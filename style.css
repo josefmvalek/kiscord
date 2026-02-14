@@ -1,0 +1,1141 @@
+:root {
+  /* Discord barvy (Default) */
+  --bg-tertiary: #202225;
+  --bg-secondary: #2f3136;
+  --bg-primary: #36393f;
+  --text-normal: #dcddde;
+  --text-header: #ffffff;
+  --interactive-normal: #b9bbbe;
+  --blurple: #5865f2;
+  --green: #3ba55c;
+  --red: #ed4245;
+  --yellow: #faa61a;
+  --pink: #eb459e;
+  --font-main: "Inter", sans-serif;
+}
+
+/* --- VALENTINE'S THEME (Refined) --- */
+.theme-valentines {
+  --bg-tertiary: #3a0e16;
+  /* Lighter Burgundy */
+  --bg-secondary: #581622;
+  /* Rich Red/Pink */
+  --bg-primary: #7a1e2e;
+  /* Muted Red */
+  --text-normal: #ffe4e1;
+  /* Misty Rose */
+  --text-header: #fff0f5;
+  /* Lavender Blush */
+  --interactive-normal: #ffb7c5;
+  /* Cherry Blossom */
+  --blurple: #ff1493;
+  /* Deep Pink */
+  --green: #32cd32;
+  /* Lime Green (Readable) */
+  --red: #ff4500;
+  /* Orange Red */
+  --yellow: #ffd700;
+  /* Gold */
+  --pink: #ff69b4;
+  /* Hot Pink */
+  --font-main: "Comic Sans MS", "Chalkboard SE", "Comic Neue", sans-serif !important;
+}
+
+/* FIX: Protect FontAwesome Icons from font-family override */
+.fas,
+.fa-solid,
+.fa {
+  font-family: "Font Awesome 6 Free", sans-serif !important;
+  font-weight: 900 !important;
+}
+
+.far,
+.fa-regular {
+  font-family: "Font Awesome 6 Free", sans-serif !important;
+  font-weight: 400 !important;
+}
+
+.fab,
+.fa-brands {
+  font-family: "Font Awesome 6 Brands", sans-serif !important;
+  font-weight: 400 !important;
+}
+
+/* STRONG OVERRIDES FOR TAILWIND UTILITIES IN VALENTINE MODE */
+/* Force text colors to match theme */
+body.theme-valentines .text-gray-300,
+body.theme-valentines .text-gray-400,
+body.theme-valentines .text-gray-500 {
+  color: var(--text-normal) !important;
+}
+
+body.theme-valentines .text-white {
+  color: var(--text-header) !important;
+}
+
+/* Force backgrounds - Respect Hierarchy */
+body.theme-valentines .bg-\[\#202225\] {
+  background-color: var(--bg-tertiary) !important;
+}
+
+body.theme-valentines .bg-\[\#2f3136\] {
+  background-color: var(--bg-secondary) !important;
+}
+
+body.theme-valentines .bg-\[\#36393f\] {
+  background-color: var(--bg-primary) !important;
+}
+
+body.theme-valentines .bg-\[\#292b2f\] {
+  background-color: var(--bg-secondary) !important;
+}
+
+/* Sidebar background */
+body.theme-valentines #sidebar,
+body.theme-valentines nav {
+  background-color: var(--bg-tertiary) !important;
+}
+
+/* Channel hover effects */
+body.theme-valentines .hover\:bg-\[\#393c43\]:hover {
+  background-color: var(--bg-secondary) !important;
+}
+
+body.theme-valentines .hover\:bg-\[\#36393f\]:hover {
+  background-color: var(--bg-secondary) !important;
+}
+
+/* Fix specific colors */
+body.theme-valentines .text-\[\#b9bbbe\] {
+  color: var(--interactive-normal) !important;
+}
+
+/* Puzzle container fix */
+body.theme-valentines #puzzle-container {
+  border-color: var(--pink) !important;
+  background-color: rgba(50, 0, 20, 0.8) !important;
+}
+
+/* System messages */
+body.theme-valentines .bg-blue-500\/10 {
+  background-color: rgba(255, 105, 180, 0.2) !important;
+}
+
+
+body.theme-valentines {
+  font-family: "Comic Sans MS", "Chalkboard SE", "Comic Neue", sans-serif !important;
+}
+
+body.theme-valentines * {
+  font-family: "Comic Sans MS", "Chalkboard SE", "Comic Neue", sans-serif !important;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-primary);
+  color: var(--text-normal);
+  overflow: hidden;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+input,
+textarea {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+/* Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background-color: var(--bg-tertiary);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #1a1b1e;
+  border-radius: 4px;
+}
+
+/* Animace */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(235, 69, 158, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 15px rgba(235, 69, 158, 0.6);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s infinite;
+}
+
+/* Jemná animace pro přepínání měsíců */
+@keyframes calendarFade {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+    /* Začne trochu zmenšený */
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.calendar-fade {
+  animation: calendarFade 0.2s ease-out forwards;
+}
+
+/* --- STYL MAPY A PINOV --- */
+#leaflet-map {
+  width: 100%;
+  height: 100%;
+  background: #e3e8eb;
+  z-index: 1;
+}
+
+/* Vzhled Pinu (Kapka) */
+.custom-div-icon {
+  background: transparent;
+  border: none;
+}
+
+.marker-pin {
+  width: 30px;
+  height: 30px;
+  border-radius: 50% 50% 50% 0;
+  background: #5865f2;
+  position: absolute;
+  transform: rotate(-45deg);
+  left: 50%;
+  top: 50%;
+  margin: -15px 0 0 -15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+  border: 2px solid white;
+}
+
+/* Ikona uvnitř pinu (otočení zpět) */
+.marker-pin i {
+  transform: rotate(45deg);
+  color: white;
+  font-size: 14px;
+}
+
+.marker-pin:hover {
+  transform: rotate(-45deg) scale(1.2);
+  z-index: 1000;
+  transition: transform 0.2s;
+}
+
+/* Bubliny na mapě */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #2f3136;
+  color: #dcddde;
+  border: 1px solid #202225;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4);
+}
+
+.leaflet-container a {
+  color: #5865f2;
+}
+
+.leaflet-popup-content b {
+  color: #fff;
+  font-size: 14px;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  color: #b9bbbe;
+}
+
+/* --- KNIHOVNA & HODNOCENÍ --- */
+.star-btn {
+  color: #4f545c;
+  /* Šedá pro neaktivní */
+  transition:
+    color 0.2s,
+    transform 0.1s;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.star-btn.active {
+  color: #faa61a;
+  /* Zlatá pro aktivní */
+}
+
+.star-btn:hover {
+  transform: scale(1.2);
+}
+
+/* User Popout Animation */
+/* .user-popout {
+            position: absolute;
+            bottom: 60px;
+            left: 10px;
+            width: 300px;
+            background: #18191c;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.24);
+            z-index: 100;
+            overflow: hidden;
+            transform: scale(0.9);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid #2f3136;
+        }
+        .user-popout.active {
+            transform: scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        } */
+/* .popout-banner { height: 60px; background: #5865F2; }
+        .popout-avatar { 
+            width: 80px; height: 80px; 
+            border-radius: 50%; 
+            border: 6px solid #18191c; 
+            position: absolute; top: 20px; left: 20px; 
+        }
+        .popout-badges { position: absolute; top: 85px; right: 16px; background: #18191c; border-radius: 4px; padding: 2px; } */
+
+/* Ostatní styly (CMD, Modals...) */
+.modal-backdrop {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(3px);
+}
+
+.cmd-window {
+  font-family: "Consolas", monospace;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.cmd-header {
+  background: #fff;
+  color: #000;
+  padding: 2px 10px;
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cmd-body {
+  background: #0c0c0c;
+  color: #ccc;
+  padding: 5px;
+  height: 400px;
+  overflow-y: auto;
+}
+
+.cmd-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 14px;
+  background: #ccc;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.typing-cursor::after {
+  content: "|";
+  animation: blink 1s infinite;
+  color: var(--pink);
+  margin-left: 2px;
+}
+
+/* Mobilní zobrazení */
+@media (max-width: 768px) {
+  #leaflet-map {
+    min-height: 350px;
+  }
+
+  .flex-col-mobile {
+    flex-direction: column;
+  }
+}
+
+/* --- NOVÉ: 1. User Popout Animation --- */
+.user-popout {
+  position: absolute;
+  bottom: 60px;
+  left: 10px;
+  width: 300px;
+  background: #18191c;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.24);
+  z-index: 200;
+  /* Zvýšeno, aby to bylo nad vším */
+  overflow: hidden;
+  transform: scale(0.9);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 1px solid #2f3136;
+}
+
+.user-popout.active {
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.popout-banner {
+  height: 60px;
+  background: #5865f2;
+}
+
+.popout-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 6px solid #18191c;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
+
+.popout-badges {
+  position: absolute;
+  top: 85px;
+  right: 16px;
+  background: #18191c;
+  border-radius: 4px;
+  padding: 2px;
+}
+
+/* --- NOVÉ: 2. Message Hover Effect --- */
+.message-group {
+  padding: 8px 16px;
+  /* Zvětšeno pro lepší vzhled */
+  margin-top: 2px;
+  position: relative;
+}
+
+.message-group:hover {
+  background-color: rgba(4, 4, 5, 0.07);
+}
+
+.message-actions {
+  position: absolute;
+  top: -10px;
+  right: 16px;
+  background: #36393f;
+  border: 1px solid #202225;
+  border-radius: 4px;
+  padding: 4px;
+  display: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.message-group:hover .message-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --- NOVÉ: 3. Custom Tooltip --- */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #18191c;
+  color: #dcddde;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  margin-bottom: 8px;
+  z-index: 1000;
+}
+
+[data-tooltip]:hover::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #18191c;
+  margin-bottom: -4px;
+  z-index: 1000;
+}
+
+/* --- VYLEPŠENÉ HVĚZDIČKY (Interactive Stars) --- */
+/* Kontejner otočí pořadí prvků, aby fungoval CSS selektor pro "předchozí" sourozence */
+.star-rating-group {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.star-btn {
+  color: #4f545c;
+  /* Neaktivní šedá */
+  font-size: 1.2rem;
+  transition:
+    color 0.1s,
+    transform 0.1s;
+  padding: 0 2px;
+}
+
+/* 1. Logika pro ULOŽENÉ hodnocení (zlatá) */
+/* Všechny hvězdy, které mají class active, budou zlaté */
+/* Kvůli row-reverse musíme barvit trochu chytřeji v JS, ale tady stačí základ */
+.star-btn.active {
+  color: #faa61a;
+}
+
+/* 2. Logika pro HOVER (interaktivní) */
+/* Jakmile najedeme na kontejner, zrušíme zlatou u všech (aby se nepřetloukaly s hoverem) */
+.star-rating-group:hover .star-btn {
+  color: #4f545c;
+}
+
+/* A teď to kouzlo: Obarvi tu, na které je myš... A všechny "následující" v DOMu (vizuálně předchozí) */
+.star-btn:hover,
+.star-btn:hover~.star-btn {
+  color: #faa61a !important;
+  transform: scale(1.3);
+}
+
+/* --- FIX PRO TOOLTIPY (Aby nebyly useknuté) --- */
+/* Při najetí na kartu ji vytáhneme "nad" ostatní, aby tooltip nepřekrýval sousední film */
+/* --- LIBRARY GRID DESIGN (Netflix Style) --- */
+.library-card {
+  display: flex;
+  flex-direction: column;
+  /* Svislé uspořádání: Ikona nahoře, text dole */
+  background: #2f3136;
+  border-radius: 8px;
+  overflow: visible;
+  /* Důležité pro tooltipy! */
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    background-color 0.2s;
+  position: relative;
+  height: 100%;
+  border: 1px solid #202225;
+}
+
+/* Hover efekt celé karty */
+.library-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  background-color: #36393f;
+  z-index: 50;
+  /* Vytáhne kartu nad ostatní, aby tooltipy byly vidět */
+  border-color: #5865f2;
+}
+
+/* Sekce s ikonou (Plakát) */
+.poster-area {
+  height: 120px;
+  /* Fixní výška pro ikonu */
+  background: #202225;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  /* Obří ikona */
+  border-bottom: 1px solid #202225;
+  border-radius: 8px 8px 0 0;
+  transition: font-size 0.2s;
+}
+
+.library-card:hover .poster-area {
+  font-size: 4.5rem;
+  /* Ikona se při najetí mírně zvětší */
+}
+
+/* Sekce s obsahem */
+.content-area {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-grow: 1;
+}
+
+/* Tlačítka pod filmem */
+.card-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: auto;
+  /* Přilepí tlačítka dolů */
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.card-actions button {
+  color: #b9bbbe;
+  transition:
+    color 0.2s,
+    transform 0.2s;
+}
+
+.card-actions button:hover {
+  color: #fff;
+  transform: scale(1.1);
+}
+
+/* Tooltip styly (jen ujištění, že mají vysoký z-index a nealamují myš) */
+[data-tooltip]:hover::after,
+[data-tooltip]:hover::before {
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* --- MOBILE DATE PLANNER STYLES --- */
+/* Skryje scrollbar v seznamu kategorií, ale zachová posouvání */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* --- NO SCROLLBAR UTILITY --- */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+/* Detail panel jako "Bottom Sheet" na mobilu */
+/* --- MOBILE DATE PLANNER STYLES --- */
+/* --- MOBILE DATE PLANNER STYLES --- */
+@media (max-width: 768px) {
+  .mobile-map-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    /* --- FINÁLNÍ NASTAVENÍ --- */
+    height: 85vh !important;
+    /* Panel je vysoký 85% obrazovky */
+    display: flex;
+    flex-direction: column;
+
+    background: #2f3136;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+    /* Výraznější stín */
+    z-index: 9999 !important;
+
+    /* Pro plynulost na iPhonech */
+    will-change: transform;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1);
+  }
+
+  #detail-content {
+    overscroll-behavior: contain;
+  }
+
+  /* Na mobilu chceme místo dole kvůli gestům */
+  @media (max-width: 768px) {
+    #detail-content {
+      /* Původně 80px, zmenšeno na minimum + rezerva pro iPhone čárku */
+      padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+  }
+
+  /* Na PC chceme jen malé odsazení */
+  @media (min-width: 769px) {
+    #detail-content {
+      padding-bottom: 10px;
+      /* Malé odsazení na PC */
+    }
+  }
+
+  /* Seznam míst na mobilu */
+  .mobile-list-overlay {
+    position: absolute;
+    inset: 0;
+    background: #2f3136;
+    z-index: 900;
+    display: none;
+  }
+
+  .mobile-list-overlay.active {
+    display: flex;
+  }
+}
+
+/* Styl pro panel, který platí vždy (i na desktopu) */
+.mobile-map-overlay {
+  background: #2f3136;
+  /* Barva pozadí */
+  border-radius: 20px 20px 0 0;
+  /* Kulaté rohy nahoře */
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+  /* Stín */
+  display: flex;
+  flex-direction: column;
+  z-index: 999;
+}
+
+/* Na mobilu chceme fixní výšku, na desktopu max-výšku */
+@media (max-width: 768px) {
+  .mobile-map-overlay {
+    height: 85vh !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-map-overlay {
+    height: auto !important;
+    /* DŮLEŽITÉ: Výška se přizpůsobí obsahu */
+    max-height: 60vh;
+    /* Ale nepůjde přes 60% obrazovky */
+    bottom: 20px;
+    /* Odlepíme ho od spodní hrany (vypadá to moderněji) */
+    left: 20px;
+    /* Odlepíme zleva */
+    right: 20px;
+    /* Odlepíme zprava (nebo můžeš dát width: 500px a margin: 0 auto) */
+    border-radius: 20px;
+    /* Zakulatíme všechny rohy, nejen horní */
+    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.8);
+    /* Silnější stín pro oddělení od mapy */
+  }
+
+  /* Skryjeme "tahátko" (handle) na desktopu, tam nedává smysl */
+  #sheet-handle {
+    display: none !important;
+  }
+
+  /* Tlačítko zavřít posuneme, aby vypadalo lépe */
+  .mobile-map-overlay .fa-times {
+    top: 10px !important;
+    right: 10px !important;
+  }
+}
+
+/* --- MOBILE GESTURES CSS --- */
+
+/* Zabrání scrollování stránky při tažení panelu */
+.touch-none {
+  touch-action: none;
+}
+
+/* Větší plocha pro "chycení" panelu nahoře */
+/* Větší plocha pro "chycení" panelu nahoře */
+.sheet-handle-area {
+  width: 100%;
+  height: 40px;
+  /* Zvětšil jsem to z 30px, ať je víc místa pro prst */
+
+  /* --- ZMĚNA ZDE: Už ne absolute! --- */
+  position: relative;
+  flex-shrink: 0;
+  /* Aby se nezmenšoval, když je málo místa */
+  /* ---------------------------------- */
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  z-index: 50;
+  background: transparent;
+}
+
+/* Vizuální čárka (Handle) */
+.sheet-handle-bar {
+  width: 40px;
+  height: 5px;
+  background-color: #4f545c;
+  border-radius: 10px;
+  transition: background-color 0.2s;
+}
+
+.sheet-handle-area:active .sheet-handle-bar {
+  background-color: #eb459e;
+  /* Zrůžoví při tažení */
+}
+
+/* Hladká animace jen když netaháme prstem */
+.sheet-transition {
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* --- SLIDER STYLING --- */
+input[type="range"] {
+  -webkit-appearance: none;
+  /* Disable default styles */
+  appearance: none;
+  background: transparent;
+  /* Track is styled in JS inline */
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: #eb459e;
+  /* Default pink */
+  border: 2px solid #2f3136;
+  margin-top: -6px;
+  /* Center thumb on track (track h=8px, thumb h=20px -> (8-20)/2 = -6) */
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+/* Track styling for Firefox if needed (Webkit uses inline styles for gradient) */
+input[type="range"]::-moz-range-track {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  background: #2f3136;
+  border-radius: 4px;
+}
+
+/* --- GOODNIGHT OVERLAY STARS --- */
+#stars-container {
+  /* Simple star field using multiple box-shadows is efficient */
+}
+
+#stars-container::after {
+  content: " ";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: white;
+  /* Generování mnoha stínů pro hvězdy */
+  box-shadow:
+    10vw 10vh 0px 0px white,
+    20vw 80vh 0px 0px white,
+    30vw 30vh 1px 0px white,
+    40vw 50vh 0px 0px white,
+    50vw 10vh 0px 0px white,
+    60vw 90vh 1px 0px white,
+    70vw 20vh 0px 0px white,
+    80vw 60vh 0px 0px white,
+    90vw 40vh 1px 0px white,
+    15vw 45vh 0px 0px white,
+    55vw 25vh 1px 0px white,
+    85vw 75vh 0px 0px white,
+    25vw 95vh 0px 0px white,
+    65vw 15vh 1px 0px white;
+  animation: twinkle 3s infinite ease-in-out alternate;
+}
+
+@keyframes twinkle {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+/* --- GOOD MORNING OVERLAY --- */
+#good-morning-overlay {
+  background: linear-gradient(135deg, #fceabb 0%, #f8b500 100%);
+}
+
+.sun-rays {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 70%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+@keyframes rotateRays {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* --- MOOD SLIDER (Czippelometr) --- */
+.mood-slider-container {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+  padding-top: 10px;
+  /* Místo pro bublinu */
+  align-items: center;
+}
+
+/* Bublina s fotkou */
+.mood-bubble-wrapper {
+  position: absolute;
+  top: -140px;
+  left: 50%;
+  /* Bude se hýbat dynamicky pomocí JS, ale start je 50% */
+  transform: translateX(-50%) translateY(20px) scale(0.5);
+  /* Start: malý a posunutý */
+  width: 120px;
+  height: 120px;
+
+  /* Kontejner */
+  pointer-events: none;
+  z-index: 100;
+
+  /* Animace */
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s;
+  opacity: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mood-bubble-wrapper.active {
+  transform: translateX(-50%) translateY(0) scale(1);
+  opacity: 1;
+}
+
+.mood-bubble {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  position: relative;
+}
+
+.mood-bubble img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.1s;
+}
+
+.mood-rating-value {
+  position: absolute;
+  bottom: -10px;
+  background: #eb459e;
+  color: white;
+  font-weight: 900;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  border: 2px solid #202225;
+}
+
+/* Slider Track */
+.mood-range {
+  width: 100%;
+  height: 12px;
+  /* Tlustší track */
+  -webkit-appearance: none;
+  background: linear-gradient(to right, #ef4444, #f59e0b, #10b981);
+  border-radius: 10px;
+  outline: none;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
+  border: 1px solid #2f3136;
+  position: relative;
+  z-index: 10;
+}
+
+.mood-number {
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+.mood-number.active {
+  transform: scale(1.5) translateY(-2px);
+  color: #fff;
+  opacity: 1;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.mood-number:hover {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+/* --- DRAGGING STATE (Tactile Feel) --- */
+.mood-slider-container.dragging .mood-bubble-wrapper {
+  transform: translateX(-50%) translateY(-10px) scale(1.1) !important;
+  filter: drop-shadow(0 0 15px rgba(235, 69, 158, 0.6));
+}
+
+.mood-slider-container.dragging .mood-number:not(.active) {
+  filter: blur(2px);
+  opacity: 0.3;
+  transform: scale(0.9);
+}
+
+.mood-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #eb459e;
+  cursor: pointer;
+  border: 4px solid #fff;
+  /* Bílý okraj */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  transition: transform 0.1s, background 0.2s;
+  margin-top: -8px;
+  /* !important pro vycentrování */
+}
+
+
+
+.mood-range:active::-webkit-slider-thumb {
+  transform: scale(1.1);
+  background: #fff;
+  border-color: #eb459e;
+}
+
+/* Gradient pozadí tracku (děláme v JS dynamicky, ale default) */
+.mood-text-hint {
+  margin-top: 15px;
+  color: #b9bbbe;
+  font-size: 12px;
+  font-style: italic;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.mood-slider-container:hover .mood-text-hint {
+  opacity: 1;
+}
+
+.sun-core {
+  font-size: 8rem;
+  animation: riseUp 2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  z-index: 10;
+  text-shadow: 0 0 50px rgba(255, 165, 0, 0.8);
+}
+
+@keyframes rotateRays {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes riseUp {
+  0% {
+    transform: translateY(100px) scale(0.5);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Water Splash Animation */
+@keyframes waterSplash {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.3);
+    filter: brightness(1.2);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+button:active i.fa-tint {
+  animation: waterSplash 0.3s ease-out;
+}
+
+/* Card Glow Effect */
+.bg-\[\#2f3136\] {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.bg-\[\#2f3136\]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.1);
+}
