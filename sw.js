@@ -1,60 +1,100 @@
-const CACHE_NAME = "kiscord-v3-vercel";
+const CACHE_NAME = "kiscord-v4-vercel";
+// KRITICKÁ OPRAVA: Cachujeme POUZE lokální assety.
+// CDN URL vedly k selhání celé instalace (cache.addAll je atomické).
 const ASSETS_TO_CACHE = [
   "/",
   "/index.html",
+  "/style.css",
   "/manifest.json",
   "/img/app/czippel2_kytka-modified.png",
   "/img/app/klarka_profilovka.webp",
   "/img/app/jozka_profilovka.jpg",
-  // Externí knihovny
-  "https://cdn.tailwindcss.com",
-  "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css",
-  "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
-  "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
-  "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap",
+  "/img/app/czippel2_vanoce.png",
 ];
 
-// 1. INSTALACE: Uložíme vše do cache
+// 1. INSTALL
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log("[Service Worker] Caching assets");
+      console.log("[SW] Caching local assets");
       return cache.addAll(ASSETS_TO_CACHE);
-    }),
+    })
   );
+  self.skipWaiting(); // Aktivuj nový SW ihned, bez čekání
 });
 
-// 2. AKTIVACE: Vyčistíme staré cache (když změníš verzi)
+// 2. ACTIVATE – smaž staré cache
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keyList) => {
-      return Promise.all(
-        keyList.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        }),
-      );
-    }),
+    caches.keys().then((keyList) =>
+      Promise.all(
+        keyList.map((key) => key !== CACHE_NAME && caches.delete(key))
+      )
+    )
   );
+  return self.clients.claim(); // Převezmi kontrolu nad stávajícími stránkami ihned
 });
 
-// 3. FETCH: Když není internet, bereme z cache
+// 3. FETCH – Network-First pro JS, Cache-First pro obrázky, Network pro Supabase
 self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      // Pokud je v cache, vrátíme to. Pokud ne, zkusíme internet.
-      return (
-        response ||
-        fetch(event.request).catch(() => {
-          // Pokud selže i internet (jsme offline a nemáme to v cache),
-          // tady bychom mohli vrátit nějakou "offline stránku",
-          // ale pro SPA stačí, když vrátíme index.html (pokud jde o navigaci).
-          if (event.request.mode === "navigate") {
-            return caches.match("./index.html");
+  const url = new URL(event.request.url);
+
+  // Supabase API volání – NIKDY necachovat
+  if (url.hostname.includes("supabase.co")) {
+    return; // Nech projít beze změny
+  }
+
+  // CDN (Tailwind, FontAwesome, Google Fonts) – zkus network, fallback cache
+  if (!url.hostname.includes("localhost") && url.hostname !== location.hostname) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // JS moduly – Network-First (zajistí, že deploy aktualizace vidí uživatelé ihned)
+  if (url.pathname.startsWith("/js/") || url.pathname.endsWith(".js")) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Ulož do cache pro offline
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
+          return response;
         })
-      );
-    }),
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Obrázky – Cache-First (šetří bandwidth)
+  if (url.pathname.match(/\.(jpg|jpeg|png|webp|gif|svg|ico)$/)) {
+    event.respondWith(
+      caches.match(event.request).then(
+        (cached) => cached || fetch(event.request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+      )
+    );
+    return;
+  }
+
+  // HTML navigace (F5, přímý link) – Network-First, fallback na index.html
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match("/index.html"))
+    );
+    return;
+  }
+
+  // Výchozí – Network s cache fallback
+  event.respondWith(
+    fetch(event.request).catch(() => caches.match(event.request))
   );
 });

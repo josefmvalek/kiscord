@@ -83,11 +83,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (user) {
                 const loginEl = document.getElementById('login-screen');
                 const appEl = document.getElementById('app-interface');
-                if (loginEl) loginEl.classList.add('hidden');
-                if (appEl) appEl.classList.add('show');
+                if (loginEl) loginEl.style.display = 'none';
+                if (appEl) appEl.style.display = 'flex';
                 updateUserProfileUI(user);
 
-                // --- UPDATE: Refresh data for new user ---
+                // Refresh data for new user
                 await initializeState();
                 
                 // Re-render current or default channel
@@ -97,8 +97,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (event === 'SIGNED_OUT') {
             const loginEl = document.getElementById('login-screen');
             const appEl = document.getElementById('app-interface');
-            if (loginEl) loginEl.classList.remove('hidden');
-            if (appEl) appEl.classList.remove('show');
+            if (loginEl) loginEl.style.display = '';
+            if (appEl) appEl.style.display = 'none';
         }
     });
 
@@ -106,12 +106,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const user = await getCurrentUser();
     if (!user) {
         const loginEl = document.getElementById('login-screen');
-        if (loginEl) loginEl.classList.remove('hidden');
+        if (loginEl) loginEl.style.display = '';
     } else {
         const loginEl = document.getElementById('login-screen');
         const appEl = document.getElementById('app-interface');
-        if (loginEl) loginEl.classList.add('hidden');
-        if (appEl) appEl.classList.add('show');
+        if (loginEl) loginEl.style.display = 'none';
+        if (appEl) appEl.style.display = 'flex';
         updateUserProfileUI(user);
     }
 

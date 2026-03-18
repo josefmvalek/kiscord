@@ -1,10 +1,10 @@
 import { supabase } from './supabase.js';
 
 export const state = {
-    tetris: { jose: 0, klarka: 0 }, // Synchronizováno ze Supabase
+    tetris: { jose: 0, klarka: 0 },
     currentChannel: "welcome",
-    topicProgress: {}, // Synchronizováno ze Supabase
-    schoolEvents: {}, // Synchronizováno ze Supabase
+    topicProgress: {},
+    schoolEvents: {},
     calendarFilter: "all",
     isViewingBookmarks: false,
     currentTopicId: null,
@@ -12,34 +12,29 @@ export const state = {
     topicSessionHistory: [],
     pendingResetId: null,
     currentDownload: null,
-    startDate: "2025-12-24", // ⚠️ ZMĚŇ NA VAŠE SKUTEČNÉ DATUM (YYYY-MM-DD)
-    healthData: {}, // Synchronizováno ze Supabase
+    startDate: "2025-12-24",
+    healthData: {},
     dateFilter: "all",
     mapInstance: null,
-    quizAnswers: {
-        score: 0,
-        completed: false,
-    },
-    watchlist: [], 
+    quizAnswers: { score: 0, completed: false },
+    watchlist: [],
     route: [],
-    ratings: {}, 
-    dateRatings: {}, // <-- ADDED
-    dateRoute: [],   // <-- ADDED
+    ratings: {},
+    dateRatings: {},
+    dateRoute: [],
     watchHistory: {},
-    plannedDates: {}, 
+    plannedDates: {},
     currentUser: { name: 'Klárka', email: '' },
-    // --- Statický obsah (nyní ze Supabase) ---
     factsLibrary: { octopus: [], owl: [], raccoon: [], fun: [] },
     library: { movies: [], series: [], games: [] },
     timelineEvents: [],
-    timelineHighlights: {}, // <-- ADDED
+    timelineHighlights: {},
     dateLocations: [],
     conversationTopics: [],
 };
 
-// Funkce pro počáteční načtení dat
 export async function initializeState() {
-    // Reset uživatelských dat před načtením (prevence duplikátů při přepínání účtů)
+    // Reset před načtením (zabrání duplikátům při přepínání účtů)
     state.healthData = {};
     state.plannedDates = {};
     state.schoolEvents = {};
@@ -49,8 +44,6 @@ export async function initializeState() {
     state.watchHistory = {};
     state.dateRatings = {};
     state.quizAnswers = { score: 0, completed: false };
-    
-    // Reset statických dat (volitelné, ale bezpečnější pro čistý render)
     state.factsLibrary = { octopus: [], owl: [], raccoon: [], fun: [] };
     state.library = { movies: [], series: [], games: [] };
     state.timelineEvents = [];
@@ -58,25 +51,51 @@ export async function initializeState() {
     state.conversationTopics = [];
 
     try {
-        // --- Health Data ---
-        const { data: healthData, error: healthErr } = await supabase.from('health_data').select('*');
-        if (!healthErr && healthData) {
+        // OPRAVA #2: Paralelní dotazy místo 10 sekvenčních await
+        // Snižuje dobu načítání z ~10×RTT na ~1×RTT
+        const [
+            { data: healthData },
+            { data: plannedData },
+            { data: schoolData },
+            { data: tetrisData },
+            { data: watchData },
+            { data: ratingData },
+            { data: factsData },
+            { data: libData },
+            { data: timelineData },
+            { data: ratingDateData },
+            { data: locData },
+            { data: topicsData },
+        ] = await Promise.all([
+            supabase.from('health_data').select('*'),
+            supabase.from('planned_dates').select('*'),
+            supabase.from('school_events').select('*'),
+            supabase.from('tetris_scores').select('*'),
+            supabase.from('library_watchlist').select('*'),
+            supabase.from('library_ratings').select('*'),
+            supabase.from('app_facts').select('*'),
+            supabase.from('library_content').select('*'),
+            supabase.from('timeline_events').select('*').order('event_date', { ascending: false, nullsFirst: false }),
+            supabase.from('date_ratings').select('*'),
+            supabase.from('date_locations').select('*'),
+            supabase.from('conversation_topics').select('*'),
+        ]);
+
+        // OPRAVA #1: Health Data – odstraněn zbytečný JS user_id filtr
+        // RLS politika (auth.uid() = user_id) filtrování zajišťuje sama.
+        // Původní filtr selhal, protože state.currentUser.id není ještě nastaveno.
+        if (healthData) {
             healthData.forEach(row => {
-                // Only load if it belongs to current user
-                if (row.user_id === state.currentUser.id) {
-                    state.healthData[row.date_key] = {
-                        water: row.water,
-                        sleep: row.sleep,
-                        mood: row.mood,
-                        movement: row.movement
-                    };
-                }
+                state.healthData[row.date_key] = {
+                    water: row.water,
+                    sleep: row.sleep,
+                    mood: row.mood,
+                    movement: row.movement
+                };
             });
         }
 
-        // --- Planned Dates ---
-        const { data: plannedData, error: planErr } = await supabase.from('planned_dates').select('*');
-        if (!planErr && plannedData) {
+        if (plannedData) {
             plannedData.forEach(row => {
                 state.plannedDates[row.date_key] = {
                     id: row.id,
@@ -88,9 +107,7 @@ export async function initializeState() {
             });
         }
 
-        // --- School Events ---
-        const { data: schoolData, error: schoolErr } = await supabase.from('school_events').select('*');
-        if (!schoolErr && schoolData) {
+        if (schoolData) {
             schoolData.forEach(row => {
                 state.schoolEvents[row.date_key] = {
                     title: row.title,
@@ -99,11 +116,8 @@ export async function initializeState() {
             });
         }
 
-        // --- Tetris Scores ---
-        const { data: tetrisData, error: tetrisErr } = await supabase.from('tetris_scores').select('*');
-        if (!tetrisErr && tetrisData) {
+        if (tetrisData) {
             tetrisData.forEach(row => {
-                // Map by known fixed UUIDs
                 if (row.user_id === '00000000-0000-0000-0000-000000000001') {
                     state.tetris.jose = row.score || 0;
                 } else if (row.user_id === '00000000-0000-0000-0000-000000000002') {
@@ -112,34 +126,28 @@ export async function initializeState() {
             });
         }
 
-        // --- Library Watchlist ---
-        const { data: watchData, error: watchErr } = await supabase.from('library_watchlist').select('*');
-        if (!watchErr && watchData) {
+        if (watchData) {
             state.watchlist = watchData.map(row => ({
                 id: row.media_id,
                 type: row.type
             }));
         }
 
-        // --- Library Ratings ---
-        const { data: ratingData, error: ratingErr } = await supabase.from('library_ratings').select('*');
-        if (!ratingErr && ratingData) {
+        if (ratingData) {
             ratingData.forEach(row => {
                 state.ratings[row.media_id] = row.rating;
                 if (row.status) state.watchHistory[row.media_id] = row.status;
             });
         }
 
-        // --- app_facts ---
-        const { data: factsData } = await supabase.from('app_facts').select('*');
         if (factsData) {
             factsData.forEach(f => {
-                if (state.factsLibrary[f.category]) state.factsLibrary[f.category].push({ icon: f.icon, text: f.text });
+                if (state.factsLibrary[f.category]) {
+                    state.factsLibrary[f.category].push({ icon: f.icon, text: f.text });
+                }
             });
         }
 
-        // --- library_content ---
-        const { data: libData } = await supabase.from('library_content').select('*');
         if (libData) {
             libData.forEach(item => {
                 const typeKey = item.type === 'movie' ? 'movies' : (item.type === 'series' ? 'series' : 'games');
@@ -154,34 +162,28 @@ export async function initializeState() {
             });
         }
 
-        // --- timeline_events ---
-        const { data: timelineData } = await supabase.from('timeline_events').select('*').order('event_date', { ascending: false, nullsFirst: false });
+        // OPRAVA #5: Odstraněn duplicitní klíč `icon` který přepisoval správnou hodnotu z DB
         if (timelineData) {
             state.timelineEvents = timelineData.map(e => ({
                 id: e.id,
                 title: e.title,
                 event_date: e.event_date,
-                icon: e.icon,
+                icon: e.icon || "📸",
                 color: e.color,
                 description: e.description || "",
                 images: e.images || [],
                 location_id: e.location_id || null,
-                icon: e.icon || "📸",
                 user_highlights: e.user_highlights || "",
                 is_milestone: e.is_milestone || false
             }));
         }
 
-        // --- date_ratings ---
-        const { data: ratingDateData } = await supabase.from('date_ratings').select('*');
         if (ratingDateData) {
             ratingDateData.forEach(row => {
                 state.dateRatings[row.location_id] = row.rating;
             });
         }
 
-        // --- date_locations ---
-        const { data: locData } = await supabase.from('date_locations').select('*');
         if (locData) {
             state.dateLocations = locData.map(l => ({
                 id: l.id,
@@ -194,8 +196,6 @@ export async function initializeState() {
             }));
         }
 
-        // --- conversation_topics ---
-        const { data: topicsData } = await supabase.from('conversation_topics').select('*');
         if (topicsData) {
             state.conversationTopics = topicsData.map(t => ({
                 id: t.id,
@@ -207,13 +207,19 @@ export async function initializeState() {
             }));
         }
 
-        // --- quiz_answers ---
-        const { data: quizData } = await supabase.from('quiz_answers').select('*').eq('user_id', state.currentUser.id).maybeSingle();
-        if (quizData) {
-            state.quizAnswers = {
-                score: quizData.score || 0,
-                completed: quizData.completed || false
-            };
+        // quiz_answers závisí na user_id → samostatně po inicializaci uživatele
+        if (state.currentUser?.id) {
+            const { data: quizData } = await supabase
+                .from('quiz_answers')
+                .select('*')
+                .eq('user_id', state.currentUser.id)
+                .maybeSingle();
+            if (quizData) {
+                state.quizAnswers = {
+                    score: quizData.score || 0,
+                    completed: quizData.completed || false
+                };
+            }
         }
 
     } catch (err) {
