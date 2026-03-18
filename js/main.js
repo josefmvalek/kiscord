@@ -27,7 +27,9 @@ import {
     renderTimeline,
     openGallery,
     closeGallery,
-    changeGalleryImage
+    changeGalleryImage,
+    uploadPhoto,
+    deletePhoto
 } from './modules/timeline.js';
 import {
     renderLibrary,
@@ -710,6 +712,14 @@ function exposeGlobals() {
 
     // Achievements
     window.toggleAchievement = toggleAchievement;
+
+    // Timeline
+    window.renderTimeline = renderTimeline;
+    window.openGallery = openGallery;
+    window.closeGallery = closeGallery;
+    window.changeGalleryImage = changeGalleryImage;
+    window.uploadPhoto = uploadPhoto;
+    window.deletePhoto = deletePhoto;
 
     // Migration
     import('./migration.js').then(m => {
