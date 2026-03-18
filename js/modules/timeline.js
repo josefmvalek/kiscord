@@ -19,7 +19,7 @@ export async function renderTimeline() {
 
     // Show Loader
     container.innerHTML = `
-        <div class="flex items-center justify-center h-full">
+        <div class="h-full flex items-center justify-center bg-[#36393f]">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5865F2]"></div>
         </div>
     `;
@@ -78,37 +78,44 @@ export async function renderTimeline() {
                 groupedEvents[groupKey] = [];
             }
             groupedEvents[groupKey].push(event);
-        });
-
-        // 4. Build HTML
+        });        // 4. Build HTML
         let html = `
-          <div class="p-4 md:p-8 max-w-4xl mx-auto w-full">
-              <h3 class="text-white font-bold text-2xl mb-8 pl-4 border-l-4 border-[#5865F2] animate-fade-in flex flex-wrap items-center justify-between gap-4">
-                  <div class="flex items-center gap-3">
-                    <i class="fas fa-history text-[#5865F2]"></i> Naše Společná Cesta
-                  </div>
-                  
-                  <div class="flex items-center gap-3">
-                      <!-- Add Event Button -->
-                      <button onclick="import('./js/modules/timeline.js').then(m => m.openEventModal())" 
-                              class="bg-[#3ba55c] hover:bg-[#2d7d44] text-white text-xs px-3 py-2 rounded font-bold shadow-lg flex items-center gap-2 transition-all transform hover:scale-105 active:scale-95">
-                          <i class="fas fa-plus"></i> Nová vzpomínka
-                      </button>
+          <div class="h-full flex flex-col bg-[#36393f] overflow-hidden">
+              <!-- Sticky Header -->
+              <div class="flex-shrink-0 z-20 bg-[#36393f] p-4 md:p-8 pb-4 border-b border-[#202225]/50 shadow-lg">
+                  <div class="max-w-4xl mx-auto w-full">
+                      <h3 class="text-white font-bold text-2xl mb-0 pl-4 border-l-4 border-[#5865F2] flex flex-wrap items-center justify-between gap-4">
+                          <div class="flex items-center gap-3">
+                            <i class="fas fa-history text-[#5865F2]"></i> Naše Společná Cesta
+                          </div>
+                          
+                          <div class="flex items-center gap-3">
+                              <!-- Add Event Button -->
+                              <button onclick="import('./js/modules/timeline.js').then(m => m.openEventModal())" 
+                                      class="bg-[#3ba55c] hover:bg-[#2d7d44] text-white text-xs px-3 py-2 rounded font-bold shadow-lg flex items-center gap-2 transition-all transform hover:scale-105 active:scale-95">
+                                  <i class="fas fa-plus"></i> Nová vzpomínka
+                              </button>
 
-                      <!-- Search Bar -->
-                      <div class="relative w-full max-w-[200px] md:max-w-[300px]">
-                          <input type="text" 
-                                 id="timeline-search"
-                                 placeholder="Hledat vzpomínku..." 
-                                 value="${searchQuery}"
-                                 oninput="import('./js/modules/timeline.js').then(m => m.searchTimeline(this.value))"
-                                 class="w-full bg-[#202225] text-xs text-white px-3 py-2 rounded-full border border-[#2f3136] focus:border-[#5865F2] outline-none transition-all pl-8">
-                          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-[10px]"></i>
-                      </div>
+                              <!-- Search Bar -->
+                              <div class="relative w-full max-w-[200px] md:max-w-[300px]">
+                                  <input type="text" 
+                                         id="timeline-search"
+                                         placeholder="Hledat vzpomínku..." 
+                                         value="${searchQuery}"
+                                         oninput="import('./js/modules/timeline.js').then(m => m.searchTimeline(this.value))"
+                                         class="w-full bg-[#202225] text-xs text-white px-3 py-2 rounded-full border border-[#2f3136] focus:border-[#5865F2] outline-none transition-all pl-8">
+                                  <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-[10px]"></i>
+                              </div>
+                          </div>
+                      </h3>
                   </div>
-              </h3>
-              <div class="space-y-10 pb-10">
+              </div>
+
+              <!-- Scrollable Content -->
+              <div class="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-8 pt-6">
+                  <div class="max-w-4xl mx-auto w-full space-y-10 pb-20">
         `;
+
 
         for (const [groupName, events] of Object.entries(groupedEvents)) {
             html += `
@@ -258,7 +265,7 @@ export async function renderTimeline() {
             `;
         }
 
-        html += `</div></div>`;
+        html += `</div></div></div>`;
         container.innerHTML = html;
 
         // Restore Search Focus
