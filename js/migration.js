@@ -201,14 +201,15 @@ export async function migrateLocalDataToSupabase() {
         }
     }
 
+    localStorage.setItem('klarka_migration_done', 'true');
+    
     if (totalMigrated > 0) {
         console.log(`🎉 User data migration complete! Total records moved: ${totalMigrated}.`);
-        localStorage.setItem('klarka_migration_done', 'true');
     } else {
         console.log("ℹ️ No local user data found.");
     }
     
-    return true;
+    return totalMigrated;
 }
 
 export async function migrateStaticContentToSupabase() {

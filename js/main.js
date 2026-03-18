@@ -103,9 +103,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Run migration once if data exists but hasn't been moved yet
     if (!localStorage.getItem('klarka_migration_done')) {
-        await migrateLocalDataToSupabase();
-        // Option to reload so the app pulls the newly migrated data right away
-        window.location.reload(); 
+        const migratedCount = await migrateLocalDataToSupabase();
+        // Only reload if something was actually migrated to avoid infinite loop on empty storage
+        if (migratedCount > 0) {
+            window.location.reload(); 
+        }
     }
 
     // Static content migration (forced re-run to fix previous incomplete sync)
