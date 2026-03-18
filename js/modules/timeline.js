@@ -175,10 +175,12 @@ export async function renderTimeline() {
             // Upload Button
             const uploadBtnHtml = `
                 <div class="mt-2 text-right">
-                    <button onclick="event.stopPropagation(); this.nextElementSibling.click()" class="text-[10px] text-gray-500 hover:text-[#5865F2] transition-colors flex items-center gap-1 ml-auto">
-                        <i class="fas fa-plus-circle"></i> Přidat fotku
-                    </button>
-                    <input type="file" class="hidden" accept="image/*" onclick="event.stopPropagation()" onchange="import('./js/modules/timeline.js').then(m => m.uploadPhoto('${event.id}', this))">
+                             <button onclick="document.getElementById('photo-upload-${event.id}').click()" 
+                                 class="mt-3 text-[#5865F2] hover:text-white text-xs font-bold transition-colors flex items-center gap-1.5 px-2 py-1 rounded hover:bg-[#5865F2]/10">
+                                 <i class="fas fa-camera"></i> Přidat fotku
+                             </button>
+                             <input type="file" id="photo-upload-${event.id}" class="hidden" accept="image/*" 
+                                 onchange="import('./js/modules/timeline.js').then(m => m.uploadPhoto('${event.id}', this))">
                 </div>
             `;
 
