@@ -39,6 +39,24 @@ export const state = {
 
 // Funkce pro počáteční načtení dat
 export async function initializeState() {
+    // Reset uživatelských dat před načtením (prevence duplikátů při přepínání účtů)
+    state.healthData = {};
+    state.plannedDates = {};
+    state.schoolEvents = {};
+    state.topicProgress = {};
+    state.watchlist = [];
+    state.ratings = {};
+    state.watchHistory = {};
+    state.dateRatings = {};
+    state.quizAnswers = { score: 0, completed: false };
+    
+    // Reset statických dat (volitelné, ale bezpečnější pro čistý render)
+    state.factsLibrary = { octopus: [], owl: [], raccoon: [], fun: [] };
+    state.library = { movies: [], series: [], games: [] };
+    state.timelineEvents = [];
+    state.dateLocations = [];
+    state.conversationTopics = [];
+
     try {
         // --- Health Data ---
         const { data: healthData, error: healthErr } = await supabase.from('health_data').select('*');

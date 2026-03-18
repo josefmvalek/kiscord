@@ -65,7 +65,7 @@ import { renderAchievements, toggleAchievement, cleanupRealtime as achCleanup } 
 
 document.addEventListener('DOMContentLoaded', async () => {
     // 0. Listen for auth changes
-    onAuthChange((event, session) => {
+    onAuthChange(async (event, session) => {
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
             const user = session?.user;
             if (user) {
@@ -74,6 +74,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (loginEl) loginEl.classList.add('hidden');
                 if (appEl) appEl.classList.add('show');
                 updateUserProfileUI(user);
+
+                // --- UPDATE: Refresh data for new user ---
+                await initializeState();
+                
+                // Re-render current or default channel
+                const currentChan = state.currentChannel || 'dashboard';
+                switchChannel(currentChan);
             }
         } else if (event === 'SIGNED_OUT') {
             const loginEl = document.getElementById('login-screen');
