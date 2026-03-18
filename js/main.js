@@ -29,7 +29,17 @@ import {
     closeGallery,
     changeGalleryImage,
     uploadPhoto,
-    deletePhoto
+    deleteCurrentPhoto,
+    confirmDeletePhoto,
+    saveHighlight,
+    toggleMilestone,
+    toggleTimelineCard,
+    openEventModal,
+    closeEventModal,
+    saveEvent,
+    deleteEvent,
+    jumpToTimeline,
+    searchTimeline
 } from './modules/timeline.js';
 import {
     renderLibrary,
@@ -719,7 +729,17 @@ function exposeGlobals() {
     window.closeGallery = closeGallery;
     window.changeGalleryImage = changeGalleryImage;
     window.uploadPhoto = uploadPhoto;
-    window.deletePhoto = deletePhoto;
+    window.deleteCurrentPhoto = deleteCurrentPhoto;
+    window.confirmDeletePhoto = confirmDeletePhoto;
+    window.saveHighlight = saveHighlight;
+    window.toggleMilestone = toggleMilestone;
+    window.toggleTimelineCard = toggleTimelineCard;
+    window.openEventModal = openEventModal;
+    window.closeEventModal = closeEventModal;
+    window.saveEvent = saveEvent;
+    window.deleteEvent = deleteEvent;
+    window.jumpToTimeline = jumpToTimeline;
+    window.searchTimeline = searchTimeline;
 
     // Migration
     import('./migration.js').then(m => {
