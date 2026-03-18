@@ -83,8 +83,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (user) {
                 const loginEl = document.getElementById('login-screen');
                 const appEl = document.getElementById('app-interface');
-                if (loginEl) loginEl.style.display = 'none';
-                if (appEl) appEl.style.display = 'flex';
+                if (loginEl) loginEl.classList.add('hidden');
+                if (appEl) appEl.classList.add('show');
                 updateUserProfileUI(user);
 
                 // Refresh data for new user
@@ -97,8 +97,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else if (event === 'SIGNED_OUT') {
             const loginEl = document.getElementById('login-screen');
             const appEl = document.getElementById('app-interface');
-            if (loginEl) loginEl.style.display = '';
-            if (appEl) appEl.style.display = 'none';
+            if (loginEl) loginEl.classList.remove('hidden');
+            if (appEl) appEl.classList.remove('show');
         }
     });
 
@@ -106,12 +106,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const user = await getCurrentUser();
     if (!user) {
         const loginEl = document.getElementById('login-screen');
-        if (loginEl) loginEl.style.display = '';
+        if (loginEl) loginEl.classList.remove('hidden');
     } else {
         const loginEl = document.getElementById('login-screen');
         const appEl = document.getElementById('app-interface');
-        if (loginEl) loginEl.style.display = 'none';
-        if (appEl) appEl.style.display = 'flex';
+        if (loginEl) loginEl.classList.add('hidden');
+        if (appEl) appEl.classList.add('show');
         updateUserProfileUI(user);
     }
 
