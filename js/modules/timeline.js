@@ -422,7 +422,9 @@ export async function uploadPhoto(eventId, input) {
         renderTimeline(); // Re-render to show new thumbnail
 
     } catch (err) {
-        console.error("Upload Error:", err);
+        console.error("Upload Error Details:", err);
+        if (err.message) console.error("Error Message:", err.message);
+        if (err.status) console.error("Error Status:", err.status);
         window.showNotification('Nahrávání se nepovedlo. Zkontroluj bucket timeline-photos v Supabase.', 'error');
     } finally {
         btn.innerHTML = originalContent;
