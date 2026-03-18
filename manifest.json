@@ -1,7 +1,9 @@
 {
   "name": "Kiscord",
   "short_name": "Kiscord",
-  "start_url": "./index.html",
+  "description": "Naše společná aplikace 💖",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#202225",
   "theme_color": "#202225",

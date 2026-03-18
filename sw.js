@@ -1,14 +1,12 @@
-const CACHE_NAME = "kiscord-v2-offline-valentine";
+const CACHE_NAME = "kiscord-v3-vercel";
 const ASSETS_TO_CACHE = [
-  "./",
-  "./index.html",
-  "./manifest.json",
-  // Zde vypiš názvy tvých lokálních obrázků, které chceš mít offline:
-  ".img/app/czippel2_kytka-modified.png",
-  ".img/app/klarka_profilovka.webp",
-  ".img/app/jozka_profilovka.jpg",
-  // Externí knihovny (Tailwind, FontAwesome, Leaflet)
-  // Pokud je uživatel jednou načte online, uloží se do cache
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "/img/app/czippel2_kytka-modified.png",
+  "/img/app/klarka_profilovka.webp",
+  "/img/app/jozka_profilovka.jpg",
+  // Externí knihovny
   "https://cdn.tailwindcss.com",
   "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css",
   "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",

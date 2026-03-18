@@ -1,134 +1,93 @@
 :root {
-  /* Discord barvy (Default) */
+  /* --- DESIGN TOKENS (Discord Defaults) --- */
   --bg-tertiary: #202225;
   --bg-secondary: #2f3136;
   --bg-primary: #36393f;
+  --bg-modifier-hover: rgba(79, 84, 92, 0.16);
+  --bg-modifier-active: rgba(79, 84, 92, 0.24);
+  --bg-modifier-selected: rgba(79, 84, 92, 0.32);
+  
   --text-normal: #dcddde;
+  --text-muted: #72767d;
   --text-header: #ffffff;
+  --text-link: #00aff4;
+  
   --interactive-normal: #b9bbbe;
+  --interactive-hover: #dcddde;
+  --interactive-active: #ffffff;
+  --interactive-muted: #4f545c;
+  
   --blurple: #5865f2;
+  --blurple-hover: #4752c4;
   --green: #3ba55c;
   --red: #ed4245;
   --yellow: #faa61a;
   --pink: #eb459e;
-  --font-main: "Inter", sans-serif;
+  
+  --font-main: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: "Inter", sans-serif;
+  
+  --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  --modal-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
 }
 
-/* --- VALENTINE'S THEME (Refined) --- */
+/* --- VALENTINE'S THEME --- */
 .theme-valentines {
   --bg-tertiary: #3a0e16;
-  /* Lighter Burgundy */
   --bg-secondary: #581622;
-  /* Rich Red/Pink */
   --bg-primary: #7a1e2e;
-  /* Muted Red */
+  --bg-modifier-hover: rgba(255, 105, 180, 0.1);
+  --bg-modifier-active: rgba(255, 105, 180, 0.2);
+  
   --text-normal: #ffe4e1;
-  /* Misty Rose */
+  --text-muted: #fab1c6;
   --text-header: #fff0f5;
-  /* Lavender Blush */
+  --text-link: #ff69b4;
+  
   --interactive-normal: #ffb7c5;
-  /* Cherry Blossom */
+  --interactive-hover: #ffffff;
+  
   --blurple: #ff1493;
-  /* Deep Pink */
+  --blurple-hover: #ff0080;
   --green: #32cd32;
-  /* Lime Green (Readable) */
-  --red: #ff4500;
-  /* Orange Red */
   --yellow: #ffd700;
-  /* Gold */
   --pink: #ff69b4;
-  /* Hot Pink */
-  --font-main: "Comic Sans MS", "Chalkboard SE", "Comic Neue", sans-serif !important;
+  
+  --font-main: "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive;
+  --font-display: "Indie Flower", cursive;
+  
+  --card-shadow: 0 4px 20px rgba(122, 30, 46, 0.5);
 }
 
-/* FIX: Protect FontAwesome Icons from font-family override */
-.fas,
-.fa-solid,
-.fa {
-  font-family: "Font Awesome 6 Free", sans-serif !important;
-  font-weight: 900 !important;
+/* Global Font Overrides for Theme */
+.theme-valentines, .theme-valentines * {
+  font-family: var(--font-main);
 }
 
-.far,
-.fa-regular {
-  font-family: "Font Awesome 6 Free", sans-serif !important;
-  font-weight: 400 !important;
+/* Protect FontAwesome */
+.fas, .fa-solid, .fa, .far, .fa-regular, .fab, .fa-brands {
+  font-family: inherit; /* Fallback */
 }
+.fas, .fa-solid, .fa { font-family: "Font Awesome 6 Free", sans-serif !important; font-weight: 900 !important; }
+.far, .fa-regular { font-family: "Font Awesome 6 Free", sans-serif !important; font-weight: 400 !important; }
+.fab, .fa-brands { font-family: "Font Awesome 6 Brands", sans-serif !important; font-weight: 400 !important; }
 
-.fab,
-.fa-brands {
-  font-family: "Font Awesome 6 Brands", sans-serif !important;
-  font-weight: 400 !important;
-}
+/* REPLACING HEAVY OVERRIDES WITH CLEANER VARIABLE SYSTEM */
+body.theme-valentines .text-white { color: var(--text-header) !important; }
+body.theme-valentines .text-gray-300, 
+body.theme-valentines .text-gray-400 { color: var(--text-normal) !important; }
+body.theme-valentines .text-gray-500 { color: var(--text-muted) !important; }
 
-/* STRONG OVERRIDES FOR TAILWIND UTILITIES IN VALENTINE MODE */
-/* Force text colors to match theme */
-body.theme-valentines .text-gray-300,
-body.theme-valentines .text-gray-400,
-body.theme-valentines .text-gray-500 {
-  color: var(--text-normal) !important;
-}
-
-body.theme-valentines .text-white {
-  color: var(--text-header) !important;
-}
-
-/* Force backgrounds - Respect Hierarchy */
-body.theme-valentines .bg-\[\#202225\] {
-  background-color: var(--bg-tertiary) !important;
-}
-
-body.theme-valentines .bg-\[\#2f3136\] {
-  background-color: var(--bg-secondary) !important;
-}
-
-body.theme-valentines .bg-\[\#36393f\] {
-  background-color: var(--bg-primary) !important;
-}
-
-body.theme-valentines .bg-\[\#292b2f\] {
-  background-color: var(--bg-secondary) !important;
-}
-
-/* Sidebar background */
-body.theme-valentines #sidebar,
-body.theme-valentines nav {
-  background-color: var(--bg-tertiary) !important;
-}
-
-/* Channel hover effects */
-body.theme-valentines .hover\:bg-\[\#393c43\]:hover {
-  background-color: var(--bg-secondary) !important;
-}
-
-body.theme-valentines .hover\:bg-\[\#36393f\]:hover {
-  background-color: var(--bg-secondary) !important;
-}
-
-/* Fix specific colors */
-body.theme-valentines .text-\[\#b9bbbe\] {
-  color: var(--interactive-normal) !important;
-}
-
-/* Puzzle container fix */
-body.theme-valentines #puzzle-container {
-  border-color: var(--pink) !important;
-  background-color: rgba(50, 0, 20, 0.8) !important;
-}
-
-/* System messages */
-body.theme-valentines .bg-blue-500\/10 {
-  background-color: rgba(255, 105, 180, 0.2) !important;
-}
-
-
-body.theme-valentines {
-  font-family: "Comic Sans MS", "Chalkboard SE", "Comic Neue", sans-serif !important;
-}
-
-body.theme-valentines * {
-  font-family: "Comic Sans MS", "Chalkboard SE", "Comic Neue", sans-serif !important;
-}
+/* Force mapping of common Tailwind colors in Valentine Mode */
+body.theme-valentines .bg-\[\#36393f\] { background-color: var(--bg-primary) !important; }
+body.theme-valentines .bg-\[\#2f3136\] { background-color: var(--bg-secondary) !important; }
+body.theme-valentines .bg-\[\#202225\] { background-color: var(--bg-tertiary) !important; }
+body.theme-valentines .bg-\[\#5865F2\] { background-color: var(--blurple) !important; }
+body.theme-valentines .hover\:bg-\[\#4752c4\]:hover { background-color: var(--blurple-hover) !important; }
+body.theme-valentines .border-\[\#202225\] { border-color: var(--bg-tertiary) !important; }
 
 body {
   font-family: var(--font-main);
@@ -299,38 +258,7 @@ textarea {
   transform: scale(1.2);
 }
 
-/* User Popout Animation */
-/* .user-popout {
-            position: absolute;
-            bottom: 60px;
-            left: 10px;
-            width: 300px;
-            background: #18191c;
-            border-radius: 8px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.24);
-            z-index: 100;
-            overflow: hidden;
-            transform: scale(0.9);
-            opacity: 0;
-            pointer-events: none;
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 1px solid #2f3136;
-        }
-        .user-popout.active {
-            transform: scale(1);
-            opacity: 1;
-            pointer-events: auto;
-        } */
-/* .popout-banner { height: 60px; background: #5865F2; }
-        .popout-avatar { 
-            width: 80px; height: 80px; 
-            border-radius: 50%; 
-            border: 6px solid #18191c; 
-            position: absolute; top: 20px; left: 20px; 
-        }
-        .popout-badges { position: absolute; top: 85px; right: 16px; background: #18191c; border-radius: 4px; padding: 2px; } */
-
-/* Ostatní styly (CMD, Modals...) */
+/* --- COMPONENT STYLES --- */
 .modal-backdrop {
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(3px);
@@ -673,7 +601,7 @@ textarea {
     display: flex;
     flex-direction: column;
 
-    background: #2f3136;
+    background: var(--bg-secondary);
     border-radius: 20px 20px 0 0;
     box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
     /* Výraznější stín */
@@ -709,7 +637,7 @@ textarea {
   .mobile-list-overlay {
     position: absolute;
     inset: 0;
-    background: #2f3136;
+    background: var(--bg-secondary);
     z-index: 900;
     display: none;
   }
@@ -721,7 +649,7 @@ textarea {
 
 /* Styl pro panel, který platí vždy (i na desktopu) */
 .mobile-map-overlay {
-  background: #2f3136;
+  background: var(--bg-secondary);
   /* Barva pozadí */
   border-radius: 20px 20px 0 0;
   /* Kulaté rohy nahoře */
@@ -849,13 +777,13 @@ input[type="range"]::-moz-range-track {
   width: 100%;
   height: 8px;
   cursor: pointer;
-  background: #2f3136;
+  background: var(--bg-secondary);
   border-radius: 4px;
 }
 
 /* --- GOODNIGHT OVERLAY STARS --- */
 #stars-container {
-  /* Simple star field using multiple box-shadows is efficient */
+  display: block; /* Fixed empty ruleset */
 }
 
 #stars-container::after {
@@ -1002,13 +930,13 @@ input[type="range"]::-moz-range-track {
 .mood-range {
   width: 100%;
   height: 12px;
-  /* Tlustší track */
   -webkit-appearance: none;
+  appearance: none; /* Added for compatibility */
   background: linear-gradient(to right, #ef4444, #f59e0b, #10b981);
-  border-radius: 10px;
+  border-radius: var(--border-radius-md);
   outline: none;
   box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
-  border: 1px solid #2f3136;
+  border: 1px solid var(--bg-tertiary);
   position: relative;
   z-index: 10;
 }
@@ -1045,17 +973,16 @@ input[type="range"]::-moz-range-track {
 
 .mood-range::-webkit-slider-thumb {
   -webkit-appearance: none;
+  appearance: none;
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: #eb459e;
+  background: var(--pink);
   cursor: pointer;
-  border: 4px solid #fff;
-  /* Bílý okraj */
+  border: 4px solid var(--text-header);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
   transition: transform 0.1s, background 0.2s;
   margin-top: -8px;
-  /* !important pro vycentrování */
 }
 
 
@@ -1127,6 +1054,146 @@ input[type="range"]::-moz-range-track {
 
 button:active i.fa-tint {
   animation: waterSplash 0.3s ease-out;
+}
+
+/* --- TIMELINE POLAROID & MILESTONE STYLES --- */
+
+.milestone-card {
+  border: 1px solid rgba(250, 166, 26, 0.3) !important;
+  box-shadow: 0 0 20px rgba(250, 166, 26, 0.15) !important;
+  background: var(--bg-primary);
+}
+
+.milestone-card:hover {
+  box-shadow: 0 0 30px rgba(250, 166, 26, 0.3) !important;
+  border-color: rgba(250, 166, 26, 0.6) !important;
+}
+
+.polaroid-frame {
+  background: #fbfbfb;
+  padding: 8px 8px 30px 8px !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  border: 1px solid #ddd;
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: inline-block;
+  margin: 5px;
+}
+
+.polaroid-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover !important;
+  border: 1px solid #eee;
+}
+
+.polaroid-date {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: 'Indie Flower', cursive;
+  font-size: 14px;
+  color: #444;
+  transform: rotate(-2deg);
+}
+
+.polaroid-tape {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+  width: 60px;
+  height: 25px;
+  background: rgba(200, 200, 200, 0.4);
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 10;
+}
+
+.polaroid-thumb {
+  width: 50px !important;
+  height: 60px !important;
+  padding: 4px 4px 14px 4px !important;
+}
+
+@media (min-width: 768px) {
+  .polaroid-thumb {
+    width: 80px !important;
+    height: 100px !important;
+    padding: 6px 6px 20px 6px !important;
+  }
+  .polaroid-thumb .polaroid-date {
+    font-size: 10px;
+    bottom: 4px;
+  }
+  .polaroid-thumb .polaroid-tape {
+    width: 40px;
+    height: 15px;
+    top: -10px;
+  }
+}
+
+.polaroid-thumb .polaroid-date {
+  font-size: 8px;
+  bottom: 2px;
+}
+
+.polaroid-thumb .polaroid-tape {
+  width: 25px;
+  height: 10px;
+  top: -6px;
+}
+
+/* Auth & Login Styles */
+#login-screen {
+    transition: opacity 1s ease, visibility 1s;
+    background: var(--bg-tertiary);
+}
+
+#login-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+#app-interface {
+    transition: opacity 1.2s ease-in-out;
+}
+
+#app-interface.show {
+    opacity: 1 !important;
+}
+
+.login-input-error {
+    border-color: #ed4245 !important;
+    animation: shake 0.4s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.polaroid-stack:nth-child(2n) { transform: rotate(3deg); }
+.polaroid-stack:nth-child(3n) { transform: rotate(-2deg) translateY(-2px); }
+.polaroid-stack:hover {
+  transform: scale(1.2) rotate(0deg) !important;
+  z-index: 50;
+}
+
+.milestone-crown {
+  color: #faa61a;
+  filter: drop-shadow(0 0 5px rgba(250, 166, 26, 0.5));
+  animation: crown-float 2s ease-in-out infinite;
+}
+
+@keyframes crown-float {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-3px) rotate(5deg); }
 }
 
 /* Card Glow Effect */

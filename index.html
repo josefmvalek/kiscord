@@ -31,6 +31,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Consolas:wght@400;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet" />
 
   <!-- LEAFLET MAPS CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -41,8 +42,34 @@
 </head>
 
 <body class="h-screen w-screen flex flex-col md:flex-row text-sm select-none transition-colors duration-300">
+  <!-- ========== LOGIN SCREEN ========== -->
+  <div id="login-screen" class="fixed inset-0 z-[200] bg-[#202225] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-gradient-to-br from-[#5865F2]/20 to-[#eb459e]/20 z-0"></div>
+    <div class="relative z-10 w-full max-w-md bg-[#36393f] rounded-xl shadow-2xl border border-[#202225] p-8 animate-fade-in">
+        <div class="text-6xl text-center mb-6">🦝</div>
+        <h2 class="text-2xl font-bold text-white text-center mb-2">Vítej v Kiscordu</h2>
+        <p class="text-gray-400 text-center mb-8 text-sm">Zadej své údaje pro vstup do našeho světa.</p>
+        
+        <form onsubmit="event.preventDefault(); import('./js/main.js').then(m => m.handleLogin(this))" class="space-y-4">
+            <div>
+                <label class="block text-[#b9bbbe] text-[10px] font-bold uppercase mb-1">E-mail</label>
+                <input type="email" name="email" required class="w-full bg-[#202225] text-white p-3 rounded border border-[#202225] outline-none focus:border-[#5865F2] transition">
+            </div>
+            <div>
+                <label class="block text-[#b9bbbe] text-[10px] font-bold uppercase mb-1">Heslo</label>
+                <input type="password" name="password" required class="w-full bg-[#202225] text-white p-3 rounded border border-[#202225] outline-none focus:border-[#5865F2] transition">
+            </div>
+            <button type="submit" class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-3 rounded font-bold transition shadow-lg mt-4 flex items-center justify-center gap-2">
+                <span>Přihlásit se</span>
+                <i class="fas fa-arrow-right text-xs"></i>
+            </button>
+            <p id="login-error" class="hidden text-red-400 text-center text-xs mt-4"></p>
+        </form>
+    </div>
+  </div>
+
   <!-- ========== MAIN APP ========== -->
-  <div id="app-interface" class="flex w-full h-full transition-opacity duration-1000">
+  <div id="app-interface" class="flex w-full h-full transition-opacity duration-1000 opacity-0">
     <!-- SERVER LIST -->
     <div id="sidebar-wrapper"
       class="fixed inset-y-0 left-0 z-50 flex h-full transition-transform duration-300 transform -translate-x-full md:relative md:translate-x-0 shadow-2xl md:shadow-none">
@@ -78,14 +105,14 @@
           class="h-[52px] bg-[var(--bg-tertiary)] flex items-center px-2 w-full cursor-pointer hover:bg-[#34373c] transition select-none"
           onclick="toggleUserPopout()">
           <div class="relative w-8 h-8 mr-2 group">
-            <img src="img/app/klarka_profilovka.webp" alt="Klárka" class="w-8 h-8 rounded-full object-cover"
+            <img id="sidebar-user-avatar" src="img/app/klarka_profilovka.webp" alt="Avatar" class="w-8 h-8 rounded-full object-cover"
               loading="lazy" />
             <div
               class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--green)] rounded-full border-2 border-[#292b2f]">
             </div>
           </div>
           <div class="flex-1 overflow-hidden">
-            <div class="text-[var(--text-header)] text-xs font-bold truncate">
+            <div id="sidebar-user-name" class="text-[var(--text-header)] text-xs font-bold truncate">
               Klárka
             </div>
             <div class="text-[var(--interactive-normal)] text-[10px] truncate">
@@ -291,6 +318,9 @@
             Název
           </h3>
           <p id="gallery-counter" class="text-gray-400 text-sm">1 / 5</p>
+          <button onclick="import('./js/modules/timeline.js').then(m => m.deleteCurrentPhoto())" class="mt-4 text-xs text-red-500 hover:text-red-400 transition flex items-center gap-1 mx-auto">
+            <i class="fas fa-trash-alt"></i> Smazat tuhle fotku
+          </button>
         </div>
       </div>
 
@@ -497,6 +527,28 @@
     </div>
   </div>
 
+  <div id="delete-photo-modal" class="fixed inset-0 z-[150] hidden modal-backdrop items-center justify-center p-4">
+    <div class="bg-[#36393f] rounded-xl shadow-2xl w-full max-w-sm border border-[#ed4245] p-6 text-center animate-fade-in">
+      <div class="text-4xl mb-3 text-[#ed4245]">
+        <i class="fas fa-trash-alt"></i>
+      </div>
+      <h3 class="text-xl font-bold text-white mb-2">Smazat fotku?</h3>
+      <p class="text-gray-300 mb-6 text-sm">
+        Opravdu chceš tuhle fotku smazat z vašich vzpomínek? Tuhle akci nejde vzít zpět.
+      </p>
+      <div class="flex gap-3">
+        <button onclick="closeModal('delete-photo-modal')"
+          class="flex-1 bg-[#2f3136] hover:bg-[#40444b] text-white py-2 rounded font-bold transition">
+          Zrušit
+        </button>
+        <button onclick="import('./js/modules/timeline.js').then(m => m.confirmDeletePhoto())"
+          class="flex-1 bg-[#ed4245] hover:bg-[#c03537] text-white py-2 rounded font-bold transition">
+          Smazat
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div id="library-plan-modal" class="fixed inset-0 z-[100] hidden modal-backdrop items-center justify-center p-4">
     <div
       class="bg-[#36393f] rounded-xl shadow-2xl w-full max-w-sm border border-[#202225] overflow-hidden animate-fade-in">
@@ -606,11 +658,17 @@
           </div>
         </div>
 
-        <div id="modal-section-health" class="hidden border-t border-gray-700 pt-4">
-          <h4 class="text-xs font-bold text-[#3ba55c] uppercase mb-2 flex items-center gap-2">
-            <i class="fas fa-notes-medical"></i> Záznam dne
-          </h4>
-          <div class="grid grid-cols-2 gap-3 text-sm">
+        <div id="modal-section-health" class="border-t border-gray-700 pt-4">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-xs font-bold text-[#3ba55c] uppercase flex items-center gap-2">
+              <i class="fas fa-notes-medical"></i> Záznam dne
+            </h4>
+            <button onclick="import('./js/modules/calendar.js').then(m => m.toggleHealthEdit())" class="text-gray-400 hover:text-white transition px-2">
+              <i class="fas fa-edit"></i>
+            </button>
+          </div>
+
+          <div id="health-display-grid" class="grid grid-cols-2 gap-3 text-sm">
             <div class="bg-[#202225] p-2 rounded border border-[#2f3136] flex flex-col items-center">
               <span class="text-gray-500 text-[10px] uppercase">Voda</span>
               <span class="font-bold text-[#00e5ff]" id="modal-health-water">0/8</span>
@@ -620,12 +678,37 @@
               <span class="font-bold text-[#9b59b6]" id="modal-health-sleep">-</span>
             </div>
             <div class="bg-[#202225] p-2 rounded border border-[#2f3136] flex flex-col items-center col-span-2">
-              <span class="text-gray-500 text-[10px] uppercase">Cyklus</span>
-              <span class="font-bold text-[#ed4245]" id="modal-health-period">Ne</span>
+              <span class="text-gray-500 text-[10px] uppercase">Nálada</span>
+              <span class="font-bold text-gray-200" id="modal-health-mood">-</span>
             </div>
             <div class="bg-[#202225] p-2 rounded border border-[#2f3136] flex flex-col items-center col-span-2 mt-2">
               <span class="text-gray-500 text-[10px] uppercase mb-1">Pohyb</span>
               <div id="modal-health-movement" class="flex gap-1 flex-wrap justify-center"></div>
+            </div>
+          </div>
+
+          <div id="health-edit-form" class="hidden flex flex-col gap-3">
+            <div class="flex gap-2">
+              <div class="flex-1">
+                <label class="text-gray-500 text-[10px] uppercase block mb-1">Voda (sklenice)</label>
+                <input type="number" id="edit-health-water" min="0" max="20" class="w-full bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none focus:border-[#5865F2]">
+              </div>
+              <div class="flex-1">
+                <label class="text-gray-500 text-[10px] uppercase block mb-1">Spánek (hodiny)</label>
+                <input type="number" step="0.5" id="edit-health-sleep" min="0" max="24" class="w-full bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none focus:border-[#5865F2]">
+              </div>
+            </div>
+            <div>
+              <label class="text-gray-500 text-[10px] uppercase block mb-1">Nálada (0-10)</label>
+              <input type="number" id="edit-health-mood" min="0" max="10" class="w-full bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none focus:border-[#5865F2]">
+            </div>
+            <div>
+              <label class="text-gray-500 text-[10px] uppercase block mb-1">Pohyb (odděleno čárkou: gym, walk, run, yoga, sex, clean)</label>
+              <input type="text" id="edit-health-movement" placeholder="např. walk, gym" class="w-full bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none focus:border-[#5865F2]">
+            </div>
+            <div class="flex justify-end gap-2 mt-2">
+              <button onclick="import('./js/modules/calendar.js').then(m => m.toggleHealthEdit())" class="bg-[#2f3136] hover:bg-[#40444b] text-white px-3 py-1.5 rounded transition text-xs font-bold">Zrušit</button>
+              <button onclick="import('./js/modules/calendar.js').then(m => m.saveHealthRecord())" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-3 py-1.5 rounded transition text-xs font-bold">Uložit</button>
             </div>
           </div>
         </div>
@@ -635,17 +718,17 @@
 
   <div id="user-popout" class="user-popout">
     <div class="popout-banner"></div>
-    <img src="img/app/klarka_profilovka.webp" class="popout-avatar object-cover" />
+    <img id="popout-user-avatar" src="img/app/klarka_profilovka.webp" class="popout-avatar object-cover" />
     <div class="popout-badges text-xl">🏆 🦉</div>
     <div class="pt-12 pb-4 px-4">
-      <h3 class="text-white font-bold text-lg">Klárka</h3>
+      <h3 id="popout-user-name" class="text-white font-bold text-lg">Klárka</h3>
       <p class="text-gray-400 text-xs border-b border-gray-700 pb-3">
         #1337 • Vrchní Fact-Checker
       </p>
 
       <div class="mt-3">
         <h4 class="text-xs font-bold text-gray-300 uppercase mb-1">BIO</h4>
-        <p class="text-gray-400 text-sm">
+        <p id="popout-user-bio" class="text-gray-400 text-sm">
           📍 Věří, že Podolí je skutečné místo.<br />
           🦉 Spirituální zvíře: Sova (protože ponocuje).<br />
           🔥 Přežila se mnou Hody i požár v Polešovicích.<br />
@@ -653,11 +736,16 @@
           navigátor (občas).
         </p>
       </div>
+
+      <button onclick="import('./js/core/auth.js').then(m => m.signOut())" class="w-full mt-4 bg-[#ed4245]/10 hover:bg-[#ed4245] text-[#ed4245] hover:text-white py-2 rounded text-xs font-bold transition border border-[#ed4245]/20 flex items-center justify-center gap-2">
+        <i class="fas fa-sign-out-alt"></i> Odhlásit se
+      </button>
     </div>
   </div>
 
-  <script src="data.js"></script>
-  <script src="script.js"></script>
+  <script src="js/debug.js"></script> <!-- Core / State -->
+  <script src="data.js"></script> <!-- Temporarily for migration -->
+  <script type="module" src="js/main.js"></script>
 </body>
 
 </html>
