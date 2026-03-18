@@ -111,13 +111,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Static content migration (forced re-run to fix previous incomplete sync)
-        // Statický obsah (data.js) - vynucená migrace v3 pro nová data
-        if (!localStorage.getItem('klarka_static_migration_v3_done')) {
-            console.log("🚀 Starting forced static content migration v3...");
+        // Statický obsah (data.js) - vynucená migrace v4 pro fix prázdných tabulek
+        if (!localStorage.getItem('klarka_static_migration_v4_done')) {
+            console.log("🚀 Starting forced static content migration v4...");
             const { migrateStaticContentToSupabase } = await import('./migration.js');
             await migrateStaticContentToSupabase();
-            localStorage.setItem('klarka_static_migration_v3_done', 'true');
-            console.log("🎉 Static content migration v3 finished.");
+            localStorage.setItem('klarka_static_migration_v4_done', 'true');
+            console.log("🎉 Static content migration v4 finished - reloading to apply...");
+            window.location.reload();
         }
 
     // 3. Theme Init
