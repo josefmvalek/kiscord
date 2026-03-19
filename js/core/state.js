@@ -1,4 +1,5 @@
 import { supabase } from './supabase.js';
+import { isJosef } from './auth.js';
 
 export const state = {
     tetris: { jose: 0, klarka: 0 },
@@ -143,10 +144,24 @@ export async function initializeState() {
 
         if (tetrisData) {
             tetrisData.forEach(row => {
-                if (row.user_id === '00000000-0000-0000-0000-000000000001') {
-                    state.tetris.jose = row.score || 0;
-                } else if (row.user_id === '00000000-0000-0000-0000-000000000002') {
-                    state.tetris.klarka = row.score || 0;
+                // Determine whose score this is based on current user
+                if (row.user_id === state.currentUser?.id) {
+                    if (isJosef(state.currentUser)) {
+                        state.tetris.jose = row.score || 0;
+                        state.tetris.jose_id = row.user_id;
+                    } else {
+                        state.tetris.klarka = row.score || 0;
+                        state.tetris.klarka_id = row.user_id;
+                    }
+                } else {
+                    // It's the partner's score
+                    if (isJosef(state.currentUser)) {
+                        state.tetris.klarka = row.score || 0;
+                        state.tetris.klarka_id = row.user_id;
+                    } else {
+                        state.tetris.jose = row.score || 0;
+                        state.tetris.jose_id = row.user_id;
+                    }
                 }
             });
         }

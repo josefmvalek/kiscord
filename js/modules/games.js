@@ -19,8 +19,8 @@ export async function updateTetrisScore(who, amount) {
         
         // Save both resets to Supabase
         await Promise.all([
-            supabase.from('tetris_scores').upsert({ user_id: '00000000-0000-0000-0000-000000000001', score: 0 }),
-            supabase.from('tetris_scores').upsert({ user_id: '00000000-0000-0000-0000-000000000002', score: 0 })
+            supabase.from('tetris_scores').upsert({ user_id: state.tetris.jose_id, score: 0 }),
+            supabase.from('tetris_scores').upsert({ user_id: state.tetris.klarka_id, score: 0 })
         ]);
     } else {
         const key = who === 'jose' ? 'jose' : 'klarka';
@@ -34,7 +34,11 @@ export async function updateTetrisScore(who, amount) {
 
         // Save to Supabase
         try {
-            const targetUserId = who === 'jose' ? '00000000-0000-0000-0000-000000000001' : '00000000-0000-0000-0000-000000000002';
+            const targetUserId = who === 'jose' ? state.tetris.jose_id : state.tetris.klarka_id;
+            if (!targetUserId) {
+                console.error("Missing target user ID for score update");
+                return;
+            }
             await supabase.from('tetris_scores').upsert({
                 user_id: targetUserId,
                 score: state.tetris[key],

@@ -2,7 +2,7 @@
   "name": "Kiscord",
   "short_name": "Kiscord",
   "description": "Naše společná aplikace 💖",
-  "start_url": "/",
+  "start_url": "/index.html",
   "scope": "/",
   "display": "standalone",
   "background_color": "#202225",
@@ -10,13 +10,13 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "czippel2_kytka.jpg",
+      "src": "/img/app/czippel2_kytka.jpg",
       "sizes": "192x192",
       "type": "image/jpeg",
       "purpose": "any maskable"
     },
     {
-      "src": "czippel2_kytka.jpg",
+      "src": "/img/app/czippel2_kytka.jpg",
       "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "any maskable"

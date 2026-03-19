@@ -31,3 +31,8 @@ export function onAuthChange(callback) {
         callback(event, session);
     });
 }
+
+export function isJosef(user) {
+    if (!user || !user.email) return false;
+    return user.email.toLowerCase().includes('josef') || user.email.toLowerCase().includes('jozk');
+}
