@@ -89,10 +89,20 @@ body.theme-valentines .bg-\[\#5865F2\] { background-color: var(--blurple) !impor
 body.theme-valentines .hover\:bg-\[\#4752c4\]:hover { background-color: var(--blurple-hover) !important; }
 body.theme-valentines .border-\[\#202225\] { border-color: var(--bg-tertiary) !important; }
 
+/* Global Focus Styles (Better than default browser rings) */
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: 2px solid var(--blurple);
+  outline-offset: 2px;
+}
+
 body {
   font-family: var(--font-main);
   background-color: var(--bg-primary);
   color: var(--text-normal);
+  transition: background-color 0.3s ease, color 0.3s ease;
   /* overflow: hidden; */
 }
 
@@ -136,6 +146,22 @@ textarea {
 
 .animate-fade-in {
   animation: fade-in 0.3s ease-out forwards;
+}
+
+@keyframes bounce-short {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-bounce-short {
+  animation: bounce-short 1.5s ease-in-out infinite;
+}
+
+@keyframes scale-in {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out forwards;
 }
 
 @keyframes pulse-glow {

@@ -39,6 +39,22 @@
   <!-- LEAFLET MAPS JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Early Theme Init to prevent flash -->
+  <script>
+    (function() {
+      const saved = localStorage.getItem('klarka_theme') || 'default';
+      const root = document.documentElement;
+      if (saved === 'valentines') {
+        root.style.setProperty("--bg-tertiary", "#2d0a12");
+        root.style.setProperty("--bg-secondary", "#4a101e");
+        root.style.setProperty("--bg-primary", "#6d2232");
+        root.classList.add('theme-valentines');
+      } else if (saved === 'christmas') {
+        root.style.setProperty("--bg-primary", "#240a0a");
+      }
+      // ... only minimal needed to avoid flash
+    })();
+  </script>
 </head>
 
 <body class="h-screen w-screen flex flex-col md:flex-row text-sm select-none transition-colors duration-300">

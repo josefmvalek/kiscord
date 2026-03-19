@@ -72,6 +72,11 @@ import { updateHealth, updateBedtime, startSleep, wakeUp, startSleepTimer } from
 import { migrateLocalDataToSupabase } from './migration.js';
 import { renderBucketList, addBucketItem, toggleItem, deleteItem, cleanupRealtime as bucketCleanup } from './modules/bucketlist.js';
 import { renderAchievements, toggleAchievement, cleanupRealtime as achCleanup } from './modules/achievements.js';
+import { renderDailyQuestions, cleanupRealtime as dailyCleanup } from './modules/dailyQuestions.js';
+import { cleanupRealtime as whoCleanup } from './modules/gameWho.js';
+import { cleanupRealtime as drawCleanup } from './modules/gameDraw.js';
+
+let lastUserId = null;
 
 // --- INITIALIZATION ---
 
@@ -81,6 +86,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
             const user = session?.user;
             if (user) {
+                // Prevent redundant re-renders if user hasn't changed (e.g. token refresh)
+                if (user.id === lastUserId) {
+                    console.log(`[AUTH] Event: ${event} - User ID same (${user.id}). Skipping re-render.`);
+                    return;
+                }
+                
+                console.log(`[AUTH] Event: ${event} - New User ID: ${user.id}. Re-initializing...`);
+                lastUserId = user.id;
+                
                 const loginEl = document.getElementById('login-screen');
                 const appEl = document.getElementById('app-interface');
                 if (loginEl) loginEl.classList.add('hidden');
@@ -92,13 +106,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 // Re-render current or default channel
                 const currentChan = state.currentChannel || 'dashboard';
+                console.log(`[AUTH] Initializing channel: ${currentChan}`);
                 switchChannel(currentChan);
             }
-        } else if (event === 'SIGNED_OUT') {
-            const loginEl = document.getElementById('login-screen');
-            const appEl = document.getElementById('app-interface');
-            if (loginEl) loginEl.classList.remove('hidden');
-            if (appEl) appEl.classList.remove('show');
+        } else {
+            console.log(`[AUTH] Unhandled event: ${event}`);
         }
     });
 
@@ -415,12 +427,14 @@ const channelCategories = [
     {
         name: "RANDE",
         items: [
-            { id: 'dateplanner', name: 'plánovač', icon: '<i class="fas fa-map-marker-alt"></i>', type: 'text', color: '#3ba55c', desc: 'Kam vyrazíme příště? 🥂' },
+            { id: 'dateplanner', name: 'plánovač', icon: '<i class="fas fa-map-marker-alt"></i>', type: 'text', color: '#3ba55c', desc: 'Kam vyrazíme příště?🥂' },
             { id: 'timeline', name: 'timeline', icon: '<i class="fas fa-history"></i>', type: 'text', color: '#eb459e', desc: 'Naše nejhezčí společné chvilky 🎞️' },
             { id: 'topics', name: 'témata', icon: '<i class="fas fa-comments"></i>', type: 'text', color: '#faa61a', desc: 'Když nevíme, o čem si povídat... 🥰' },
             { id: 'bucketlist', name: 'bucket-list', icon: '<i class="fas fa-rocket"></i>', type: 'text', color: '#ed4245', desc: 'Všechno, co spolu chceme zažít! ✨' },
             { id: 'letters', name: 'dopisy', icon: '<i class="fas fa-envelope-open-text"></i>', type: 'text', color: '#eb459e', desc: 'Vzkazy v láhvi, které se otevřou v čas 💌' },
-            { id: 'quiz', name: 'kvízy pro dva', icon: '<i class="fas fa-brain"></i>', type: 'text', color: '#5865F2', desc: 'Kdo vás lépe zná? 🧠' }
+            { id: 'quiz', name: 'kvízy pro dva', icon: '<i class="fas fa-brain"></i>', type: 'text', color: '#5865F2', desc: 'Kdo vás lépe zná? 🧠' },
+            { id: 'games-hub', name: 'Herní Doupě', icon: '<i class="fas fa-gamepad"></i>', type: 'text', color: '#3ba55c', desc: 'Kdo spíše, Draw Duel... 🎮' },
+            { id: 'daily-questions', name: 'denní otázky', icon: '<i class="fas fa-question-circle"></i>', type: 'text', color: '#99aab5', desc: 'Každý den nová otázka pro nás dva. 🤔' }
         ]
     },
     {
@@ -484,7 +498,11 @@ function renderChannels() {
 }
 
 export function switchChannel(channelId) {
-    console.log("Switching to channel:", channelId);
+    if (state.currentChannel === channelId && document.getElementById("messages-container")?.innerHTML !== "") {
+        console.log(`[NAV] Already on channel ${channelId}, skipping full re-render.`);
+        return;
+    }
+    console.log(`[NAV] Switching to channel: ${channelId} at ${new Date().toLocaleTimeString()}`);
     state.currentChannel = channelId;
     localStorage.setItem('klarka_last_channel', channelId);
 
@@ -511,6 +529,14 @@ export function switchChannel(channelId) {
     // Render Content
     const container = document.getElementById("messages-container");
     if (container) container.innerHTML = ""; // Clear current
+
+    // Cleanup Realtime Subscriptions from previous channels
+    if (typeof achCleanup === 'function') achCleanup();
+    if (typeof dailyCleanup === 'function') dailyCleanup();
+    if (typeof bucketCleanup === 'function') bucketCleanup();
+    if (typeof cleanupQuestsRealtime === 'function') cleanupQuestsRealtime();
+    if (typeof whoCleanup === 'function') whoCleanup();
+    if (typeof drawCleanup === 'function') drawCleanup();
 
     // Route
     switch (channelId) {
@@ -548,6 +574,21 @@ export function switchChannel(channelId) {
             break;
         case 'puzzle':
             renderPuzzle();
+            break;
+        case 'quiz':
+            import('./modules/coupleQuiz.js').then(m => m.renderCoupleQuiz());
+            break;
+        case 'games-hub':
+            import('./modules/gamesHub.js').then(m => m.renderGamesHub());
+            break;
+        case 'game-who':
+            import('./modules/gameWho.js').then(m => m.renderGameWho());
+            break;
+        case 'game-draw':
+            import('./modules/gameDraw.js').then(m => m.renderGameDraw());
+            break;
+        case 'daily-questions':
+            renderDailyQuestions();
             break;
         case 'achievements':
             renderAchievements();

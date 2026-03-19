@@ -31,6 +31,12 @@ export const state = {
     timelineHighlights: {},
     dateLocations: [],
     conversationTopics: [],
+    achievements: [],
+    dailyQuestion: null,
+    dailyAnswers: [],
+    gameQuestions: [],
+    gameVotes: [],
+    drawStrokes: [],
 };
 
 export async function initializeState() {
@@ -49,6 +55,9 @@ export async function initializeState() {
     state.timelineEvents = [];
     state.dateLocations = [];
     state.conversationTopics = [];
+    state.achievements = [];
+    state.dailyQuestion = null;
+    state.dailyAnswers = [];
 
     try {
         // OPRAVA #2: Paralelní dotazy místo 10 sekvenčních await
@@ -66,6 +75,12 @@ export async function initializeState() {
             { data: ratingDateData },
             { data: locData },
             { data: topicsData },
+            { data: achievementData },
+            { data: questionData },
+            { data: answerData },
+            { data: gQuestionData },
+            { data: gVoteData },
+            { data: strokeData },
         ] = await Promise.all([
             supabase.from('health_data').select('*'),
             supabase.from('planned_dates').select('*'),
@@ -79,7 +94,17 @@ export async function initializeState() {
             supabase.from('date_ratings').select('*'),
             supabase.from('date_locations').select('*'),
             supabase.from('conversation_topics').select('*'),
+            supabase.from('achievements').select('*'),
+            supabase.from('daily_questions').select('*'),
+            supabase.from('daily_answers').select('*'),
+            supabase.from('game_questions').select('*'),
+            supabase.from('game_votes').select('*'),
+            supabase.from('draw_strokes').select('*').order('created_at', { ascending: true }),
         ]);
+
+        if (gQuestionData) state.gameQuestions = gQuestionData;
+        if (gVoteData) state.gameVotes = gVoteData;
+        if (strokeData) state.drawStrokes = strokeData;
 
         // OPRAVA #1: Health Data – odstraněn zbytečný JS user_id filtr
         // RLS politika (auth.uid() = user_id) filtrování zajišťuje sama.
@@ -205,6 +230,24 @@ export async function initializeState() {
                 desc: t.description,
                 questions: t.questions
             }));
+        }
+
+        if (achievementData) {
+            state.achievements = achievementData;
+        }
+
+        // --- Logika pro Daily Question ---
+        if (questionData && questionData.length > 0) {
+            // Výběr otázky podle dne (staticky pro všechny stejný)
+            const today = new Date();
+            const dateSeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+            const index = dateSeed % questionData.length;
+            state.dailyQuestion = questionData[index];
+        }
+
+        if (answerData) {
+            // Načteme pouze odpovědi pro dnešní otázku
+            state.dailyAnswers = answerData.filter(a => a.question_id === state.dailyQuestion?.id);
         }
 
         // quiz_answers závisí na user_id → samostatně po inicializaci uživatele

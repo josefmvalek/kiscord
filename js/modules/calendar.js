@@ -660,6 +660,11 @@ export function saveHealthRecord() {
         });
     });
 
+    // Achievement Hook
+    import('./achievements.js').then(m => {
+        m.checkHealthAchievements(currentModalDateKey, newHealth, state.healthData);
+    });
+
     const storageKey = `vault_health_${state.currentUser.name.toLowerCase()}`;
     localStorage.setItem(storageKey, JSON.stringify(state.healthData));
     

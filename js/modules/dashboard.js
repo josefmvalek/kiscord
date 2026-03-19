@@ -523,96 +523,147 @@ export function renderWelcome() {
     if (!container) return;
     container.className = "flex-1 flex flex-col bg-[#36393f] relative overflow-hidden";
 
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? "Dobré ráno" : (hour < 18 ? "Hezké odpoledne" : "Krásný večer");
+
     container.innerHTML = `
-    <div class="flex-1 overflow-y-auto px-4 py-4 custom-scrollbar space-y-6" id="chat-scroller">
-        <div class="message-group animate-fade-in group hover:bg-black/5 -mx-4 px-4 py-1">
+    <div class="flex-1 overflow-y-auto px-4 py-6 custom-scrollbar space-y-8" id="chat-scroller">
+        <!-- HEADER MESSAGE -->
+        <div class="message-group animate-fade-in group hover:bg-black/5 -mx-4 px-4 py-2">
             <div class="flex gap-4 items-start">
-                <div class="w-10 h-10 rounded-full bg-[#5865F2] flex items-center justify-center text-white text-sm font-bold mt-1 shadow-lg cursor-pointer hover:opacity-80 transition flex-shrink-0"><i class="fas fa-robot"></i></div>
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#5865F2] to-[#eb459e] flex items-center justify-center text-white text-sm font-bold mt-1 shadow-lg ring-2 ring-white/10 flex-shrink-0">
+                    <i class="fas fa-sparkles"></i>
+                </div>
                 <div class="flex-1 min-w-0">
                     <div class="flex items-baseline gap-2">
-                        <span class="font-bold text-[var(--text-header)] cursor-pointer hover:underline">System Bot</span>
-                        <span class="text-[10px] bg-[#5865F2] text-white px-1 rounded uppercase font-bold flex-shrink-0">BOT</span>
-                        <span class="text-xs text-[var(--interactive-normal)]">Dnes v ${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, "0")}</span>
+                        <span class="font-bold text-white text-lg">Systém Kiscord</span>
+                        <span class="text-[10px] bg-[#5865F2] text-white px-1.5 py-0.5 rounded uppercase font-black tracking-tighter">VERS. 3.0</span>
+                        <span class="text-xs text-gray-500 font-medium">Právě teď</span>
                     </div>
-                    <div class="text-[var(--text-normal)] mt-1">
-                        <p class="font-bold text-white text-lg">Vítej zpět, ${state.currentUser.name}! 👋</p>
-                        <p class="text-gray-300 text-sm">Server byl úspěšně aktualizován na verzi <code class="bg-[#202225] p-1 rounded text-xs">v2.6 - The Valentine Update</code>.</p>
+                    <div class="text-gray-200 mt-2 space-y-3">
+                        <p class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 leading-tight">
+                            ${greeting}, ${state.currentUser.name}! 👋<br>Vítej v nové éře naší aplikace.
+                        </p>
+                        <p class="text-sm text-gray-400 max-w-xl leading-relaxed">
+                            Kiscord prošel kompletní transformací. Od základů jsme přepsali backend, přidali tunu nových her a vylepšili místo, kde uchováváme naše vzpomínky.
+                        </p>
                     </div>
-                    <div class="mt-3 border-l-4 border-[#faa61a] bg-[#2f3136] rounded p-4 max-w-2xl shadow-sm">
-                        <h3 class="text-white font-bold text-sm mb-3 flex items-center gap-2"><i class="fas fa-sparkles text-[#faa61a]"></i> Co je nového?</h3>
+
+                    <!-- ARCHITECTURE CARD -->
+                    <div class="mt-6 bg-[#202225]/50 border border-white/5 rounded-2xl p-5 shadow-inner backdrop-blur-sm group/card hover:bg-[#202225]/80 transition-all duration-300">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-8 h-8 rounded-lg bg-[#5865F2]/20 flex items-center justify-center text-[#5865F2]">
+                                <i class="fas fa-database text-sm"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-white font-bold text-sm tracking-wide">Realtime Revolution ⚡</h3>
+                                <p class="text-[10px] text-gray-500 uppercase font-black tracking-widest">Powered by Supabase</p>
+                            </div>
+                        </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="flex gap-3"><div class="text-2xl">📊</div><div><div class="font-bold text-gray-200 text-xs uppercase">Nový Dashboard</div><p class="text-xs text-gray-400">Vylepšený sledovač spánku, nálady a nový Tetris widget.</p></div></div>
-                            <div class="flex gap-3"><div class="text-2xl">🧩</div><div><div class="font-bold text-gray-200 text-xs uppercase">Hry & Zábava</div><p class="text-xs text-gray-400">Přidán Tetris Tracker a Love Puzzle minihra jako nové kanály.</p></div></div>
-                            <div class="flex gap-3"><div class="text-2xl">🗺️</div><div><div class="font-bold text-gray-200 text-xs uppercase">Vylepšený Plánovač</div><p class="text-xs text-gray-400">Mapka nyní ukazuje fotky z Timeline a vodítka pro Treasure Hunt.</p></div></div>
-                            <div class="flex gap-3"><div class="text-2xl">💖</div><div><div class="font-bold text-gray-200 text-xs uppercase">Valentýnský Mód</div><p class="text-xs text-gray-400">Speciální růžové téma s přepínačem nahoře v liště! 👆</p></div></div>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-[#3f4147] flex justify-between items-center">
-                            <div class="text-[10px] text-gray-400">Patch ID: #ILOVEYOU-3000</div>
-                            <button onclick="window.switchChannel('dateplanner')" class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-3 py-1 rounded text-xs font-bold transition">Vyzkoušet hned</button>
+                            <div class="bg-black/20 p-3 rounded-xl border border-white/5">
+                                <div class="text-[#3ba55c] text-xs font-bold mb-1 flex items-center gap-1.5"><i class="fas fa-lock"></i> Soukromá data</div>
+                                <p class="text-[11px] text-gray-400">Tvé zdraví (spánek, voda, nálada) je plně v tvých rukách a nikdo jiný ho nevidí.</p>
+                            </div>
+                            <div class="bg-black/20 p-3 rounded-xl border border-white/5">
+                                <div class="text-[#eb459e] text-xs font-bold mb-1 flex items-center gap-1.5"><i class="fas fa-users"></i> Společný prostor</div>
+                                <p class="text-[11px] text-gray-400">Timeline, Hry a Questy se synchronizují okamžitě mezi oběma telefony.</p>
+                            </div>
                         </div>
                     </div>
-                     <div class="message-group animate-fade-in group hover:bg-black/5 px-4 py-3 mt-4" style="animation-delay: 0.1s">
-                         <div class="flex gap-4 items-start">
-                             <div class="w-10 h-10 rounded-full bg-[#faa61a] flex items-center justify-center text-white text-lg font-bold mt-1 shadow-lg cursor-pointer hover:opacity-80 transition flex-shrink-0">🦉</div>
-                             <div class="flex-1 min-w-0">
-                                 <div class="flex items-baseline gap-2">
-                                     <span class="font-bold text-[var(--text-header)] cursor-pointer hover:underline">Owl of Wisdom</span>
-                                     <span class="text-[10px] bg-[#5865F2] text-white px-1 rounded uppercase font-bold flex-shrink-0">BOT</span>
-                                     <span class="text-xs text-[var(--interactive-normal)]">Právě teď</span>
-                                 </div>
-                                 <div class="text-[var(--text-normal)] mt-1">
-                                     <p class="text-sm">Klikni níže a získej náhodný fakt pro dnešní den. 👇</p>
-                                     <div id="fact-display" class="mt-2 text-gray-300 italic transition-all duration-300 min-h-[20px]"></div>
-                                     <button onclick="import('./js/modules/dashboard.js').then(m => m.showNextFact())" class="mt-2 border border-[#4f545c] text-xs text-gray-300 hover:bg-[#4f545c] hover:text-white px-3 py-1 rounded transition flex items-center gap-2">
-                                         <i class="fas fa-dice"></i> Náhodná zajímavost
-                                     </button>
-                                 </div>
-                             </div>
-                         </div>
-                     </div>
-                     <div class="message-group animate-fade-in group hover:bg-black/5 px-4 py-3" style="animation-delay: 0.2s">
-                          <div class="flex gap-4 items-start">
-                              <img src="img/app/jozka_profilovka.jpg" alt="Jožka" class="w-10 h-10 rounded-full object-cover mt-1 shadow-md cursor-pointer hover:opacity-80 transition flex-shrink-0" loading="lazy">
-                              <div class="flex-1 min-w-0">
-                                  <div class="flex items-baseline gap-2">
-                                      <span class="font-bold text-[var(--text-header)] hover:underline cursor-pointer">Jožka</span>
-                                      <span class="text-xs text-[var(--interactive-normal)]">Právě teď</span>
-                                  </div>
-                                  <div class="text-[var(--text-normal)] mt-1">
-                                      <p>Další verze Kiscordu. Přidal jsem pár secret commandů. Zkus napsat dolů do chatu třeba <code>/miluju</code> nebo <code>/sova</code>. 😉</p>
-                                  </div>
-                              </div>
-                          </div>
-                      </div>
+
+                    <!-- TIMELINE TEASER -->
+                    <div class="mt-4 bg-[#2f3136] border border-[#eb459e]/20 rounded-2xl p-5 shadow-lg relative overflow-hidden group/timeline cursor-pointer hover:border-[#eb459e]/50 transition-all" onclick="window.switchChannel('timeline')">
+                        <div class="absolute top-0 right-0 p-4 opacity-5 text-6xl rotate-12 group-hover/timeline:rotate-0 transition-transform duration-700 font-serif">📸</div>
+                        <h3 class="text-[#eb459e] font-black text-lg mb-2 flex items-center gap-2">
+                             Naše Společná Cesta 🎞️
+                        </h3>
+                        <p class="text-gray-300 text-sm mb-4 leading-relaxed pr-8">
+                            Timeline byla kompletně upravena. Nyní můžeš přidávat neomezeně fotek, tvořit galerie, zaznamenávat si poznámky k momentům a označovat ty nejdůležitější jako <span class="text-[#faa61a] font-bold">Milníky</span> s výbuchem konfet!
+                        </p>
+                        <div class="flex gap-2">
+                            <span class="px-2 py-0.5 bg-[#eb459e]/10 text-[#eb459e] text-[9px] font-bold rounded uppercase">Polaroid Style</span>
+                            <span class="px-2 py-0.5 bg-[#5865F2]/10 text-[#5865F2] text-[9px] font-bold rounded uppercase">Auto-Sync</span>
+                            <span class="px-2 py-0.5 bg-[#faa61a]/10 text-[#faa61a] text-[9px] font-bold rounded uppercase">Galerie</span>
+                        </div>
+                    </div>
+
+                    <!-- FEATURE GRID -->
+                    <div class="mt-8">
+                        <h4 class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4 text-center">Nové Moduly a Možnosti</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div onclick="window.switchChannel('games-hub')" class="bg-[#2f3136] p-4 rounded-xl border border-transparent hover:border-[#5865F2] hover:bg-[#32353b] transition group/feat cursor-pointer text-center flex flex-col items-center">
+                                <div class="text-2xl mb-2 group-hover/feat:scale-110 transition">🎮</div>
+                                <div class="text-[11px] font-bold text-gray-200">Herní Doupě</div>
+                            </div>
+                            <div onclick="window.switchChannel('daily-questions')" class="bg-[#2f3136] p-4 rounded-xl border border-transparent hover:border-[#faa61a] hover:bg-[#32353b] transition group/feat cursor-pointer text-center flex flex-col items-center">
+                                <div class="text-2xl mb-2 group-hover/feat:scale-110 transition">💭</div>
+                                <div class="text-[11px] font-bold text-gray-200">Denní Otázky</div>
+                            </div>
+                            <div onclick="window.switchChannel('quests')" class="bg-[#2f3136] p-4 rounded-xl border border-transparent hover:border-[#3ba55c] hover:bg-[#32353b] transition group/feat cursor-pointer text-center flex flex-col items-center">
+                                <div class="text-2xl mb-2 group-hover/feat:scale-110 transition">⚔️</div>
+                                <div class="text-[11px] font-bold text-gray-200">Společné Questy</div>
+                            </div>
+                            <div onclick="window.switchChannel('achievements')" class="bg-[#2f3136] p-4 rounded-xl border border-transparent hover:border-[#faa61a] hover:bg-[#32353b] transition group/feat cursor-pointer text-center flex flex-col items-center">
+                                <div class="text-2xl mb-2 group-hover/feat:scale-110 transition">🏆</div>
+                                <div class="text-[11px] font-bold text-gray-200">Achievementy</div>
+                            </div>
+                            <div onclick="window.switchChannel('bucketlist')" class="bg-[#2f3136] p-4 rounded-xl border border-transparent hover:border-[#eb459e] hover:bg-[#32353b] transition group/feat cursor-pointer text-center flex flex-col items-center">
+                                <div class="text-2xl mb-2 group-hover/feat:scale-110 transition">🪣</div>
+                                <div class="text-[11px] font-bold text-gray-200">Bucket List</div>
+                            </div>
+                            <div onclick="window.switchChannel('letters')" class="bg-[#2f3136] p-4 rounded-xl border border-transparent hover:border-[#eb459e] hover:bg-[#32353b] transition group/feat cursor-pointer text-center flex flex-col items-center">
+                                <div class="text-2xl mb-2 group-hover/feat:scale-110 transition">💌</div>
+                                <div class="text-[11px] font-bold text-gray-200">Dopisy Času</div>
+                            </div>
+                            <div onclick="window.switchChannel('calendar')" class="bg-[#2f3136] p-4 rounded-xl border border-transparent hover:border-[#5865F2] hover:bg-[#32353b] transition group/feat cursor-pointer text-center flex flex-col items-center">
+                                <div class="text-2xl mb-2 group-hover/feat:scale-110 transition">📅</div>
+                                <div class="text-[11px] font-bold text-gray-200">Kalendář 2.0</div>
+                            </div>
+                            <div class="bg-[#2f3136] p-4 rounded-xl border border-white/5 opacity-50 text-center flex flex-col items-center">
+                                <div class="text-2xl mb-2">💎</div>
+                                <div class="text-[11px] font-bold text-gray-500">Coming Soon</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FOOTER BUTTONS -->
+                    <div class="mt-8 flex flex-wrap gap-3">
+                        <button onclick="window.switchChannel('dashboard')" class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-6 py-2.5 rounded-xl font-black text-sm transition transform hover:scale-105 active:scale-95 shadow-lg flex items-center gap-2">
+                             Jít na Dashboard <i class="fas fa-arrow-right"></i>
+                        </button>
+                        <button onclick="document.getElementById('welcome-chat-input').focus()" class="bg-white/5 hover:bg-white/10 text-gray-300 px-6 py-2.5 rounded-xl font-bold text-sm transition border border-white/5">
+                             Zeptat se na něco
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
+
         <div id="new-messages-area"></div>
         <div class="h-4"></div>
     </div>
     
     <div class="px-4 pb-6 pt-2 bg-[#36393f] flex-shrink-0 z-10">
-        <div class="bg-[#40444b] rounded-lg flex items-center p-2.5 px-4 shadow-sm relative">
+        <div class="bg-[#40444b] rounded-lg flex items-center p-2.5 px-4 shadow-sm relative focus-within:ring-2 ring-[#5865F2]/50 transition-all">
             <div class="flex items-center gap-3 mr-4 text-[#b9bbbe]">
                 <button class="hover:text-gray-200 transition bg-gray-600 rounded-full w-5 h-5 flex items-center justify-center text-[10px]"><i class="fas fa-plus"></i></button>
             </div>
-            <input type="text" id="welcome-chat-input" autocomplete="off" placeholder="Poslat zprávu do #uvítání" class="bg-transparent text-gray-200 placeholder-[#72767d] w-full outline-none font-light text-sm">
+            <input type="text" id="welcome-chat-input" 
+                   onkeypress="import('./js/modules/dashboard.js').then(m => m.handleWelcomeChat(event))"
+                   autocomplete="off" placeholder="Napiš zprávu nebo zkus /help" 
+                   class="bg-transparent text-gray-200 placeholder-[#72767d] w-full outline-none font-light text-sm">
             <div class="flex items-center gap-3 ml-4 text-[#b9bbbe]">
-                <button class="hover:text-yellow-400 transition" title="Dárek"><i class="fas fa-gift"></i></button>
-                <button class="hover:text-gray-200 transition font-bold text-[10px] bg-[#b9bbbe] text-[#40444b] px-1 rounded-sm">GIF</button>
-                <button class="hover:text-yellow-400 transition"><i class="far fa-smile"></i></button>
+                <i class="fas fa-gift hover:text-gray-200 transition cursor-pointer"></i>
+                <i class="fas fa-file-image hover:text-gray-200 transition cursor-pointer"></i>
+                <i class="fas fa-smile hover:text-gray-200 transition cursor-pointer"></i>
             </div>
         </div>
-        <div id="typing-indicator" class="absolute bottom-1 left-4 text-[10px] text-gray-400 font-bold hidden flex items-center gap-1">
-             <span class="animate-bounce">●</span><span class="animate-bounce" style="animation-delay:0.1s">●</span><span class="animate-bounce" style="animation-delay:0.2s">●</span> System Bot píše...
-        </div>
-    </div>`;
+    </div>
+    `;
 
     setTimeout(() => {
-        const input = document.getElementById("welcome-chat-input");
-        if (input) {
-            input.addEventListener("keypress", (e) => import('./dashboard.js').then(m => m.handleWelcomeChat(e)));
-            input.focus();
-        }
+        const scroller = document.getElementById("chat-scroller");
+        if (scroller) scroller.scrollTop = scroller.scrollHeight;
     }, 100);
 }

@@ -1,4 +1,5 @@
 import { supabase } from '../core/supabase.js';
+import { state } from '../core/state.js';
 import { triggerHaptic } from '../core/utils.js';
 
 // --- DEFINICE ACHIEVEMENTŮ ---
@@ -41,7 +42,7 @@ const ACHIEVEMENT_LIST = [
     { id: 'bucket_starter', category: 'health_system', title: 'Snílci', description: 'Přidána první společná položka do Bucket Listu.', icon: '🚀', color: 'from-orange-400 to-red-500' }
 ];
 
-let unlockedState = []; // Pole IDček odemčených achievementů ze Supabase
+// let unlockedState = []; // ODSTRANĚNO - nyní používáme state.achievements
 let subscription = null;
 
 // --- RENDER ---
@@ -87,50 +88,29 @@ export async function renderAchievements() {
     `;
 
     setupRealtime();
-    await fetchUnlockedAchievements();
+    renderCategories(); // Nyní rendrujeme rovnou ze state
 }
 
 // --- LOGIKA ---
 
-async function fetchUnlockedAchievements() {
-    const loadingEl = document.getElementById('ach-loading');
-    const containerEl = document.getElementById('ach-container');
-    const progressEl = document.getElementById('achievements-progress');
-    if (!containerEl) return;
-
-    try {
-        const { data, error } = await supabase
-            .from('achievements')
-            .select('*');
-
-        if (error) throw error;
-
-        unlockedState = data || [];
-        
-        renderCategories();
-
-        if (progressEl) {
-            progressEl.classList.remove('hidden');
-            const unlockedCount = unlockedState.length;
-            const totalCount = ACHIEVEMENT_LIST.length;
-            const percentage = totalCount > 0 ? Math.round((unlockedCount / totalCount) * 100) : 0;
-            
-            document.getElementById('progress-text').innerText = `${unlockedCount} / ${totalCount} (${percentage}%)`;
-            document.getElementById('progress-bar').style.width = `${percentage}%`;
-        }
-
-        if (loadingEl) loadingEl.style.display = 'none';
-        containerEl.classList.remove('opacity-0');
-
-    } catch (e) {
-        console.error("Chyba při načítání achievementů:", e);
-        if (loadingEl) loadingEl.style.display = 'none';
-    }
-}
+// ODSTRANĚNO: fetchUnlockedAchievements – data se nyní načítají v state.js:initializeState()
 
 function renderCategories() {
     const containerEl = document.getElementById('ach-container');
+    const loadingEl = document.getElementById('ach-loading');
+    const progressEl = document.getElementById('achievements-progress');
     if (!containerEl) return;
+
+    // Aktualizace progress baru
+    if (progressEl) {
+        progressEl.classList.remove('hidden');
+        const unlockedCount = state.achievements.length;
+        const totalCount = ACHIEVEMENT_LIST.length;
+        const percentage = totalCount > 0 ? Math.round((unlockedCount / totalCount) * 100) : 0;
+        
+        document.getElementById('progress-text').innerText = `${unlockedCount} / ${totalCount} (${percentage}%)`;
+        document.getElementById('progress-bar').style.width = `${percentage}%`;
+    }
 
     let html = '';
 
@@ -147,7 +127,7 @@ function renderCategories() {
         `;
 
         categoryAchievements.forEach(ach => {
-            const unlockedData = unlockedState.find(u => u.id === ach.id);
+            const unlockedData = state.achievements.find(u => u.id === ach.id);
             const isUnlocked = !!unlockedData;
             
             html += generateAchievementCard(ach, isUnlocked, unlockedData?.unlocked_at);
@@ -157,6 +137,8 @@ function renderCategories() {
     });
 
     containerEl.innerHTML = html;
+    if (loadingEl) loadingEl.style.display = 'none';
+    containerEl.classList.remove('opacity-0');
 }
 
 function generateAchievementCard(ach, isUnlocked, dateStrRaw) {
@@ -207,23 +189,35 @@ function generateAchievementCard(ach, isUnlocked, dateStrRaw) {
 export async function toggleAchievement(id, unlock) {
     triggerHaptic(unlock ? 'success' : 'medium');
     
-    if (unlock) {
-        if (typeof window.triggerConfetti === 'function') {
-            window.triggerConfetti();
-        }
-        
-        const { error } = await supabase.from('achievements').insert([{
-            id: id,
-            unlocked_at: new Date().toISOString()
-        }]);
+    try {
+        if (unlock) {
+            if (typeof window.triggerConfetti === 'function') {
+                window.triggerConfetti();
+            }
+            
+            const { error } = await supabase.from('achievements').insert([{
+                id: id,
+                user_id: state.currentUser.id,
+                unlocked_at: new Date().toISOString()
+            }]);
 
-        if (error) console.error("Chyba při odemykání:", error);
-    } else {
-        const { error } = await supabase.from('achievements').delete().eq('id', id);
-        if (error) console.error("Chyba při zamykání:", error);
+            if (error) throw error;
+        } else {
+            const { error } = await supabase.from('achievements').delete().eq('id', id);
+            if (error) throw error;
+        }
+    } catch (err) {
+        console.error("Chyba při změně achievementu:", err);
+        window.showNotification("Nepodařilo se uložit změnu.", "error");
     }
 
-    await fetchUnlockedAchievements();
+    // Refresh dat proběhne buď přes Realtime, nebo ho zde pro jistotu vynutíme
+    // fetchUnlockedAchievements() už neexistuje, fetchujeme rovnou celé
+    const { data } = await supabase.from('achievements').select('*');
+    if (data) {
+        state.achievements = data;
+        renderCategories();
+    }
 }
 
 // --- REALTIME ---
@@ -236,8 +230,13 @@ function setupRealtime() {
         .on(
             'postgres_changes',
             { event: '*', schema: 'public', table: 'achievements' },
-            (payload) => {
-                fetchUnlockedAchievements();
+            async () => {
+                // Refresh globálního state a UI při jakékoliv změně (i od druhého uživatele)
+                const { data } = await supabase.from('achievements').select('*');
+                if (data) {
+                    state.achievements = data;
+                    renderCategories();
+                }
             }
         )
         .subscribe();
@@ -254,11 +253,16 @@ export function cleanupRealtime() {
 
 export async function autoUnlock(id) {
     // Zkontroluje, zda už to není v unlockedState (abychom nedělali query/konfety zbytečně)
-    if (unlockedState.some(u => u.id === id)) return;
+    if (state.achievements.some(u => u.id === id)) return;
 
     // Ještě pro jistotu fetch ze Supabase (přece jen to mohl odemknout druhý)
     const { data } = await supabase.from('achievements').select('id').eq('id', id).single();
-    if (data) return; // Už je odemčeno
+    if (data) {
+        // Pokud tam je, ale nebyl v state, updatneme state
+        const { data: allData } = await supabase.from('achievements').select('*');
+        if (allData) state.achievements = allData;
+        return; 
+    }
 
     // Můžeme odemknout!
     triggerHaptic('success');
@@ -276,13 +280,18 @@ export async function autoUnlock(id) {
 
     const { error } = await supabase.from('achievements').insert([{
         id: id,
+        user_id: state.currentUser.id,
         unlocked_at: new Date().toISOString()
     }]);
 
     if (error) {
          console.error("Chyba auto-unlock:", error);
     } else {
-         fetchUnlockedAchievements(); // Refresh listu na pozadí
+         const { data: allData } = await supabase.from('achievements').select('*');
+         if (allData) {
+             state.achievements = allData;
+             renderCategories();
+         }
     }
 }
 

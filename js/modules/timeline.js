@@ -323,8 +323,12 @@ export function toggleTimelineCard(cardElement) {
 }
 
 export function openGallery(eventId) {
-    const event = dbEvents.find(e => e.id === eventId);
-    if (!event || !event.images || event.images.length === 0) return;
+    const idNum = Number(eventId);
+    const event = dbEvents.find(e => Number(e.id) === idNum);
+    if (!event || !event.images || event.images.length === 0) {
+        console.error("Gallery: Event not found or has no images", idNum);
+        return;
+    }
 
     currentGalleryImages = event.images;
     currentImageIndex = 0;
@@ -348,7 +352,8 @@ export async function saveHighlight(eventId, text) {
         if (error) throw error;
         
         // Update local state
-        const ev = state.timelineEvents.find(e => e.id == eventId);
+        const idNum = Number(eventId);
+        const ev = state.timelineEvents.find(e => Number(e.id) === idNum);
         if (ev) ev.user_highlights = text;
         
         window.showNotification('Poznámka uložena ✨', 'success');
@@ -367,7 +372,8 @@ export async function toggleMilestone(eventId, status) {
         
         if (error) throw error;
         
-        const ev = dbEvents.find(e => e.id === eventId);
+        const idNum = Number(eventId);
+        const ev = dbEvents.find(e => Number(e.id) === idNum);
         if (ev) ev.is_milestone = status;
 
         if (status && window.confetti) {
@@ -404,9 +410,15 @@ export async function uploadPhoto(eventId, input) {
         // 1. Upload to Storage
         const { error: uploadError } = await supabase.storage
             .from('timeline-photos')
-            .upload(filePath, file);
+            .upload(filePath, file, {
+                contentType: file.type,
+                upsert: true
+            });
 
         if (uploadError) throw uploadError;
+        
+        // Ensure eventId is a number for state lookup (Supabase usually handles strings in .eq() but local state doesn't)
+        const idNum = Number(eventId);
 
         // 2. Get Public URL
         const { data: { publicUrl } } = supabase.storage
@@ -414,21 +426,27 @@ export async function uploadPhoto(eventId, input) {
             .getPublicUrl(filePath);
 
         // 3. Update Database images array
-        const event = dbEvents.find(e => e.id === eventId);
-        if (!event) return;
+        const event = state.timelineEvents.find(e => Number(e.id) === idNum);
+        if (!event) {
+            console.error("Event not found in state:", idNum);
+            throw new Error("Událost nebyla nalezena v paměti aplikace.");
+        }
         
         const newImages = [...(event.images || []), publicUrl];
 
         const { error: updateError } = await supabase
             .from('timeline_events')
             .update({ images: newImages })
-            .eq('id', eventId);
+            .eq('id', idNum);
 
         if (updateError) throw updateError;
 
-        // 4. Update UI
-        event.images = newImages;
+        // 4. Update Global State and Local cache
+        event.images = newImages; 
+        dbEvents = state.timelineEvents; // Ensure local cache is in sync
+        
         renderTimeline(); // Re-render to show new thumbnail
+        window.showNotification('Fotka úspěšně nahrána! 📸', 'success');
 
     } catch (err) {
         console.error("Upload Error Details:", err);
@@ -599,7 +617,8 @@ export function openEventModal(eventId = null) {
         document.body.appendChild(modal);
     }
 
-    const event = eventId ? dbEvents.find(e => e.id == eventId) : null;
+    const idNum = eventId ? Number(eventId) : null;
+    const event = idNum ? dbEvents.find(e => Number(e.id) === idNum) : null;
     const title = event ? "Upravit vzpomínku" : "Nová vzpomínka";
     
     modal.innerHTML = `
@@ -669,12 +688,13 @@ export async function saveEvent(eventId) {
 
     if (!titleValue) return window.showNotification("Název je povinný!", "error");
 
+    const idNum = eventId ? Number(eventId) : null;
     const eventData = {
         title: titleValue,
         event_date: dateValue,
         icon: iconValue,
         description: descValue,
-        color: eventId ? dbEvents.find(e => e.id == eventId).color : "#5865F2"
+        color: idNum ? dbEvents.find(e => Number(e.id) === idNum).color : "#5865F2"
     };
 
     try {
@@ -726,10 +746,11 @@ export async function deleteEvent(eventId) {
     if (!ok) return;
 
     try {
-        const { error } = await supabase.from('timeline_events').delete().eq('id', eventId);
+        const idNum = Number(eventId);
+        const { error } = await supabase.from('timeline_events').delete().eq('id', idNum);
         if (error) throw error;
 
-        state.timelineEvents = state.timelineEvents.filter(e => e.id != eventId);
+        state.timelineEvents = state.timelineEvents.filter(e => Number(e.id) !== idNum);
         window.showNotification("Vzpomínka smazána.", "info");
         closeEventModal();
         renderTimeline();

@@ -70,6 +70,11 @@ export async function updateHealth(type, value) {
     });
     if (error) console.error("Error saving health to Supabase:", error);
 
+    // Achievement Hook
+    import('./achievements.js').then(m => {
+        m.checkHealthAchievements(todayKey, data, state.healthData);
+    });
+
     // Local Fallback Save - User Specific
     const storageKey = `vault_health_${state.currentUser.name.toLowerCase()}`;
     localStorage.setItem(storageKey, JSON.stringify(state.healthData));
@@ -360,6 +365,11 @@ export async function wakeUp() {
         movement: data.movement
     });
     if (error) console.error("Error saving sleep to Supabase:", error);
+
+    // Achievement Hook
+    import('./achievements.js').then(m => {
+        m.checkHealthAchievements(todayKey, data, state.healthData);
+    });
 
     const storageKey = `vault_health_${state.currentUser.name.toLowerCase()}`;
     localStorage.setItem(storageKey, JSON.stringify(state.healthData));
