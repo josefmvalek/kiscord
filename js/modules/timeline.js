@@ -645,8 +645,17 @@ export function openEventModal(eventId = null) {
                             <input type="date" id="edit-date" value="${event ? (event.event_date || '') : ''}" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-[#2f3136] focus:border-[#5865F2] outline-none">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ikona</label>
-                            <input type="text" id="edit-icon" value="${event ? event.icon : 'fa-heart'}" placeholder="fa-heart" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-[#2f3136] focus:border-[#5865F2] outline-none">
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ikona / Emoji</label>
+                            <div class="flex gap-2 mb-2">
+                                <input type="text" id="edit-icon" value="${event ? event.icon : 'fa-heart'}" placeholder="fa-heart nebo 🍕" class="flex-1 bg-[#202225] text-white p-3 rounded-lg border border-[#2f3136] focus:border-[#5865F2] outline-none">
+                            </div>
+                            <div class="flex flex-wrap gap-2 p-2 bg-[#202225] rounded-lg border border-[#2f3136]">
+                                ${['fa-heart', 'fa-star', 'fa-camera', 'fa-film', 'fa-utensils', 'fa-plane', 'fa-gift', 'fa-music', '🍕', '🍦', '🥂', '🎞️', '🎡', '🏰', '🌅', '✨'].map(ico => `
+                                    <button onclick="document.getElementById('edit-icon').value='${ico}'" class="w-8 h-8 flex items-center justify-center rounded hover:bg-[#5865F2]/20 transition-colors ${ico.startsWith('fa') ? 'text-xs' : 'text-lg'}">
+                                        ${ico.startsWith('fa') ? `<i class="fas ${ico}"></i>` : ico}
+                                    </button>
+                                `).join('')}
+                            </div>
                         </div>
                     </div>
 

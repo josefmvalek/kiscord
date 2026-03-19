@@ -147,13 +147,24 @@ export function renderPuzzleGame(selectedImage = null) {
     const container = document.getElementById("messages-container");
     if (!container) return;
 
-    const puzzleImages = [
+    let puzzleImages = [
         { src: "img/puzzle/puzzle_myval_sova_foto.jpg", name: "Sova & Mýval (Originál)" },
         { src: "img/puzzle/puzzle_myval_zaba_kreslene.jpg", name: "Žabák & Kamarádi (Kreslené)" },
         { src: "img/puzzle/crazy_fight_sova_myval.jpg", name: "Crazy Fight" },
         { src: "img/puzzle/myval_zaba_ai.jpg", name: "AI Art: Mýval & Žába" },
         { src: "img/puzzle/myval_zaba_medvidek.jpg", name: "Trio: Mýval, Žába, Medvídek" }
     ];
+
+    // Add user photos from timeline
+    if (state.timelineEvents) {
+        state.timelineEvents.forEach(event => {
+            if (event.images && event.images.length > 0) {
+                event.images.forEach(img => {
+                    puzzleImages.push({ src: img, name: event.title });
+                });
+            }
+        });
+    }
 
     const currentImageSrc = selectedImage || puzzleImages[0].src;
 

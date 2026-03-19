@@ -186,13 +186,13 @@ export function updateMoodVisuals(val) {
     if (moodVal === 1) icon = '🤬';
     else if (moodVal === 2) icon = '💩';
     else if (moodVal === 3) icon = '🙈';
-    else if (moodVal === 4) icon = '😐';
-    else if (moodVal === 5) icon = '🫤';
+    else if (moodVal === 4) icon = '🫤';
+    else if (moodVal === 5) icon = '✨'; // Special 5/10
     else if (moodVal === 6) icon = '🚬';
     else if (moodVal === 7) icon = '🧙‍♀️';
     else if (moodVal === 8) icon = '🕺';
     else if (moodVal === 9) icon = '🥰';
-    else if (moodVal === 10) icon = '💎';
+    else if (moodVal === 10) icon = '💎'; // Special 10/10
 
     if (iconDisplay) iconDisplay.innerText = icon;
 }
@@ -204,6 +204,8 @@ export function generateMovementChips() {
     const activities = [
         { id: 'gym', icon: '💪', label: 'Fitko' },
         { id: 'walk', icon: '🌲', label: 'Procházka' },
+        { id: 'sport', icon: '🏸', label: 'Sport' },
+        { id: 'dance', icon: '💃', label: 'Tanec' },
         { id: 'run', icon: '🏃‍♀️', label: 'Běh' },
         { id: 'yoga', icon: '🧘‍♀️', label: 'Jóga' },
         { id: 'sex', icon: '🔥', label: 'Love' },

@@ -204,7 +204,13 @@ export function renderMap() {
             },
         ).addTo(map);
 
-        await fetchMarkersMemories();
+        // Use state.timelineEvents if already loaded
+        if (state.timelineEvents && state.timelineEvents.length > 0) {
+            markersMemories = state.timelineEvents.filter(e => e.location_id);
+        } else {
+            await fetchMarkersMemories();
+        }
+        
         renderMarkers(state.dateLocations);
         renderLocationList(state.dateLocations);
         updateRouteUI();
@@ -284,9 +290,13 @@ export function renderMarkers(locations) {
 
 let markersMemories = [];
 export async function fetchMarkersMemories() {
+    if (state.timelineEvents && state.timelineEvents.length > 0) {
+        markersMemories = state.timelineEvents.filter(e => e.location_id);
+        return;
+    }
     try {
         const { supabase } = await import('../core/supabase.js');
-        const { data } = await supabase.from('timeline_events').select('id, title, event_date, location_id');
+        const { data } = await supabase.from('timeline_events').select('id, title, event_date, location_id').not('location_id', 'is', null);
         markersMemories = data || [];
     } catch (e) {
         console.error("Failed to fetch memories for markers", e);

@@ -75,6 +75,7 @@ import { renderAchievements, toggleAchievement, cleanupRealtime as achCleanup } 
 import { renderDailyQuestions, cleanupRealtime as dailyCleanup } from './modules/dailyQuestions.js';
 import { cleanupRealtime as whoCleanup } from './modules/gameWho.js';
 import { cleanupRealtime as drawCleanup } from './modules/gameDraw.js';
+import { renderFunFacts } from './modules/funfacts.js';
 
 let lastUserId = null;
 
@@ -83,93 +84,70 @@ let lastUserId = null;
 document.addEventListener('DOMContentLoaded', async () => {
     // 0. Listen for auth changes
     onAuthChange(async (event, session) => {
+        const user = session?.user;
+        const loginEl = document.getElementById('login-screen');
+        const appEl = document.getElementById('app-interface');
+
         if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-            const user = session?.user;
             if (user) {
-                // Prevent redundant re-renders if user hasn't changed (e.g. token refresh)
-                if (user.id === lastUserId) {
-                    console.log(`[AUTH] Event: ${event} - User ID same (${user.id}). Skipping re-render.`);
-                    return;
-                }
-                
-                console.log(`[AUTH] Event: ${event} - New User ID: ${user.id}. Re-initializing...`);
+                if (user.id === lastUserId) return;
                 lastUserId = user.id;
                 
-                const loginEl = document.getElementById('login-screen');
-                const appEl = document.getElementById('app-interface');
                 if (loginEl) loginEl.classList.add('hidden');
                 if (appEl) appEl.classList.add('show');
                 updateUserProfileUI(user);
+
+                // Run migrations if needed (only once per app Version)
+                await handleMigrations();
 
                 // Refresh data for new user
                 await initializeState();
                 
                 // Re-render current or default channel
-                const currentChan = state.currentChannel || 'dashboard';
-                console.log(`[AUTH] Initializing channel: ${currentChan}`);
-                switchChannel(currentChan);
+                const savedChannel = localStorage.getItem('klarka_last_channel');
+                const defaultChannel = (savedChannel && savedChannel !== 'welcome') ? savedChannel : 'dashboard';
+                switchChannel(defaultChannel);
             }
-        } else {
-            console.log(`[AUTH] Unhandled event: ${event}`);
+        } else if (event === 'SIGNED_OUT') {
+            if (loginEl) loginEl.classList.remove('hidden');
+            if (appEl) appEl.classList.remove('show');
+            lastUserId = null;
         }
     });
 
-    // 1. Initial Auth Check
-    const user = await getCurrentUser();
-    if (!user) {
-        const loginEl = document.getElementById('login-screen');
-        if (loginEl) loginEl.classList.remove('hidden');
-    } else {
-        const loginEl = document.getElementById('login-screen');
-        const appEl = document.getElementById('app-interface');
-        if (loginEl) loginEl.classList.add('hidden');
-        if (appEl) appEl.classList.add('show');
-        updateUserProfileUI(user);
-    }
-
-    // 2. Fetch initial state from Supabase
-    await initializeState();
+    // 1. Initial State Setup (Static/Realtime)
     setupQuestsRealtime();
     initLevels();
-
-    // Run migration once if data exists but hasn't been moved yet
-    if (!localStorage.getItem('klarka_migration_done')) {
-        const migratedCount = await migrateLocalDataToSupabase();
-        // Only reload if something was actually migrated to avoid infinite loop on empty storage
-        if (migratedCount > 0) {
-            window.location.reload(); 
-        }
-    }
-
-    // Static content migration (forced re-run to fix previous incomplete sync)
-        // Statický obsah (data.js) - vynucená migrace v4 pro fix prázdných tabulek
-        if (!localStorage.getItem('klarka_static_migration_v4_done')) {
-            console.log("🚀 Starting forced static content migration v4...");
-            const { migrateStaticContentToSupabase } = await import('./migration.js');
-            await migrateStaticContentToSupabase();
-            localStorage.setItem('klarka_static_migration_v4_done', 'true');
-            console.log("🎉 Static content migration v4 finished - reloading to apply...");
-            window.location.reload();
-        }
-
-    // 3. Theme Init
     initTheme();
-
-    // 4. Render Channels
     renderChannels();
 
-
-    // 5. Render Initial Channel (Welcome or Saved)
-    const savedChannel = localStorage.getItem('klarka_last_channel') || 'welcome';
-    switchChannel(savedChannel);
-
-    // 6. Global Event Listeners (Navigation)
+    // 2. Global Event Listeners (Navigation)
     setupNavigation();
     setupSearch();
 
-    // 7. Expose Global Functions (for inline html handlers)
+    // 3. Expose Global Functions
     exposeGlobals();
 });
+
+async function handleMigrations() {
+    // Run migration once if data exists but hasn't been moved yet
+    if (!localStorage.getItem('klarka_migration_done')) {
+        const migratedCount = await migrateLocalDataToSupabase();
+        if (migratedCount > 0) {
+            localStorage.setItem('klarka_migration_done', 'true');
+            window.location.reload(); 
+            return;
+        }
+    }
+
+    // Static content migration v5
+    if (!localStorage.getItem('klarka_static_migration_v5_done')) {
+        const { migrateStaticContentToSupabase } = await import('./migration.js');
+        await migrateStaticContentToSupabase();
+        localStorage.setItem('klarka_static_migration_v5_done', 'true');
+        window.location.reload();
+    }
+}
 
 // --- NAVIGATION ---
 
@@ -283,19 +261,19 @@ function renderMusicBot() {
             <!-- Glow background -->
             <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[#1DB954]/20 rounded-full blur-[100px] pointer-events-none opacity-60"></div>
             
-            <div class="z-10 w-full h-[calc(100vh-140px)] max-w-7xl mx-auto flex flex-col items-center justify-start mt-4">
-                <div class="mb-4 flex flex-col md:flex-row items-center gap-4 text-center md:text-left flex-shrink-0">
-                    <div class="w-14 h-14 rounded-2xl bg-[#1DB954] flex items-center justify-center shadow-[0_0_20px_rgba(29,185,84,0.5)]">
-                        <i class="fab fa-spotify text-3xl text-black"></i>
+            <div class="z-10 w-full h-[calc(100vh-200px)] max-w-5xl mx-auto flex flex-col items-center justify-start mt-2">
+                <div class="mb-3 flex flex-col md:flex-row items-center gap-3 text-center md:text-left flex-shrink-0">
+                    <div class="w-12 h-12 rounded-xl bg-[#1DB954] flex items-center justify-center shadow-[0_0_15px_rgba(29,185,84,0.4)]">
+                        <i class="fab fa-spotify text-2xl text-black"></i>
                     </div>
                     <div>
-                        <h2 class="text-2xl font-black text-white tracking-tight">Kiscord <span class="text-[#1DB954]">Radio</span></h2>
-                        <p class="text-gray-400 font-medium text-md">Náš společný vibes playlist</p>
+                        <h2 class="text-xl font-black text-white tracking-tight leading-none">Kiscord <span class="text-[#1DB954]">Radio</span></h2>
+                        <p class="text-gray-400 font-medium text-sm">Náš společný vibes playlist</p>
                     </div>
                 </div>
 
-                <div class="w-full flex-1 bg-black/40 backdrop-blur-xl border border-[#1DB954]/20 p-2 md:p-3 rounded-2xl shadow-2xl transition-all duration-300 hover:shadow-[0_0_30px_rgba(29,185,84,0.3)] hover:border-[#1DB954]/40 flex flex-col">
-                    <iframe data-testid="embed-iframe" style="border-radius:16px; flex: 1;" src="https://open.spotify.com/embed/playlist/2zUVrUmI3NHhIPtiboRE9O?utm_source=generator&theme=0" width="100%" height="100%" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+                <div class="w-full flex-1 bg-black/40 backdrop-blur-xl border border-[#1DB954]/20 p-1 rounded-2xl shadow-2xl transition-all duration-300 hover:shadow-[0_0_30px_rgba(29,185,84,0.3)] hover:border-[#1DB954]/40 flex flex-col overflow-hidden">
+                    <iframe data-testid="embed-iframe" style="border-radius:12px; flex: 1;" src="https://open.spotify.com/embed/playlist/2zUVrUmI3NHhIPtiboRE9O?utm_source=generator&theme=0" width="100%" height="100%" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
                 </div>
             </div>
         </div>
@@ -393,10 +371,10 @@ export function updateUserProfileUI(user) {
         if (popoutAvatar) popoutAvatar.src = 'img/app/czippel2_vanoce.png';
         if (bioParagraph) {
             bioParagraph.innerHTML = `
-                📍 Bydlí v Brně (ale srdcem v Polešovicích).<br />
-                🦝 Spirituální zvíře: Mýval (protože vymýšlí hlouposti).<br />
-                🔥 Do aplikace přidal backend, aby vše fungovalo.<br />
-                <span class="text-[#5865F2] font-bold">Status:</span> Developer & Přítel.
+                📍 Student IT se srdcem v Polešovicích.<br />
+                🦝 Hlavní inženýr a mývalí nadšenec.<br />
+                🔥 Tvůrce Kiscordu – našeho digitálního domova.<br />
+                <span class="text-[#5865F2] font-bold">Motto:</span> "Všechno jde fixnout, i život." 💻
             `;
         }
     } else {
@@ -407,10 +385,10 @@ export function updateUserProfileUI(user) {
         if (popoutAvatar) popoutAvatar.src = 'img/app/klarka_profilovka.webp';
         if (bioParagraph) {
             bioParagraph.innerHTML = `
-                📍 Věří, že Podolí je skutečné místo.<br />
-                🦉 Spirituální zvíře: Sova (protože ponocuje).<br />
-                🔥 Přežila se mnou Hody i požár v Polešovicích.<br />
-                <span class="text-[#eb459e] font-bold">Status:</span> Vrchní navigátor (občas).
+                📍 Vrchní navigátorka a milovnice klidu.<br />
+                🦉 Spirituální sova, co ponocuje s Jožkou.<br />
+                🔥 Nejdůležitější část celého Kiscordu.<br />
+                <span class="text-[#eb459e] font-bold">Motto:</span> "To zvládnem, mývale." ✨
             `;
         }
     }
@@ -433,7 +411,7 @@ const channelCategories = [
             { id: 'bucketlist', name: 'bucket-list', icon: '<i class="fas fa-rocket"></i>', type: 'text', color: '#ed4245', desc: 'Všechno, co spolu chceme zažít! ✨' },
             { id: 'letters', name: 'dopisy', icon: '<i class="fas fa-envelope-open-text"></i>', type: 'text', color: '#eb459e', desc: 'Vzkazy v láhvi, které se otevřou v čas 💌' },
             { id: 'quiz', name: 'kvízy pro dva', icon: '<i class="fas fa-brain"></i>', type: 'text', color: '#5865F2', desc: 'Kdo vás lépe zná? 🧠' },
-            { id: 'games-hub', name: 'Herní Doupě', icon: '<i class="fas fa-gamepad"></i>', type: 'text', color: '#3ba55c', desc: 'Kdo spíše, Draw Duel... 🎮' },
+            { id: 'games-hub', name: 'Zóna zábavy', icon: '<i class="fas fa-gamepad"></i>', type: 'text', color: '#3ba55c', desc: 'Kdo spíše, Draw Duel... 🎮' },
             { id: 'daily-questions', name: 'denní otázky', icon: '<i class="fas fa-question-circle"></i>', type: 'text', color: '#99aab5', desc: 'Každý den nová otázka pro nás dva. 🤔' }
         ]
     },
@@ -452,6 +430,7 @@ const channelCategories = [
         items: [
             { id: 'quests', name: 'společné-questy', icon: '<i class="fas fa-shield-alt"></i>', type: 'text', color: '#faa61a', desc: 'Naše společné cíle a progress. 💪' },
             { id: 'achievements', name: 'achievementy', icon: '<i class="fas fa-trophy"></i>', type: 'text', color: '#faa61a', desc: 'Co všechno jsme už dokázali? ⭐' },
+            { id: 'funfacts', name: 'zajímavosti', icon: '<i class="fas fa-lightbulb"></i>', type: 'text', color: '#eb459e', desc: 'Vše o mývalech, sovách a tak...' },
             { id: 'manual', name: 'návod', icon: '<i class="fas fa-book"></i>', type: 'text', color: '#99aab5', desc: 'Jak ovládat tuhle aplikaci.' },
             { id: 'readme', name: 'README.md', icon: '<i class="fas fa-file-alt"></i>', type: 'text', color: '#99aab5', desc: 'Technické detaily o projektu.' }
         ]
@@ -595,6 +574,9 @@ export function switchChannel(channelId) {
             break;
         case 'quests':
             renderQuests();
+            break;
+        case 'funfacts':
+            renderFunFacts();
             break;
         case 'letters':
             import('./modules/letters.js').then(m => m.renderLetters());

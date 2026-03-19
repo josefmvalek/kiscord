@@ -114,7 +114,17 @@ export function toggleValentineMode() {
     }
 }
 
+let lastNotificationMessage = '';
+let lastNotificationTime = 0;
+
 export function showNotification(message, type = 'info') {
+    const now = Date.now();
+    if (message === lastNotificationMessage && now - lastNotificationTime < 2000) {
+        return;
+    }
+    lastNotificationMessage = message;
+    lastNotificationTime = now;
+
     // Create/Find notification container
     let container = document.getElementById('notification-container');
     if (!container) {

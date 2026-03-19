@@ -143,6 +143,16 @@ function initCanvas() {
     canvas.addEventListener('mousemove', draw);
     window.addEventListener('mouseup', stopDrawing);
 
+    // Responsive: Update size on resize
+    window.addEventListener('resize', () => {
+        if (state.currentChannel !== 'game-draw') return;
+        const oldW = canvas.width;
+        const oldH = canvas.height;
+        canvas.width = wrapper.clientWidth;
+        canvas.height = wrapper.clientHeight;
+        redrawAll();
+    });
+
     // Touch support
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();

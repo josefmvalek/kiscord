@@ -2,7 +2,7 @@
 import { state } from '../core/state.js';
 // import { factsLibrary } from '../data.js'; // Smazáno, nyní ze state
 import { getTodayData, updateHealth, updateBedtime, startSleep, wakeUp, startSleepTimer } from './health.js';
-import { triggerHaptic, triggerConfetti } from '../core/utils.js';
+import { triggerHaptic, triggerConfetti, getInflectedName } from '../core/utils.js';
 import { showNotification } from '../core/theme.js';
 import { getTetrisScore } from './games.js';
 
@@ -75,7 +75,9 @@ export function updateMoodVisuals(val) {
             if (i === value) {
                 span.classList.add('active');
                 if (i <= 3) span.style.textShadow = "0 0 10px rgba(239, 68, 68, 0.8)";
+                else if (i === 5) span.style.textShadow = "0 0 15px rgba(255, 255, 255, 1)"; // Glow for special 5
                 else if (i <= 7) span.style.textShadow = "0 0 10px rgba(245, 158, 11, 0.8)";
+                else if (i === 10) span.style.textShadow = "0 0 20px rgba(0, 229, 255, 1)"; // Glow for diamond
                 else span.style.textShadow = "0 0 10px rgba(16, 185, 129, 0.8)";
             } else {
                 span.classList.remove('active');
@@ -83,7 +85,7 @@ export function updateMoodVisuals(val) {
             }
         }
     }
-    
+
     triggerHaptic("light");
 }
 
@@ -108,7 +110,9 @@ export function generateWaterIcons(count) {
 export function generateMovementChips(movement) {
     const activities = [
         { id: 'gym', icon: '💪', label: 'Fitko', color: 'text-red-400', border: 'border-red-500/50', bg: 'bg-red-500/10' },
-        { id: 'walk', icon: '🌲', label: 'Procházka', color: 'text-green-400', border: 'border-green-500/50', bg: 'bg-green-500/10' }
+        { id: 'walk', icon: '🌲', label: 'Procházka', color: 'text-green-400', border: 'border-green-500/50', bg: 'bg-green-500/10' },
+        { id: 'sport', icon: '🏸', label: 'Sport', color: 'text-blue-400', border: 'border-blue-500/50', bg: 'bg-blue-500/10' },
+        { id: 'dance', icon: '💃', label: 'Tanec', color: 'text-pink-400', border: 'border-pink-500/50', bg: 'bg-pink-500/10' }
     ];
 
     return activities.map(act => {
@@ -212,7 +216,7 @@ export function updateSleep(val) {
         textEl.innerText = sleepValue;
         textEl.className = `font-black text-4xl ${sleepColor.class} transition-colors duration-200 leading-none drop-shadow-md filter brightness-110`;
     }
-    
+
     // Uložit mezistav POUZE do RAM (paměti), aby ho následný klik na vodu nepřeplácl starou hodnotou, než se slider uvolní
     import('../core/state.js').then(s => {
         import('../core/utils.js').then(u => {
@@ -384,7 +388,7 @@ export function renderDashboard() {
     const daysTogether = getDaysTogether();
 
     if (!state.dashboardSessionFact) {
-        const allFacts = state.factsLibrary.raccoon.length > 0 
+        const allFacts = state.factsLibrary.raccoon.length > 0
             ? state.factsLibrary.raccoon.map((f) => `${f.icon} ${f.text}`)
             : ["🦝 Načítám moudra z popelnice..."];
         state.dashboardSessionFact = allFacts[Math.floor(Math.random() * allFacts.length)];
@@ -405,7 +409,7 @@ export function renderDashboard() {
                   <div class="relative z-10 px-6 mb-4 flex justify-between items-start">
                       <div id="dashboard-welcome-text">
                           <p class="text-[10px] font-bold uppercase tracking-wider opacity-80 text-white/90 mb-0.5">${niceDate}</p>
-                          <h1 class="text-2xl font-black text-white drop-shadow-md leading-tight">${greeting},<br>${state.currentUser.name} 🌞</h1>
+                          <h1 class="text-2xl font-black text-white drop-shadow-md leading-tight">${greeting},<br>${getInflectedName(state.currentUser.name)} 🌞</h1>
                       </div>
                       <div class="bg-white/20 backdrop-blur-md px-2 py-1 rounded text-center shadow-sm border border-white/10">
                           <span class="block text-[8px] uppercase font-bold tracking-widest opacity-90 text-white">Spolu</span>
@@ -504,7 +508,7 @@ export function renderDashboard() {
 }
 
 export function refreshDashboardFact() {
-    const allFacts = state.factsLibrary.raccoon.length > 0 
+    const allFacts = state.factsLibrary.raccoon.length > 0
         ? state.factsLibrary.raccoon.map((f) => `${f.icon} ${f.text}`)
         : ["🦝 Načítám moudra z popelnice..."];
     const randomFact = allFacts[Math.floor(Math.random() * allFacts.length)];
@@ -542,7 +546,7 @@ export function renderWelcome() {
                     </div>
                     <div class="text-gray-200 mt-2 space-y-3">
                         <p class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 leading-tight">
-                            ${greeting}, ${state.currentUser.name}! 👋<br>Vítej v nové éře naší aplikace.
+                            ${greeting}, ${getInflectedName(state.currentUser.name)}! 👋<br>Vítej v nové éře naší aplikace.
                         </p>
                         <p class="text-sm text-gray-400 max-w-xl leading-relaxed">
                             Kiscord prošel kompletní transformací. Od základů jsme přepsali backend, přidali tunu nových her a vylepšili místo, kde uchováváme naše vzpomínky.

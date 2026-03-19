@@ -76,6 +76,38 @@ export function triggerConfetti() {
             }),
         );
     }, 250);
+}
 
+/**
+ * Czech name declension for Jožka and Klárka
+ * @param {string} name 
+ * @param {number} caseNum (1-7)
+ */
+export function getInflectedName(name, caseNum) {
+    if (!name) return "";
+    const lower = name.toLowerCase();
+    const isKlarka = lower.includes('klár') || lower.includes('klar');
+    const isJozka = lower.includes('jožk') || lower.includes('jozk');
 
+    if (isKlarka) {
+        switch (caseNum) {
+            case 2: return 'Klárky';
+            case 3: return 'Klárce';
+            case 4: return 'Klárku';
+            case 6: return 'Klárce';
+            case 7: return 'Klárkou';
+            default: return 'Klárka';
+        }
+    }
+    if (isJozka) {
+        switch (caseNum) {
+            case 2: return 'Jožky';
+            case 3: return 'Jožkovi';
+            case 4: return 'Jožku';
+            case 6: return 'Jožkovi';
+            case 7: return 'Jožkou';
+            default: return 'Jožka';
+        }
+    }
+    return name;
 }
