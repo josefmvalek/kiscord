@@ -1,9 +1,10 @@
 import { state } from '../core/state.js';
 import { supabase } from '../core/supabase.js';
-import { triggerConfetti } from '../core/utils.js';
+import { triggerHaptic, triggerConfetti } from '../core/utils.js';
 import { showNotification } from '../core/theme.js';
 
 let subscription = null;
+let sessionQuestionIndex = -1; // -1 means use daily seed
 
 export function renderGameWho() {
     const container = document.getElementById("messages-container");
@@ -20,11 +21,16 @@ export function renderGameWho() {
         return;
     }
 
-    // Pick a question (could be daily or random)
-    // For now, let's use a "Daily Game Question" based on date
-    const today = new Date();
-    const dateSeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-    const qIndex = dateSeed % state.gameQuestions.length;
+    // Pick a question
+    let qIndex;
+    if (sessionQuestionIndex === -1) {
+        const today = new Date();
+        const dateSeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+        qIndex = dateSeed % state.gameQuestions.length;
+    } else {
+        qIndex = sessionQuestionIndex % state.gameQuestions.length;
+    }
+    
     const currentQ = state.gameQuestions[qIndex];
 
     setupRealtime(currentQ.id);
@@ -89,15 +95,21 @@ function renderContent(question) {
                 </div>
 
                 <!-- Status / Results -->
-                <div class="mt-16 min-h-[100px] flex items-center justify-center">
+                <div class="mt-16 min-h-[120px] flex flex-col items-center justify-center gap-6">
                     ${!myVote ? 
                         '<p class="text-gray-500 animate-pulse italic">Čekám na tvůj hlas...</p>' : 
                         (!partnerVote ? 
-                            '<div class="bg-[#2f3136] px-6 py-4 rounded-xl flex items-center gap-4 text-white font-medium border border-[#202225]"><i class="fas fa-spinner fa-spin text-[#faa61a]"></i> Čekám na partnerovo hlasování...</div>' :
-                            (isMatched ? 
-                                '<div class="animate-bounce-short"><h3 class="text-3xl font-black text-[#faa61a] mb-2">SHODA! ✨</h3><p class="text-white">Myslíte si to oba stejně!</p></div>' :
-                                '<div class="grayscale opacity-80"> <h3 class="text-xl font-bold text-gray-400 mb-2">Neshodli jste se...</h3><p class="text-gray-500 text-sm">Každý máte jiný názor, a to je v pořádku!</p></div>'
-                            )
+                            '<div class="bg-[#2f3136] px-6 py-4 rounded-xl flex items-center gap-4 text-white font-medium border border-[#202225] shadow-lg"><i class="fas fa-spinner fa-spin text-[#faa61a]"></i> Čekám na partnerovo hlasování...</div>' :
+                            `<div>
+                                ${isMatched ? 
+                                    '<div class="animate-bounce-short mb-6"><h3 class="text-3xl font-black text-[#faa61a] mb-2 uppercase tracking-tighter shadow-sm">SHODA! ✨</h3><p class="text-white opacity-90">Myslíte si to oba stejně!</p></div>' :
+                                    '<div class="grayscale opacity-80 mb-6"> <h3 class="text-xl font-bold text-gray-400 mb-2">Neshodli jste se...</h3><p class="text-gray-500 text-sm">Každý máte jiný názor, a to je v pořádku!</p></div>'
+                                }
+                                <button onclick="window.nextGameQuestion()" 
+                                    class="px-8 py-3 bg-[#faa61a] hover:bg-[#e09216] text-black font-black rounded-xl transition transform hover:scale-105 active:scale-95 shadow-lg flex items-center gap-2 mx-auto">
+                                    Další otázka <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>`
                         )
                     }
                 </div>
@@ -150,6 +162,20 @@ function renderContent(question) {
             console.error("Vote error:", err);
             showNotification("Hlasování se nezdařilo.", "error");
         }
+    };
+
+    // Handler for next question
+    window.nextGameQuestion = () => {
+        if (sessionQuestionIndex === -1) {
+            const today = new Date();
+            const dateSeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+            sessionQuestionIndex = (dateSeed % state.gameQuestions.length) + 1;
+        } else {
+            sessionQuestionIndex++;
+        }
+        
+        triggerHaptic('light');
+        renderGameWho();
     };
 }
 

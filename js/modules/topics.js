@@ -362,7 +362,7 @@ export async function markQuestionDone() {
     }
 
     triggerHaptic("success");
-    if (typeof window.triggerConfetti === 'function') window.triggerConfetti();
+    // Removed confetti as it may cause lag on mobile
 
     // Move to next
     nextQuestion();

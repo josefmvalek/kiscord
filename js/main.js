@@ -257,23 +257,21 @@ function renderMusicBot() {
     if (!container) return;
     
     container.innerHTML = `
-        <div class="h-full flex flex-col items-center justify-center bg-[#36393f] relative overflow-hidden animate-fade-in p-4 md:p-8">
+        <div class="h-full flex flex-col items-center justify-center bg-[#36393f] relative overflow-hidden animate-fade-in p-2 md:p-6">
             <!-- Glow background -->
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[#1DB954]/20 rounded-full blur-[100px] pointer-events-none opacity-60"></div>
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#1DB954]/10 rounded-full blur-[120px] pointer-events-none opacity-40"></div>
             
-            <div class="z-10 w-full h-[calc(100vh-200px)] max-w-5xl mx-auto flex flex-col items-center justify-start mt-2">
-                <div class="mb-3 flex flex-col md:flex-row items-center gap-3 text-center md:text-left flex-shrink-0">
-                    <div class="w-12 h-12 rounded-xl bg-[#1DB954] flex items-center justify-center shadow-[0_0_15px_rgba(29,185,84,0.4)]">
-                        <i class="fab fa-spotify text-2xl text-black"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-xl font-black text-white tracking-tight leading-none">Kiscord <span class="text-[#1DB954]">Radio</span></h2>
-                        <p class="text-gray-400 font-medium text-sm">Náš společný vibes playlist</p>
-                    </div>
-                </div>
-
-                <div class="w-full flex-1 bg-black/40 backdrop-blur-xl border border-[#1DB954]/20 p-1 rounded-2xl shadow-2xl transition-all duration-300 hover:shadow-[0_0_30px_rgba(29,185,84,0.3)] hover:border-[#1DB954]/40 flex flex-col overflow-hidden">
-                    <iframe data-testid="embed-iframe" style="border-radius:12px; flex: 1;" src="https://open.spotify.com/embed/playlist/2zUVrUmI3NHhIPtiboRE9O?utm_source=generator&theme=0" width="100%" height="100%" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+            <div class="z-10 w-full h-full max-w-6xl mx-auto flex flex-col items-center justify-center">
+                <div class="w-full h-full max-h-[85vh] bg-black/20 backdrop-blur-md border border-white/5 p-1 rounded-3xl shadow-2xl transition-all duration-500 hover:shadow-[0_0_40px_rgba(29,185,84,0.2)] hover:border-[#1DB954]/30 flex flex-col overflow-hidden">
+                    <iframe data-testid="embed-iframe" 
+                            style="border-radius:20px; flex: 1; border: none;" 
+                            src="https://open.spotify.com/embed/playlist/2zUVrUmI3NHhIPtiboRE9O?utm_source=generator&theme=0" 
+                            width="100%" 
+                            height="100%" 
+                            allowfullscreen="" 
+                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+                            loading="lazy">
+                    </iframe>
                 </div>
             </div>
         </div>

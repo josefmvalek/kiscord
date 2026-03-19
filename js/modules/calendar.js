@@ -11,6 +11,23 @@ let currentModalDateKey = null;
 
 // --- EXPORTED FUNCTIONS ---
 
+export function getMoodColor(val) {
+    if (val > 10) val = Math.round(val / 10);
+    const colors = {
+        1: "#ed4245", // Red
+        2: "#f97316", // Orange
+        3: "#fbbf24", // Amber
+        4: "#facc15", // Yellow
+        5: "#d4d82b", // Lime-Yellow
+        6: "#a3e635", // Lime
+        7: "#4ade80", // Light Green
+        8: "#22c55e", // Green
+        9: "#16a34a", // Dark Green
+        10: "#065f46"  // Emerald
+    };
+    return colors[val] || "#4b5563";
+}
+
 export function renderCalendar(year = null, month = null) {
     const container = document.getElementById("messages-container");
     if (!container) return; // Guard clause
@@ -158,6 +175,7 @@ export function generateCalendarGrid(year, month) {
         let bgStyle = "bg-[#2f3136]";
         let borderStyle = "border-[#202225]";
         let textStyle = "text-gray-500 font-medium md:text-sm";
+        let inlineStyles = "";
 
         if (isToday) {
             borderStyle = "border-[#5865F2] border-2 shadow-[0_0_10px_rgba(88,101,242,0.2)] z-10";
@@ -205,11 +223,13 @@ export function generateCalendarGrid(year, month) {
                     else if (hours >= 7) icon = "✨";
                     const formattedHours = hours % 1 === 0 ? hours : hours.toFixed(1);
 
-                    bgStyle = ``; // Bude override inline stylem
-                    cellContent += `<div class="w-full h-full flex flex-col items-center justify-center text-white rounded-md" style="background-color: ${hexBg}AA;">
-                    <div class="text-lg leading-none">${icon}</div>
-                    <div class="text-[8px] font-bold mt-0.5">${formattedHours}h</div>
-                </div>`;
+                    bgStyle = ""; 
+                    inlineStyles = `background-color: ${hexBg}AA;`;
+                    cellContent += `
+                    <div class="w-full h-full flex flex-col items-center justify-center text-white">
+                        <div class="text-xl leading-none mt-1">${icon}</div>
+                        <div class="text-[10px] font-extrabold mt-0.5">${formattedHours}h</div>
+                    </div>`;
                 } else {
                     // Old data support
                     let icon = "😐";
@@ -218,7 +238,8 @@ export function generateCalendarGrid(year, month) {
                     if (dayData.sleep === "zombie") { bg = "#ed4245"; icon = "🧟‍♀️"; }
 
                     bgStyle = "";
-                    cellContent += `<div class="w-full h-full flex items-center justify-center text-xl text-white opacity-90 rounded-md" style="background-color: ${bg};">${icon}</div>`;
+                    inlineStyles = `background-color: ${bg};`;
+                    cellContent += `<div class="w-full h-full flex items-center justify-center text-xl text-white opacity-90">${icon}</div>`;
                 }
                 textStyle = "text-white/80";
             } else {
@@ -241,25 +262,16 @@ export function generateCalendarGrid(year, month) {
                 cellContent += `<div class="absolute top-1 right-1 text-[8px]">🩸</div>`;
             }
             if (dayData.mood) {
-                let iconResult = "😐";
                 if (typeof dayData.mood === 'number') {
-                    const val = dayData.mood;
-                    // Mapování
-                    if (val <= 1) iconResult = "🤬";
-                    else if (val <= 2) iconResult = "💩";
-                    else if (val <= 3) iconResult = "🙈";
-                    else if (val <= 4) iconResult = "😐";
-                    else if (val <= 5) iconResult = "🫤";
-                    else if (val <= 6) iconResult = "🚬";
-                    else if (val <= 7) iconResult = "🧙‍♀️";
-                    else if (val <= 8) iconResult = "🕺";
-                    else if (val <= 9) iconResult = "🥰";
-                    else if (val >= 10) iconResult = "💎";
+                    let val = dayData.mood;
+                    if (val > 10) val = Math.round(val / 10);
+                    const hexBg = getMoodColor(val);
 
-                    cellContent += `<div class="w-full h-full flex items-center justify-center text-2xl pt-2 relative">
-                        ${iconResult}
-                        <div class="absolute bottom-1 right-1 text-[8px] font-bold opacity-50 text-white">${val}/10</div>
-                  </div>`;
+                    bgStyle = ""; 
+                    inlineStyles = `background-color: ${hexBg}; opacity: 0.9;`;
+                    cellContent += `<div class="w-full h-full flex items-center justify-center text-white drop-shadow-md">
+                        <span class="text-2xl font-black">${val}</span>
+                    </div>`;
                 } else {
                     // Old data
                     const moodIcons = { happy: "🥰", tired: "😴", sad: "😢", angry: "😡", horny: "😈" };
@@ -273,8 +285,10 @@ export function generateCalendarGrid(year, month) {
         }
 
         html += `
-          <div onclick="import('./js/modules/calendar.js').then(m => m.showDayDetail('${dateKey}'))" class="${cellClasses} ${bgStyle} ${borderStyle} calendar-fade">
-              <span class="absolute top-1 left-1.5 md:top-2 md:left-2 text-[10px] ${textStyle}">${d}</span>
+          <div onclick="import('./js/modules/calendar.js').then(m => m.showDayDetail('${dateKey}'))" 
+               class="${cellClasses} ${bgStyle} ${borderStyle} calendar-fade"
+               style="${inlineStyles}">
+              <span class="absolute top-1 left-1.5 md:top-2 md:left-2 text-[10px] z-20 ${textStyle}">${d}</span>
               ${cellContent}
           </div>
       `;
@@ -427,19 +441,10 @@ export function showDayDetail(dateKey) {
             
             let moodText = "-";
             if (typeof health.mood === 'number') {
-                const val = health.mood;
-                let iconResult = "😐";
-                if (val <= 1) iconResult = "🤬";
-                else if (val <= 2) iconResult = "💩";
-                else if (val <= 3) iconResult = "🙈";
-                else if (val <= 4) iconResult = "😐";
-                else if (val <= 5) iconResult = "🫤";
-                else if (val <= 6) iconResult = "🚬";
-                else if (val <= 7) iconResult = "🧙‍♀️";
-                else if (val <= 8) iconResult = "🕺";
-                else if (val <= 9) iconResult = "🥰";
-                else if (val >= 10) iconResult = "💎";
-                moodText = `${val}/10 ${iconResult}`;
+                let val = health.mood;
+                if (val > 10) val = Math.round(val / 10);
+                const hexColor = getMoodColor(val);
+                moodText = `<span class="px-2 py-0.5 rounded font-bold text-white shadow-sm" style="background-color: ${hexColor}">${val}/10</span>`;
             } else if (health.mood) {
                 const moodIcons = { happy: "🥰", tired: "😴", sad: "😢", angry: "😡", horny: "😈" };
                 moodText = `${health.mood} ${moodIcons[health.mood] || ""}`;
@@ -602,6 +607,7 @@ export function toggleHealthEdit() {
         document.getElementById("edit-health-sleep").value = sleepVal !== undefined ? sleepVal : "";
 
         let moodVal = health.mood;
+        if (typeof moodVal === 'number' && moodVal > 10) moodVal = Math.round(moodVal / 10);
         if (typeof moodVal === 'string') {
             if(moodVal === 'happy' || moodVal === 'horny') moodVal = 9;
             else if(moodVal === 'sad' || moodVal === 'angry') moodVal = 3;

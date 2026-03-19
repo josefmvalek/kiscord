@@ -178,7 +178,7 @@ export function renderMap() {
                 </div>
                 
                 <!-- Bottom Sheet / Detail Panel -->
-                <div id="detail-panel" class="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-[#36393f] rounded-xl shadow-2xl z-[40] transition-all duration-300 translate-y-[120%] flex flex-col max-h-[70vh] border border-[#202225]">
+                <div id="detail-panel" class="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-[#36393f] rounded-2xl shadow-2xl z-[40] transition-all duration-300 translate-y-[120%] flex flex-col max-h-[85vh] border border-white/5 overflow-hidden">
                     <!-- Content injected by selectLocation -->
                 </div>
             </div>
@@ -407,24 +407,19 @@ export function selectLocation(id) {
     let mapsUrl = loc.url ? loc.url : "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(loc.name + " Česká republika");
 
     panel.innerHTML = `
-        <!-- Handle -->
-        <div id="sheet-handle" class="w-full h-6 flex items-center justify-center cursor-grab active:cursor-grabbing border-b border-[#202225] hover:bg-[#2f3136] rounded-t-xl" onclick="document.getElementById('detail-panel').style.transform='translateY(120%)'">
-            <div class="w-12 h-1 bg-gray-600 rounded-full"></div>
-        </div>
-        
-        <!-- Close -->
-        <button onclick="document.getElementById('detail-panel').style.transform='translateY(120%)'" class="absolute top-2 right-4 text-gray-400 hover:text-white p-2 z-10">
-            <i class="fas fa-times"></i>
-        </button>
-
-        <div class="p-6 overflow-y-auto max-h-[70vh]">
-            <!-- Header & Weather -->
-            <div class="mb-2">
-                <h3 class="text-2xl font-bold text-white leading-tight mb-1">${loc.name}</h3>
-                <div class="flex items-center gap-2 text-xs text-gray-400">
-                    <i class="fas fa-sun text-yellow-500"></i>
-                    <span class="font-medium">-1°C • Jasno</span>
+        <div class="p-5 md:p-6 overflow-y-auto max-h-[85vh] relative">
+            <div class="flex items-start justify-between gap-4 mb-3">
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-2xl font-bold text-white leading-tight truncate">${loc.name}</h3>
+                    <div class="flex items-center gap-2 text-xs text-gray-400 mt-1">
+                        <i class="fas fa-sun text-yellow-500"></i>
+                        <span class="font-medium">-1°C • Jasno</span>
+                    </div>
                 </div>
+                <button onclick="import('./js/modules/map.js').then(m => m.closeLocationDetail())" 
+                        class="flex-shrink-0 w-10 h-10 bg-[#2f3136] hover:bg-[#ed4245] text-white rounded-xl flex items-center justify-center transition shadow-lg border border-white/5 group">
+                    <i class="fas fa-times text-xl group-hover:rotate-90 transition-transform"></i>
+                </button>
             </div>
 
             <p class="text-gray-400 text-sm mb-4 leading-relaxed">${loc.desc || ""}</p>
@@ -566,9 +561,13 @@ export async function saveDateToCalendar() {
     }
 
     if (window.showNotification) window.showNotification("Rande uloženo do kalendáře! 📅", "success");
+    closeLocationDetail();
+}
 
-    // Refresh to show saved state if needed, or close panel
-    document.getElementById('detail-panel').style.transform = 'translateY(120%)';
+export function closeLocationDetail() {
+    const panel = document.getElementById('detail-panel');
+    if (!panel) return;
+    panel.style.transform = 'translateY(120%)';
 }
 
 export function pickRandomLocation() {

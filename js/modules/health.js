@@ -14,7 +14,7 @@ export function getTodayData() {
     if (!state.healthData[todayKey]) {
         state.healthData[todayKey] = {
             water: 0,
-            mood: 50,
+            mood: 5,
             sleep: 0,
             movement: [] // Array of IDs: 'gym', 'walk', 'sex'
         };
@@ -139,22 +139,22 @@ export function generateWaterIcons() {
 
 export function generateMoodSlider() {
     const data = getTodayData();
-    const currentMood = data.mood || 50; // 0-100
-    // Convert 0-100 to 1-10 scale for display
-    const moodVal = Math.round(currentMood / 10) || 5;
+    const currentMood = data.mood || 5; // 1-10
+    
+    // Normalize if it's old 10-100 data
+    const moodVal = currentMood > 10 ? Math.round(currentMood / 10) : currentMood;
 
     let icon = '😐';
-    // Mapování podle Czippelometru
-    if (moodVal <= 10) icon = '💎';
-    if (moodVal <= 9) icon = '🥰';
-    if (moodVal <= 8) icon = '🕺';
-    if (moodVal <= 7) icon = '🧙‍♀️';
-    if (moodVal <= 6) icon = '🚬';
-    if (moodVal <= 5) icon = '🫤';
-    if (moodVal <= 4) icon = '😐';
-    if (moodVal <= 3) icon = '🙈';
-    if (moodVal <= 2) icon = '💩';
-    if (moodVal <= 1) icon = '🤬';
+    if (moodVal === 1) icon = '🤬';
+    else if (moodVal === 2) icon = '💩';
+    else if (moodVal === 3) icon = '🙈';
+    else if (moodVal === 4) icon = '😐';
+    else if (moodVal === 5) icon = '🫤';
+    else if (moodVal === 6) icon = '🚬';
+    else if (moodVal === 7) icon = '🧙‍♀️';
+    else if (moodVal === 8) icon = '🕺';
+    else if (moodVal === 9) icon = '🥰';
+    else if (moodVal >= 10) icon = '💎';
 
     return `
         <div class="flex flex-col gap-2">
@@ -162,10 +162,10 @@ export function generateMoodSlider() {
                 <span id="mood-val-display" class="text-2xl">${moodVal}/10</span>
                 <span id="mood-icon-display" class="text-4xl animate-bounce-slow">${icon}</span>
             </div>
-            <input type="range" min="10" max="100" step="10" value="${currentMood}" 
+            <input type="range" min="1" max="10" step="1" value="${moodVal}" 
                    class="w-full h-3 bg-[#2f3136] rounded-lg appearance-none cursor-pointer accent-[#eb459e] hover:accent-[#ff69b4] transition-all"
                    oninput="import('./js/modules/health.js').then(m => m.updateMoodVisuals(this.value));"
-                   onchange="import('./js/modules/health.js').then(m => m.updateHealth('mood', this.value))">
+                   onchange="import('./js/modules/health.js').then(m => m.updateHealth('mood', parseInt(this.value)))">
             <div class="flex justify-between text-[10px] text-gray-500 font-mono mt-1">
                 <span>🤬 Zmar</span>
                 <span>😐 Meh</span>
@@ -176,7 +176,7 @@ export function generateMoodSlider() {
 }
 
 export function updateMoodVisuals(val) {
-    const moodVal = Math.round(val / 10);
+    const moodVal = parseInt(val);
     const display = document.getElementById('mood-val-display');
     const iconDisplay = document.getElementById('mood-icon-display');
 
@@ -186,13 +186,13 @@ export function updateMoodVisuals(val) {
     if (moodVal === 1) icon = '🤬';
     else if (moodVal === 2) icon = '💩';
     else if (moodVal === 3) icon = '🙈';
-    else if (moodVal === 4) icon = '🫤';
-    else if (moodVal === 5) icon = '✨'; // Special 5/10
+    else if (moodVal === 4) icon = '😐';
+    else if (moodVal === 5) icon = '🫤';
     else if (moodVal === 6) icon = '🚬';
     else if (moodVal === 7) icon = '🧙‍♀️';
     else if (moodVal === 8) icon = '🕺';
     else if (moodVal === 9) icon = '🥰';
-    else if (moodVal === 10) icon = '💎'; // Special 10/10
+    else if (moodVal >= 10) icon = '💎';
 
     if (iconDisplay) iconDisplay.innerText = icon;
 }

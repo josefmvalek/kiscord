@@ -11,8 +11,8 @@ export const state = {
     currentTopicId: null,
     currentQuestionIndex: null,
     topicSessionHistory: [],
+    funFactProgress: {}, // { raccoon: { index: 0, completed: false } }
     pendingResetId: null,
-    currentDownload: null,
     startDate: "2025-12-24",
     healthData: {},
     dateFilter: "all",
@@ -38,6 +38,7 @@ export const state = {
     gameQuestions: [],
     gameVotes: [],
     drawStrokes: [],
+    pinnedDrawing: null,
 };
 
 export async function initializeState() {
@@ -57,6 +58,7 @@ export async function initializeState() {
     state.dateLocations = [];
     state.conversationTopics = [];
     state.achievements = [];
+    state.funFactProgress = {};
     state.dailyQuestion = null;
     state.dailyAnswers = [];
 
@@ -82,6 +84,7 @@ export async function initializeState() {
             { data: gQuestionData },
             { data: gVoteData },
             { data: strokeData },
+            { data: funFactProgressData },
         ] = await Promise.all([
             supabase.from('health_data').select('*'),
             supabase.from('planned_dates').select('*'),
@@ -101,10 +104,13 @@ export async function initializeState() {
             supabase.from('game_questions').select('*'),
             supabase.from('game_votes').select('*'),
             supabase.from('draw_strokes').select('*').order('created_at', { ascending: true }),
+            supabase.from('fun_fact_progress').select('*'),
         ]);
 
         if (gQuestionData) state.gameQuestions = gQuestionData;
         if (gVoteData) state.gameVotes = gVoteData;
+        const [,, pinnedData] = await Promise.all([null, null, supabase.from('pinned_drawings').select('*, drawings(*)').maybeSingle()]); // Clean way
+        if (pinnedData?.data) state.pinnedDrawing = pinnedData.data.drawings;
         if (strokeData) state.drawStrokes = strokeData;
 
         // OPRAVA #1: Health Data – odstraněn zbytečný JS user_id filtr
@@ -199,6 +205,15 @@ export async function initializeState() {
                     magnet: item.magnet,
                     gdrive: item.gdrive
                 });
+            });
+        }
+
+        if (funFactProgressData) {
+            funFactProgressData.forEach(row => {
+                state.funFactProgress[row.category_id] = {
+                    index: row.current_index,
+                    completed: row.completed
+                };
             });
         }
 

@@ -111,8 +111,7 @@ export function generateMovementChips(movement) {
     const activities = [
         { id: 'gym', icon: '💪', label: 'Fitko', color: 'text-red-400', border: 'border-red-500/50', bg: 'bg-red-500/10' },
         { id: 'walk', icon: '🌲', label: 'Procházka', color: 'text-green-400', border: 'border-green-500/50', bg: 'bg-green-500/10' },
-        { id: 'sport', icon: '🏸', label: 'Sport', color: 'text-blue-400', border: 'border-blue-500/50', bg: 'bg-blue-500/10' },
-        { id: 'dance', icon: '💃', label: 'Tanec', color: 'text-pink-400', border: 'border-pink-500/50', bg: 'bg-pink-500/10' }
+        { id: 'sport', icon: '🏸', label: 'Sport', color: 'text-blue-400', border: 'border-blue-500/50', bg: 'bg-blue-500/10' }
     ];
 
     return activities.map(act => {
@@ -371,6 +370,20 @@ export function showNextFact() {
     }, 300);
 }
 
+export function refreshDashboardFact() {
+    const allFacts = [...state.factsLibrary.owl, ...state.factsLibrary.octopus, ...state.factsLibrary.raccoon];
+    if (allFacts.length === 0) return;
+    const randomFact = allFacts[Math.floor(Math.random() * allFacts.length)];
+    const el = document.getElementById("dashboard-fact-text");
+    if (el) {
+        el.style.opacity = "0";
+        setTimeout(() => {
+            el.innerHTML = `${randomFact.icon} ${randomFact.text}`;
+            el.style.opacity = "1";
+        }, 200);
+    }
+}
+
 
 // --- MAIN DASHBOARD RENDERER ---
 
@@ -387,13 +400,6 @@ export function renderDashboard() {
     if (hour >= 18) greeting = "Krásný večer";
     const daysTogether = getDaysTogether();
 
-    if (!state.dashboardSessionFact) {
-        const allFacts = state.factsLibrary.raccoon.length > 0
-            ? state.factsLibrary.raccoon.map((f) => `${f.icon} ${f.text}`)
-            : ["🦝 Načítám moudra z popelnice..."];
-        state.dashboardSessionFact = allFacts[Math.floor(Math.random() * allFacts.length)];
-    }
-    const randomFact = state.dashboardSessionFact;
 
     const todayStr = new Date().toISOString().split("T")[0];
     if (!state.plannedDates) state.plannedDates = {};
@@ -439,6 +445,26 @@ export function renderDashboard() {
 
               <div class="max-w-3xl mx-auto px-3 mt-4 relative z-20 space-y-3">
                   <div class="space-y-3">
+                      <!-- PINNED DRAWING (FRIDGE) -->
+                      ${state.pinnedDrawing ? `
+                        <div onclick="window.switchChannel('game-draw')" class="bg-[#2f3136] rounded-xl shadow border border-[#202225] overflow-hidden group cursor-pointer transition hover:border-[#eb459e]/30 shadow-md">
+                            <div class="p-3 border-b border-[#202225] flex justify-between items-center bg-black/10">
+                                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                    <i class="fas fa-snowflake text-[#00e5ff]"></i> Z Lednice
+                                </h3>
+                                <span class="text-[9px] bg-[#eb459e]/10 text-[#eb459e] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">Mistrovské dílo</span>
+                            </div>
+                            <div class="relative aspect-video bg-white overflow-hidden">
+                                <img src="${state.pinnedDrawing.thumbnail}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                                <div class="absolute bottom-3 left-3">
+                                    <p class="text-white text-sm font-black drop-shadow-md">${state.pinnedDrawing.title || 'Bez názvu'}</p>
+                                    <p class="text-white/70 text-[10px] font-bold uppercase">${new Date(state.pinnedDrawing.created_at).toLocaleDateString('cs-CZ')}</p>
+                                </div>
+                            </div>
+                        </div>
+                      ` : ''}
+
                       <!-- SLEEP -->
                       <div class="bg-[#2f3136] rounded-xl shadow border border-[#202225] p-3">
                           <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-2"><i class="fas fa-bed text-[#faa61a]"></i> Jak ses vyspala?</h3>
@@ -453,7 +479,7 @@ export function renderDashboard() {
                           <div class="flex justify-between gap-0.5" id="water-container">${generateWaterIcons(data.water)}</div>
                       </div>
                       <!-- MOOD & MOVEMENT -->
-                      <div class="flex flex-col gap-2">
+                      <div class="flex flex-col gap-2 mt-20">
                           <div class="bg-[#2f3136] rounded-xl shadow border border-[#202225] p-3">
                               <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2">Jak se cítíš?</h3>
                               <div class="flex justify-between px-1" id="mood-container">${generateMoodSlider(data.mood)}</div>
@@ -465,15 +491,6 @@ export function renderDashboard() {
                       </div>
                   </div>
 
-                  <!-- FACT -->
-                  <div class="bg-gradient-to-r from-[#202225] to-[#2f3136] rounded-xl shadow border border-[#202225] p-4 relative overflow-hidden group">
-                      <div class="absolute top-0 right-0 p-3 opacity-5 text-5xl rotate-12 group-hover:rotate-0 transition-transform duration-500">💡</div>
-                      <h3 class="text-[10px] font-bold text-[#eb459e] uppercase tracking-wide mb-1 flex items-center gap-2">Věděla jsi, že...</h3>
-                      <p class="text-gray-300 text-xs font-medium leading-relaxed italic pr-4 min-h-[40px]" id="dashboard-fact-text">${randomFact}</p>
-                      <button onclick="import('./js/modules/dashboard.js').then(m => m.refreshDashboardFact())" class="mt-2 text-[9px] bg-[#202225] hover:bg-[#40444b] text-gray-500 hover:text-white px-2 py-1 rounded border border-gray-700 transition flex items-center gap-1 ml-auto">
-                          <i class="fas fa-sync-alt"></i> Další
-                      </button>
-                  </div>
 
                   <!-- TETRIS WIDGET -->
                   ${(() => {
@@ -507,20 +524,6 @@ export function renderDashboard() {
     }
 }
 
-export function refreshDashboardFact() {
-    const allFacts = state.factsLibrary.raccoon.length > 0
-        ? state.factsLibrary.raccoon.map((f) => `${f.icon} ${f.text}`)
-        : ["🦝 Načítám moudra z popelnice..."];
-    const randomFact = allFacts[Math.floor(Math.random() * allFacts.length)];
-    const el = document.getElementById("dashboard-fact-text");
-    if (el) {
-        el.style.opacity = "0";
-        setTimeout(() => {
-            el.innerText = randomFact;
-            el.style.opacity = "1";
-        }, 200);
-    }
-}
 
 export function renderWelcome() {
     const container = document.getElementById("messages-container");
@@ -668,6 +671,6 @@ export function renderWelcome() {
 
     setTimeout(() => {
         const scroller = document.getElementById("chat-scroller");
-        if (scroller) scroller.scrollTop = scroller.scrollHeight;
+        if (scroller) scroller.scrollTop = 0;
     }, 100);
 }
