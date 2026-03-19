@@ -415,7 +415,7 @@ export function renderDashboard() {
                   <div class="relative z-10 px-6 mb-4 flex justify-between items-start">
                       <div id="dashboard-welcome-text">
                           <p class="text-[10px] font-bold uppercase tracking-wider opacity-80 text-white/90 mb-0.5">${niceDate}</p>
-                          <h1 class="text-2xl font-black text-white drop-shadow-md leading-tight">${greeting},<br>${getInflectedName(state.currentUser.name)} 🌞</h1>
+                          <h1 class="text-2xl font-black text-white drop-shadow-md leading-tight">${greeting},<br>${getInflectedName(state.currentUser.name, 5)} 🌞</h1>
                       </div>
                       <div class="bg-white/20 backdrop-blur-md px-2 py-1 rounded text-center shadow-sm border border-white/10">
                           <span class="block text-[8px] uppercase font-bold tracking-widest opacity-90 text-white">Spolu</span>
@@ -549,7 +549,7 @@ export function renderWelcome() {
                     </div>
                     <div class="text-gray-200 mt-2 space-y-3">
                         <p class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 leading-tight">
-                            ${greeting}, ${getInflectedName(state.currentUser.name)}! 👋<br>Vítej v nové éře naší aplikace.
+                            ${greeting}, ${getInflectedName(state.currentUser.name, 5)}! 👋<br>Vítej v nové éře naší aplikace.
                         </p>
                         <p class="text-sm text-gray-400 max-w-xl leading-relaxed">
                             Kiscord prošel kompletní transformací. Od základů jsme přepsali backend, přidali tunu nových her a vylepšili místo, kde uchováváme naše vzpomínky.

@@ -437,7 +437,7 @@ export function showDayDetail(dateKey) {
                 const sleepMap = { zombie: "Zombie 🧟‍♀️", ok: "Ujde to 😐", good: "Růženka 👸" };
                 sleepText = sleepMap[health.sleep] || "-";
             }
-            document.getElementById("modal-health-sleep").innerText = sleepText;
+            document.getElementById("modal-health-sleep").innerHTML = sleepText;
             
             let moodText = "-";
             if (typeof health.mood === 'number') {
@@ -449,7 +449,7 @@ export function showDayDetail(dateKey) {
                 const moodIcons = { happy: "🥰", tired: "😴", sad: "😢", angry: "😡", horny: "😈" };
                 moodText = `${health.mood} ${moodIcons[health.mood] || ""}`;
             }
-            document.getElementById("modal-health-mood").innerText = moodText;
+            document.getElementById("modal-health-mood").innerHTML = moodText;
 
             if (moveContainer) {
                 const moveIconMap = { gym: "💪 Fitko", walk: "🌲 Proch.", run: "🏃‍♀️ Běh", yoga: "🧘‍♀️ Jóga", sex: "🔥 Love", clean: "🧹 Úklid", bike: "🚲 Kolo" };

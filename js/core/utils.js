@@ -96,6 +96,7 @@ export function getInflectedName(name, caseNum) {
             case 4: return 'Klárku';
             case 6: return 'Klárce';
             case 7: return 'Klárkou';
+            case 5: return 'Klárko';
             default: return 'Klárka';
         }
     }
@@ -106,6 +107,7 @@ export function getInflectedName(name, caseNum) {
             case 4: return 'Jožku';
             case 6: return 'Jožkovi';
             case 7: return 'Jožkou';
+            case 5: return 'Jožko';
             default: return 'Jožka';
         }
     }

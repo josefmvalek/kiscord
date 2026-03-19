@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (user) {
                 if (user.id === lastUserId) return;
                 lastUserId = user.id;
-                
+
                 if (loginEl) loginEl.classList.add('hidden');
                 if (appEl) appEl.classList.add('show');
                 updateUserProfileUI(user);
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // Refresh data for new user
                 await initializeState();
-                
+
                 // Re-render current or default channel
                 const savedChannel = localStorage.getItem('klarka_last_channel');
                 const defaultChannel = (savedChannel && savedChannel !== 'welcome') ? savedChannel : 'dashboard';
@@ -135,7 +135,7 @@ async function handleMigrations() {
         const migratedCount = await migrateLocalDataToSupabase();
         if (migratedCount > 0) {
             localStorage.setItem('klarka_migration_done', 'true');
-            window.location.reload(); 
+            window.location.reload();
             return;
         }
     }
@@ -255,7 +255,7 @@ function renderManual() {
 function renderMusicBot() {
     const container = document.getElementById("messages-container");
     if (!container) return;
-    
+
     container.innerHTML = `
         <div class="h-full flex flex-col items-center justify-center bg-[#36393f] relative overflow-hidden animate-fade-in p-2 md:p-6">
             <!-- Glow background -->
@@ -369,10 +369,11 @@ export function updateUserProfileUI(user) {
         if (popoutAvatar) popoutAvatar.src = 'img/app/czippel2_vanoce.png';
         if (bioParagraph) {
             bioParagraph.innerHTML = `
-                📍 Student IT se srdcem v Polešovicích.<br />
-                🦝 Hlavní inženýr a mývalí nadšenec.<br />
-                🔥 Tvůrce Kiscordu – našeho digitálního domova.<br />
-                <span class="text-[#5865F2] font-bold">Motto:</span> "Všechno jde fixnout, i život." 💻
+                Systémový Administrátor & Full-Stack Boyfriend<br />
+                Třída: ENTP / Chaotický Mýval<br />
+                Bio: 📍 Kunovice<br />
+                ❄️ Status: Trvale studené ruce.<br />
+                🛡️ Upozornění: Pravidelně potřebuje updatovat morální kodex.<br />
             `;
         }
     } else {
@@ -383,10 +384,11 @@ export function updateUserProfileUI(user) {
         if (popoutAvatar) popoutAvatar.src = 'img/app/klarka_profilovka.webp';
         if (bioParagraph) {
             bioParagraph.innerHTML = `
-                📍 Vrchní navigátorka a milovnice klidu.<br />
-                🦉 Spirituální sova, co ponocuje s Jožkou.<br />
-                🔥 Nejdůležitější část celého Kiscordu.<br />
-                <span class="text-[#eb459e] font-bold">Motto:</span> "To zvládnem, mývale." ✨
+                Role: Vrchní Fact-Checker & QA Tester<br />
+                Třída: Spirituální Sova<br />
+                Bio: 📍 Rezidentka sporného území Podolí-Kunovice.<br />
+                👀 Pasivní skill: Odmítá nosit brýle, přesto vidí všechny tvoje chyby.<br />
+                🦴 Slabina: Vlastní kotníky (a sprchové kouty).<br />
             `;
         }
     }
