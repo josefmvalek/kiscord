@@ -1,46 +1,10 @@
 import { supabase } from '../core/supabase.js';
 import { state } from '../core/state.js';
+import { isJosef } from '../core/auth.js';
 import { triggerHaptic } from '../core/utils.js';
 
 // --- DEFINICE ACHIEVEMENTŮ ---
-const ACHIEVEMENT_CATEGORIES = [
-    { id: 'tutorial', name: '🟢 The Tutorial (Naše začátky)' },
-    { id: 'exploration', name: '🔵 Exploration & World Events (Naše cesty)' },
-    { id: 'easter_eggs', name: '🔴 Inside Jokes & Easter Eggs (Naše bizáry)' },
-    { id: 'dlc', name: '🟡 Upcoming DLC (Naše roadmapa)' },
-    { id: 'health_system', name: '🩺 Health & System (Automatické)' }
-];
-
-const ACHIEVEMENT_LIST = [
-    // 🟢 The Tutorial (Naše začátky)
-    { id: 'math_cipher', category: 'tutorial', title: 'Matematická šifra', description: 'Úspěšné získání legendárních výpisků z matematiky, které odstartovalo celou naši story.', icon: '📐', color: 'from-green-400 to-green-600' },
-    { id: 'discord_residents', category: 'tutorial', title: 'Discord Residents', description: 'Prolomení hranice 6 hodin v jednom kuse v callu bez jediného „dropu“ konverzace.', icon: '🎧', color: 'from-[#5865F2] to-indigo-600' },
-    { id: 'hello_world', category: 'tutorial', title: 'Hello World', description: 'Oficiální „zakliknutí“ vztahu v aplikaci (24. 12.).', icon: '💻', color: 'from-pink-400 to-rose-600' },
-    { id: 'sidequest_starter', category: 'tutorial', title: 'Sidequest Starter', description: 'Absolvování prvního společného táboráku u Vlčnovských búd.', icon: '🔥', color: 'from-orange-400 to-red-500' },
-
-    // 🔵 Exploration & World Events (Naše cesty)
-    { id: 'mammoth_hunters', category: 'exploration', title: 'Lovci mamutů', description: 'Přežití prvního oficiálního rande v Boršicích v mrazivých podmínkách.', icon: '🦣', color: 'from-cyan-400 to-blue-600' },
-    { id: 'golden_hour', category: 'exploration', title: 'Zlatá hodinka', description: 'Nalezení Slunce u Buchlovského kamene.', icon: '🌅', color: 'from-yellow-300 to-orange-500' },
-    { id: 'geopolitics', category: 'exploration', title: 'Geopolitický převrat', description: 'Úspěšné přesvědčení občana Podolí, že je ve skutečnosti hrdým Kunovjanem.', icon: '🌍', color: 'from-emerald-400 to-teal-600' },
-    { id: 'survival_mode', category: 'exploration', title: 'Survival Mode', description: 'Bezpečný návrat domů autem, kterému se uprostřed noci rozhodla vypovědět službu světla.', icon: '🚗', color: 'from-neutral-600 to-neutral-900' },
-
-    // 🔴 Inside Jokes & Easter Eggs (Naše bizáry)
-    { id: 'atc_control', category: 'easter_eggs', title: 'Řízení letového provozu', description: 'Správná identifikace letadla vs. hvězdy dříve, než proběhne povinný „fact-check“.', icon: '✈️', color: 'from-red-400 to-red-600' },
-    { id: 'newton_sacrifice', category: 'easter_eggs', title: 'Newtonova oběť', description: 'Praktický důkaz toho, že přisednutí vlastního kotníku vede k okamžitému rebuildu končetiny v sádře.', icon: '🦵', color: 'from-zinc-400 to-zinc-600' },
-    { id: 'sowl_synergy', category: 'easter_eggs', title: 'Sowl & Raccoon Synergy', description: 'Harmonické spojení moudré sovy a mývala.', icon: '🦉', color: 'from-purple-400 to-fuchsia-600' },
-
-    // 🟡 Upcoming DLC (Naše roadmapa)
-    { id: 'alps_dlc', category: 'dlc', title: 'Alps Expansion Pack', description: 'Společné nasazení ve Woferlgutu.', icon: '🏔️', color: 'from-amber-200 to-yellow-500' },
-    { id: 'fit_survivors', category: 'dlc', title: 'FIT Survivors', description: 'Úspěšné zkompilování prvního semestru na VUT FIT bez ztráty duševního zdraví.', icon: '💻', color: 'from-red-600 to-red-800' },
-    { id: 'cips_alpha', category: 'dlc', title: 'Cip’s Alpha Version', description: 'Pořízení prvního psa a jeho oficiální pojmenování podle schválené dokumentace.', icon: '🐕', color: 'from-yellow-600 to-amber-800' },
-
-    // 🩺 Health & System (Automatické)
-    { id: 'hydration_master', category: 'health_system', title: 'Piháchův Vodník', description: 'Bez hydrování není žití. Vypito minimálně 8/8 pohárků vody za den.', icon: '💧', color: 'from-blue-400 to-cyan-500' },
-    { id: 'sleeping_beauty', category: 'health_system', title: 'Šípková Růženka', description: 'Poctivý 7+ hodinový spánek držen alespoň 7 dní v kuse.', icon: '👸', color: 'from-pink-300 to-purple-400' },
-    { id: 'euphoria', category: 'health_system', title: 'Vrchol Nálady', description: 'Dosažena úroveň štěstí 10/10.', icon: '🌞', color: 'from-yellow-400 to-yellow-600' },
-    { id: 'zombie_survivor', category: 'health_system', title: 'Zombie Mód', description: 'Zvládnutý den s méně než 4 hodinami spánku.', icon: '🧟', color: 'from-gray-600 to-gray-800' },
-    { id: 'bucket_starter', category: 'health_system', title: 'Snílci', description: 'Přidána první společná položka do Bucket Listu.', icon: '🚀', color: 'from-orange-400 to-red-500' }
-];
+// ACHIEVEMENT_CATEGORIES and ACHIEVEMENT_LIST are now fetched from state.achievementCategories and state.achievementDefinitions
 
 // let unlockedState = []; // ODSTRANĚNO - nyní používáme state.achievements
 let subscription = null;
@@ -62,6 +26,12 @@ export async function renderAchievements() {
                 </div>
                 <h1 class="relative z-10 text-3xl lg:text-4xl font-black text-white tracking-tight drop-shadow-lg text-center uppercase">Síň Slávy</h1>
                 <p class="relative z-10 text-gray-400 font-medium mt-2 text-center max-w-md">Naše příběhy a milníky vytesané do kamene.</p>
+                
+                ${isJosef(state.currentUser) ? `
+                    <button onclick="import('./js/modules/achievements.js').then(m => m.showAddAchievementModal())" class="relative z-10 mt-4 bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-4 py-2 rounded-lg font-bold shadow-lg transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Nový Achievement
+                    </button>
+                ` : ''}
                 
                 <div id="achievements-progress" class="mt-6 w-full max-w-md relative z-10 hidden">
                     <div class="flex justify-between text-xs font-bold text-gray-400 mb-1">
@@ -105,7 +75,7 @@ function renderCategories() {
     if (progressEl) {
         progressEl.classList.remove('hidden');
         const unlockedCount = state.achievements.length;
-        const totalCount = ACHIEVEMENT_LIST.length;
+        const totalCount = state.achievementDefinitions.length;
         const percentage = totalCount > 0 ? Math.round((unlockedCount / totalCount) * 100) : 0;
         
         document.getElementById('progress-text').innerText = `${unlockedCount} / ${totalCount} (${percentage}%)`;
@@ -114,8 +84,8 @@ function renderCategories() {
 
     let html = '';
 
-    ACHIEVEMENT_CATEGORIES.forEach(category => {
-        const categoryAchievements = ACHIEVEMENT_LIST.filter(a => a.category === category.id);
+    state.achievementCategories.forEach(category => {
+        const categoryAchievements = state.achievementDefinitions.filter(a => a.category === category.id);
         if (categoryAchievements.length === 0) return;
 
         html += `
@@ -270,7 +240,7 @@ export async function autoUnlock(id) {
         window.triggerConfetti();
     }
     
-    const achievementObj = ACHIEVEMENT_LIST.find(a => a.id === id);
+    const achievementObj = state.achievementDefinitions.find(a => a.id === id);
     if (achievementObj) {
         // Notifikace pro uživatele (pokud UI běží)
         window.dispatchEvent(new CustomEvent('notification', { 
@@ -340,5 +310,84 @@ export async function checkHealthAchievements(currentDateKey, healthData, allHea
         if (consecutiveGoodSleep >= 7) {
             await autoUnlock('sleeping_beauty');
         }
+    }
+}
+
+export function showAddAchievementModal() {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in text-left';
+    modal.innerHTML = `
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="this.parentElement.remove()"></div>
+        <div class="bg-[#2f3136] border border-[#faa61a]/20 w-full max-w-lg rounded-2xl shadow-2xl relative overflow-hidden">
+            <div class="p-6">
+                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-trophy text-[#faa61a]"></i> Nový Achievement
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">ID (unikátní, např. alps_trip)</label>
+                        <input type="text" id="ach-id" class="w-full bg-[#202225] text-white p-2.5 rounded-xl border border-white/5 outline-none focus:border-[#faa61a] transition" placeholder="alps_trip">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Název</label>
+                        <input type="text" id="ach-title" class="w-full bg-[#202225] text-white p-2.5 rounded-xl border border-white/5 outline-none focus:border-[#faa61a] transition" placeholder="Alpský dobyvatel">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Kategorie</label>
+                        <select id="ach-category" class="w-full bg-[#202225] text-white p-2.5 rounded-xl border border-white/5 outline-none focus:border-[#faa61a] transition">
+                            ${state.achievementCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Popis</label>
+                        <textarea id="ach-desc" rows="2" class="w-full bg-[#202225] text-white p-2.5 rounded-xl border border-white/5 outline-none focus:border-[#faa61a] transition resize-none"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ikona (Emoji)</label>
+                        <input type="text" id="ach-icon" class="w-full bg-[#202225] text-white p-2.5 rounded-xl border border-white/5 outline-none focus:border-[#faa61a] transition text-center" placeholder="🏔️">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Barva (Tailwind gradient)</label>
+                        <input type="text" id="ach-color" class="w-full bg-[#202225] text-white p-2.5 rounded-xl border border-white/5 outline-none focus:border-[#faa61a] transition" value="from-amber-200 to-yellow-500">
+                    </div>
+                </div>
+                <button onclick="import('./js/modules/achievements.js').then(m => m.saveNewAchievement())" class="w-full mt-6 bg-[#faa61a] hover:bg-[#e09216] text-black font-black py-3 rounded-xl shadow-lg transition transform hover:scale-[1.02] active:scale-95">
+                    Vytvořit milník
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+export async function saveNewAchievement() {
+    const id = document.getElementById('ach-id').value.trim();
+    const title = document.getElementById('ach-title').value.trim();
+    const category = document.getElementById('ach-category').value;
+    const description = document.getElementById('ach-desc').value.trim();
+    const icon = document.getElementById('ach-icon').value.trim() || '🏆';
+    const color = document.getElementById('ach-color').value.trim();
+
+    if (!id || !title) {
+        if (window.showNotification) window.showNotification("ID a Název jsou povinné!", "error");
+        return;
+    }
+
+    try {
+        const { data, error } = await supabase.from('achievement_definitions').insert([{
+            id, category, title, description, icon, color
+        }]).select();
+
+        if (error) throw error;
+
+        if (data && data[0]) {
+            state.achievementDefinitions.push(data[0]);
+            if (window.showNotification) window.showNotification("Achievement vytvořen! 🏆", "success");
+            document.querySelector('.animate-fade-in')?.remove();
+            renderCategories();
+        }
+    } catch (err) {
+        console.error("Failed to save achievement:", err);
+        if (window.showNotification) window.showNotification("Chyba při ukládání (ID musí být unikátní).", "error");
     }
 }

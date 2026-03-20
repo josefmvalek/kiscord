@@ -26,7 +26,14 @@ export function renderDailyQuestions() {
     container.innerHTML = `
         <div class="h-full bg-[#36393f] flex flex-col font-sans animate-fade-in">
             <!-- Header -->
-            <div class="bg-[#2f3136] shadow-sm z-10 flex-shrink-0 border-b border-[#202225] p-6 lg:p-10 flex flex-col items-center text-center">
+            <div class="bg-[#2f3136] shadow-sm z-10 flex-shrink-0 border-b border-[#202225] p-6 lg:p-10 flex flex-col items-center text-center relative">
+                <div class="absolute top-4 right-4 group">
+                    <button onclick="import('./js/modules/dailyQuestions.js').then(m => m.showAddQuestionModal())" class="bg-[#5865F2] hover:bg-[#4752c4] text-white p-3 rounded-full shadow-lg transition-all active:scale-95" title="Navrhnout novou otázku">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <span class="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-black/80 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none uppercase font-bold tracking-widest border border-gray-700">Navrhnout otázku</span>
+                </div>
+
                 <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#faa61a] to-[#eb459e] shadow-lg mb-6 flex items-center justify-center transform hover:rotate-6 transition-transform">
                     <i class="fas fa-comment-alt text-white text-3xl"></i>
                 </div>
@@ -211,5 +218,77 @@ export function cleanupRealtime() {
     if (subscription) {
         supabase.removeChannel(subscription);
         subscription = null;
+    }
+}
+
+// --- ADD NEW QUESTION ---
+
+export function showAddQuestionModal() {
+    const modal = document.createElement('div');
+    modal.id = 'question-suggest-modal';
+    modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in';
+    
+    modal.innerHTML = `
+        <div class="bg-[#36393f] w-full max-w-lg rounded-2xl shadow-2xl border border-gray-700 overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#2f3136]">
+                <h3 class="text-xl font-black text-white tracking-widest uppercase">Navrhnout otázku 🤔</h3>
+                <button onclick="this.closest('#question-suggest-modal').remove()" class="text-gray-400 hover:text-white transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-3">Text otázky</label>
+                    <textarea id="nq-text" placeholder="Např. Jaká je tvoje nejoblíbenější vzpomínka na naše začátky?" class="w-full bg-[#202225] text-white p-4 rounded-xl border-2 border-transparent focus:border-[#faa61a] outline-none transition min-h-[120px] shadow-inner text-lg leading-relaxed"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-3">Kategorie</label>
+                    <select id="nq-cat" class="w-full bg-[#202225] text-white p-4 rounded-xl border-2 border-transparent focus:border-[#faa61a] outline-none transition font-bold">
+                        <option value="love" selected>Láska & Vztahy ❤️</option>
+                        <option value="future">Budoucnost 🔮</option>
+                        <option value="deep">Hluboké zamyšlení 🧠</option>
+                        <option value="fun">Zábava & Relax 😄</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="p-6 bg-[#2f3136] border-t border-gray-700">
+                <button onclick="import('./js/modules/dailyQuestions.js').then(m => m.saveNewQuestion())" class="w-full bg-gradient-to-r from-[#faa61a] to-[#eb459e] text-white py-4 rounded-xl font-black text-lg transition shadow-[0_0_20px_rgba(250,166,26,0.2)] transform active:scale-95">
+                    PŘIDAT DO OSUDÍ 🗳️
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+export async function saveNewQuestion() {
+    const text = document.getElementById('nq-text').value.trim();
+    const category = document.getElementById('nq-cat').value;
+    
+    if (!text) return;
+    
+    triggerHaptic('success');
+    
+    try {
+        const { error } = await supabase.from('daily_questions').insert([{
+            text, category
+        }]);
+        
+        if (error) throw error;
+        
+        // Notification
+        if (window.showNotification) window.showNotification("Otázka byla přidána do poolu! 🧠", "success");
+        if (typeof window.triggerConfetti === 'function') window.triggerConfetti();
+        
+        // Close modal
+        document.getElementById('question-suggest-modal')?.remove();
+        
+    } catch (err) {
+        console.error("Save Question Error:", err);
+        alert("Chyba při ukládání: " + err.message);
     }
 }

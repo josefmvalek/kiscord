@@ -9,7 +9,7 @@ let selectedDateLocation = null;
 // --- ROUTE LOGIC ---
 
 export function addToRoute(id) {
-    const loc = state.dateLocations.find(l => l.id === id);
+    const loc = state.dateLocations.find(l => l.id == id);
     if (!loc) return;
 
     if (state.route.length >= 10) {
@@ -147,8 +147,11 @@ export function renderMap() {
                             </div>
                             <input type="text" id="planner-search" placeholder="Kam vyrazíme?" 
                                 oninput="import('./js/modules/map.js').then(m => m.searchLocations(this.value))"
-                                class="w-full bg-[#2f3136] text-gray-200 placeholder-gray-500 text-sm rounded-lg pl-10 pr-4 py-3 border border-[#202225] outline-none focus:border-[#5865F2] focus:ring-1 focus:ring-[#5865F2] transition">
+                                class="w-full bg-[#2f3136] text-gray-200 placeholder-gray-500 text-sm rounded-lg pl-10 pr-4 py-3 border border-[#202225] outline-none focus:border-[#5865F2] focus:ring-1 focus:ring-[#5865F2] transition h-[46px]">
                         </div>
+                        <button onclick="import('./js/modules/map.js').then(m => m.showAddLocationModal())" class="w-12 h-[46px] bg-[#3ba55c] hover:bg-[#2d7d46] text-white rounded-lg shadow-lg flex items-center justify-center transition transform hover:scale-105 active:scale-95" title="Přidat místo">
+                            <i class="fas fa-plus text-xl"></i>
+                        </button>
                         <button onclick="import('./js/modules/map.js').then(m => m.pickRandomLocation())" class="w-12 h-[46px] bg-[#eb459e] hover:bg-[#d63b8c] text-white rounded-lg shadow-lg flex items-center justify-center transition transform hover:scale-105 active:scale-95" title="Náhodné místo">
                             <i class="fas fa-dice text-xl"></i>
                         </button>
@@ -203,6 +206,12 @@ export function renderMap() {
                 maxZoom: 19,
             },
         ).addTo(map);
+
+        // Add Click Listener for quick Adding
+        map.on('click', (e) => {
+            if (window.showNotification) window.showNotification("Klikni na '+' nahoře pro přidání tohoto místa! 📍", "info");
+            window.lastMapClick = e.latlng;
+        });
 
         // Use state.timelineEvents if already loaded
         if (state.timelineEvents && state.timelineEvents.length > 0) {
@@ -379,7 +388,7 @@ export function filterMap(category) {
 }
 
 export function selectLocation(id) {
-    const loc = dateLocations.find((l) => l.id === id);
+    const loc = state.dateLocations.find((l) => l.id == id);
     if (!loc) return;
     selectedDateLocation = loc;
 
@@ -586,7 +595,7 @@ export function searchLocations(query) {
     renderMarkers(filtered);
 }
 export function jumpToLocation(id) {
-    const loc = state.dateLocations.find(l => l.id === id);
+    const loc = state.dateLocations.find(l => l.id == id);
     if (!loc || !state.mapInstance) return;
     
     // Switch to map channel if not already there
@@ -609,4 +618,141 @@ export function jumpToLocation(id) {
             }
         });
     }, 100);
+}
+
+// --- ADD NEW LOCATION ---
+
+export function showAddLocationModal() {
+    const coords = window.lastMapClick || { lat: 49.069, lng: 17.464 };
+    
+    const modal = document.createElement('div');
+    modal.id = 'location-add-modal';
+    modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in';
+    
+    modal.innerHTML = `
+        <div class="bg-[#36393f] w-full max-w-lg rounded-2xl shadow-2xl border border-gray-700 overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#2f3136]">
+                <h3 class="text-xl font-black text-white tracking-widest uppercase">Nové místo na mapě 📍</h3>
+                <button onclick="this.closest('#location-add-modal').remove()" class="text-gray-400 hover:text-white transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <div>
+                     <label class="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest text-center">Typ místa</label>
+                     <div class="grid grid-cols-4 gap-2">
+                        <button onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.selectedLocCat = 'view'" class="p-3 rounded-xl border-2 border-transparent bg-[#2f3136] transition flex flex-col items-center gap-1 group">
+                            <span class="text-xl">⛰️</span>
+                            <span class="text-[8px] font-black text-white group-hover:text-[#eb459e]">VÝHLED</span>
+                        </button>
+                        <button onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.selectedLocCat = 'food'" class="p-3 rounded-xl border-2 border-transparent bg-[#2f3136] transition flex flex-col items-center gap-1 group">
+                            <span class="text-xl">🍔</span>
+                            <span class="text-[8px] font-black text-white group-hover:text-[#faa61a]">JÍDLO</span>
+                        </button>
+                        <button onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.selectedLocCat = 'walk'" class="p-3 rounded-xl border-2 border-transparent bg-[#2f3136] transition flex flex-col items-center gap-1 group">
+                            <span class="text-xl">🌲</span>
+                            <span class="text-[8px] font-black text-white group-hover:text-[#3ba55c]">POHYB</span>
+                        </button>
+                        <button onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.selectedLocCat = 'fun'" class="p-3 rounded-xl border-2 border-transparent bg-[#2f3136] transition flex flex-col items-center gap-1 group">
+                            <span class="text-xl">⚡</span>
+                            <span class="text-[8px] font-black text-white group-hover:text-[#ed4245]">ZÁBAVA</span>
+                        </button>
+                     </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Název</label>
+                        <input type="text" id="nl-name" placeholder="Pěkná kavárna" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-sm">
+                    </div>
+                     <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Ikona (emoji)</label>
+                        <input type="text" id="nl-icon" placeholder="☕" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-sm text-center">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Popis</label>
+                    <textarea id="nl-desc" placeholder="Mají tam nejlepší větrníky v okolí..." class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-sm min-h-[60px]"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                     <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Latitude (Šířka)</label>
+                        <input type="number" id="nl-lat" value="${coords.lat.toFixed(6)}" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-sm">
+                    </div>
+                     <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Longitude (Délka)</label>
+                        <input type="number" id="nl-lng" value="${coords.lng.toFixed(6)}" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-sm">
+                    </div>
+                </div>
+                
+                 <p class="text-[10px] text-gray-500 italic text-center">💡 Tip: Klikni kamkoliv na mapu před otevřením tohoto okna pro automatické souřadnice.</p>
+            </div>
+            
+            <div class="p-6 bg-[#2f3136] border-t border-gray-700">
+                <button onclick="import('./js/modules/map.js').then(m => m.saveNewLocation())" class="w-full bg-[#3ba55c] hover:bg-[#2d7d46] text-white py-4 rounded-xl font-black text-lg transition shadow-xl transform active:scale-95">
+                    ULOŽIT MÍSTO 🗺️
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+export async function saveNewLocation() {
+    const name = document.getElementById('nl-name').value.trim();
+    const desc = document.getElementById('nl-desc').value.trim();
+    const icon = document.getElementById('nl-icon').value.trim() || '📍';
+    const lat = parseFloat(document.getElementById('nl-lat').value);
+    const lng = parseFloat(document.getElementById('nl-lng').value);
+    const cat = window.selectedLocCat;
+    
+    if (!name || isNaN(lat) || isNaN(lng) || !cat) {
+        alert("Vyplň název, kategorii a souřadnice!");
+        return;
+    }
+    
+    triggerHaptic('success');
+    
+    try {
+        const { supabase } = await import('../core/supabase.js');
+        const { data: newLocs, error } = await supabase.from('date_locations').insert([{
+            name,
+            description: desc,
+            icon,
+            lat,
+            lng,
+            category: cat
+        }]).select();
+        
+        if (error) throw error;
+        
+        // Update local state
+        state.dateLocations.push({
+            id: newLocs[0].id,
+            name,
+            desc,
+            icon,
+            lat,
+            lng,
+            cat
+        });
+        
+        // Notification
+        if (window.showNotification) window.showNotification(`Místo "${name}" bylo přidáno do mapy! 🎈`, "success");
+        if (typeof window.triggerConfetti === 'function') window.triggerConfetti();
+        
+        // Close modal
+        document.getElementById('location-add-modal')?.remove();
+        
+        // Refresh UI
+        renderMap(); // Re-renders list and markers
+        
+    } catch (err) {
+        console.error("Save Location Error:", err);
+        alert("Chyba při ukládání: " + err.message);
+    }
 }

@@ -50,6 +50,7 @@ import {
     playTrailer,
     openHistoryModal,
     setHistoryStatus,
+    setReactionInput,
     saveHistory,
     exportWatchlist,
     clearWatchlist,
@@ -317,43 +318,43 @@ function renderReadme() {
                 .replace(/`([^`]+)`/gim, '<code class="bg-[#2f3136] px-1 rounded text-sm font-mono text-gray-300">$1</code>')
                 .replace(/\n/gim, '<br>');
 
-            // Check for secret confession token (hidden in README.md)
-            const hasConfession = text.includes('# k i s c o r d');
-            
+            // Robust detection for the confession trigger (case-insensitive, ignores extra whitespace)
+            const hasConfession = /#\s*k\s*i\s*s\s*c\s*o\s*r\s*d/i.test(text);
+
             if (hasConfession) {
                 // FAITHFUL DISCORD UI (Secret & Authentic)
                 container.innerHTML = `
-                    <div class="h-full flex flex-col p-6 items-start animate-fade-in bg-[#36393f] font-sans">
-                        <div class="flex gap-4 items-start max-w-2xl group">
+                    <div class="h-full flex flex-col p-4 md:p-6 items-start animate-fade-in bg-[#36393f] font-sans">
+                        <div class="flex gap-3 md:gap-4 items-start max-w-full md:max-w-2xl group overflow-hidden">
                              <!-- Avatar -->
                              <div class="relative flex-shrink-0 mt-0.5">
-                                 <img src="img/app/jozka_profilovka.jpg" alt="Jožka" class="w-10 h-10 rounded-full object-cover shadow-sm bg-[#2f3136]" loading="lazy">
+                                 <img src="img/app/jozka_profilovka.jpg" alt="Jožka" class="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover shadow-sm bg-[#2f3136]" loading="lazy">
                              </div>
                              
                              <div class="flex-1 min-w-0">
-                                 <!-- Header (Removed intro text for cleaner look) -->
-                                 <div class="flex items-baseline gap-2 mb-3">
-                                     <span class="font-bold text-white hover:underline cursor-pointer">Jožka</span>
+                                 <!-- Header -->
+                                 <div class="flex items-baseline gap-2 mb-2 md:mb-3">
+                                     <span class="font-bold text-white text-sm md:text-base hover:underline cursor-pointer">Jožka</span>
                                      <span class="text-[10px] text-[#b9bbbe] font-medium">Pinned</span>
                                  </div>
                                  
                                  <!-- THE PATCH FILE BLOCK (Authentic Discord Style) -->
                                  <div onclick="import('./js/modules/confession.js').then(m => m.startConfession())" 
-                                      class="bg-[#2f3136] border border-[#202225] rounded-md p-3 flex items-center gap-4 w-full max-w-[432px] cursor-pointer hover:bg-[#32353b] transition-colors duration-150">
+                                      class="bg-[#2f3136] border border-[#202225] rounded-md p-3 flex items-center gap-3 md:gap-4 w-full max-w-[432px] cursor-pointer hover:bg-[#32353b] transition-colors duration-150">
                                      
                                      <!-- File Icon -->
-                                     <div class="w-10 h-12 bg-[#5865F2] rounded-sm flex items-center justify-center text-white text-2xl">
+                                     <div class="w-10 h-11 md:h-12 bg-[#5865F2] rounded-sm flex items-center justify-center text-white text-xl md:text-2xl flex-shrink-0">
                                          <i class="fas fa-file-code"></i>
                                      </div>
 
                                      <div class="flex-1 min-w-0">
-                                         <div class="text-[#00aff4] font-medium text-base truncate hover:underline">system_patch_v2.0.exe</div>
-                                         <div class="text-[#b9bbbe] text-xs font-medium mt-0.5">1.2 MB • Executable</div>
+                                         <div class="text-[#00aff4] font-medium text-sm md:text-base truncate hover:underline">system_patch_v2.0.exe</div>
+                                         <div class="text-[#b9bbbe] text-[10px] md:text-xs font-medium mt-0.5">1.2 MB • Executable</div>
                                      </div>
 
                                      <!-- Download Icon -->
-                                     <div class="text-[#b9bbbe] hover:text-[#dcddde] transition-colors p-2">
-                                         <i class="fas fa-download text-xl"></i>
+                                     <div class="text-[#b9bbbe] hover:text-[#dcddde] transition-colors p-1 md:p-2">
+                                         <i class="fas fa-download text-lg md:text-xl"></i>
                                      </div>
                                  </div>
                              </div>
@@ -481,6 +482,7 @@ const channelCategories = [
         items: [
             { id: 'movies', name: 'filmy', icon: '<i class="fas fa-film"></i>', type: 'text', color: '#5865F2', desc: 'Co nás čeká v kině i doma 🍿' },
             { id: 'series', name: 'seriály', icon: '<i class="fas fa-tv"></i>', type: 'text', color: '#5865F2', desc: 'Maratony pod dekou 🎞️' },
+            { id: 'watchlist', name: 'watchlist', icon: '<i class="fas fa-heart text-[#eb459e]"></i>', type: 'text', color: '#eb459e', desc: 'Náš společný seznam přání a osud 🎬🌟' },
             { id: 'games', name: 'hry', icon: '<i class="fas fa-gamepad"></i>', type: 'text', color: '#5865F2', desc: 'Vyzvi mě na souboj! ⚔️' },
             { id: 'puzzle', name: 'puzzle', icon: '<i class="fas fa-puzzle-piece"></i>', type: 'text', color: '#eb459e', desc: 'Skládejte naše vzpomínky kousek po kousku.' },
             { id: 'tetris', name: 'tetris-tracker', icon: '<i class="fas fa-shapes"></i>', type: 'text', color: '#faa61a', desc: 'Sezóna v Tetris War začíná! 🏆' }
@@ -605,6 +607,9 @@ export function switchChannel(channelId) {
         case 'series':
         case 'games': // Library Categories
             renderLibrary(channelId);
+            break;
+        case 'watchlist':
+            import('./modules/watchlist.js').then(m => m.renderWatchlist());
             break;
         case 'topics': // Quiz / Topics
             renderTopics();
@@ -748,12 +753,16 @@ function exposeGlobals() {
     window.playTrailer = playTrailer;
     window.openHistoryModal = openHistoryModal;
     window.setHistoryStatus = setHistoryStatus;
+    window.setReactionInput = setReactionInput;
     window.saveHistory = saveHistory;
     window.exportWatchlist = exportWatchlist;
     window.clearWatchlist = clearWatchlist;
     window.openPlanningModal = openPlanningModal;
     window.confirmLibraryPlan = confirmLibraryPlan;
     window.startConfession = startConfession;
+    
+    // Watchlist
+    window.rollTheDice = () => import('./modules/watchlist.js').then(m => m.rollTheDice());
 
     // Confession
     window.responseYes = responseYes;

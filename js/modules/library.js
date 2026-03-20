@@ -39,7 +39,18 @@ export function renderLibrary(category) {
         return a.localeCompare(b);
     });
 
-    let html = `<div class="p-6 pb-20 animate-fade-in space-y-10">`;
+    let html = `
+        <div class="px-6 pt-6 flex justify-between items-center max-w-7xl mx-auto w-full">
+            <h2 class="text-2xl font-black text-white flex items-center gap-3 tracking-widest uppercase">
+                <span class="bg-[#5865F2] p-2 rounded-lg shadow-lg">🎬</span>
+                ${category === 'movies' ? 'Filmy' : (category === 'series' ? 'Seriály' : 'Hry')}
+            </h2>
+            <button onclick="import('./js/modules/library.js').then(m => m.showAddMediaModal('${category}'))" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-4 py-2 rounded-lg transition-all font-bold text-sm flex items-center gap-2 shadow-lg active:scale-95">
+                <i class="fas fa-plus"></i> Přidat do knihovny
+            </button>
+        </div>
+        <div class="p-6 pb-20 animate-fade-in space-y-10">
+    `;
 
     sortedCategories.forEach((catName) => {
         const groupItems = groups[catName].sort((a, b) => a.title.localeCompare(b.title));
@@ -57,7 +68,7 @@ export function renderLibrary(category) {
             const status = historyData.status || "unseen";
             const userRating = historyData.rating || 0;
             const watchlist = state.watchlist || [];
-            const isBookmarked = watchlist.some((w) => typeof w === "object" ? w.id === item.id : w === item.id);
+            const isBookmarked = watchlist.some((w) => w.id === item.id && w.user_id === state.currentUser?.id);
 
             const safeTitle = (item.title || "").replace(/'/g, "\\'");
             const safeMagnet = (item.magnet || "").replace(/'/g, "\\'");
@@ -87,6 +98,9 @@ export function renderLibrary(category) {
                       </div>
 
                       <div class="p-3 flex flex-col flex-1">
+                          <div class="flex flex-wrap gap-1 mb-2">
+                              ${(item.mood_tags || []).map(tag => `<span class="text-[9px] bg-[#5865F2]/20 text-[#5865F2] px-1.5 py-0.5 rounded border border-[#5865F2]/20 font-bold">${tag}</span>`).join('')}
+                          </div>
                           <h3 class="font-bold text-white text-sm leading-tight mb-1 group-hover:text-[#5865F2] transition line-clamp-2" title="${item.title}">${item.title}</h3>
                           <div class="mt-auto pt-3 border-t border-[#202225] flex justify-between items-center gap-1">
                               ${item.trailer
@@ -112,26 +126,29 @@ export function renderLibrary(category) {
 
 export async function toggleWatchlist(id) {
     if (!state.watchlist) state.watchlist = [];
-    const index = state.watchlist.findIndex(w => (typeof w === 'object' ? w.id === id : w === id));
+    const index = state.watchlist.findIndex(w => w.id === id && w.user_id === state.currentUser?.id);
 
     const item = state.library[state.currentChannel].find(i => i.id === id);
     const itemType = state.currentChannel === "games" ? "game" : "movie";
 
     if (index === -1) {
-        state.watchlist.push({ id, type: itemType });
+        state.watchlist.push({ id, type: itemType, user_id: state.currentUser?.id });
         triggerHaptic('success');
         if (typeof window.showNotification === 'function') window.showNotification('Přidáno do seznamu přání ❤️', 'success');
 
         await supabase.from('library_watchlist').insert({
-            media_id: id.toString(),
+            media_id: id,
             type: itemType,
-            added_by: state.currentUser.id
+            added_by: state.currentUser?.id
         });
     } else {
         state.watchlist.splice(index, 1);
         triggerHaptic('light');
 
-        await supabase.from('library_watchlist').delete().match({ media_id: id.toString() });
+        await supabase.from('library_watchlist').delete().match({ 
+            media_id: id,
+            added_by: state.currentUser?.id
+        });
     }
 
     renderLibrary(state.currentChannel);
@@ -189,31 +206,96 @@ export function openGoogleDrive() {
 let currentHistoryStatus = "unseen";
 
 export function openHistoryModal(id) {
-    const item = state.watchHistory[id] || { status: "unseen", date: "", reaction: "" };
+    // In current state.js, watchHistory stores an object: { status, date, reaction, rating }
+    let item = state.watchHistory[id];
+    
+    // Fallback if it's the old simple string format or missing
+    if (!item || typeof item === 'string') {
+        item = { 
+            status: typeof item === 'string' ? item : "unseen", 
+            date: "", 
+            reaction: "", 
+            rating: state.ratings[id] || 0 
+        };
+    }
 
     document.getElementById("history-item-id").value = id;
     document.getElementById("history-modal").style.display = "flex";
-
+    
+    // Set date: from item or today
     if (item.date) document.getElementById("history-date").value = item.date;
     else document.getElementById("history-date").valueAsDate = new Date();
 
-    document.getElementById("history-reaction").value = item.reaction || "";
-
+    const reaction = item.reaction || "";
+    document.getElementById("history-reaction").value = reaction;
+    
+    // Highlight verdict button if matches
+    document.querySelectorAll(".verdict-btn").forEach(btn => {
+        btn.classList.remove("active");
+        const verdictText = btn.querySelector("span:last-child")?.innerText;
+        const emoji = btn.querySelector("span:first-child")?.innerText;
+        if (reaction.includes(emoji) || (verdictText && reaction.toLowerCase().includes(verdictText.toLowerCase()))) {
+            btn.classList.add("active");
+        }
+    });
+    
+    // Trigger star rating and status UI updates
+    setStarRating(item.rating || 0);
     setHistoryStatus(item.status);
+}
+
+export function setReactionInput(text, btn) {
+    const input = document.getElementById("history-reaction");
+    if (!input) return;
+
+    // Reset all verdict buttons
+    document.querySelectorAll(".verdict-btn").forEach(b => b.classList.remove("active"));
+    
+    if (btn) {
+        btn.classList.add("active");
+        // If the textarea is empty or just has another emoji, replace it. 
+        // If it has a custom comment, just prepend the verdict.
+        const currentVal = input.value.trim();
+        const emojiMatch = currentVal.match(/^(\p{Emoji_Presentation}\s[^\n]+)/u);
+        
+        if (!currentVal || emojiMatch) {
+            input.value = text;
+        } else {
+            // Keep the comment but update the verdict if it's there
+            input.value = text + "\n" + currentVal;
+        }
+    } else {
+        input.value = text;
+    }
+}
+
+export function setStarRating(rating) {
+    document.getElementById("history-rating").value = rating;
+    const stars = document.querySelectorAll(".star-btn");
+    stars.forEach(btn => {
+        const r = parseInt(btn.getAttribute("data-rating"));
+        if (r <= rating) {
+            btn.classList.add("text-[#faa61a]");
+            btn.classList.remove("text-gray-600");
+        } else {
+            btn.classList.remove("text-[#faa61a]");
+            btn.classList.add("text-gray-600");
+        }
+    });
 }
 
 export function setHistoryStatus(status) {
     currentHistoryStatus = status;
 
     document.querySelectorAll(".status-btn").forEach((btn) => {
-        btn.classList.add("opacity-50", "border-gray-600");
-        btn.classList.remove("opacity-100", "border-[#eb459e]", "bg-[#2f3136]");
+        btn.classList.add("opacity-50");
+        btn.classList.remove("bg-[#40444b]", "border-[#eb459e]");
     });
 
     const activeBtn = document.getElementById(`status-${status}`);
     if (activeBtn) {
-        activeBtn.classList.remove("opacity-50", "border-gray-600");
-        activeBtn.classList.add("opacity-100", "border-[#eb459e]", "bg-[#2f3136]");
+        activeBtn.classList.remove("opacity-50");
+        activeBtn.classList.add("bg-[#40444b]", "border-[#eb459e]");
     }
 
     const dateWrapper = document.getElementById("history-date-wrapper");
@@ -232,25 +314,60 @@ export function setHistoryStatus(status) {
 }
 
 export async function saveHistory() {
-    const id = document.getElementById("history-item-id").value;
+    const id = parseInt(document.getElementById("history-item-id").value);
     const date = document.getElementById("history-date").value;
     const reaction = document.getElementById("history-reaction").value;
+    const rating = parseInt(document.getElementById("history-rating").value) || 0;
 
-    const currentRating = state.ratings[id] || 0;
+    const { supabase } = await import('../core/supabase.js');
+
+    // Logic: if not "unseen", we might want a date. 
+    const finalDate = (currentHistoryStatus !== "unseen" && !date) ? new Date().toISOString().split('T')[0] : date;
 
     if (currentHistoryStatus === "unseen") {
         delete state.watchHistory[id];
-        await supabase.from('library_ratings').delete().match({ media_id: id.toString() });
+        delete state.ratings[id];
+        await supabase.from('library_ratings').delete().match({ media_id: id });
     } else {
-        state.watchHistory[id] = currentHistoryStatus;
-        // In this version, we store rating separately in state.ratings
-        // We update the DB with both status and current rating
-        await supabase.from('library_ratings').upsert({
-            media_id: id.toString(),
-            rating: currentRating,
+        // Save to Supabase
+        const { error } = await supabase.from('library_ratings').upsert({
+            media_id: id,
+            rating: rating,
             status: currentHistoryStatus,
+            reaction: reaction,
+            seen_date: finalDate || null,
             updated_at: new Date().toISOString()
         });
+
+        if (error) {
+            console.error("Save history error:", error);
+            if (window.showNotification) window.showNotification("Chyba při ukládání... 😕", "error");
+            return;
+        }
+
+        // Update local state
+        state.ratings[id] = rating;
+        state.watchHistory[id] = {
+            rating: rating,
+            status: currentHistoryStatus,
+            date: finalDate,
+            reaction: reaction
+        };
+    }
+
+    // Refresh calendar state if date changed
+    if (finalDate) {
+        if (!state.movieHistory[finalDate]) state.movieHistory[finalDate] = [];
+        state.movieHistory[finalDate] = state.movieHistory[finalDate].filter(m => m.media_id !== id);
+        
+        if (currentHistoryStatus === 'seen') {
+            state.movieHistory[finalDate].push({
+                media_id: id,
+                rating: rating,
+                status: currentHistoryStatus,
+                reaction: reaction
+            });
+        }
     }
 
     if (window.closeModal) window.closeModal("history-modal");
@@ -259,6 +376,60 @@ export async function saveHistory() {
     if (window.showNotification) window.showNotification("Deníček aktualizován! 📝", "success");
 
     renderLibrary(state.currentChannel);
+
+    if (state.currentChannel === 'calendar') {
+        import('./calendar.js').then(m => m.renderCalendar());
+    } else if (state.currentChannel === 'watchlist') {
+        import('./watchlist.js').then(m => m.renderWatchlist());
+    }
+}
+
+export function deleteHistory() {
+    const id = document.getElementById("history-item-id").value;
+    if (!id) return;
+    document.getElementById("delete-history-modal").style.display = "flex";
+}
+
+export async function confirmDeleteHistory() {
+    const id = parseInt(document.getElementById("history-item-id").value);
+    if (!id) return;
+
+    try {
+        const { error } = await supabase.from('library_ratings').delete().match({ media_id: id });
+        if (error) throw error;
+
+        // Find and remove from movieHistory (by date)
+        if (state.watchHistory[id]?.date) {
+            const date = state.watchHistory[id].date;
+            if (state.movieHistory[date]) {
+                state.movieHistory[date] = state.movieHistory[date].filter(m => m.media_id !== id);
+            }
+        }
+
+        delete state.watchHistory[id];
+        delete state.ratings[id];
+
+        if (window.closeModal) {
+            window.closeModal("delete-history-modal");
+            window.closeModal("history-modal");
+        } else {
+            document.getElementById("delete-history-modal").style.display = "none";
+            document.getElementById("history-modal").style.display = "none";
+        }
+
+        if (window.showNotification) window.showNotification("Záznam smazán 🗑️", "success");
+
+        renderLibrary(state.currentChannel);
+        
+        if (state.currentChannel === 'calendar') {
+            import('./calendar.js').then(m => m.renderCalendar());
+        } else if (state.currentChannel === 'watchlist') {
+            import('./watchlist.js').then(m => m.renderWatchlist());
+        }
+    } catch (e) {
+        console.error("Delete history error:", e);
+        if (window.showNotification) window.showNotification("Chyba při mazání... 😕", "error");
+    }
 }
 
 // --- PLANNING ---
@@ -369,4 +540,126 @@ export async function clearWatchlist() {
     await supabase.from('library_watchlist').delete().not('media_id', 'is', null); 
     renderLibrary(state.currentChannel);
     if (window.showNotification) window.showNotification("Watchlist vyčištěn", "success");
+}
+
+// --- ADD NEW MEDIA ---
+
+export function showAddMediaModal(category) {
+    const modal = document.createElement('div');
+    modal.id = 'media-admin-modal';
+    modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in';
+    
+    const displayType = category === 'movies' ? 'film' : (category === 'series' ? 'seriál' : 'hru');
+    const categories = category === 'games' 
+        ? ["RPG", "FPS", "Strategie", "Simulátor", "Závodní", "Ostatní"]
+        : ["Akční", "Sci-Fi", "Komedie", "Animovaný", "Fantasy", "Drama", "Horor", "Romantický", "Dobrodružný", "Ostatní"];
+
+    modal.innerHTML = `
+        <div class="bg-[#36393f] w-full max-w-lg rounded-2xl shadow-2xl border border-gray-700 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#2f3136]">
+                <h3 class="text-xl font-black text-white tracking-widest uppercase">Přidat nový ${displayType} 🎬</h3>
+                <button onclick="this.closest('#media-admin-modal').remove()" class="text-gray-400 hover:text-white transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto space-y-5 custom-scrollbar">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Název</label>
+                    <input type="text" id="m-title" placeholder="Např. Inception" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Ikona (emoji)</label>
+                        <input type="text" id="m-icon" placeholder="🎬" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-center text-2xl">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Kategorie</label>
+                        <select id="m-cat" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition">
+                            ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Magnet Link (volitelné)</label>
+                    <input type="text" id="m-magnet" placeholder="magnet:?xt=..." class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-xs font-mono">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Google Drive Link (volitelné)</label>
+                    <input type="text" id="m-gdrive" placeholder="https://drive.google.com/..." class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-xs">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Mood Tags / Vibes (oddělit čárkou)</label>
+                    <input type="text" id="m-moods" placeholder="Např. Doják, Napínavé, Pohoda" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-xs">
+                </div>
+            </div>
+            
+            <div class="p-6 bg-[#2f3136] border-t border-gray-700">
+                <button onclick="import('./js/modules/library.js').then(m => m.saveNewMedia('${category}'))" class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-4 rounded-xl font-black text-lg transition shadow-xl transform active:scale-95">
+                    ULOŽIT DO KNIHOVNY 🚀
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+export async function saveNewMedia(category) {
+    const title = document.getElementById('m-title').value.trim();
+    const icon = document.getElementById('m-icon').value.trim() || "🎬";
+    const cat = document.getElementById('m-cat').value;
+    const magnet = document.getElementById('m-magnet').value.trim();
+    const gdrive = document.getElementById('m-gdrive').value.trim();
+    const moodTags = document.getElementById('m-moods').value.split(',').map(t => t.trim()).filter(t => t !== "");
+    
+    if (!title) {
+        alert("Název je povinný!");
+        return;
+    }
+    
+    const dbType = category === 'movies' ? 'movie' : (category === 'series' ? 'series' : 'game');
+    
+    triggerHaptic('success');
+    
+    try {
+        const { data: newItems, error } = await supabase.from('library_content').insert([{
+            type: dbType,
+            title, icon, category: cat, magnet, gdrive,
+            mood_tags: moodTags
+        }]).select();
+        
+        if (error) throw error;
+        
+        // Update local state
+        const newItem = newItems[0];
+        if (!state.library[category]) state.library[category] = [];
+        state.library[category].push({
+            id: newItem.id,
+            title: newItem.title,
+            icon: newItem.icon,
+            cat: newItem.category,
+            magnet: newItem.magnet,
+            gdrive: newItem.gdrive,
+            mood_tags: newItem.mood_tags
+        });
+        
+        // Close modal
+        document.getElementById('media-admin-modal')?.remove();
+        
+        // Notification
+        if (window.showNotification) window.showNotification(`${title} přidán do knihovny!`, "success");
+        if (typeof window.triggerConfetti === 'function') window.triggerConfetti();
+        
+        // Re-render
+        renderLibrary(category);
+        
+    } catch (err) {
+        console.error("Save Media Error:", err);
+        alert("Chyba při ukládání: " + err.message);
+    }
 }

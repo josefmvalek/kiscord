@@ -40,7 +40,7 @@
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <!-- Early Theme Init to prevent flash -->
   <script>
-    (function() {
+    (function () {
       const saved = localStorage.getItem('klarka_theme') || 'default';
       const root = document.documentElement;
       if (saved === 'valentines') {
@@ -60,26 +60,30 @@
   <!-- ========== LOGIN SCREEN ========== -->
   <div id="login-screen" class="fixed inset-0 z-[200] bg-[#202225] flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-gradient-to-br from-[#5865F2]/20 to-[#eb459e]/20 z-0"></div>
-    <div class="relative z-10 w-full max-w-md bg-[#36393f] rounded-xl shadow-2xl border border-[#202225] p-8 animate-fade-in">
-        <div class="text-6xl text-center mb-6">🦝</div>
-        <h2 class="text-2xl font-bold text-white text-center mb-2">Vítej v Kiscordu</h2>
-        <p class="text-gray-400 text-center mb-8 text-sm">Zadej své údaje pro vstup do našeho světa.</p>
-        
-        <form onsubmit="event.preventDefault(); import('./js/main.js').then(m => m.handleLogin(this))" class="space-y-4">
-            <div>
-                <label class="block text-[#b9bbbe] text-[10px] font-bold uppercase mb-1">E-mail</label>
-                <input type="email" name="email" required class="w-full bg-[#202225] text-white p-3 rounded border border-[#202225] outline-none focus:border-[#5865F2] transition">
-            </div>
-            <div>
-                <label class="block text-[#b9bbbe] text-[10px] font-bold uppercase mb-1">Heslo</label>
-                <input type="password" name="password" required class="w-full bg-[#202225] text-white p-3 rounded border border-[#202225] outline-none focus:border-[#5865F2] transition">
-            </div>
-            <button type="submit" class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-3 rounded font-bold transition shadow-lg mt-4 flex items-center justify-center gap-2">
-                <span>Přihlásit se</span>
-                <i class="fas fa-arrow-right text-xs"></i>
-            </button>
-            <p id="login-error" class="hidden text-red-400 text-center text-xs mt-4"></p>
-        </form>
+    <div
+      class="relative z-10 w-full max-w-md bg-[#36393f] rounded-xl shadow-2xl border border-[#202225] p-8 animate-fade-in">
+      <div class="text-6xl text-center mb-6">🦝</div>
+      <h2 class="text-2xl font-bold text-white text-center mb-2">Vítej v Kiscordu</h2>
+      <p class="text-gray-400 text-center mb-8 text-sm">Zadej své údaje pro vstup do našeho světa.</p>
+
+      <form onsubmit="event.preventDefault(); import('./js/main.js').then(m => m.handleLogin(this))" class="space-y-4">
+        <div>
+          <label class="block text-[#b9bbbe] text-[10px] font-bold uppercase mb-1">E-mail</label>
+          <input type="email" name="email" required
+            class="w-full bg-[#202225] text-white p-3 rounded border border-[#202225] outline-none focus:border-[#5865F2] transition">
+        </div>
+        <div>
+          <label class="block text-[#b9bbbe] text-[10px] font-bold uppercase mb-1">Heslo</label>
+          <input type="password" name="password" required
+            class="w-full bg-[#202225] text-white p-3 rounded border border-[#202225] outline-none focus:border-[#5865F2] transition">
+        </div>
+        <button type="submit"
+          class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-3 rounded font-bold transition shadow-lg mt-4 flex items-center justify-center gap-2">
+          <span>Přihlásit se</span>
+          <i class="fas fa-arrow-right text-xs"></i>
+        </button>
+        <p id="login-error" class="hidden text-red-400 text-center text-xs mt-4"></p>
+      </form>
     </div>
   </div>
 
@@ -120,16 +124,14 @@
           class="h-[52px] bg-[var(--bg-tertiary)] flex items-center px-2 w-full cursor-pointer hover:bg-[#34373c] transition select-none"
           onclick="toggleUserPopout()">
           <div class="relative w-8 h-8 mr-2 group">
-            <img id="sidebar-user-avatar" src="img/app/klarka_profilovka.webp" alt="Avatar" class="w-8 h-8 rounded-full object-cover"
-              loading="lazy" />
+            <img id="sidebar-user-avatar" src="img/app/klarka_profilovka.webp" alt="Avatar"
+              class="w-8 h-8 rounded-full object-cover" loading="lazy" />
             <div
               class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--green)] rounded-full border-2 border-[#292b2f]">
             </div>
           </div>
           <div class="flex-1 overflow-hidden">
-            <div id="sidebar-user-name" class="text-[var(--text-header)] text-xs font-bold truncate">
-              Klárka
-            </div>
+            <div id="sidebar-user-name" class="text-[var(--text-header)] text-xs font-bold truncate">&nbsp;</div>
             <div class="text-[var(--interactive-normal)] text-[10px] truncate">
               #1337 • <span id="user-status">Online</span>
             </div>
@@ -152,9 +154,8 @@
         </button>
 
         <i id="channel-icon" class="fas fa-hashtag text-gray-500 text-xl mr-2"></i>
-        <span id="channel-name" class="font-bold text-[var(--text-header)] mr-4 truncate">uvítání</span>
-        <span id="channel-desc" class="text-xs text-[var(--interactive-normal)] truncate hidden md:block">Krásného
-          Valentýna té nejúžasnější holce pod sluncem!</span>
+        <span id="channel-name" class="font-bold text-[var(--text-header)] mr-4 truncate">&nbsp;</span>
+        <span id="channel-desc" class="text-xs text-[var(--interactive-normal)] truncate hidden md:block">&nbsp;</span>
         <div class="ml-auto flex items-center gap-4 text-[var(--interactive-normal)]">
           <div class="bg-[var(--bg-tertiary)] px-2 py-1 rounded text-xs flex items-center gap-2 w-32 md:w-48">
             <input type="text" placeholder="Hledat..." class="bg-transparent text-white focus:outline-none w-full"
@@ -250,66 +251,109 @@
         <input type="hidden" id="history-item-id" />
 
         <div>
-          <label class="block text-[#b9bbbe] text-xs font-bold uppercase mb-2">Stav</label>
+          <label class="block text-[#b9bbbe] text-[10px] font-bold uppercase mb-2 tracking-widest text-center">Jak se ti
+            to líbilo?</label>
+          <div id="star-rating" class="flex justify-center text-3xl mb-4">
+            <button onclick="import('./js/modules/library.js').then(m => m.setStarRating(1))"
+              class="star-btn transition-transform hover:scale-125 focus:outline-none" data-rating="1"><i
+                class="fas fa-star"></i></button>
+            <button onclick="import('./js/modules/library.js').then(m => m.setStarRating(2))"
+              class="star-btn transition-transform hover:scale-125 focus:outline-none" data-rating="2"><i
+                class="fas fa-star"></i></button>
+            <button onclick="import('./js/modules/library.js').then(m => m.setStarRating(3))"
+              class="star-btn transition-transform hover:scale-125 focus:outline-none" data-rating="3"><i
+                class="fas fa-star"></i></button>
+            <button onclick="import('./js/modules/library.js').then(m => m.setStarRating(4))"
+              class="star-btn transition-transform hover:scale-125 focus:outline-none" data-rating="4"><i
+                class="fas fa-star"></i></button>
+            <button onclick="import('./js/modules/library.js').then(m => m.setStarRating(5))"
+              class="star-btn transition-transform hover:scale-125 focus:outline-none" data-rating="5"><i
+                class="fas fa-star"></i></button>
+          </div>
+          <input type="hidden" id="history-rating" value="0" />
+        </div>
+
+        <div>
+          <label class="block text-[#b9bbbe] text-[10px] font-bold uppercase mb-2 tracking-widest">Stav
+            sledování</label>
           <div class="grid grid-cols-3 gap-2">
-            <button onclick="setHistoryStatus('unseen')" id="status-unseen"
-              class="status-btn p-2 rounded border border-gray-600 hover:bg-[#40444b] text-center transition opacity-50">
-              <div class="text-xl mb-1">❌</div>
-              <div class="text-[10px] font-bold text-gray-300">Neviděno</div>
+            <button onclick="import('./js/modules/library.js').then(m => m.setHistoryStatus('unseen'))"
+              id="status-unseen"
+              class="status-btn p-3 rounded-xl border border-gray-700 hover:bg-[#40444b] text-center transition opacity-50 flex flex-col items-center">
+              <span class="text-xl mb-1">💤</span>
+              <span class="text-[9px] font-black uppercase text-gray-400">V plánu</span>
             </button>
-            <button onclick="setHistoryStatus('watching')" id="status-watching"
-              class="status-btn p-2 rounded border border-gray-600 hover:bg-[#40444b] text-center transition opacity-50">
-              <div class="text-xl mb-1">👀</div>
-              <div class="text-[10px] font-bold text-blue-300">
-                Rozkoukáno
-              </div>
+            <button onclick="import('./js/modules/library.js').then(m => m.setHistoryStatus('watching'))"
+              id="status-watching"
+              class="status-btn p-3 rounded-xl border border-gray-700 hover:bg-[#40444b] text-center transition opacity-50 flex flex-col items-center">
+              <span class="text-xl mb-1">🍿</span>
+              <span class="text-[9px] font-black uppercase text-blue-400">Koukáme</span>
             </button>
-            <button onclick="setHistoryStatus('seen')" id="status-seen"
-              class="status-btn p-2 rounded border border-gray-600 hover:bg-[#40444b] text-center transition opacity-50">
-              <div class="text-xl mb-1">✅</div>
-              <div class="text-[10px] font-bold text-green-400">Viděno</div>
+            <button onclick="import('./js/modules/library.js').then(m => m.setHistoryStatus('seen'))" id="status-seen"
+              class="status-btn p-3 rounded-xl border border-gray-700 hover:bg-[#40444b] text-center transition opacity-50 flex flex-col items-center">
+              <span class="text-xl mb-1">🔥</span>
+              <span class="text-[9px] font-black uppercase text-green-400">Viděno</span>
             </button>
           </div>
         </div>
 
-        <div id="history-date-wrapper" class="hidden transition-all">
-          <label class="block text-[#b9bbbe] text-xs font-bold uppercase mb-1">Kdy jsme to viděli?</label>
+        <div id="history-date-wrapper" class="hidden animate-slide-up">
+          <label class="block text-[#b9bbbe] text-[10px] font-bold uppercase mb-1 tracking-widest">Kdy to bylo?</label>
           <input type="date" id="history-date"
-            class="w-full bg-[#202225] text-white p-2 rounded border border-[#202225] focus:border-[#eb459e] outline-none text-sm" />
+            class="w-full bg-[#202225] text-white p-2.5 rounded-lg border border-[#2f3136] focus:border-[#eb459e] outline-none text-sm shadow-inner" />
         </div>
 
-        <div id="history-reaction-wrapper" class="hidden transition-all">
-          <label class="block text-[#b9bbbe] text-xs font-bold uppercase mb-1">Tvoje reakce</label>
-          <div class="flex gap-2 mb-2">
-            <button onclick="setReactionInput('❤️')"
-              class="flex-1 bg-[#202225] hover:bg-[#2f3136] py-1 rounded text-lg">
-              ❤️
+        <div id="history-reaction-wrapper" class="hidden animate-slide-up space-y-4">
+          <label class="block text-[#b9bbbe] text-[10px] font-bold uppercase mb-1 tracking-widest leading-none">Tvůj
+            verdikt</label>
+          <div class="grid grid-cols-3 sm:grid-cols-5 gap-2">
+            <button onclick="import('./js/modules/library.js').then(m => m.setReactionInput('💖 Srdcovka', this))"
+              class="verdict-btn bg-[#202225] hover:bg-[#eb459e]/10 border border-[#2f3136] rounded-xl p-2.5 transition flex flex-col items-center gap-1 group">
+              <span class="text-xl group-hover:scale-110 transition">💖</span>
+              <span class="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">Srdcovka</span>
             </button>
-            <button onclick="setReactionInput('😂')"
-              class="flex-1 bg-[#202225] hover:bg-[#2f3136] py-1 rounded text-lg">
-              😂
+            <button onclick="import('./js/modules/library.js').then(m => m.setReactionInput('🍿 Pohodička', this))"
+              class="verdict-btn bg-[#202225] hover:bg-[#5865F2]/10 border border-[#2f3136] rounded-xl p-2.5 transition flex flex-col items-center gap-1 group">
+              <span class="text-xl group-hover:scale-110 transition">🍿</span>
+              <span class="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">Pohoda</span>
             </button>
-            <button onclick="setReactionInput('😭')"
-              class="flex-1 bg-[#202225] hover:bg-[#2f3136] py-1 rounded text-lg">
-              😭
+            <button onclick="import('./js/modules/library.js').then(m => m.setReactionInput('🧠 Hluboké', this))"
+              class="verdict-btn bg-[#202225] hover:bg-[#faa61a]/10 border border-[#2f3136] rounded-xl p-2.5 transition flex flex-col items-center gap-1 group">
+              <span class="text-xl group-hover:scale-110 transition">🧠</span>
+              <span class="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">Hluboké</span>
             </button>
-            <button onclick="setReactionInput('🤯')"
-              class="flex-1 bg-[#202225] hover:bg-[#2f3136] py-1 rounded text-lg">
-              🤯
+            <button onclick="import('./js/modules/library.js').then(m => m.setReactionInput('😴 Nuda', this))"
+              class="verdict-btn bg-[#202225] hover:bg-[#b9bbbe]/10 border border-[#2f3136] rounded-xl p-2.5 transition flex flex-col items-center gap-1 group">
+              <span class="text-xl group-hover:scale-110 transition">😴</span>
+              <span class="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">Nuda</span>
             </button>
-            <button onclick="setReactionInput('😴')"
-              class="flex-1 bg-[#202225] hover:bg-[#2f3136] py-1 rounded text-lg">
-              😴
+            <button onclick="import('./js/modules/library.js').then(m => m.setReactionInput('👎 Blbost', this))"
+              class="verdict-btn bg-[#202225] hover:bg-[#ed4245]/10 border border-[#2f3136] rounded-xl p-2.5 transition flex flex-col items-center gap-1 group">
+              <span class="text-xl group-hover:scale-110 transition">👎</span>
+              <span class="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">Blbost</span>
             </button>
           </div>
-          <input type="text" id="history-reaction" placeholder="Nebo napiš vlastní..."
-            class="w-full bg-[#202225] text-white p-2 rounded border border-[#202225] focus:border-[#eb459e] outline-none text-sm" />
+
+          <div class="relative group mt-2">
+            <textarea id="history-reaction" placeholder="Dojmy, pocity, vzpomínky..."
+              class="w-full bg-[#202225] text-white p-3.5 rounded-xl border border-[#2f3136] focus:border-[#eb459e]/50 outline-none transition min-h-[100px] text-sm resize-none shadow-inner custom-scrollbar italic placeholder:text-gray-600"></textarea>
+            <div
+              class="absolute bottom-3 right-3 text-[9px] text-gray-600 group-focus-within:text-[#eb459e] transition flex items-center gap-1 pointer-events-none">
+              <i class="fas fa-feather-alt opacity-50"></i> Deníček
+            </div>
+          </div>
         </div>
 
-        <button onclick="saveHistory()"
-          class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-3 rounded font-bold mt-2 shadow-lg">
-          Uložit záznam
-        </button>
+        <div class="flex gap-3 mt-4">
+          <button onclick="import('./js/modules/library.js').then(m => m.deleteHistory())" 
+            class="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 py-3 rounded-xl font-bold transition border border-red-500/30">
+            <i class="fas fa-trash-alt mr-2 text-xs"></i>Smazat
+          </button>
+          <button onclick="saveHistory()"
+            class="flex-[2] bg-[#5865F2] hover:bg-[#4752c4] text-white py-3 rounded-xl font-bold shadow-lg transition">
+            Uložit záznam
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -334,7 +378,8 @@
             Název
           </h3>
           <p id="gallery-counter" class="text-gray-400 text-sm">1 / 5</p>
-          <button onclick="import('./js/modules/timeline.js').then(m => m.deleteCurrentPhoto())" class="mt-4 text-xs text-red-500 hover:text-red-400 transition flex items-center gap-1 mx-auto">
+          <button onclick="import('./js/modules/timeline.js').then(m => m.deleteCurrentPhoto())"
+            class="mt-4 text-xs text-red-500 hover:text-red-400 transition flex items-center gap-1 mx-auto">
             <i class="fas fa-trash-alt"></i> Smazat tuhle fotku
           </button>
         </div>
@@ -544,7 +589,8 @@
   </div>
 
   <div id="delete-photo-modal" class="fixed inset-0 z-[150] hidden modal-backdrop items-center justify-center p-4">
-    <div class="bg-[#36393f] rounded-xl shadow-2xl w-full max-w-sm border border-[#ed4245] p-6 text-center animate-fade-in">
+    <div
+      class="bg-[#36393f] rounded-xl shadow-2xl w-full max-w-sm border border-[#ed4245] p-6 text-center animate-fade-in">
       <div class="text-4xl mb-3 text-[#ed4245]">
         <i class="fas fa-trash-alt"></i>
       </div>
@@ -558,6 +604,28 @@
           Zrušit
         </button>
         <button onclick="import('./js/modules/timeline.js').then(m => m.confirmDeletePhoto())"
+          class="flex-1 bg-[#ed4245] hover:bg-[#c03537] text-white py-2 rounded font-bold transition">
+          Smazat
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="delete-history-modal" class="fixed inset-0 z-[150] hidden modal-backdrop items-center justify-center p-4">
+    <div class="bg-[#36393f] rounded-xl shadow-2xl w-full max-w-sm border border-[#ed4245] p-6 text-center animate-fade-in">
+      <div class="text-4xl mb-3 text-[#ed4245]">
+        <i class="fas fa-trash-alt"></i>
+      </div>
+      <h3 class="text-xl font-bold text-white mb-2">Smazat záznam?</h3>
+      <p class="text-gray-300 mb-6 text-sm">
+        Opravdu chceš tento záznam z deníčku smazat? Tuhle akci nejde vzít zpět.
+      </p>
+      <div class="flex gap-3">
+        <button onclick="closeModal('delete-history-modal')"
+          class="flex-1 bg-[#2f3136] hover:bg-[#40444b] text-white py-2 rounded font-bold transition">
+          Zrušit
+        </button>
+        <button onclick="import('./js/modules/library.js').then(m => m.confirmDeleteHistory())"
           class="flex-1 bg-[#ed4245] hover:bg-[#c03537] text-white py-2 rounded font-bold transition">
           Smazat
         </button>
@@ -679,7 +747,8 @@
             <h4 class="text-xs font-bold text-[#3ba55c] uppercase flex items-center gap-2">
               <i class="fas fa-notes-medical"></i> Záznam dne
             </h4>
-            <button onclick="import('./js/modules/calendar.js').then(m => m.toggleHealthEdit())" class="text-gray-400 hover:text-white transition px-2">
+            <button onclick="import('./js/modules/calendar.js').then(m => m.toggleHealthEdit())"
+              class="text-gray-400 hover:text-white transition px-2">
               <i class="fas fa-edit"></i>
             </button>
           </div>
@@ -707,24 +776,31 @@
             <div class="flex gap-2">
               <div class="flex-1">
                 <label class="text-gray-500 text-[10px] uppercase block mb-1">Voda (sklenice)</label>
-                <input type="number" id="edit-health-water" min="0" max="20" class="w-full bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none focus:border-[#5865F2]">
+                <input type="number" id="edit-health-water" min="0" max="20"
+                  class="w-full bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none focus:border-[#5865F2]">
               </div>
               <div class="flex-1">
                 <label class="text-gray-500 text-[10px] uppercase block mb-1">Spánek (hodiny)</label>
-                <input type="number" step="0.5" id="edit-health-sleep" min="0" max="24" class="w-full bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none focus:border-[#5865F2]">
+                <input type="number" step="0.5" id="edit-health-sleep" min="0" max="24"
+                  class="w-full bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none focus:border-[#5865F2]">
               </div>
             </div>
             <div>
               <label class="text-gray-500 text-[10px] uppercase block mb-1">Nálada (0-10)</label>
-              <input type="number" id="edit-health-mood" min="0" max="10" class="w-full bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none focus:border-[#5865F2]">
+              <input type="number" id="edit-health-mood" min="0" max="10"
+                class="w-full bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none focus:border-[#5865F2]">
             </div>
             <div>
-              <label class="text-gray-500 text-[10px] uppercase block mb-1">Pohyb (odděleno čárkou: gym, walk, run, yoga, sex, clean)</label>
-              <input type="text" id="edit-health-movement" placeholder="např. walk, gym" class="w-full bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none focus:border-[#5865F2]">
+              <label class="text-gray-500 text-[10px] uppercase block mb-1">Pohyb (odděleno čárkou: gym, walk, run,
+                yoga, sex, clean)</label>
+              <input type="text" id="edit-health-movement" placeholder="např. walk, gym"
+                class="w-full bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none focus:border-[#5865F2]">
             </div>
             <div class="flex justify-end gap-2 mt-2">
-              <button onclick="import('./js/modules/calendar.js').then(m => m.toggleHealthEdit())" class="bg-[#2f3136] hover:bg-[#40444b] text-white px-3 py-1.5 rounded transition text-xs font-bold">Zrušit</button>
-              <button onclick="import('./js/modules/calendar.js').then(m => m.saveHealthRecord())" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-3 py-1.5 rounded transition text-xs font-bold">Uložit</button>
+              <button onclick="import('./js/modules/calendar.js').then(m => m.toggleHealthEdit())"
+                class="bg-[#2f3136] hover:bg-[#40444b] text-white px-3 py-1.5 rounded transition text-xs font-bold">Zrušit</button>
+              <button onclick="import('./js/modules/calendar.js').then(m => m.saveHealthRecord())"
+                class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-3 py-1.5 rounded transition text-xs font-bold">Uložit</button>
             </div>
           </div>
         </div>
@@ -737,7 +813,7 @@
     <img id="popout-user-avatar" src="img/app/klarka_profilovka.webp" class="popout-avatar object-cover" />
     <div class="popout-badges text-xl">🏆 🦉</div>
     <div class="pt-12 pb-4 px-4">
-      <h3 id="popout-user-name" class="text-white font-bold text-lg">Klárka</h3>
+      <h3 id="popout-user-name" class="text-white font-bold text-lg">&nbsp;</h3>
       <p class="text-gray-400 text-xs border-b border-gray-700 pb-3">
         #1337 • Vrchní Fact-Checker
       </p>
@@ -753,7 +829,8 @@
         </p>
       </div>
 
-      <button onclick="import('./js/core/auth.js').then(m => m.signOut())" class="w-full mt-4 bg-[#ed4245]/10 hover:bg-[#ed4245] text-[#ed4245] hover:text-white py-2 rounded text-xs font-bold transition border border-[#ed4245]/20 flex items-center justify-center gap-2">
+      <button onclick="import('./js/core/auth.js').then(m => m.signOut())"
+        class="w-full mt-4 bg-[#ed4245]/10 hover:bg-[#ed4245] text-[#ed4245] hover:text-white py-2 rounded text-xs font-bold transition border border-[#ed4245]/20 flex items-center justify-center gap-2">
         <i class="fas fa-sign-out-alt"></i> Odhlásit se
       </button>
     </div>

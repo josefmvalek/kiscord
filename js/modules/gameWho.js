@@ -64,8 +64,13 @@ function renderContent(question) {
             <div class="absolute -bottom-20 -right-20 w-80 h-80 bg-[#faa61a]/5 rounded-full blur-[100px]"></div>
 
             <div class="z-10 max-w-2xl w-full">
-                <div class="mb-8">
+                <div class="mb-8 relative group">
                     <span class="px-3 py-1 bg-[#faa61a]/20 text-[#faa61a] rounded-full text-xs font-bold uppercase tracking-widest mb-4 inline-block">Kdo spíše?</span>
+                    ${state.currentUser && (state.currentUser.email.toLowerCase().includes('josef') || state.currentUser.email.toLowerCase().includes('jozk')) ? `
+                        <button onclick="import('./js/modules/gameWho.js').then(m => m.showAddGameQuestionModal())" class="absolute -top-1 right-0 md:-right-8 opacity-0 group-hover:opacity-100 bg-[#2f3136] hover:bg-[#faa61a] text-white hover:text-black p-2 rounded-lg transition shadow-lg" title="Přidat otázku">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    ` : ''}
                     <h2 class="text-3xl md:text-5xl font-black text-white leading-tight mb-4">${question.text}</h2>
                     <p class="text-gray-400">Oba vyberte jednu osobu. Schodnete se?</p>
                 </div>
@@ -206,5 +211,58 @@ export function cleanupRealtime() {
     if (subscription) {
         supabase.removeChannel(subscription);
         subscription = null;
+    }
+}
+
+export function showAddGameQuestionModal() {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in text-left';
+    modal.innerHTML = `
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="this.parentElement.remove()"></div>
+        <div class="bg-[#2f3136] border border-[#faa61a]/20 w-full max-w-md rounded-2xl shadow-2xl relative overflow-hidden">
+            <div class="p-6">
+                <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fas fa-plus-circle text-[#faa61a]"></i> Přidat "Kdo spíše?"
+                </h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Kdo spíše...</label>
+                        <textarea id="game-q-text" rows="3" class="w-full bg-[#202225] text-white p-3 rounded-xl border border-white/5 outline-none focus:border-[#faa61a] transition resize-none" placeholder="Např. ...vymyslí větší hovadinu?"></textarea>
+                    </div>
+                    <button onclick="import('./js/modules/gameWho.js').then(m => m.saveNewGameQuestion())" class="w-full bg-[#faa61a] hover:bg-[#e09216] text-black font-black py-3 rounded-xl shadow-lg transition transform hover:scale-[1.02] active:scale-95">
+                        Uložit otázku
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById('game-q-text')?.focus();
+}
+
+export async function saveNewGameQuestion() {
+    const text = document.getElementById('game-q-text')?.value.trim();
+    if (!text) {
+        if (window.showNotification) window.showNotification("Zadej text otázky!", "error");
+        return;
+    }
+
+    try {
+        const fullText = text.startsWith('Kdo spíše') ? text : `Kdo spíše ${text.startsWith('...') ? text.substring(3).trim() : text}`;
+        const { data, error } = await supabase.from('game_questions').insert([{ text: fullText }]).select();
+        if (error) throw error;
+
+        if (data && data[0]) {
+            state.gameQuestions.push(data[0]);
+            if (window.showNotification) window.showNotification("Otázka přidána! ✨", "success");
+            document.querySelector('.animate-fade-in')?.remove();
+            
+            // Jump to the new question to show it
+            sessionQuestionIndex = state.gameQuestions.length - 1;
+            renderGameWho();
+        }
+    } catch (err) {
+        console.error("Failed to save game question:", err);
+        if (window.showNotification) window.showNotification("Chyba při ukládání.", "error");
     }
 }

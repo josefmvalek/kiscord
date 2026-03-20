@@ -28,10 +28,16 @@ export function renderTopics() {
                       <h2 class="text-3xl font-extrabold text-white mb-1">Knihovna Témat</h2>
                       <p class="text-gray-400 text-sm">Hluboké otázky, abychom se poznali ještě líp.</p>
                   </div>
-                  <button onclick="import('./js/modules/topics.js').then(m => m.openRandomTopic())" class="bg-[#2f3136] hover:bg-[#eb459e] text-white px-4 py-2 rounded-lg font-bold transition border border-gray-600 hover:border-[#eb459e] shadow-lg flex items-center gap-2 group">
-                      <i class="fas fa-random group-hover:rotate-180 transition-transform duration-500"></i>
-                      <span class="hidden sm:inline">Náhodná otázka</span>
-                  </button>
+                  <div class="flex gap-2">
+                      <button onclick="import('./js/modules/topics.js').then(m => m.showAddTopicQuestionModal())" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-4 py-2 rounded-lg font-bold transition shadow-lg flex items-center gap-2">
+                          <i class="fas fa-plus"></i>
+                          <span class="hidden sm:inline">Nová otázka</span>
+                      </button>
+                      <button onclick="import('./js/modules/topics.js').then(m => m.openRandomTopic())" class="bg-[#2f3136] hover:bg-[#eb459e] text-white px-4 py-2 rounded-lg font-bold transition border border-gray-600 hover:border-[#eb459e] shadow-lg flex items-center gap-2 group">
+                          <i class="fas fa-random group-hover:rotate-180 transition-transform duration-500"></i>
+                          <span class="hidden sm:inline">Náhodná</span>
+                      </button>
+                  </div>
               </div>
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               `;
@@ -436,4 +442,91 @@ export function toggleViewBookmarks() {
 
     // Refresh question
     nextQuestion(true);
+}
+
+// --- ADD NEW TOPIC QUESTION ---
+
+export function showAddTopicQuestionModal() {
+    const modal = document.createElement('div');
+    modal.id = 'topic-add-modal';
+    modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in';
+    
+    modal.innerHTML = `
+        <div class="bg-[#36393f] w-full max-w-lg rounded-2xl shadow-2xl border border-gray-700 overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#2f3136]">
+                <h3 class="text-xl font-black text-white tracking-widest uppercase">Nová otázka do knihovny 🗨️</h3>
+                <button onclick="this.closest('#topic-add-modal').remove()" class="text-gray-400 hover:text-white transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-3 text-center">Vyber kategorii</label>
+                    <div class="grid grid-cols-2 gap-3" id="q-topic-selector">
+                        ${state.conversationTopics.map(t => `
+                            <button onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); this.dataset.selected = 'true'; window.selectedTopicId = '${t.id}'" 
+                                    class="p-4 rounded-xl border-2 border-transparent bg-[#2f3136] text-white transition hover:border-gray-500 flex flex-col items-center gap-2 group">
+                                <span class="text-2xl transition group-hover:scale-110">${t.icon}</span>
+                                <span class="text-xs font-bold uppercase tracking-tighter">${t.title}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-3">Znění otázky</label>
+                    <textarea id="nt-text" placeholder="Co bys dělala, kdybychom vyhráli v loterii?" class="w-full bg-[#202225] text-white p-4 rounded-xl border-2 border-transparent focus:border-[#eb459e] outline-none transition min-h-[100px] shadow-inner text-lg leading-relaxed"></textarea>
+                </div>
+            </div>
+            
+            <div class="p-6 bg-[#2f3136] border-t border-gray-700">
+                <button onclick="import('./js/modules/topics.js').then(m => m.saveNewTopicQuestion())" class="w-full bg-[#eb459e] hover:bg-[#d63b8c] text-white py-4 rounded-xl font-black text-lg transition shadow-xl transform active:scale-95">
+                    PŘIDAT OTÁZKU 💖
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+export async function saveNewTopicQuestion() {
+    const text = document.getElementById('nt-text').value.trim();
+    const topicId = window.selectedTopicId;
+    
+    if (!text || !topicId) {
+        alert("Vyber kategorii a napiš text!");
+        return;
+    }
+    
+    triggerHaptic('success');
+    
+    try {
+        const topic = state.conversationTopics.find(t => t.id === topicId);
+        const updatedQuestions = [...topic.questions, text];
+        
+        const { error } = await supabase.from('conversation_topics').update({
+            questions: updatedQuestions
+        }).eq('id', topicId);
+        
+        if (error) throw error;
+        
+        // Update local state
+        topic.questions = updatedQuestions;
+        
+        // Notification
+        if (window.showNotification) window.showNotification(`Otázka přidána do kategorie ${topic.title}! ✨`, "success");
+        if (typeof window.triggerConfetti === 'function') window.triggerConfetti();
+        
+        // Close modal
+        document.getElementById('topic-add-modal')?.remove();
+        
+        // Refresh UI
+        renderTopics();
+        
+    } catch (err) {
+        console.error("Save Topic Question Error:", err);
+        alert("Chyba při ukládání: " + err.message);
+    }
 }

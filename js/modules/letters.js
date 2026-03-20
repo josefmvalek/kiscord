@@ -281,6 +281,10 @@ export async function sendLetter() {
         });
 
         if (error) throw error;
+        
+        // Achievement Hook: Letter Writer
+        import('./achievements.js').then(m => m.autoUnlock('letter_writer'));
+
         triggerHaptic('success');
         if (window.showNotification) window.showNotification('Dopis odeslán! 💌', 'success');
         currentView = 'sent';

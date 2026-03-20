@@ -165,6 +165,7 @@ export function generateCalendarGrid(year, month) {
         const dayData = (state.healthData || {})[dateKey] || {};
         const plannedDate = (state.plannedDates || {})[dateKey];
         const schoolEvent = (state.schoolEvents || {})[dateKey];
+        const movieHistory = (state.movieHistory || {})[dateKey];
         const timelineEvent = state.timelineEvents.find((e) => e.event_date === dateKey);
 
         const isToday = dateKey === getTodayKey();
@@ -195,6 +196,10 @@ export function generateCalendarGrid(year, month) {
             if (timelineEvent) {
                 borderStyle = "border-[#faa61a] border-dashed";
                 iconsHtml += `<span class="text-[10px]">📜</span>`;
+            }
+
+            if (movieHistory) {
+                iconsHtml += `<span class="text-[10px]">🎬</span>`;
             }
 
             if (plannedDate) {
@@ -314,6 +319,7 @@ export function showDayDetail(dateKey) {
     const health = state.healthData[dateKey];
     const plannedDate = state.plannedDates[dateKey];
     const schoolEvent = state.schoolEvents[dateKey];
+    const movieHistory = state.movieHistory[dateKey];
     const timelineEvent = state.timelineEvents.find((e) => e.event_date === dateKey);
 
     // --- 3. Elementy sekcí ---
@@ -322,7 +328,7 @@ export function showDayDetail(dateKey) {
     const healthSection = document.getElementById("modal-section-health");
 
     // --- A) PLÁNY ---
-    const showDateSection = !isPast || timelineEvent || plannedDate;
+    const showDateSection = !isPast || timelineEvent || plannedDate || (movieHistory && movieHistory.length > 0);
 
     if (showDateSection && dateSection) {
         let plansHtml = `<h4 class="text-xs font-bold text-[#eb459e] uppercase mb-2 flex items-center gap-2"><i class="fas fa-calendar-day"></i> Plány & Vzpomínky</h4>`;
@@ -371,6 +377,28 @@ export function showDayDetail(dateKey) {
                 </div>
             </div>`;
         }
+
+        if (movieHistory && movieHistory.length > 0) {
+            plansHtml += `<div class="mt-3 space-y-2">`;
+            movieHistory.forEach(item => {
+                const libItem = [...state.library.movies, ...state.library.series].find(m => m.id === item.media_id);
+                const title = libItem ? libItem.title : "Neznámý film";
+                const ratingStars = "⭐".repeat(item.rating || 0);
+                
+                plansHtml += `
+                <div class="bg-[#2f3136] border border-[#202225] rounded-xl p-3 flex items-center gap-3 hover:border-[#eb459e]/30 transition cursor-pointer"
+                     onclick="import('./js/modules/library.js').then(m => m.openHistoryModal(${item.media_id}))">
+                    <div class="text-xl">🎬</div>
+                    <div class="flex-1 overflow-hidden">
+                        <div class="text-[11px] font-bold text-white truncate">${title}</div>
+                        <div class="text-[9px] text-yellow-400">${ratingStars}</div>
+                    </div>
+                    ${item.status === 'seen' ? '<div class="text-xs">🔥</div>' : '<div class="text-xs">🍿</div>'}
+                </div>`;
+            });
+            plansHtml += `</div>`;
+        }
+
         dateSection.innerHTML = plansHtml;
         dateSection.classList.remove("hidden");
     } else if (dateSection) {

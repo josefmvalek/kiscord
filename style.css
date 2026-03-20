@@ -156,6 +156,15 @@ textarea {
   animation: fade-in 0.3s ease-out forwards;
 }
 
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
 @keyframes bounce-short {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
@@ -275,27 +284,41 @@ textarea {
 /* --- KNIHOVNA & HODNOCENÍ --- */
 .star-btn {
   color: #4f545c;
-  /* Šedá pro neaktivní */
-  transition:
-    color 0.2s,
-    transform 0.1s;
+  transition: transform 0.2s, color 0.2s;
   cursor: pointer;
-  font-size: 1.1rem;
+  padding: 0 4px; /* Ensure continuous hit area */
 }
 
 .star-btn.active {
-  color: #faa61a;
-  /* Zlatá pro aktivní */
+  color: #faa61a !important;
 }
 
-.star-btn:hover {
+/* HOVER PREVIEW: Must override .active when parent is hovered */
+#star-rating:hover .star-btn {
+  color: #faa61a !important;
+}
+
+#star-rating:hover .star-btn:hover ~ .star-btn {
+  color: #4f545c !important;
+}
+
+/* Verdict Badges */
+.verdict-btn {
+  border: 1px solid #2f3136;
+}
+
+.verdict-btn.active {
+  background-color: rgba(235, 69, 158, 0.15) !important;
+  border-color: #eb459e !important;
+  box-shadow: 0 0 10px rgba(235, 69, 158, 0.2);
+}
+
+.verdict-btn.active span:first-child {
   transform: scale(1.2);
 }
 
-/* --- COMPONENT STYLES --- */
-.modal-backdrop {
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(3px);
+.verdict-btn.active span:last-child {
+  color: #fff !important;
 }
 
 .cmd-window {
@@ -1258,4 +1281,46 @@ button:active i.fa-tint {
 
 .animate-scale-up {
   animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* --- PUZZLE PREMIUM STYLES --- */
+.puzzle-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+    padding: 15px;
+}
+
+.puzzle-card {
+    aspect-ratio: 1/1;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background: #202225;
+}
+
+.puzzle-card:hover {
+    transform: scale(1.05);
+    border-color: #ff69b4;
+    box-shadow: 0 0 15px rgba(255, 105, 180, 0.4);
+}
+
+.puzzle-card.active {
+    border-color: #ff69b4;
+    box-shadow: 0 0 0 4px rgba(255, 105, 180, 0.2);
+}
+
+.upload-zone {
+    border: 2px dashed rgba(255, 255, 255, 0.1);
+    transition: all 0.3s;
+}
+
+.upload-zone:hover {
+    background: rgba(255, 105, 180, 0.05);
+    border-color: #ff69b4;
+}
+
+#puzzle-gallery-modal {
+    z-index: 2000;
 }

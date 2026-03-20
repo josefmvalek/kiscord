@@ -577,6 +577,11 @@ export async function nextQuestion() {
             }
         } catch (e) { /* XP is optional */ }
 
+        // Achievement Hook: Quiz Master (100% on partner's quiz)
+        if (score === questions.length && currentQuiz.creator_id !== state.currentUser.id) {
+            import('./achievements.js').then(m => m.autoUnlock('quiz_master'));
+        }
+
         triggerHaptic('success');
         renderResults(score, questions.length);
     }

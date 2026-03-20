@@ -1,6 +1,6 @@
 
 import { state } from '../core/state.js';
-// import { factsLibrary } from '../data.js'; // Smazáno, nyní ze state
+import { isJosef } from '../core/auth.js';
 import { getTodayData, updateHealth, updateBedtime, startSleep, wakeUp, startSleepTimer } from './health.js';
 import { triggerHaptic, triggerConfetti, getInflectedName } from '../core/utils.js';
 import { showNotification } from '../core/theme.js';
@@ -271,6 +271,14 @@ export function addMessageToChat(name, avatar, text, isBot = false) {
 
     container.appendChild(div);
     if (scroller) scroller.scrollTop = scroller.scrollHeight;
+
+    // Achievement Hook: Social Butterfly (10 messages)
+    if (!isBot) {
+        state.messageCount = (state.messageCount || 0) + 1;
+        if (state.messageCount >= 10) {
+            import('./achievements.js').then(m => m.autoUnlock('social_butterfly'));
+        }
+    }
 }
 
 function processCommand(text) {
@@ -479,7 +487,7 @@ export function renderDashboard() {
                           <div class="flex justify-between gap-0.5" id="water-container">${generateWaterIcons(data.water)}</div>
                       </div>
                       <!-- MOOD & MOVEMENT -->
-                      <div class="flex flex-col gap-2 mt-20">
+                      <div class="flex flex-col gap-2 mt-36">
                           <div class="bg-[#2f3136] rounded-xl shadow border border-[#202225] p-3">
                               <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2">Jak se cítíš?</h3>
                               <div class="flex justify-between px-1" id="mood-container">${generateMoodSlider(data.mood)}</div>

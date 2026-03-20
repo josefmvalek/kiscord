@@ -25,20 +25,27 @@ export const state = {
     dateRoute: [],
     watchHistory: {},
     plannedDates: {},
+    movieHistory: {}, // { 'yyyy-mm-dd': [{ media_id, rating, status }] }
     currentUser: { name: 'Klárka', email: '' },
+    isValentine: false,
+    messageCount: 0, // Pro achievement Social Butterfly
     factsLibrary: { octopus: [], owl: [], raccoon: [], fun: [] },
     library: { movies: [], series: [], games: [] },
     timelineEvents: [],
     timelineHighlights: {},
     dateLocations: [],
     conversationTopics: [],
+    achievementCategories: [],
+    achievementDefinitions: [],
     achievements: [],
     dailyQuestion: null,
     dailyAnswers: [],
     gameQuestions: [],
+    gamePrompts: [],
     gameVotes: [],
     drawStrokes: [],
     pinnedDrawing: null,
+    coopQuests: []
 };
 
 export async function initializeState() {
@@ -50,6 +57,7 @@ export async function initializeState() {
     state.watchlist = [];
     state.ratings = {};
     state.watchHistory = {};
+    state.movieHistory = {};
     state.dateRatings = {};
     state.quizAnswers = { score: 0, completed: false };
     state.factsLibrary = { octopus: [], owl: [], raccoon: [], fun: [] };
@@ -57,10 +65,14 @@ export async function initializeState() {
     state.timelineEvents = [];
     state.dateLocations = [];
     state.conversationTopics = [];
+    state.achievementCategories = [];
+    state.achievementDefinitions = [];
     state.achievements = [];
     state.funFactProgress = {};
     state.dailyQuestion = null;
     state.dailyAnswers = [];
+    state.gamePrompts = [];
+    state.coopQuests = [];
 
     try {
         // OPRAVA #2: Paralelní dotazy místo 10 sekvenčních await
@@ -82,9 +94,13 @@ export async function initializeState() {
             { data: questionData },
             { data: answerData },
             { data: gQuestionData },
+            { data: gPromptData },
             { data: gVoteData },
             { data: strokeData },
             { data: funFactProgressData },
+            { data: questData },
+            { data: achCatData },
+            { data: achDefData }
         ] = await Promise.all([
             supabase.from('health_data').select('*'),
             supabase.from('planned_dates').select('*'),
@@ -102,9 +118,13 @@ export async function initializeState() {
             supabase.from('daily_questions').select('*'),
             supabase.from('daily_answers').select('*'),
             supabase.from('game_questions').select('*'),
+            supabase.from('game_prompts').select('*'),
             supabase.from('game_votes').select('*'),
             supabase.from('draw_strokes').select('*').order('created_at', { ascending: true }),
             supabase.from('fun_fact_progress').select('*'),
+            supabase.from('coop_quests').select('*').eq('is_active', true),
+            supabase.from('achievement_categories').select('*').order('sort_order', { ascending: true }),
+            supabase.from('achievement_definitions').select('*')
         ]);
 
         if (gQuestionData) state.gameQuestions = gQuestionData;
@@ -174,15 +194,37 @@ export async function initializeState() {
 
         if (watchData) {
             state.watchlist = watchData.map(row => ({
-                id: row.media_id,
-                type: row.type
+                id: parseInt(row.media_id),
+                type: row.type,
+                user_id: row.added_by
             }));
         }
 
         if (ratingData) {
             ratingData.forEach(row => {
-                state.ratings[row.media_id] = row.rating;
-                if (row.status) state.watchHistory[row.media_id] = row.status;
+                const mid = parseInt(row.media_id);
+                // Standardize: 'watched' in DB -> 'seen' for UI
+                const status = row.status === 'watched' ? 'seen' : row.status;
+                state.ratings[mid] = row.rating || 0;
+                
+                state.watchHistory[mid] = {
+                    rating: row.rating || 0,
+                    status: status,
+                    date: row.seen_date || "",
+                    reaction: row.reaction || ""
+                };
+
+                if (row.seen_date && status === 'seen') {
+                    if (!state.movieHistory[row.seen_date]) state.movieHistory[row.seen_date] = [];
+                    // Remove existing entry for this media if any (prevents duplicates)
+                    state.movieHistory[row.seen_date] = state.movieHistory[row.seen_date].filter(m => m.media_id !== mid);
+                    state.movieHistory[row.seen_date].push({
+                        media_id: mid,
+                        rating: row.rating || 0,
+                        status: status,
+                        reaction: row.reaction || ""
+                    });
+                }
             });
         }
 
@@ -262,8 +304,24 @@ export async function initializeState() {
             }));
         }
 
+        if (gQuestionData) state.gameQuestions = gQuestionData;
+        if (gPromptData) state.gamePrompts = gPromptData;
+        if (gVoteData) state.gameVotes = gVoteData;
+
         if (achievementData) {
             state.achievements = achievementData;
+        }
+
+        if (achCatData) {
+            state.achievementCategories = achCatData;
+        }
+
+        if (achDefData) {
+            state.achievementDefinitions = achDefData;
+        }
+
+        if (questData) {
+            state.coopQuests = questData;
         }
 
         // --- Logika pro Daily Question ---

@@ -19,9 +19,14 @@ export function renderFunFacts() {
     let html = `
         <div class="flex-1 overflow-y-auto px-4 py-8 custom-scrollbar bg-[#36393f] animate-fade-in">
             <div class="max-w-6xl mx-auto space-y-8 pb-10">
-                <div class="text-center mb-10">
+                <div class="text-center mb-10 relative">
                     <h1 class="text-4xl font-black text-white mb-2">Encyklopedie Kiscordu 📚</h1>
                     <p class="text-gray-400">Všechno, co jsi (ne)chtěla vědět o našich oblíbených zvířátkách.</p>
+                    <div class="mt-6 flex justify-center">
+                        <button onclick="import('./js/modules/funfacts.js').then(m => m.showAddFactModal())" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-6 py-3 rounded-2xl font-black transition shadow-lg flex items-center gap-3 transform hover:scale-105 active:scale-95 border border-white/10 uppercase tracking-widest text-xs">
+                            <i class="fas fa-plus"></i> Přidat moudrost
+                        </button>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -177,6 +182,11 @@ export function nextFact(catId) {
             }).then(() => {});
         });
 
+        // Achievement Hook
+        if (progress.index >= facts.length) {
+            import('./achievements.js').then(m => m.autoUnlock('fact_enthusiast'));
+        }
+
         triggerHaptic('success');
         openFactCategory(catId);
     }
@@ -256,4 +266,91 @@ export function resetFactCategory(catId) {
         
         if (window.showNotification) window.showNotification("Kategorie byla resetována! ✨", "info");
     };
+}
+
+// --- ADD NEW FACT ---
+
+export function showAddFactModal() {
+    const modal = document.createElement('div');
+    modal.id = 'fact-add-modal';
+    modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in';
+    
+    modal.innerHTML = `
+        <div class="bg-[#36393f] w-full max-w-lg rounded-2xl shadow-2xl border border-gray-700 overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#2f3136]">
+                <h3 class="text-xl font-black text-white tracking-widest uppercase text-center w-full ml-6">Nové moudro do archivu 📜</h3>
+                <button onclick="this.closest('#fact-add-modal').remove()" class="text-gray-400 hover:text-white transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                 <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-3 text-center tracking-widest">Kategorie znalostí</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        ${CATEGORIES.map(c => `
+                            <button onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.selectedFactCatId = '${c.id}'" 
+                                    class="p-4 rounded-xl border-2 border-transparent bg-[#2f3136] text-white transition hover:border-gray-500 flex flex-col items-center gap-2 group">
+                                <span class="text-2xl transition group-hover:scale-110">${c.icon}</span>
+                                <span class="text-[10px] font-black uppercase tracking-tighter">${c.title.split(' ')[0]}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-3 tracking-widest">Text faktu</label>
+                    <textarea id="nf-text" placeholder="Např. Mývalové si jídlo nemyjí proto, že by byli čistotní, ale aby si ho lépe ohmatali..." class="w-full bg-[#202225] text-white p-4 rounded-xl border-2 border-transparent focus:border-[#5865F2] outline-none transition min-h-[120px] shadow-inner text-lg leading-relaxed"></textarea>
+                </div>
+            </div>
+            
+            <div class="p-6 bg-[#2f3136] border-t border-gray-700">
+                <button onclick="import('./js/modules/funfacts.js').then(m => m.saveNewFact())" class="w-full bg-gradient-to-r from-[#5865F2] to-[#eb459e] text-white py-4 rounded-xl font-black text-xl transition shadow-xl transform active:scale-95 uppercase tracking-widest">
+                    ULOŽIT ZNALOST 📚
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+export async function saveNewFact() {
+    const text = document.getElementById('nf-text').value.trim();
+    const catId = window.selectedFactCatId;
+    
+    if (!text || !catId) {
+        alert("Vyber kategorii a napiš text!");
+        return;
+    }
+    
+    triggerHaptic('success');
+    
+    try {
+        const { supabase } = await import('../core/supabase.js');
+        const { data: newItems, error } = await supabase.from('app_facts').insert([{
+            category: catId,
+            text: text
+        }]).select();
+        
+        if (error) throw error;
+        
+        // Update local state
+        if (!state.factsLibrary[catId]) state.factsLibrary[catId] = [];
+        state.factsLibrary[catId].push(newItems[0]);
+        
+        // Notification
+        if (window.showNotification) window.showNotification("Archivy byly obohaceny o novou znalost! 🐙", "success");
+        if (typeof window.triggerConfetti === 'function') window.triggerConfetti();
+        
+        // Close modal
+        document.getElementById('fact-add-modal')?.remove();
+        
+        // Refresh UI
+        renderFunFacts();
+        
+    } catch (err) {
+        console.error("Save Fact Error:", err);
+        alert("Chyba při ukládání: " + err.message);
+    }
 }
