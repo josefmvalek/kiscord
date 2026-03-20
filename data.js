@@ -1104,6 +1104,8 @@ const funFacts = [
   "VUT FIT má ve znaku sovu (nebo něco, co ji připomíná).",
 ];
 
+/*
+// --- DEPRECATED: Timeline results are now managed via Supabase ---
 var timelineEvents = [
   {
     title: "Kde to všechno začalo – Clash Royale",
@@ -1332,6 +1334,7 @@ var timelineEvents = [
     images: [],
   },
 ];
+*/
 
 // --- LIBRARY DATA ---
 var library = {

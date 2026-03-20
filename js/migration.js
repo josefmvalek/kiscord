@@ -213,18 +213,28 @@ export async function migrateLocalDataToSupabase() {
 }
 
 export async function migrateStaticContentToSupabase() {
-    console.log("🚀 Starting STATIC CONTENT migration from data.js to Supabase...");
+    console.log("🚀 Starting STATIC CONTENT seeding from data.js to Supabase...");
     
     try {
-        // 0. Clear existing static content tables to avoid duplicates and ensure clean sync
-        const tablesToClear = ['app_facts', 'library_content', 'timeline_events', 'date_locations', 'conversation_topics'];
-        for (const table of tablesToClear) {
-            const { error: delErr } = await supabase.from(table).delete().neq('id', -1);
-            if (delErr) console.warn(`⚠️ Could not clear table ${table}:`, delErr);
-        }
+        // Helper function to seed a specific table if it's empty
+        const seedTable = async (tableId, sourceData, insertFn) => {
+            if (!sourceData) return;
+            const { count, error } = await supabase.from(tableId).select('*', { count: 'exact', head: true });
+            
+            if (error) {
+                console.warn(`⚠️ Could not check table ${tableId}:`, error);
+                return;
+            }
+            if (count > 0) {
+                console.log(`ℹ️ Table ${tableId} already has data, skipping seeding.`);
+                return;
+            }
+            console.log(`🌱 Seeding table ${tableId}...`);
+            await insertFn();
+        };
 
         // 1. Facts
-        if (typeof factsLibrary !== 'undefined') {
+        await seedTable('app_facts', typeof factsLibrary !== 'undefined' ? factsLibrary : null, async () => {
             const factsBatch = [];
             for (const [cat, items] of Object.entries(factsLibrary)) {
                 items.forEach(item => {
@@ -234,12 +244,12 @@ export async function migrateStaticContentToSupabase() {
             if (factsBatch.length > 0) {
                 const { error } = await supabase.from('app_facts').insert(factsBatch);
                 if (error) console.error("❌ Facts insert error:", error);
-                else console.log(`✅ Migrated ${factsBatch.length} facts.`);
+                else console.log(`✅ Seeded ${factsBatch.length} facts.`);
             }
-        }
+        });
 
         // 2. Library
-        if (typeof library !== 'undefined') {
+        await seedTable('library_content', typeof library !== 'undefined' ? library : null, async () => {
             const libraryBatch = [];
             for (const [type, items] of Object.entries(library)) {
                 let mappedType = 'movie';
@@ -257,16 +267,15 @@ export async function migrateStaticContentToSupabase() {
                     });
                 });
             }
-
             if (libraryBatch.length > 0) {
                 const { error } = await supabase.from('library_content').insert(libraryBatch);
                 if (error) console.error("❌ Library insert error:", error);
-                else console.log(`✅ Migrated ${libraryBatch.length} library items.`);
+                else console.log(`✅ Seeded ${libraryBatch.length} library items.`);
             }
-        }
+        });
 
         // 3. Date Locations
-        if (typeof dateLocations !== 'undefined') {
+        await seedTable('date_locations', typeof dateLocations !== 'undefined' ? dateLocations : null, async () => {
             const locBatch = dateLocations.map(loc => ({
                 id: loc.id,
                 name: loc.name,
@@ -278,12 +287,12 @@ export async function migrateStaticContentToSupabase() {
             if (locBatch.length > 0) {
                 const { error } = await supabase.from('date_locations').insert(locBatch);
                 if (error) console.error("❌ Locations insert error:", error);
-                else console.log(`✅ Migrated ${locBatch.length} locations.`);
+                else console.log(`✅ Seeded ${locBatch.length} locations.`);
             }
-        }
+        });
 
         // 4. Conversation Topics
-        if (typeof conversationTopics !== 'undefined') {
+        await seedTable('conversation_topics', typeof conversationTopics !== 'undefined' ? conversationTopics : null, async () => {
             const topicBatch = conversationTopics.map(t => ({
                 id: t.id,
                 title: t.title,
@@ -295,12 +304,12 @@ export async function migrateStaticContentToSupabase() {
             if (topicBatch.length > 0) {
                 const { error } = await supabase.from('conversation_topics').insert(topicBatch);
                 if (error) console.error("❌ Topics insert error:", error);
-                else console.log(`✅ Migrated ${topicBatch.length} topics.`);
+                else console.log(`✅ Seeded ${topicBatch.length} topics.`);
             }
-        }
+        });
 
         // 5. Timeline Events
-        if (typeof timelineEvents !== 'undefined') {
+        await seedTable('timeline_events', typeof timelineEvents !== 'undefined' ? timelineEvents : null, async () => {
             const timelineBatch = timelineEvents.map(ev => ({
                 title: ev.title,
                 event_date: ev.date || null,
@@ -313,12 +322,89 @@ export async function migrateStaticContentToSupabase() {
             if (timelineBatch.length > 0) {
                 const { error } = await supabase.from('timeline_events').insert(timelineBatch);
                 if (error) console.error("❌ Timeline insert error:", error);
-                else console.log(`✅ Migrated ${timelineBatch.length} timeline events.`);
+                else console.log(`✅ Seeded ${timelineBatch.length} timeline events.`);
+            }
+        });
+
+        console.log("🎉 Static content seeding finished.");
+    } catch (e) {
+        console.error("❌ Fatal error during static seeding:", e);
+    }
+}
+
+/**
+ * Fixes the timeline duplication by identifying "Default" records
+ * and removing them if a "User-Modified" version exists.
+ */
+export async function cleanupTimelineDuplicates() {
+    console.log("🧹 Starting timeline deduplication...");
+    try {
+        const { data: events, error } = await supabase.from('timeline_events').select('*');
+        if (error) throw error;
+
+        // Group by title to find potential duplicates
+        const groups = {};
+        events.forEach(ev => {
+            const key = ev.title;
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(ev);
+        });
+
+        const toDeleteIDs = [];
+        const defaultEvents = typeof timelineEvents !== 'undefined' ? timelineEvents : [];
+
+        for (const [title, evs] of Object.entries(groups)) {
+            if (evs.length > 1) {
+                // We have duplicates.
+                // 1. Identify the "Default" version from data.js
+                const defaultVer = defaultEvents.find(d => d.title === title);
+                
+                if (defaultVer) {
+                    // Look for the record that matches the default description exactly
+                    const originalRecord = evs.find(e => e.description === (defaultVer.desc || ""));
+                    // A modified record is any that DOESN'T match default description, OR has images, OR has highlights
+                    const modifiedRecord = evs.find(e => 
+                        e.description !== (defaultVer.desc || "") || 
+                        (e.images && e.images.length > (defaultVer.images?.length || 0)) || 
+                        e.user_highlights
+                    );
+
+                    if (originalRecord && modifiedRecord) {
+                        console.log(`🗑️ Found duplicate for "${title}". Keeping edited version, adding original to delete list.`);
+                        toDeleteIDs.push(originalRecord.id);
+                    } else if (evs.length > 1) {
+                        // If they are identical duplicates, keep only the oldest one
+                        evs.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+                        for (let i = 1; i < evs.length; i++) {
+                            toDeleteIDs.push(evs[i].id);
+                        }
+                    }
+                } else {
+                    // Not a default event, but has duplicates? Keep the one with most content.
+                    evs.sort((a, b) => {
+                        const scoreA = (a.description?.length || 0) + (a.images?.length || 0) * 100 + (a.user_highlights ? 50 : 0);
+                        const scoreB = (b.description?.length || 0) + (b.images?.length || 0) * 100 + (b.user_highlights ? 50 : 0);
+                        return scoreB - scoreA;
+                    });
+                    for (let i = 1; i < evs.length; i++) {
+                        toDeleteIDs.push(evs[i].id);
+                    }
+                }
             }
         }
 
-        console.log("🎉 Static content migration finished.");
-    } catch (e) {
-        console.error("❌ Fatal error during static migration:", e);
+        if (toDeleteIDs.length > 0) {
+            console.log(`🚀 Deleting ${toDeleteIDs.length} redundant timeline records...`);
+            const { error: delErr } = await supabase.from('timeline_events').delete().in('id', toDeleteIDs);
+            if (delErr) throw delErr;
+            console.log("✅ Deduplication complete!");
+            return toDeleteIDs.length;
+        }
+
+        console.log("✅ No duplicates found.");
+        return 0;
+    } catch (err) {
+        console.error("❌ Error during deduplication:", err);
+        throw err;
     }
 }

@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function handleMigrations() {
-    // Run migration once if data exists but hasn't been moved yet
+    // 1. Initial migration from LocalStorage (v1-v4)
     if (!localStorage.getItem('klarka_migration_done')) {
         const migratedCount = await migrateLocalDataToSupabase();
         if (migratedCount > 0) {
@@ -140,12 +140,26 @@ async function handleMigrations() {
         }
     }
 
-    // Static content migration v5
+    // 2. Static content seeding (Non-destructive check)
+    // Runs once to ensure Supabase has the default content if tables are empty
     if (!localStorage.getItem('klarka_static_migration_v5_done')) {
         const { migrateStaticContentToSupabase } = await import('./migration.js');
         await migrateStaticContentToSupabase();
         localStorage.setItem('klarka_static_migration_v5_done', 'true');
-        window.location.reload();
+        // No reload needed here yet
+    }
+
+    // 3. Timeline Cleanup (Repair for the duplication bug)
+    // Only runs once to remove redundant records while keeping user edits
+    if (!localStorage.getItem('klarka_timeline_repair_v1_done')) {
+        const { cleanupTimelineDuplicates } = await import('./migration.js');
+        const count = await cleanupTimelineDuplicates();
+        localStorage.setItem('klarka_timeline_repair_v1_done', 'true');
+        if (count > 0) {
+            console.log(`✨ Timeline repaired: Removed ${count} duplicates.`);
+            window.location.reload(); // Reload to refresh state with clean data
+            return;
+        }
     }
 }
 
@@ -303,9 +317,56 @@ function renderReadme() {
                 .replace(/`([^`]+)`/gim, '<code class="bg-[#2f3136] px-1 rounded text-sm font-mono text-gray-300">$1</code>')
                 .replace(/\n/gim, '<br>');
 
+            // Check for secret confession token (hidden in README.md)
+            const hasConfession = text.includes('# k i s c o r d');
+            
+            if (hasConfession) {
+                // FAITHFUL DISCORD UI (Secret & Authentic)
+                container.innerHTML = `
+                    <div class="h-full flex flex-col p-6 items-start animate-fade-in bg-[#36393f] font-sans">
+                        <div class="flex gap-4 items-start max-w-2xl group">
+                             <!-- Avatar -->
+                             <div class="relative flex-shrink-0 mt-0.5">
+                                 <img src="img/app/jozka_profilovka.jpg" alt="Jožka" class="w-10 h-10 rounded-full object-cover shadow-sm bg-[#2f3136]" loading="lazy">
+                             </div>
+                             
+                             <div class="flex-1 min-w-0">
+                                 <!-- Header (Removed intro text for cleaner look) -->
+                                 <div class="flex items-baseline gap-2 mb-3">
+                                     <span class="font-bold text-white hover:underline cursor-pointer">Jožka</span>
+                                     <span class="text-[10px] text-[#b9bbbe] font-medium">Pinned</span>
+                                 </div>
+                                 
+                                 <!-- THE PATCH FILE BLOCK (Authentic Discord Style) -->
+                                 <div onclick="import('./js/modules/confession.js').then(m => m.startConfession())" 
+                                      class="bg-[#2f3136] border border-[#202225] rounded-md p-3 flex items-center gap-4 w-full max-w-[432px] cursor-pointer hover:bg-[#32353b] transition-colors duration-150">
+                                     
+                                     <!-- File Icon -->
+                                     <div class="w-10 h-12 bg-[#5865F2] rounded-sm flex items-center justify-center text-white text-2xl">
+                                         <i class="fas fa-file-code"></i>
+                                     </div>
+
+                                     <div class="flex-1 min-w-0">
+                                         <div class="text-[#00aff4] font-medium text-base truncate hover:underline">system_patch_v2.0.exe</div>
+                                         <div class="text-[#b9bbbe] text-xs font-medium mt-0.5">1.2 MB • Executable</div>
+                                     </div>
+
+                                     <!-- Download Icon -->
+                                     <div class="text-[#b9bbbe] hover:text-[#dcddde] transition-colors p-2">
+                                         <i class="fas fa-download text-xl"></i>
+                                     </div>
+                                 </div>
+                             </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
             container.innerHTML = `
                 <div class="p-8 max-w-4xl mx-auto text-gray-300 animate-fade-in font-mono text-sm">
-                    <div class="bg-[#2f3136] p-8 rounded-xl border border-[#202225] shadow-lg">
+                    <div class="bg-[#2f3136] p-8 rounded-2xl border border-white/5 shadow-2xl relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-[#5865F2] opacity-50"></div>
                         ${htmlContent}
                     </div>
                 </div>
@@ -432,7 +493,7 @@ const channelCategories = [
             { id: 'achievements', name: 'achievementy', icon: '<i class="fas fa-trophy"></i>', type: 'text', color: '#faa61a', desc: 'Co všechno jsme už dokázali? ⭐' },
             { id: 'funfacts', name: 'zajímavosti', icon: '<i class="fas fa-lightbulb"></i>', type: 'text', color: '#eb459e', desc: 'Vše o mývalech, sovách a tak...' },
             { id: 'manual', name: 'návod', icon: '<i class="fas fa-book"></i>', type: 'text', color: '#99aab5', desc: 'Jak ovládat tuhle aplikaci.' },
-            { id: 'readme', name: 'README.md', icon: '<i class="fas fa-file-alt"></i>', type: 'text', color: '#99aab5', desc: 'Technické detaily o projektu.' }
+            { id: 'readme', name: 'README.md', icon: '<i class="fas fa-file-alt"></i>', type: 'text', color: '#99aab5', desc: 'Krásného Valentýna té nejúžasnější holce pod sluncem! ❤️' }
         ]
     }
 ];
