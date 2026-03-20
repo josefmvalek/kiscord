@@ -3,7 +3,63 @@ import { triggerHaptic } from '../core/utils.js';
 
 // --- CONFESSION LOGIC ---
 
+function ensureModals() {
+    if (!document.getElementById("confession-modal")) {
+        const modal = document.createElement("div");
+        modal.id = "confession-modal";
+        modal.className = "fixed inset-0 z-[90] hidden items-center justify-center bg-transparent backdrop-blur-sm";
+        modal.innerHTML = `
+            <div class="cmd-window w-full max-w-3xl rounded-none border border-[#444] cursor-text" onclick="const input = document.getElementById('hidden-input'); if(input) input.focus()">
+                <input type="text" id="hidden-input" class="opacity-0 absolute" style="top: -1000px" />
+                <div class="cmd-header">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-terminal text-[10px]"></i><span>Administrator: C:\\Windows\\System32\\cmd.exe</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <div class="w-3 h-3 bg-gray-400"></div>
+                        <div class="w-3 h-3 bg-gray-400"></div>
+                        <div class="w-3 h-3 bg-red-500 cursor-pointer" onclick="import('./js/modules/confession.js').then(m => m.closeModal('confession-modal'))"></div>
+                    </div>
+                </div>
+                <div class="cmd-body" id="terminal-body">
+                    <div id="terminal-output"></div>
+                    <div class="flex">
+                        <span id="prompt-text">C:\\Klárka\\Heart&gt;</span><span id="typing-area" class="ml-2"></span><span id="cmd-cursor" class="cmd-cursor ml-1"></span>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    if (!document.getElementById("final-confession-modal")) {
+        const finalModal = document.createElement("div");
+        finalModal.id = "final-confession-modal";
+        finalModal.className = "fixed inset-0 z-[100] hidden modal-backdrop items-center justify-center p-4";
+        finalModal.innerHTML = `
+            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-md border border-[#5865F2]/30 overflow-hidden relative animate-fade-in" id="final-modal-box">
+                <button onclick="import('./js/modules/confession.js').then(m => m.closeModal('final-confession-modal'))" class="absolute top-5 right-5 text-gray-400 hover:text-white transition-all w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+                <div class="p-10 text-center" id="final-modal-content">
+                    <div id="typing-container" class="text-gray-200 mb-8 text-left space-y-4 leading-relaxed min-h-[200px] mt-8 text-lg font-medium italic"></div>
+                    <div id="confession-buttons" class="space-y-4 hidden animate-slide-up">
+                        <button onclick="import('./js/modules/confession.js').then(m => m.responseYes())" class="w-full bg-gradient-to-r from-[#eb459e] to-[#5865F2] hover:opacity-90 text-white py-4 rounded-xl font-bold text-lg transition shadow-xl active:scale-95">
+                            Ano, pojďme to zkusit <i class="fas fa-heart ml-2"></i>
+                        </button>
+                        <button onclick="import('./js/modules/confession.js').then(m => m.responseNo())" class="w-full text-gray-500 hover:text-white py-2 font-bold transition text-xs uppercase tracking-widest">
+                            Zůstaňme kamarádi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(finalModal);
+    }
+}
+
 export function startConfession() {
+    ensureModals();
     // Play music (if available) - typically handled in old script.js as:
     // const music1 = document.getElementById("audio-final-countdown");
     // if (music1) { music1.currentTime = 0; music1.volume = 0.5; music1.play(); }

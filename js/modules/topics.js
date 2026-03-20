@@ -9,7 +9,65 @@ let activeTopicObject = null;
 
 // --- EXPORTED FUNCTIONS ---
 
+function ensureModals() {
+    if (!document.getElementById("topic-modal")) {
+        const topicModal = document.createElement("div");
+        topicModal.id = "topic-modal";
+        topicModal.className = "fixed inset-0 z-[130] hidden bg-[var(--bg-primary)]/95 backdrop-blur-md flex flex-col items-center justify-center animate-fade-in";
+        topicModal.innerHTML = `
+            <div class="absolute top-6 right-6 flex gap-3">
+                <button id="bookmark-filter-btn" onclick="import('./js/modules/topics.js').then(m => m.toggleViewBookmarks())"
+                    class="text-gray-400 hover:text-[#faa61a] w-12 h-12 flex items-center justify-center rounded-full hover:bg-white/10 transition-all active:scale-90" title="Zobrazit záložky">
+                    <i class="fas fa-bookmark text-2xl"></i>
+                </button>
+                <button onclick="import('./js/modules/topics.js').then(m => m.closeTopicModal())"
+                    class="text-gray-400 hover:text-white w-12 h-12 flex items-center justify-center rounded-full hover:bg-white/10 transition-all active:scale-90">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div class="max-w-2xl w-full px-6 text-center animate-scale-in">
+                <div id="topic-badge" class="inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4 bg-[#5865F2]/20 text-[#5865F2]">Kategorie</div>
+                <h2 id="topic-title-display" class="text-3xl md:text-5xl font-extrabold text-white mb-6 leading-tight">Téma otázky</h2>
+                <div class="relative min-h-[150px] flex items-center justify-center mb-8">
+                    <p id="topic-question-display" class="text-lg md:text-2xl text-gray-200 leading-relaxed italic">"Načítám otázku..."</p>
+                </div>
+                <div class="flex flex-col items-center gap-6">
+                    <div class="flex items-center gap-4">
+                        <button onclick="import('./js/modules/topics.js').then(m => m.prevQuestion())" class="w-12 h-12 rounded-full bg-[#2f3136] hover:bg-[#4f545c] text-white flex items-center justify-center transition-all shadow-lg active:scale-90"><i class="fas fa-chevron-left"></i></button>
+                        <button id="done-btn" onclick="import('./js/modules/topics.js').then(m => m.markQuestionDone())" class="px-8 py-4 rounded-full bg-[#3ba55c] hover:bg-[#2d7d44] text-white font-bold text-lg shadow-xl transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3"><i class="fas fa-check-circle"></i> Hotovo!</button>
+                        <button onclick="import('./js/modules/topics.js').then(m => m.nextQuestion())" class="w-12 h-12 rounded-full bg-[#2f3136] hover:bg-[#4f545c] text-white flex items-center justify-center transition-all shadow-lg active:scale-90"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <div class="flex items-center gap-6">
+                        <button id="topic-bookmark-btn" onclick="import('./js/modules/topics.js').then(m => m.toggleQuestionBookmark())" class="text-gray-500 hover:text-[#faa61a] transition-colors flex items-center gap-2 text-sm font-bold"><i class="far fa-bookmark"></i> Uložit si na potom</button>
+                        <div id="topic-progress-text" class="text-gray-500 text-xs font-mono tracking-widest uppercase">Otázka 0 z 0</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(topicModal);
+    }
+
+    if (!document.getElementById("reset-confirm-modal")) {
+        const resetModal = document.createElement("div");
+        resetModal.id = "reset-confirm-modal";
+        resetModal.className = "fixed inset-0 z-[150] hidden modal-backdrop items-center justify-center p-4";
+        resetModal.innerHTML = `
+            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-sm border border-[#faa61a]/50 p-8 text-center animate-fade-in">
+                <div class="w-16 h-16 bg-[#faa61a]/20 text-[#faa61a] rounded-full flex items-center justify-center text-3xl mb-4 mx-auto shadow-inner"><i class="fas fa-undo-alt"></i></div>
+                <h3 class="text-xl font-bold text-white mb-2">Resetovat pokrok?</h3>
+                <p class="text-gray-400 mb-8 text-sm leading-relaxed">Opravdu chceš smazat všechnu historii v tomhle tématu a začít od první otázky?</p>
+                <div class="flex gap-3">
+                    <button onclick="window.closeModal ? window.closeModal('reset-confirm-modal') : this.closest('#reset-confirm-modal').style.display='none'" class="flex-1 text-gray-400 hover:text-white font-bold py-2 transition text-xs uppercase tracking-widest">Zrušit</button>
+                    <button onclick="import('./js/modules/topics.js').then(m => m.confirmResetTopic())" class="flex-[2] bg-[#faa61a] hover:bg-[#c88515] text-white py-3 rounded-xl font-bold shadow-lg transition active:scale-95">Ano, resetovat</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(resetModal);
+    }
+}
+
 export function renderTopics() {
+    ensureModals();
     const container = document.getElementById("messages-container");
     if (!container) return;
 
@@ -115,6 +173,7 @@ export function renderTopics() {
 }
 
 export function openTopic(id) {
+    ensureModals();
     state.topicSessionHistory = []; // Reset historie
     state.isViewingBookmarks = false; // Reset filtru
 

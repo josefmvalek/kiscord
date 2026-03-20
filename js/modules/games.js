@@ -17,32 +17,44 @@ export async function updateTetrisScore(who, amount) {
         state.tetris.jose = 0;
         state.tetris.klarka = 0;
         
-        // Save both resets to Supabase
-        await Promise.all([
-            supabase.from('tetris_scores').upsert({ user_id: state.tetris.jose_id, score: 0 }),
-            supabase.from('tetris_scores').upsert({ user_id: state.tetris.klarka_id, score: 0 })
-        ]);
+        const updates = [];
+        if (state.tetris.jose_id) updates.push(supabase.from('tetris_scores').upsert({ user_id: state.tetris.jose_id, score: 0 }));
+        if (state.tetris.klarka_id) updates.push(supabase.from('tetris_scores').upsert({ user_id: state.tetris.klarka_id, score: 0 }));
+        
+        await Promise.all(updates);
     } else {
         const key = who === 'jose' ? 'jose' : 'klarka';
-        state.tetris[key] += amount;
+        let targetUserId = who === 'jose' ? state.tetris.jose_id : state.tetris.klarka_id;
+
+        // Last-resort ID resolution if state hasn't discovered it yet
+        if (!targetUserId && state.currentUser?.id) {
+            const isMeJose = isJosef(state.currentUser);
+            if ((who === 'jose' && isMeJose) || (who === 'klarka' && !isMeJose)) {
+                targetUserId = state.currentUser.id;
+                // Back-fill the state
+                if (isMeJose) state.tetris.jose_id = targetUserId;
+                else state.tetris.klarka_id = targetUserId;
+            }
+        }
+
+        if (!targetUserId) {
+            console.error("Missing target user ID for score update", who);
+            if (window.showNotification) window.showNotification("Chyba: ID uživatele nenalezeno.", "error");
+            return;
+        }
+
+        state.tetris[key] = (state.tetris[key] || 0) + amount;
 
         if (amount > 0) {
             if (typeof triggerHaptic === 'function') triggerHaptic('success');
-            // window.triggerConfetti() removed for performance
-            if (window.showNotification) window.showNotification(`${who === 'jose' ? 'Jožka' : 'Klárka'} vyhrává bod! 🧱`, 'success');
+            if (window.showNotification) window.showNotification(`${who === 'jose' ? 'Jožka' : 'Klárka'} +1 bod! 🧱`, 'success');
         }
 
         // Save to Supabase
         try {
-            const targetUserId = who === 'jose' ? state.tetris.jose_id : state.tetris.klarka_id;
-            if (!targetUserId) {
-                console.error("Missing target user ID for score update");
-                return;
-            }
             await supabase.from('tetris_scores').upsert({
                 user_id: targetUserId,
-                score: state.tetris[key],
-                updated_at: new Date().toISOString()
+                score: state.tetris[key]
             });
         } catch (err) {
             console.error("Failed to save tetris score", err);
@@ -51,7 +63,7 @@ export async function updateTetrisScore(who, amount) {
 
     // Re-render
     if (state.currentChannel === 'dashboard') {
-        if (window.renderDashboard) window.renderDashboard();
+        if (typeof window.renderDashboard === 'function') window.renderDashboard();
     } else if (state.currentChannel === 'tetris' || state.currentChannel === 'games') {
         renderTetrisTracker();
     }
@@ -91,7 +103,7 @@ export function renderTetrisTracker() {
                    <!-- ME -->
                    <div class="flex-1 flex flex-col items-center group">
                        <div class="w-24 h-24 rounded-full bg-[#5865F2]/10 flex items-center justify-center border-4 border-[#5865F2] mb-4 relative cursor-pointer transition transform active:scale-95 hover:shadow-[0_0_20px_rgba(88,101,242,0.5)]" 
-                            onclick="import('./js/modules/games.js').then(m => m.updateTetrisScore('${currKey}', 1))">
+                            onclick="window.updateTetrisScore('${currKey}', 1)">
                            <div class="text-6xl">${currEmoji}</div>
                            <div class="absolute -bottom-2 -right-2 bg-[#5865F2] w-8 h-8 rounded-full flex items-center justify-center text-sm text-white font-bold shadow-md group-hover:scale-110 transition">+1</div>
                        </div>
@@ -108,7 +120,7 @@ export function renderTetrisTracker() {
                    <!-- PARTNER -->
                    <div class="flex-1 flex flex-col items-center group">
                        <div class="w-24 h-24 rounded-full bg-[#eb459e]/10 flex items-center justify-center border-4 border-[#eb459e] mb-4 relative cursor-pointer transition transform active:scale-95 hover:shadow-[0_0_20px_rgba(235,69,158,0.5)]" 
-                            onclick="import('./js/modules/games.js').then(m => m.updateTetrisScore('${partKey}', 1))">
+                            onclick="window.updateTetrisScore('${partKey}', 1)">
                            <div class="text-6xl">${partEmoji}</div>
                            <div class="absolute -bottom-2 -left-2 bg-[#eb459e] w-8 h-8 rounded-full flex items-center justify-center text-sm text-white font-bold shadow-md group-hover:scale-110 transition">+1</div>
                        </div>
@@ -122,7 +134,7 @@ export function renderTetrisTracker() {
                        <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wide">Aktuální lídr</span>
                        <span id="tetris-leader-text" class="text-xl font-bold ${leaderColor}">${leader}</span>
                    </div>
-                   <button onclick="import('./js/modules/games.js').then(m => m.updateTetrisScore('reset'))" class="text-xs bg-[#2f3136] hover:bg-red-500/20 text-gray-500 hover:text-red-400 border border-gray-600 hover:border-red-500/50 px-4 py-2 rounded transition uppercase font-bold">
+                   <button onclick="window.updateTetrisScore('reset')" class="text-xs bg-[#2f3136] hover:bg-red-500/20 text-gray-500 hover:text-red-400 border border-gray-600 hover:border-red-500/50 px-4 py-2 rounded transition uppercase font-bold">
                        Reset
                    </button>
                </div>
@@ -432,3 +444,7 @@ export async function addPuzzleImage(url) {
         showNotification("Nepodařilo se přidat obrázek.", "error");
     }
 }
+
+// Global exposure for onclick handlers
+window.updateTetrisScore = updateTetrisScore;
+window.renderTetrisTracker = renderTetrisTracker;

@@ -13,7 +13,62 @@ let searchQuery = "";
 
 // --- EXPORTED FUNCTIONS ---
 
+function ensureModals() {
+    if (!document.getElementById("gallery-modal")) {
+        const galleryModal = document.createElement("div");
+        galleryModal.id = "gallery-modal";
+        galleryModal.className = "fixed inset-0 z-[120] hidden bg-black/90 backdrop-blur-xl flex-col items-center justify-center animate-fade-in";
+        galleryModal.innerHTML = `
+            <button onclick="import('./js/modules/timeline.js').then(m => m.closeGallery())" class="absolute top-6 right-6 text-gray-400 hover:text-white z-50 w-12 h-12 flex items-center justify-center rounded-full hover:bg-white/10 transition-all active:scale-90">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+            <div class="relative w-full h-full flex items-center justify-center p-4 md:p-10">
+                <button onclick="import('./js/modules/timeline.js').then(m => m.changeGalleryImage(-1))"
+                    class="absolute left-2 md:left-8 text-white hover:text-[#5865F2] transition p-4 z-50 bg-black/50 hover:bg-black/80 rounded-full">
+                    <i class="fas fa-chevron-left text-2xl md:text-4xl"></i>
+                </button>
+                <div class="max-w-5xl max-h-full flex flex-col items-center">
+                    <img id="gallery-image" src=""
+                        class="max-h-[80vh] max-w-full object-contain rounded-lg shadow-2xl border border-[#2f3136] animate-fade-in" />
+                    <div class="mt-4 text-center">
+                        <h3 id="gallery-title" class="text-white font-bold text-xl mb-1">Název</h3>
+                        <p id="gallery-counter" class="text-gray-400 text-sm">1 / 5</p>
+                        <button onclick="import('./js/modules/timeline.js').then(m => m.deleteCurrentPhoto())"
+                            class="mt-4 text-xs text-red-500 hover:text-red-400 transition flex items-center gap-1 mx-auto">
+                            <i class="fas fa-trash-alt"></i> Smazat tuhle fotku
+                        </button>
+                    </div>
+                </div>
+                <button onclick="import('./js/modules/timeline.js').then(m => m.changeGalleryImage(1))"
+                    class="absolute right-2 md:right-8 text-white hover:text-[#5865F2] transition p-4 z-50 bg-black/50 hover:bg-black/80 rounded-full">
+                    <i class="fas fa-chevron-right text-2xl md:text-4xl"></i>
+                </button>
+            </div>
+        `;
+        document.body.appendChild(galleryModal);
+    }
+
+    if (!document.getElementById("delete-photo-modal")) {
+        const deleteModal = document.createElement("div");
+        deleteModal.id = "delete-photo-modal";
+        deleteModal.className = "fixed inset-0 z-[150] hidden modal-backdrop items-center justify-center p-4";
+        deleteModal.innerHTML = `
+            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-sm border border-red-500/50 p-8 text-center animate-fade-in">
+                <div class="w-16 h-16 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center text-3xl mb-4 mx-auto shadow-inner"><i class="fas fa-trash-alt"></i></div>
+                <h3 class="text-xl font-bold text-white mb-2">Smazat fotku?</h3>
+                <p class="text-gray-400 mb-8 text-sm leading-relaxed">Opravdu chceš tuhle fotku smazat? Tuhle akci nejde vzít zpět.</p>
+                <div class="flex gap-3">
+                    <button onclick="closeModal('delete-photo-modal')" class="flex-1 text-gray-400 hover:text-white font-bold py-2 transition text-xs uppercase tracking-widest">Zrušit</button>
+                    <button onclick="import('./js/modules/timeline.js').then(m => m.confirmDeletePhoto())" class="flex-[2] bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-bold shadow-lg transition active:scale-95">Smazat</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(deleteModal);
+    }
+}
+
 export async function renderTimeline() {
+    ensureModals();
     const container = document.getElementById("messages-container");
     if (!container) return;
 

@@ -28,9 +28,124 @@ export function getMoodColor(val) {
     return colors[val] || "#4b5563";
 }
 
+function ensureModals() {
+    if (!document.getElementById("day-modal")) {
+        const dayModal = document.createElement("div");
+        dayModal.id = "day-modal";
+        dayModal.className = "fixed inset-0 z-[100] hidden modal-backdrop items-center justify-center p-4";
+        dayModal.innerHTML = `
+            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-md border border-white/10 overflow-hidden animate-fade-in flex flex-col max-h-[90vh]">
+                <!-- Modal Header -->
+                <div class="bg-black/20 p-5 border-b border-white/5 flex justify-between items-center">
+                    <div>
+                        <h3 id="modal-date-title" class="font-bold text-white text-lg leading-tight">Datum</h3>
+                        <p id="modal-date-subtitle" class="text-[10px] text-gray-400 uppercase font-black tracking-widest mt-0.5">Den v týdnu</p>
+                    </div>
+                    <button onclick="import('./js/modules/calendar.js').then(m => m.closeDayModal())" class="text-gray-400 hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <!-- Modal Body -->
+                <div class="p-6 overflow-y-auto custom-scrollbar space-y-6">
+                    <div id="modal-section-date" class="space-y-3"></div>
+                    <div id="modal-section-school" class="hidden space-y-3">
+                        <h4 class="text-xs font-bold text-[#faa61a] uppercase mb-2 flex items-center gap-2"><i class="fas fa-graduation-cap"></i> Škola</h4>
+                        <div id="school-event-display" class="hidden bg-[#faa61a]/10 border border-[#faa61a]/30 rounded-xl p-3 flex justify-between items-center">
+                            <span id="school-event-text" class="text-white text-sm font-medium"></span>
+                            <button class="text-red-400 hover:text-red-200 p-1"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                        <div id="school-add-form" class="flex gap-2">
+                           <input type="text" id="school-input" placeholder="Zkouška, test..." class="flex-1 bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#faa61a]/50">
+                           <button onclick="import('./js/modules/calendar.js').then(m => m.addSchoolEvent())" class="bg-[#faa61a] hover:bg-[#c88515] text-white px-4 rounded-xl transition shadow-lg active:scale-95"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                    
+                    <div id="modal-section-health" class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-xs font-bold text-[#3ba55c] uppercase flex items-center gap-2"><i class="fas fa-heartbeat"></i> Zdraví & Restart</h4>
+                            <button onclick="import('./js/modules/calendar.js').then(m => m.toggleHealthEdit())" class="text-[10px] font-bold text-gray-500 hover:text-white uppercase tracking-widest transition">Upravit</button>
+                        </div>
+                        
+                        <div id="health-display-grid" class="grid grid-cols-2 gap-3">
+                            <div class="bg-black/10 p-3 rounded-xl border border-white/5">
+                                <span class="block text-[8px] text-gray-500 uppercase font-bold mb-1 tracking-tighter">Voda</span>
+                                <span id="modal-health-water" class="text-white font-bold text-sm">0/8</span>
+                            </div>
+                            <div class="bg-black/10 p-3 rounded-xl border border-white/5">
+                                <span class="block text-[8px] text-gray-500 uppercase font-bold mb-1 tracking-tighter">Spánek</span>
+                                <span id="modal-health-sleep" class="text-white font-bold text-sm">-</span>
+                            </div>
+                            <div class="bg-black/10 p-3 rounded-xl border border-white/5 col-span-1">
+                                <span class="block text-[8px] text-gray-500 uppercase font-bold mb-1 tracking-tighter">Nálada</span>
+                                <span id="modal-health-mood" class="text-white font-bold text-sm">-</span>
+                            </div>
+                             <div class="bg-black/10 p-3 rounded-xl border border-white/5 col-span-1">
+                                <span class="block text-[8px] text-gray-500 uppercase font-bold mb-1 tracking-tighter">Pohyb</span>
+                                <div id="modal-health-movement" class="flex flex-wrap gap-1"></div>
+                            </div>
+                        </div>
+
+                        <div id="health-edit-form" class="hidden space-y-4 bg-black/10 p-4 rounded-xl border border-white/10 animate-fade-in">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="block text-[10px] text-gray-500 font-bold uppercase mb-1">Voda (sklenice)</label><input type="number" id="edit-health-water" class="w-full bg-[#202225] text-white p-2 rounded-lg border border-[#2f3136]"></div>
+                                <div><label class="block text-[10px] text-gray-500 font-bold uppercase mb-1">Spánek (hodiny)</label><input type="number" step="0.5" id="edit-health-sleep" class="w-full bg-[#202225] text-white p-2 rounded-lg border border-[#2f3136]"></div>
+                            </div>
+                            <div><label class="block text-[10px] text-gray-500 font-bold uppercase mb-1">Nálada (1-10)</label><input type="number" id="edit-health-mood" min="1" max="10" class="w-full bg-[#202225] text-white p-2 rounded-lg border border-[#2f3136]"></div>
+                            <div><label class="block text-[10px] text-gray-500 font-bold uppercase mb-1">Pohyb (oddělený čárkou)</label><input type="text" id="edit-health-movement" placeholder="gym, procházka..." class="w-full bg-[#202225] text-white p-2 rounded-lg border border-[#2f3136]"></div>
+                            <div class="flex gap-2">
+                                <button onclick="import('./js/modules/calendar.js').then(m => m.toggleHealthEdit())" class="flex-1 text-gray-400 font-bold text-xs">Zrušit</button>
+                                <button onclick="import('./js/modules/calendar.js').then(m => m.saveHealthRecord())" class="flex-[2] bg-[#3ba55c] hover:bg-[#2d7d46] text-white py-2 rounded-lg font-bold shadow-lg transition">Uložit</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(dayModal);
+    }
+
+    if (!document.getElementById("redirect-modal")) {
+        const redModal = document.createElement("div");
+        redModal.id = "redirect-modal";
+        redModal.className = "fixed inset-0 z-[150] hidden modal-backdrop items-center justify-center p-4";
+        redModal.innerHTML = `
+            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-sm border border-[#faa61a]/30 p-8 text-center animate-fade-in">
+                <div class="text-5xl mb-4">📜</div>
+                <h3 class="text-xl font-bold text-white mb-2">Přejít do Timeline?</h3>
+                <p class="text-gray-400 mb-8 text-sm leading-relaxed">Tenhle záznam má svůj vlastní příběh v Timeline. Chceš ho vidět?</p>
+                <div class="flex flex-col gap-3">
+                    <button id="confirm-redirect" class="w-full bg-[#faa61a] hover:bg-[#c88515] text-white py-3 rounded-xl font-bold shadow-lg transition active:scale-95">Ano, ukázat vzpomínku</button>
+                    <button onclick="closeModal('redirect-modal')" class="w-full text-gray-500 hover:text-white py-2 font-bold transition text-xs uppercase tracking-widest">Zůstat tady</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(redModal);
+    }
+}
+
 export function renderCalendar(year = null, month = null) {
+    ensureModals();
     const container = document.getElementById("messages-container");
     if (!container) return; // Guard clause
+
+    if (state.loadError) {
+        container.innerHTML = `
+            <div class="h-full flex flex-col items-center justify-center bg-[#36393f] text-gray-400 p-6 text-center animate-fade-in">
+                <div class="text-8xl mb-6 filter drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]">📅❄️</div>
+                <h3 class="text-xl font-bold text-white mb-2 uppercase tracking-tighter">Kalendář zamrzl...</h3>
+                <p class="text-sm text-gray-400 mb-8 max-w-xs leading-relaxed">
+                    Nepodařilo se načíst tvé plány a události. Zkusíme to znovu rozmrazit?
+                </p>
+                <button onclick="import('./js/core/state.js').then(async m => { await m.initializeState(); import('./js/modules/calendar.js').then(c => c.renderCalendar(${year}, ${month})); }); triggerHaptic('light')" 
+                        class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-8 py-3 rounded-xl font-black uppercase tracking-widest transition-all transform hover:scale-105 active:scale-95 shadow-xl flex items-center gap-3">
+                    <i class="fas fa-sync-alt"></i>
+                    Zkusit znovu
+                </button>
+            </div>
+        `;
+        return;
+    }
 
     // Pokud nejsou parametry, použijeme aktuální (nebo poslední uložené)
     if (year === null) year = currentCalYear;
@@ -43,6 +158,11 @@ export function renderCalendar(year = null, month = null) {
     } else if (month > 11) {
         month = 0;
         year++;
+    }
+
+    // Only trigger haptic if this is a month transition (not initial render)
+    if (year !== currentCalYear || month !== currentCalMonth) {
+        triggerHaptic('light');
     }
 
     // Uložíme si aktuální stav pro filtry
@@ -199,7 +319,15 @@ export function generateCalendarGrid(year, month) {
             }
 
             if (movieHistory) {
+                // Show generic and specific movie icons
                 iconsHtml += `<span class="text-[10px]">🎬</span>`;
+                
+                // Try to find the first movie's icon
+                const firstMovie = movieHistory[0];
+                const libItem = [...(state.library?.movies || []), ...(state.library?.series || [])].find(m => m.id === firstMovie.media_id);
+                if (libItem && libItem.icon) {
+                    iconsHtml += `<span class="text-[10px]">${libItem.icon}</span>`;
+                }
             }
 
             if (plannedDate) {
@@ -209,9 +337,19 @@ export function generateCalendarGrid(year, month) {
                 const icon = iconsMap[plannedDate.cat] || "📍";
                 cellContent += `
              <div class="w-full h-full flex flex-col items-center justify-center pt-2">
-                 <div class="text-lg drop-shadow-sm transform group-hover:scale-110 transition">${icon}</div>
-                 <div class="text-[7px] text-gray-300 leading-tight text-center truncate w-full px-0.5 mt-1">${plannedDate.name}</div>
+                 <div class="text-base drop-shadow-sm transform group-hover:scale-110 transition">${icon}</div>
+                 <div class="text-[7px] text-gray-300 leading-tight text-center truncate w-full px-0.5 mt-0.5">${plannedDate.name}</div>
              </div>`;
+             
+             // Still show icons from iconsHtml at the top
+             cellContent += `<div class="absolute top-1 right-1 flex gap-0.5">${iconsHtml}</div>`;
+            } else if (timelineEvent) {
+                // If no plan, but has timeline event, show title
+                cellContent += `
+                <div class="w-full h-full flex flex-col items-center justify-center pt-2">
+                    <div class="text-[7px] text-[#faa61a] font-bold leading-tight text-center line-clamp-2 w-full px-0.5">${timelineEvent.title}</div>
+                </div>`;
+                cellContent += `<div class="absolute bottom-1 right-1 flex gap-0.5">${iconsHtml}</div>`;
             } else {
                 cellContent += `<div class="flex items-center justify-center gap-0.5 w-full pb-0.5 mt-auto">${iconsHtml}</div>`;
             }
@@ -305,6 +443,8 @@ export function showDayDetail(dateKey) {
     currentModalDateKey = dateKey;
     const dateObj = new Date(dateKey);
 
+    triggerHaptic('light');
+
     const today = new Date();
     const todayKey = getTodayKey();
     const isPast = dateKey < todayKey;
@@ -335,15 +475,16 @@ export function showDayDetail(dateKey) {
 
         if (timelineEvent) {
             plansHtml += `
-            <div class="bg-gradient-to-r from-[#5865F2]/20 to-[#eb459e]/20 border border-[#5865F2]/50 rounded-lg p-3 relative group">
-                <div class="font-bold text-white text-sm flex items-center gap-2">
-                    <i class="fas ${timelineEvent.icon || "fa-star"} text-[#eb459e]"></i>
-                    ${timelineEvent.title}
+            <div class="bg-gradient-to-r from-[#5865F2]/10 to-[#eb459e]/10 border border-[#5865F2]/30 rounded-lg p-3 relative group hover:border-[#eb459e] transition cursor-pointer"
+                 onclick="closeDayModal(); import('./js/modules/timeline.js').then(m => m.jumpToTimeline('${timelineEvent.id}'))">
+                <div class="font-bold text-white text-sm flex items-center justify-between gap-2">
+                    <span class="flex items-center gap-2">
+                        <i class="fas ${timelineEvent.icon || "fa-star"} text-[#faa61a]"></i>
+                        ${timelineEvent.title}
+                    </span>
+                    <i class="fas fa-external-link-alt text-[10px] text-gray-500 group-hover:text-white transition"></i>
                 </div>
-                <div class="text-xs text-gray-300 mt-2 leading-relaxed italic">"${timelineEvent.description || ""}"</div>
-                ${timelineEvent.images && timelineEvent.images.length > 0
-                    ? `<button onclick="closeModal('day-modal'); window.switchChannel('timeline');" class="mt-3 text-[10px] bg-[#202225] hover:bg-[#eb459e] text-white px-2 py-1 rounded transition border border-gray-600 w-full"><i class="fas fa-images mr-1"></i> Zobrazit fotky v Timeline</button>`
-                    : ""}
+                <div class="text-[10px] text-gray-400 mt-1 italic">Kliknutím přejdeš na záznam v Timeline</div>
             </div>`;
         } else if (plannedDate) {
             let icon = "📍";
@@ -379,21 +520,25 @@ export function showDayDetail(dateKey) {
         }
 
         if (movieHistory && movieHistory.length > 0) {
-            plansHtml += `<div class="mt-3 space-y-2">`;
+            plansHtml += `<div class="mt-4 space-y-3">`;
             movieHistory.forEach(item => {
-                const libItem = [...state.library.movies, ...state.library.series].find(m => m.id === item.media_id);
+                const libItem = [...(state.library?.movies || []), ...(state.library?.series || [])].find(m => m.id === item.media_id);
                 const title = libItem ? libItem.title : "Neznámý film";
+                const icon = libItem && libItem.icon ? libItem.icon : "🎬";
                 const ratingStars = "⭐".repeat(item.rating || 0);
                 
                 plansHtml += `
-                <div class="bg-[#2f3136] border border-[#202225] rounded-xl p-3 flex items-center gap-3 hover:border-[#eb459e]/30 transition cursor-pointer"
+                <div class="bg-[#2f3136] border border-[#202225] rounded-xl p-3 hover:border-[#eb459e]/30 transition cursor-pointer"
                      onclick="import('./js/modules/library.js').then(m => m.openHistoryModal(${item.media_id}))">
-                    <div class="text-xl">🎬</div>
-                    <div class="flex-1 overflow-hidden">
-                        <div class="text-[11px] font-bold text-white truncate">${title}</div>
-                        <div class="text-[9px] text-yellow-400">${ratingStars}</div>
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="text-xl">${icon}</div>
+                        <div class="flex-1 overflow-hidden">
+                            <div class="text-xs font-bold text-white truncate">${title}</div>
+                            <div class="text-[10px] text-yellow-400">${ratingStars}</div>
+                        </div>
+                        ${item.status === 'seen' ? '<div class="text-sm">🔥</div>' : '<div class="text-sm">🍿</div>'}
                     </div>
-                    ${item.status === 'seen' ? '<div class="text-xs">🔥</div>' : '<div class="text-xs">🍿</div>'}
+                    ${item.reaction ? `<div class="bg-[#202225] p-2 rounded-lg text-xs text-gray-300 italic border-l-2 border-[#eb459e] mt-1">"${item.reaction}"</div>` : `<div class="text-[10px] text-gray-500 italic ml-1">Bez recenze...</div>`}
                 </div>`;
             });
             plansHtml += `</div>`;
@@ -594,6 +739,7 @@ export function addSchoolEvent() {
 export function deleteSchoolEvent() {
     if (!currentModalDateKey) return;
 
+    triggerHaptic('heavy');
     delete state.schoolEvents[currentModalDateKey];
 
     // Cloud Delete (Shared)
@@ -622,6 +768,7 @@ export function toggleHealthEdit() {
 
     if (editForm.classList.contains("hidden")) {
         // Open edit form
+        triggerHaptic('light');
         const health = state.healthData[currentModalDateKey] || {};
         
         document.getElementById("edit-health-water").value = health.water || 0;

@@ -81,7 +81,7 @@ function renderContent(question) {
                         class="vote-btn flex flex-col items-center group transition-all"
                         ${myVote ? 'disabled' : ''}>
                         <div class="relative mb-4">
-                            <img src="img/app/czippel2_vanoce.png" class="w-24 h-24 md:w-32 md:h-32 rounded-3xl object-cover shadow-lg border-4 ${myVote?.voted_for_user_id === josefId ? 'border-[#faa61a] ring-4 ring-[#faa61a]/30' : 'border-[#202225] group-hover:border-[#faa61a]/50'} transition-all ${myVote && myVote.voted_for_user_id !== josefId ? 'grayscale' : ''}">
+                            <img src="img/app/jozka_profilovka.jpg" class="w-24 h-24 md:w-32 md:h-32 rounded-3xl object-cover shadow-lg border-4 ${myVote?.voted_for_user_id === josefId ? 'border-[#faa61a] ring-4 ring-[#faa61a]/30' : 'border-[#202225] group-hover:border-[#faa61a]/50'} transition-all ${myVote && myVote.voted_for_user_id !== josefId ? 'grayscale' : ''}">
                             ${myVote?.voted_for_user_id === josefId ? '<div class="absolute -top-3 -right-3 w-10 h-10 bg-[#faa61a] rounded-full flex items-center justify-center text-white shadow-lg animate-bounce-short"><i class="fas fa-check"></i></div>' : ''}
                         </div>
                         <span class="text-xl font-bold ${myVote?.voted_for_user_id === josefId ? 'text-[#faa61a]' : 'text-gray-300'}">Jožka</span>

@@ -1,82 +1,38 @@
-
+// Core imports (kept for initialization)
 import { state, initializeState } from './core/state.js';
 import { initTheme, toggleTheme, showNotification, toggleValentineMode } from './core/theme.js';
-import { triggerConfetti } from './core/utils.js';
+import { triggerConfetti, triggerHaptic } from './core/utils.js';
 import { getCurrentUser, signIn, onAuthChange } from './core/auth.js';
 import {
     renderDashboard,
-    renderWelcome,
-    handleWelcomeChat,
     updateMoodVisuals,
     updateSleep,
     refreshDashboardFact,
     showNextFact,
-    addMessageToChat
+    handleWelcomeChat
 } from './modules/dashboard.js';
-import { renderQuests, setupQuestsRealtime, cleanupQuestsRealtime } from './modules/quests.js';
+import { setupQuestsRealtime, cleanupQuestsRealtime } from './modules/quests.js';
 import { initLevels, renderLevelUI } from './modules/levels.js';
-import { renderMap, selectLocation } from './modules/map.js';
-import {
-    renderCalendar,
-    showDayDetail,
-    closeDayModal,
-    addSchoolEvent,
-    deleteSchoolEvent
-} from './modules/calendar.js';
-import {
-    renderTimeline,
-    openGallery,
-    closeGallery,
-    changeGalleryImage,
-    uploadPhoto,
-    deleteCurrentPhoto,
-    confirmDeletePhoto,
-    saveHighlight,
-    toggleMilestone,
-    toggleTimelineCard,
-    openEventModal,
-    closeEventModal,
-    saveEvent,
-    deleteEvent,
-    jumpToTimeline,
-    searchTimeline
-} from './modules/timeline.js';
-import {
-    renderLibrary,
-    openDownloadModal,
-    openMagnetLink,
-    openGoogleDrive,
-    toggleWatchlist,
-    playTrailer,
-    openHistoryModal,
-    setHistoryStatus,
-    setReactionInput,
-    saveHistory,
-    exportWatchlist,
-    clearWatchlist,
-    openPlanningModal,
-    confirmLibraryPlan
-} from './modules/library.js';
-import {
-    renderTopics,
-    closeTopicModal,
-    toggleViewBookmarks,
-    toggleQuestionBookmark,
-    prevQuestion,
-    nextQuestion,
-    markQuestionDone,
-    confirmResetTopic
-} from './modules/topics.js';
-import { renderTetrisTracker as renderTetris, renderPuzzleGame as renderPuzzle } from './modules/games.js';
-import { startConfession, responseYes, responseNo } from './modules/confession.js';
-import { updateHealth, updateBedtime, startSleep, wakeUp, startSleepTimer } from './modules/health.js';
-import { migrateLocalDataToSupabase } from './migration.js';
-import { renderBucketList, addBucketItem, toggleItem, deleteItem, cleanupRealtime as bucketCleanup } from './modules/bucketlist.js';
-import { renderAchievements, toggleAchievement, cleanupRealtime as achCleanup } from './modules/achievements.js';
-import { renderDailyQuestions, cleanupRealtime as dailyCleanup } from './modules/dailyQuestions.js';
-import { cleanupRealtime as whoCleanup } from './modules/gameWho.js';
-import { cleanupRealtime as drawCleanup } from './modules/gameDraw.js';
-import { renderFunFacts } from './modules/funfacts.js';
+
+// Lazy-loaded modules mapping (for better maintenance)
+const moduleMap = {
+    'calendar': () => import('./modules/calendar.js'),
+    'timeline': () => import('./modules/timeline.js'),
+    'library': () => import('./modules/library.js'),
+    'topics': () => import('./modules/topics.js'),
+    'games': () => import('./modules/games.js'),
+    'confession': () => import('./modules/confession.js'),
+    'health': () => import('./modules/health.js'),
+    'bucketlist': () => import('./modules/bucketlist.js'),
+    'achievements': () => import('./modules/achievements.js'),
+    'daily-questions': () => import('./modules/dailyQuestions.js'),
+    'game-who': () => import('./modules/gameWho.js'),
+    'game-draw': () => import('./modules/gameDraw.js'),
+    'funfacts': () => import('./modules/funfacts.js'),
+    'map': () => import('./modules/map.js'),
+    'search': () => import('./modules/search.js'),
+    'profile': () => import('./modules/profile.js')
+};
 
 let lastUserId = null;
 
@@ -122,9 +78,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     initTheme();
     renderChannels();
 
-    // 2. Global Event Listeners (Navigation)
+    // 2. Global Event Listeners (Navigation & System)
     setupNavigation();
     setupSearch();
+    setupConnectivityListeners();
 
     // 3. Expose Global Functions
     exposeGlobals();
@@ -133,6 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function handleMigrations() {
     // 1. Initial migration from LocalStorage (v1-v4)
     if (!localStorage.getItem('klarka_migration_done')) {
+        const { migrateLocalDataToSupabase } = await import('./migration.js');
         const migratedCount = await migrateLocalDataToSupabase();
         if (migratedCount > 0) {
             localStorage.setItem('klarka_migration_done', 'true');
@@ -162,6 +120,18 @@ async function handleMigrations() {
             return;
         }
     }
+}
+
+function setupConnectivityListeners() {
+    window.addEventListener('online', () => {
+        showNotification("Připojení obnoveno 📶", "success");
+        triggerHaptic('success');
+    });
+
+    window.addEventListener('offline', () => {
+        showNotification("Jsi offline. Některé funkce nemusí fungovat ⚠️", "error");
+        triggerHaptic('heavy');
+    });
 }
 
 // --- NAVIGATION ---
@@ -401,7 +371,9 @@ export async function handleLogin(form) {
 
     try {
         await signIn(email, password);
+        triggerHaptic('success');
     } catch (err) {
+        triggerHaptic('heavy');
         errorEl.textContent = "Chyba přihlášení: " + (err.message === "Invalid login credentials" ? "Nesprávný e-mail nebo heslo." : err.message);
         errorEl.classList.remove('hidden');
         form.querySelectorAll('input').forEach(i => i.classList.add('login-input-error'));
@@ -424,11 +396,12 @@ export function updateUserProfileUI(user) {
     const isJosef = user.email.toLowerCase().includes('josef') || user.email.toLowerCase().includes('jozk');
 
     if (isJosef) {
-        state.currentUser = { name: 'Jožka', email: user.email, id: user.id };
+        const avatarPath = 'img/app/jozka_profilovka.jpg';
+        state.currentUser = { name: 'Jožka', email: user.email, id: user.id, avatar: avatarPath };
         if (sidebarName) sidebarName.textContent = 'Jožka';
         if (popoutName) popoutName.textContent = 'Jožka';
-        if (sidebarAvatar) sidebarAvatar.src = 'img/app/czippel2_vanoce.png';
-        if (popoutAvatar) popoutAvatar.src = 'img/app/czippel2_vanoce.png';
+        if (sidebarAvatar) sidebarAvatar.src = avatarPath;
+        if (popoutAvatar) popoutAvatar.src = avatarPath;
         if (bioParagraph) {
             bioParagraph.innerHTML = `
                 Systémový Administrátor & Full-Stack Boyfriend<br />
@@ -439,11 +412,12 @@ export function updateUserProfileUI(user) {
             `;
         }
     } else {
-        state.currentUser = { name: 'Klárka', email: user.email, id: user.id };
+        const avatarPath = 'img/app/klarka_profilovka.webp';
+        state.currentUser = { name: 'Klárka', email: user.email, id: user.id, avatar: avatarPath };
         if (sidebarName) sidebarName.textContent = 'Klárka';
         if (popoutName) popoutName.textContent = 'Klárka';
-        if (sidebarAvatar) sidebarAvatar.src = 'img/app/klarka_profilovka.webp';
-        if (popoutAvatar) popoutAvatar.src = 'img/app/klarka_profilovka.webp';
+        if (sidebarAvatar) sidebarAvatar.src = avatarPath;
+        if (popoutAvatar) popoutAvatar.src = avatarPath;
         if (bioParagraph) {
             bioParagraph.innerHTML = `
                 Role: Vrchní Fact-Checker & QA Tester<br />
@@ -458,23 +432,31 @@ export function updateUserProfileUI(user) {
 
 const channelCategories = [
     {
-        name: "SOCIAL",
+        name: "ZÁBAVA & HRY",
         items: [
-            { id: 'welcome', name: 'uvítání', icon: '<i class="fas fa-door-open"></i>', type: 'text', desc: 'Vítejte na našem soukromém serveru! ❤️' },
-            { id: 'music', name: 'music-bot', icon: '<i class="fas fa-music"></i>', type: 'text', color: '#3ba55c', desc: 'Náš společný vibes playlist 🎧' }
+            { id: 'topics', name: 'témata', icon: '<i class="fas fa-comments"></i>', type: 'text', color: '#faa61a', desc: 'Když nevíme, o čem si povídat... 🥰' },
+            { id: 'funfacts', name: 'zajímavosti', icon: '<i class="fas fa-lightbulb"></i>', type: 'text', color: '#eb459e', desc: 'Vše o mývalech, sovách a tak...' },
+            { id: 'daily-questions', name: 'denní-otázky', icon: '<i class="fas fa-question-circle"></i>', type: 'text', color: '#99aab5', desc: 'Každý den nová otázka pro nás dva. 🤔' },
+            { id: 'quiz', name: 'kvízy', icon: '<i class="fas fa-brain"></i>', type: 'text', color: '#5865F2', desc: 'Kdo vás lépe zná? 🧠' },
+            { id: 'games-hub', name: 'gamesky', icon: '<i class="fas fa-gamepad"></i>', type: 'text', color: '#3ba55c', desc: 'Kdo spíše, Draw Duel... 🎮' },
+            { id: 'puzzle', name: 'puzzle', icon: '<i class="fas fa-puzzle-piece"></i>', type: 'text', color: '#eb459e', desc: 'Skládejte naše vzpomínky kousek po kousku.' },
+            { id: 'tetris', name: 'tetris-tracker', icon: '<i class="fas fa-shapes"></i>', type: 'text', color: '#faa61a', desc: 'Sezóna v Tetris War začíná! 🏆' }
         ]
     },
     {
-        name: "RANDE",
+        name: "PLÁNOVÁNÍ",
         items: [
-            { id: 'dateplanner', name: 'plánovač', icon: '<i class="fas fa-map-marker-alt"></i>', type: 'text', color: '#3ba55c', desc: 'Kam vyrazíme příště?🥂' },
-            { id: 'timeline', name: 'timeline', icon: '<i class="fas fa-history"></i>', type: 'text', color: '#eb459e', desc: 'Naše nejhezčí společné chvilky 🎞️' },
-            { id: 'topics', name: 'témata', icon: '<i class="fas fa-comments"></i>', type: 'text', color: '#faa61a', desc: 'Když nevíme, o čem si povídat... 🥰' },
+            { id: 'dateplanner', name: 'plánovač-rande', icon: '<i class="fas fa-map-marker-alt"></i>', type: 'text', color: '#3ba55c', desc: 'Kam vyrazíme příště?🥂' },
             { id: 'bucketlist', name: 'bucket-list', icon: '<i class="fas fa-rocket"></i>', type: 'text', color: '#ed4245', desc: 'Všechno, co spolu chceme zažít! ✨' },
+            { id: 'quests', name: 'společné-questy', icon: '<i class="fas fa-shield-alt"></i>', type: 'text', color: '#faa61a', desc: 'Naše společné cíle a progress. 💪' }
+        ]
+    },
+    {
+        name: "VZPOMÍNKY",
+        items: [
+            { id: 'timeline', name: 'timeline', icon: '<i class="fas fa-history"></i>', type: 'text', color: '#eb459e', desc: 'Naše nejhezčí společné chvilky 🎞️' },
             { id: 'letters', name: 'dopisy', icon: '<i class="fas fa-envelope-open-text"></i>', type: 'text', color: '#eb459e', desc: 'Vzkazy v láhvi, které se otevřou v čas 💌' },
-            { id: 'quiz', name: 'kvízy', icon: '<i class="fas fa-brain"></i>', type: 'text', color: '#5865F2', desc: 'Kdo vás lépe zná? 🧠' },
-            { id: 'games-hub', name: 'gamesky', icon: '<i class="fas fa-gamepad"></i>', type: 'text', color: '#3ba55c', desc: 'Kdo spíše, Draw Duel... 🎮' },
-            { id: 'daily-questions', name: 'denní-otázky', icon: '<i class="fas fa-question-circle"></i>', type: 'text', color: '#99aab5', desc: 'Každý den nová otázka pro nás dva. 🤔' }
+            { id: 'achievements', name: 'achievementy', icon: '<i class="fas fa-trophy"></i>', type: 'text', color: '#faa61a', desc: 'Co všechno jsme už dokázali? ⭐' }
         ]
     },
     {
@@ -483,17 +465,14 @@ const channelCategories = [
             { id: 'movies', name: 'filmy', icon: '<i class="fas fa-film"></i>', type: 'text', color: '#5865F2', desc: 'Co nás čeká v kině i doma 🍿' },
             { id: 'series', name: 'seriály', icon: '<i class="fas fa-tv"></i>', type: 'text', color: '#5865F2', desc: 'Maratony pod dekou 🎞️' },
             { id: 'watchlist', name: 'watchlist', icon: '<i class="fas fa-heart text-[#eb459e]"></i>', type: 'text', color: '#eb459e', desc: 'Náš společný seznam přání a osud 🎬🌟' },
-            { id: 'games', name: 'hry', icon: '<i class="fas fa-gamepad"></i>', type: 'text', color: '#5865F2', desc: 'Vyzvi mě na souboj! ⚔️' },
-            { id: 'puzzle', name: 'puzzle', icon: '<i class="fas fa-puzzle-piece"></i>', type: 'text', color: '#eb459e', desc: 'Skládejte naše vzpomínky kousek po kousku.' },
-            { id: 'tetris', name: 'tetris-tracker', icon: '<i class="fas fa-shapes"></i>', type: 'text', color: '#faa61a', desc: 'Sezóna v Tetris War začíná! 🏆' }
+            { id: 'games', name: 'hry', icon: '<i class="fas fa-dice"></i>', type: 'text', color: '#ff5252', desc: 'Hry' },
+            { id: 'music', name: 'music-bot', icon: '<i class="fas fa-music"></i>', type: 'text', color: '#3ba55c', desc: 'Náš společný vibes playlist 🎧' }
         ]
     },
     {
-        name: "INFO",
+        name: "SYSTÉM",
         items: [
-            { id: 'quests', name: 'společné-questy', icon: '<i class="fas fa-shield-alt"></i>', type: 'text', color: '#faa61a', desc: 'Naše společné cíle a progress. 💪' },
-            { id: 'achievements', name: 'achievementy', icon: '<i class="fas fa-trophy"></i>', type: 'text', color: '#faa61a', desc: 'Co všechno jsme už dokázali? ⭐' },
-            { id: 'funfacts', name: 'zajímavosti', icon: '<i class="fas fa-lightbulb"></i>', type: 'text', color: '#eb459e', desc: 'Vše o mývalech, sovách a tak...' },
+            { id: 'welcome', name: 'uvítání', icon: '<i class="fas fa-door-open"></i>', type: 'text', desc: 'Vítejte na našem soukromém serveru! ❤️' },
             { id: 'manual', name: 'návod', icon: '<i class="fas fa-book"></i>', type: 'text', color: '#99aab5', desc: 'Jak ovládat tuhle aplikaci.' },
             { id: 'readme', name: 'README.md', icon: '<i class="fas fa-file-alt"></i>', type: 'text', color: '#99aab5', desc: 'Krásného Valentýna té nejúžasnější holce pod sluncem! ❤️' }
         ]
@@ -544,6 +523,10 @@ export function switchChannel(channelId) {
         console.log(`[NAV] Already on channel ${channelId}, skipping full re-render.`);
         return;
     }
+    
+    // Haptic feedback for navigation
+    triggerHaptic('light');
+
     console.log(`[NAV] Switching to channel: ${channelId} at ${new Date().toLocaleTimeString()}`);
     state.currentChannel = channelId;
     localStorage.setItem('klarka_last_channel', channelId);
@@ -583,7 +566,7 @@ export function switchChannel(channelId) {
     // Route
     switch (channelId) {
         case 'welcome':
-            renderWelcome();
+            import('./modules/dashboard.js').then(m => m.renderWelcome());
             break;
         case 'music':
             renderMusicBot();
@@ -591,34 +574,34 @@ export function switchChannel(channelId) {
         case 'dashboard':
             renderDashboard();
             break;
-        case 'dateplanner': // Map / Date Planner
-            renderMap();
+        case 'dateplanner':
+            moduleMap.map().then(m => m.renderMap());
             break;
         case 'bucketlist':
-            renderBucketList();
+            moduleMap.bucketlist().then(m => m.renderBucketList());
             break;
         case 'calendar':
-            renderCalendar();
+            moduleMap.calendar().then(m => m.renderCalendar());
             break;
         case 'timeline':
-            renderTimeline();
+            moduleMap.timeline().then(m => m.renderTimeline());
             break;
         case 'movies':
         case 'series':
-        case 'games': // Library Categories
-            renderLibrary(channelId);
+        case 'games':
+            moduleMap.library().then(m => m.renderLibrary(channelId));
             break;
         case 'watchlist':
             import('./modules/watchlist.js').then(m => m.renderWatchlist());
             break;
-        case 'topics': // Quiz / Topics
-            renderTopics();
+        case 'topics':
+            moduleMap.topics().then(m => m.renderTopics());
             break;
         case 'tetris':
-            renderTetris();
+            moduleMap.games().then(m => m.renderTetrisTracker());
             break;
         case 'puzzle':
-            renderPuzzle();
+            moduleMap.games().then(m => m.renderPuzzleGame());
             break;
         case 'quiz':
             import('./modules/coupleQuiz.js').then(m => m.renderCoupleQuiz());
@@ -633,16 +616,16 @@ export function switchChannel(channelId) {
             import('./modules/gameDraw.js').then(m => m.renderGameDraw());
             break;
         case 'daily-questions':
-            renderDailyQuestions();
+            moduleMap['daily-questions']().then(m => m.renderDailyQuestions());
             break;
         case 'achievements':
-            renderAchievements();
+            moduleMap.achievements().then(m => m.renderAchievements());
             break;
         case 'quests':
-            renderQuests();
+            import('./modules/quests.js').then(m => m.renderQuests());
             break;
         case 'funfacts':
-            renderFunFacts();
+            moduleMap.funfacts().then(m => m.renderFunFacts());
             break;
         case 'letters':
             import('./modules/letters.js').then(m => m.renderLetters());
@@ -657,7 +640,7 @@ export function switchChannel(channelId) {
             renderUpgrade();
             break;
         default:
-            renderWelcome();
+            import('./modules/dashboard.js').then(m => m.renderWelcome());
     }
 
     // Mobile Sidebar Close (if applicable)
@@ -671,8 +654,6 @@ export function switchChannel(channelId) {
 
 // --- SEARCH ---
 
-import { expandSearchQuery, renderGlobalSearch } from './modules/search.js';
-
 function setupSearch() {
     const searchInput = document.getElementById('search-input');
     if (!searchInput) return;
@@ -680,7 +661,7 @@ function setupSearch() {
     searchInput.addEventListener('input', (e) => {
         const query = e.target.value.trim();
         if (query.length > 0) {
-            renderGlobalSearch(expandSearchQuery(query));
+            moduleMap.search().then(m => m.renderGlobalSearch(m.expandSearchQuery(query)));
         } else {
             // Restore current channel
             switchChannel(state.currentChannel);
@@ -691,23 +672,8 @@ function setupSearch() {
 // --- UI HELPERS FROM SCRIPT.JS ---
 
 function toggleUserPopout() {
-    const popout = document.getElementById("user-popout");
-    if (popout) {
-        popout.classList.toggle("active");
-        if (popout.classList.contains("active")) {
-            setTimeout(() => {
-                document.addEventListener("click", closePopoutOutside);
-            }, 100);
-        }
-    }
-}
-
-function closePopoutOutside(e) {
-    const popout = document.getElementById("user-popout");
-    if (popout && !e.target.closest(".user-popout") && !e.target.closest(".h-\\[52px\\]")) {
-        popout.classList.remove("active");
-        document.removeEventListener("click", closePopoutOutside);
-    }
+    triggerHaptic('light');
+    import('./modules/profile.js').then(m => m.toggleUserPopout());
 }
 
 function toggleMobileMenu() {
@@ -715,6 +681,8 @@ function toggleMobileMenu() {
     const overlay = document.getElementById("mobile-overlay");
 
     if (!sidebar || !overlay) return;
+
+    triggerHaptic('light');
 
     const isClosed = sidebar.classList.contains("-translate-x-full");
 
@@ -732,6 +700,7 @@ function toggleMobileMenu() {
 function exposeGlobals() {
     window.switchChannel = switchChannel;
     window.triggerConfetti = triggerConfetti;
+    window.triggerHaptic = triggerHaptic;
     window.toggleTheme = toggleTheme;
     window.toggleValentineMode = toggleValentineMode;
     window.showNotification = showNotification;
@@ -746,58 +715,76 @@ function exposeGlobals() {
         if (modal) modal.style.display = 'none';
         if (id === 'gallery-modal') closeGallery();
     };
-    window.openDownloadModal = openDownloadModal;
-    window.openMagnetLink = openMagnetLink;
-    window.openGoogleDrive = openGoogleDrive;
-    window.toggleWatchlist = toggleWatchlist;
-    window.playTrailer = playTrailer;
-    window.openHistoryModal = openHistoryModal;
-    window.setHistoryStatus = setHistoryStatus;
-    window.setReactionInput = setReactionInput;
-    window.saveHistory = saveHistory;
-    window.exportWatchlist = exportWatchlist;
-    window.clearWatchlist = clearWatchlist;
-    window.openPlanningModal = openPlanningModal;
-    window.confirmLibraryPlan = confirmLibraryPlan;
-    window.startConfession = startConfession;
-    
-    // Watchlist
-    window.rollTheDice = () => import('./modules/watchlist.js').then(m => m.rollTheDice());
 
-    // Confession
-    window.responseYes = responseYes;
-    window.responseNo = responseNo;
+    // Library Lazy Functions
+    const libraryFn = (fn) => (...args) => import('./modules/library.js').then(m => m[fn](...args));
+    window.openDownloadModal = libraryFn('openDownloadModal');
+    window.openMagnetLink = libraryFn('openMagnetLink');
+    window.openGoogleDrive = libraryFn('openGoogleDrive');
+    window.toggleWatchlist = libraryFn('toggleWatchlist');
+    window.playTrailer = libraryFn('playTrailer');
+    window.openHistoryModal = libraryFn('openHistoryModal');
+    window.setHistoryStatus = libraryFn('setHistoryStatus');
+    window.setReactionInput = libraryFn('setReactionInput');
+    window.saveHistory = libraryFn('saveHistory');
+    window.exportWatchlist = libraryFn('exportWatchlist');
+    window.clearWatchlist = libraryFn('clearWatchlist');
+    window.openPlanningModal = libraryFn('openPlanningModal');
+    window.confirmLibraryPlan = libraryFn('confirmLibraryPlan');
 
-    // Timeline
-    window.openGallery = openGallery;
-    window.closeGallery = closeGallery;
-    window.changeGalleryImage = changeGalleryImage;
-    window.handleLogin = handleLogin;
+    // Confession Lazy Functions
+    const confessionFn = (fn) => (...args) => import('./modules/confession.js').then(m => m[fn](...args));
+    window.startConfession = confessionFn('startConfession');
+    window.responseYes = confessionFn('responseYes');
+    window.responseNo = confessionFn('responseNo');
 
-    // Topics
-    window.closeTopicModal = closeTopicModal;
-    window.toggleViewBookmarks = toggleViewBookmarks;
-    window.toggleQuestionBookmark = toggleQuestionBookmark;
-    window.prevQuestion = prevQuestion;
-    window.nextQuestion = nextQuestion;
-    window.markQuestionDone = markQuestionDone;
-    window.confirmResetTopic = confirmResetTopic;
+    // Topics Lazy Functions
+    const topicsFn = (fn) => (...args) => import('./modules/topics.js').then(m => m[fn](...args));
+    window.closeTopicModal = topicsFn('closeTopicModal');
+    window.toggleViewBookmarks = topicsFn('toggleViewBookmarks');
+    window.toggleQuestionBookmark = topicsFn('toggleQuestionBookmark');
+    window.prevQuestion = topicsFn('prevQuestion');
+    window.nextQuestion = topicsFn('nextQuestion');
+    window.markQuestionDone = topicsFn('markQuestionDone');
+    window.confirmResetTopic = topicsFn('confirmResetTopic');
 
-    // Calendar
-    window.showDayDetail = showDayDetail;
-    window.closeDayModal = closeDayModal;
-    window.addSchoolEvent = addSchoolEvent;
-    window.deleteSchoolEvent = deleteSchoolEvent;
+    // Calendar Lazy Functions
+    const calendarFn = (fn) => (...args) => import('./modules/calendar.js').then(m => m[fn](...args));
+    window.showDayDetail = calendarFn('showDayDetail');
+    window.closeDayModal = calendarFn('closeDayModal');
+    window.addSchoolEvent = calendarFn('addSchoolEvent');
+    window.deleteSchoolEvent = calendarFn('deleteSchoolEvent');
 
-    // Map
-    window.selectLocation = selectLocation;
+    // Timeline Lazy Functions
+    const timelineFn = (fn) => (...args) => import('./modules/timeline.js').then(m => m[fn](...args));
+    window.openGallery = timelineFn('openGallery');
+    window.closeGallery = timelineFn('closeGallery');
+    window.changeGalleryImage = timelineFn('changeGalleryImage');
+    window.uploadPhoto = timelineFn('uploadPhoto');
+    window.deleteCurrentPhoto = timelineFn('deleteCurrentPhoto');
+    window.confirmDeletePhoto = timelineFn('confirmDeletePhoto');
+    window.saveHighlight = timelineFn('saveHighlight');
+    window.toggleMilestone = timelineFn('toggleMilestone');
+    window.toggleTimelineCard = timelineFn('toggleTimelineCard');
+    window.openEventModal = timelineFn('openEventModal');
+    window.closeEventModal = timelineFn('closeEventModal');
+    window.saveEvent = timelineFn('saveEvent');
+    window.deleteEvent = timelineFn('deleteEvent');
+    window.jumpToTimeline = timelineFn('jumpToTimeline');
+    window.searchTimeline = timelineFn('searchTimeline');
+
+    // Map Lazy Functions
+    window.selectLocation = (...args) => import('./modules/map.js').then(m => m.selectLocation(...args));
 
     // Health (for dashboard inline handlers)
-    window.updateHealth = updateHealth;
-    window.updateBedtime = updateBedtime;
-    window.startSleep = startSleep;
-    window.wakeUp = wakeUp;
-    window.startSleepTimer = startSleepTimer;
+    const healthFn = (fn) => (...args) => import('./modules/health.js').then(m => m[fn](...args));
+    window.updateHealth = healthFn('updateHealth');
+    window.updateBedtime = healthFn('updateBedtime');
+    window.startSleep = healthFn('startSleep');
+    window.wakeUp = healthFn('wakeUp');
+    window.startSleepTimer = healthFn('startSleepTimer');
+
+    // Dashboard Functions (imported at top)
     window.updateMoodVisuals = updateMoodVisuals;
     window.updateSleep = updateSleep;
     window.refreshDashboardFact = refreshDashboardFact;
@@ -806,30 +793,18 @@ function exposeGlobals() {
     window.renderDashboard = renderDashboard;
 
     // Bucket List
-    window.addBucketItem = addBucketItem;
-    window.toggleItem = toggleItem;
-    window.deleteItem = deleteItem;
+    window.addBucketItem = (...args) => import('./modules/bucketlist.js').then(m => m.addBucketItem(...args));
+    window.toggleItem = (...args) => import('./modules/bucketlist.js').then(m => m.toggleItem(...args));
+    window.deleteItem = (...args) => import('./modules/bucketlist.js').then(m => m.deleteItem(...args));
 
     // Achievements
-    window.toggleAchievement = toggleAchievement;
+    window.toggleAchievement = (...args) => import('./modules/achievements.js').then(m => m.toggleAchievement(...args));
 
-    // Timeline
-    window.renderTimeline = renderTimeline;
-    window.openGallery = openGallery;
-    window.closeGallery = closeGallery;
-    window.changeGalleryImage = changeGalleryImage;
-    window.uploadPhoto = uploadPhoto;
-    window.deleteCurrentPhoto = deleteCurrentPhoto;
-    window.confirmDeletePhoto = confirmDeletePhoto;
-    window.saveHighlight = saveHighlight;
-    window.toggleMilestone = toggleMilestone;
-    window.toggleTimelineCard = toggleTimelineCard;
-    window.openEventModal = openEventModal;
-    window.closeEventModal = closeEventModal;
-    window.saveEvent = saveEvent;
-    window.deleteEvent = deleteEvent;
-    window.jumpToTimeline = jumpToTimeline;
-    window.searchTimeline = searchTimeline;
+    // Watchlist
+    window.rollTheDice = () => import('./modules/watchlist.js').then(m => m.rollTheDice());
+
+    // Extra Timeline
+    window.renderTimeline = timelineFn('renderTimeline');
 
     // Migration
     import('./migration.js').then(m => {

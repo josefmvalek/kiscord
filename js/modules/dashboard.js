@@ -1,8 +1,9 @@
 
+import { supabase } from '../core/supabase.js';
 import { state } from '../core/state.js';
 import { isJosef } from '../core/auth.js';
 import { getTodayData, updateHealth, updateBedtime, startSleep, wakeUp, startSleepTimer } from './health.js';
-import { triggerHaptic, triggerConfetti, getInflectedName } from '../core/utils.js';
+import { triggerHaptic, triggerConfetti, getInflectedName, getTodayKey } from '../core/utils.js';
 import { showNotification } from '../core/theme.js';
 import { getTetrisScore } from './games.js';
 
@@ -102,7 +103,7 @@ export function generateWaterIcons(count) {
         const isFull = i <= count;
         const colorClass = isFull ? "text-[#00e5ff] scale-110 drop-shadow-[0_0_5px_rgba(0,229,255,0.5)]" : "text-[#202225] hover:text-[#40444b]";
         const borderStyle = isFull ? "" : "filter: drop-shadow(0 0 1px #555);";
-        html += `<button onclick="import('./js/modules/health.js').then(m => { m.updateHealth('water', ${i}); import('./js/modules/dashboard.js').then(d => d.renderDashboard()); })" class="text-2xl transition-all duration-200 p-1 transform active:scale-95 z-20 relative cursor-pointer ${colorClass}" style="${borderStyle}"><i class="fas fa-tint pointer-events-none"></i></button>`;
+        html += `<button onclick="import('./js/core/utils.js').then(u => u.triggerHaptic('light')); import('./js/modules/health.js').then(m => { m.updateHealth('water', ${i}); import('./js/modules/dashboard.js').then(d => d.renderDashboard()); })" class="text-2xl transition-all duration-200 p-1 transform active:scale-95 z-20 relative cursor-pointer ${colorClass}" style="${borderStyle}"><i class="fas fa-tint pointer-events-none"></i></button>`;
     }
     return html;
 }
@@ -197,6 +198,7 @@ function generateSleepControls(data) {
 }
 
 export function updateSleep(val) {
+    triggerHaptic("light");
     const sleepValue = val;
     const sleepColor = getSleepColor(sleepValue);
     const progressBar = document.getElementById('sleep-progress-bar');
@@ -235,6 +237,7 @@ export function handleWelcomeChat(e) {
         const text = e.target.value.trim();
         if (!text) return;
 
+        triggerHaptic("light");
         addMessageToChat("Klárka", "klarka_profilovka.webp", text);
         e.target.value = "";
         processCommand(text);
@@ -290,7 +293,8 @@ function processCommand(text) {
         if (indicator) indicator.style.display = "flex";
         setTimeout(() => {
             if (indicator) indicator.style.display = "none";
-            addMessageToChat("System Bot", "czippel2_kytka-modified.png", msg, true);
+            triggerHaptic("medium");
+            addMessageToChat("System Bot", "jozka_profilovka.jpg", msg, true);
         }, delay);
     };
 
@@ -395,9 +399,73 @@ export function refreshDashboardFact() {
 
 // --- MAIN DASHBOARD RENDERER ---
 
-export function renderDashboard() {
+export async function renderDashboard(forceRefresh = false) {
     const container = document.getElementById("messages-container");
     if (!container) return;
+
+    // Show skeleton/loader if we don't have data yet or if force refreshing
+    const todayKey = getTodayKey();
+    const hasData = state.healthData && state.healthData[todayKey];
+
+    if (!hasData || forceRefresh) {
+        container.innerHTML = `
+            <div class="h-full flex flex-col items-center justify-center bg-[#36393f] text-gray-400 space-y-4 animate-fade-in">
+                <div class="relative">
+                    <div class="w-16 h-16 border-4 border-[#5865F2]/20 border-t-[#5865F2] rounded-full animate-spin"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-xl">❤️</div>
+                </div>
+                <p class="text-sm font-bold uppercase tracking-widest animate-pulse">Načítám tvůj den...</p>
+            </div>
+        `;
+
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const { data, error } = await supabase.rpc('get_dashboard_data', {
+                p_user_id: state.currentUser.id,
+                p_date: today
+            });
+
+            if (error) throw error;
+
+            if (data) {
+                // Update State
+                if (!state.healthData) state.healthData = {};
+                state.healthData[todayKey] = data.health;
+                state.pinnedDrawing = data.pinned_drawing;
+                
+                // Tetris Scores
+                if (!state.tetris) state.tetris = { jose: 0, klarka: 0 };
+                state.tetris.jose = data.tetris.jose || 0;
+                state.tetris.klarka = data.tetris.klarka || 0;
+
+                // Next Event
+                if (data.next_event) {
+                    if (!state.plannedDates) state.plannedDates = {};
+                    state.plannedDates[data.next_event.date_key] = data.next_event;
+                }
+            }
+        } catch (err) {
+            console.error("Dashboard RPC Error:", err);
+            
+            // Render Fail State UI
+            container.innerHTML = `
+                <div class="h-full flex flex-col items-center justify-center bg-[#36393f] text-gray-400 p-6 text-center animate-fade-in">
+                    <div class="text-8xl mb-6 filter drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]">🦝💔</div>
+                    <h3 class="text-xl font-bold text-white mb-2 uppercase tracking-tighter">Oups! Mýval v drátech...</h3>
+                    <p class="text-sm text-gray-400 mb-8 max-w-xs leading-relaxed">
+                        Nepodařilo se mi spojit se serverem a načíst tvůj den. Možná je Supabase na kafi nebo zlobí internet.
+                    </p>
+                    <button onclick="import('./js/modules/dashboard.js').then(m => m.renderDashboard(true)); triggerHaptic('light')" 
+                            class="bg-[#ed4245] hover:bg-[#c03537] text-white px-8 py-3 rounded-xl font-black uppercase tracking-widest transition-all transform hover:scale-105 active:scale-95 shadow-xl flex items-center gap-3">
+                        <i class="fas fa-sync-alt"></i>
+                        Zkusit znovu
+                    </button>
+                    ${!navigator.onLine ? '<p class="mt-6 text-[10px] text-red-400 font-bold uppercase animate-pulse">Zdá se, že jsi odpojena od sítě 📶</p>' : ''}
+                </div>
+            `;
+            return;
+        }
+    }
 
     const data = getTodayData();
     const dateOptions = { weekday: "long", day: "numeric", month: "long" };
@@ -455,18 +523,18 @@ export function renderDashboard() {
                   <div class="space-y-3">
                       <!-- PINNED DRAWING (FRIDGE) -->
                       ${state.pinnedDrawing ? `
-                        <div onclick="window.switchChannel('game-draw')" class="bg-[#2f3136] rounded-xl shadow border border-[#202225] overflow-hidden group cursor-pointer transition hover:border-[#eb459e]/30 shadow-md">
-                            <div class="p-3 border-b border-[#202225] flex justify-between items-center bg-black/10">
+                        <div onclick="window.switchChannel('game-draw')" class="bg-[var(--bg-secondary)] rounded-2xl shadow-xl border border-white/5 overflow-hidden group cursor-pointer transition hover:border-[#eb459e]/30">
+                            <div class="p-4 border-b border-white/5 flex justify-between items-center bg-black/10">
                                 <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
                                     <i class="fas fa-snowflake text-[#00e5ff]"></i> Z Lednice
                                 </h3>
-                                <span class="text-[9px] bg-[#eb459e]/10 text-[#eb459e] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">Mistrovské dílo</span>
+                                <span class="text-[9px] bg-[#eb459e]/20 text-[#eb459e] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">Mistrovské dílo</span>
                             </div>
                             <div class="relative aspect-video bg-white overflow-hidden">
                                 <img src="${state.pinnedDrawing.thumbnail}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                                <div class="absolute bottom-3 left-3">
-                                    <p class="text-white text-sm font-black drop-shadow-md">${state.pinnedDrawing.title || 'Bez názvu'}</p>
+                                <div class="absolute bottom-4 left-4">
+                                    <p class="text-white text-base font-black drop-shadow-md">${state.pinnedDrawing.title || 'Bez názvu'}</p>
                                     <p class="text-white/70 text-[10px] font-bold uppercase">${new Date(state.pinnedDrawing.created_at).toLocaleDateString('cs-CZ')}</p>
                                 </div>
                             </div>
@@ -474,27 +542,33 @@ export function renderDashboard() {
                       ` : ''}
 
                       <!-- SLEEP -->
-                      <div class="bg-[#2f3136] rounded-xl shadow border border-[#202225] p-3">
-                          <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-2"><i class="fas fa-bed text-[#faa61a]"></i> Jak ses vyspala?</h3>
+                      <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-xl border border-white/5 p-6">
+                          <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2 leading-none">
+                            <i class="fas fa-bed text-[#faa61a]"></i> Jak ses vyspala?
+                          </h3>
                           <div class="h-full" id="sleep-container">${generateSleepSlider(data)}</div>
                       </div>
                       <!-- WATER -->
-                      <div class="bg-[#2f3136] rounded-xl shadow border border-[#202225] p-3">
-                          <div class="flex justify-between items-center mb-2">
-                              <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wide flex items-center gap-2"><i class="fas fa-tint text-[#00e5ff]"></i> Voda</h3>
-                              <span class="text-[10px] text-[#00e5ff] font-bold" id="water-count">${data.water}/8</span>
+                      <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-xl border border-white/5 p-6">
+                          <div class="flex justify-between items-center mb-4">
+                              <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 leading-none">
+                                <i class="fas fa-tint text-[#00e5ff]"></i> Voda
+                              </h3>
+                              <span class="text-[10px] text-[#00e5ff] font-black bg-[#00e5ff]/10 px-2 py-0.5 rounded-full" id="water-count">${data.water}/8</span>
                           </div>
-                          <div class="flex justify-between gap-0.5" id="water-container">${generateWaterIcons(data.water)}</div>
+                          <div class="flex justify-between gap-1" id="water-container">${generateWaterIcons(data.water)}</div>
                       </div>
                       <!-- MOOD & MOVEMENT -->
-                      <div class="flex flex-col gap-2 mt-36">
-                          <div class="bg-[#2f3136] rounded-xl shadow border border-[#202225] p-3">
-                              <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2">Jak se cítíš?</h3>
+                      <div class="flex flex-col gap-3">
+                          <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-xl border border-white/5 p-6 min-h-[140px] flex flex-col justify-between">
+                              <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 leading-none">Jak se cítíš?</h3>
                               <div class="flex justify-between px-1" id="mood-container">${generateMoodSlider(data.mood)}</div>
                           </div>
-                          <div class="bg-[#2f3136] rounded-xl shadow border border-[#202225] p-3">
-                              <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-2"><i class="fas fa-running text-[#3ba55c]"></i> Dnešní pohyb</h3>
-                              <div class="flex flex-wrap gap-2" id="movement-container">${generateMovementChips(data.movement)}</div>
+                          <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-xl border border-white/5 p-6">
+                              <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2 leading-none">
+                                <i class="fas fa-running text-[#3ba55c]"></i> Dnešní pohyb
+                              </h3>
+                              <div class="flex flex-wrap gap-3" id="movement-container">${generateMovementChips(data.movement)}</div>
                           </div>
                       </div>
                   </div>
@@ -509,7 +583,7 @@ export function renderDashboard() {
                         <div class="absolute right-[-10px] top-[-10px] opacity-10 text-6xl text-[#faa61a] rotate-12 group-hover:rotate-45 transition duration-500"><i class="fas fa-shapes"></i></div>
                         <div class="flex justify-between items-center relative z-10">
                           <div class="flex items-center gap-3 ${tLeader === 'jose' ? 'text-green-400 font-bold' : 'text-gray-400'}">
-                            <div class="relative"><img src="img/app/jozka_profilovka.jpg" class="w-10 h-10 rounded-full border-2 border-gray-600 object-cover" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Jose'">${tLeader === 'jose' ? '<span class="absolute -top-2 -right-1 text-xs animate-bounce">👑</span>' : ''}</div>
+                            <div class="relative"><img src="img/app/jozka_profilovka.jpg" class="w-10 h-10 rounded-full border-2 border-gray-600 object-cover" loading="lazy" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Jose'">${tLeader === 'jose' ? '<span class="absolute -top-2 -right-1 text-xs animate-bounce">👑</span>' : ''}</div>
                             <span class="font-mono text-xl tracking-tight">${tScore.jose}</span>
                           </div>
                           <div class="flex flex-col items-center">
@@ -517,7 +591,7 @@ export function renderDashboard() {
                               <div class="text-[9px] bg-[#202225] text-gray-500 px-1 rounded">SEASON 1</div>
                           </div>
                           <div class="flex items-center gap-3 flex-row-reverse ${tLeader === 'klarka' ? 'text-[#eb459e] font-bold' : 'text-gray-400'}">
-                            <div class="relative"><img src="img/app/klarka_profilovka.webp" class="w-10 h-10 rounded-full border-2 border-gray-600 object-cover" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Klarka'">${tLeader === 'klarka' ? '<span class="absolute -top-2 -left-1 text-xs animate-bounce">👑</span>' : ''}</div>
+                            <div class="relative"><img src="img/app/klarka_profilovka.webp" class="w-10 h-10 rounded-full border-2 border-gray-600 object-cover" loading="lazy" onerror="this.src='https://api.dicebear.com/7.x/avataaars/svg?seed=Klarka'">${tLeader === 'klarka' ? '<span class="absolute -top-2 -left-1 text-xs animate-bounce">👑</span>' : ''}</div>
                             <span class="font-mono text-xl tracking-tight">${tScore.klarka}</span>
                           </div>
                         </div>

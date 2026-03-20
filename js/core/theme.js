@@ -3,90 +3,21 @@ import { triggerHaptic } from './utils.js';
 
 export function changeTheme(theme) {
     const root = document.documentElement;
-    const body = document.body;
 
-    // Clear any existing inline styles or classes
-    body.style.fontFamily = "";
-    body.style.fontSize = "";
-    body.classList.remove('theme-valentines');
+    // List of all managed theme classes
+    const themeClasses = ['theme-christmas', 'theme-tetris', 'theme-valentines', 'theme-forest', 'theme-gold'];
+    
+    // Remove all existing theme classes
+    root.classList.remove(...themeClasses);
 
     console.log(`[Theme] Switching to: ${theme}`);
 
-    if (theme === "christmas") {
-        root.style.setProperty("--bg-tertiary", "#420d0d");
-        root.style.setProperty("--bg-secondary", "#5c1414");
-        root.style.setProperty("--bg-primary", "#240a0a");
-        root.style.setProperty("--blurple", "#c92a2a"); // Red
-        root.style.setProperty("--green", "#ffd700"); // Gold
-        root.style.setProperty("--text-header", "#ffffff");
-        root.style.setProperty("--interactive-active", "#ffffff");
-        root.style.setProperty("--interactive-normal", "#e8e8e8"); // Lighter text
-        root.style.setProperty("--text-normal", "#f0f0f0");
-    } else if (theme === "tetris") {
-        root.style.setProperty("--bg-tertiary", "#0d0e15");
-        root.style.setProperty("--bg-secondary", "#151620");
-        root.style.setProperty("--bg-primary", "#1c1d29");
-        root.style.setProperty("--blurple", "#00e5ff");
-        root.style.setProperty("--green", "#69f0ae");
-        root.style.setProperty("--red", "#ff5252");
-        root.style.setProperty("--yellow", "#ffd740");
-        root.style.setProperty("--pink", "#e040fb");
-        root.style.setProperty("--text-normal", "#33ff00");
-        root.style.setProperty("--interactive-normal", "#33ff00");
-        body.style.fontFamily = "'Press Start 2P', cursive";
-        body.style.fontSize = "0.8rem";
-    } else if (theme === "valentines") {
-        // Force CSS variables on root
-        root.style.setProperty("--bg-tertiary", "#2d0a12");
-        root.style.setProperty("--bg-secondary", "#4a101e");
-        root.style.setProperty("--bg-primary", "#6d2232");
-        root.style.setProperty("--blurple", "#ff69b4"); // Hot pink
-        root.style.setProperty("--green", "#00ff00"); // Lime green (ironic)
-        root.style.setProperty("--red", "#ff0000");
-        root.style.setProperty("--yellow", "#ffff00");
-        root.style.setProperty("--pink", "#ff1493");
-        root.style.setProperty("--text-normal", "#ffd1dc");
-        root.style.setProperty("--interactive-normal", "#fab1c6");
-
-        // Force font family via style AND class for redundancy
-        body.style.fontFamily = "'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif";
-        body.classList.add('theme-valentines');
-    } else if (theme === "forest") {
-        root.style.setProperty("--bg-tertiary", "#1a2a1a");
-        root.style.setProperty("--bg-secondary", "#243a24");
-        root.style.setProperty("--bg-primary", "#2d4a2d");
-        root.style.setProperty("--blurple", "#5a8a5a");
-        root.style.setProperty("--green", "#8ebf8e");
-        root.style.setProperty("--text-normal", "#d1e0d1");
-        root.style.setProperty("--interactive-normal", "#94a894");
-    } else if (theme === "gold") {
-        root.style.setProperty("--bg-tertiary", "#1a160d");
-        root.style.setProperty("--bg-secondary", "#2f2814");
-        root.style.setProperty("--bg-primary", "#42381c");
-        root.style.setProperty("--blurple", "#d4af37");
-        root.style.setProperty("--green", "#ffd700");
-        root.style.setProperty("--text-normal", "#f1e5ac");
-        root.style.setProperty("--interactive-normal", "#d4af37");
-    } else {
-        // Default / Reset
-        root.style.setProperty("--bg-tertiary", "#202225");
-        root.style.setProperty("--bg-secondary", "#2f3136");
-        root.style.setProperty("--bg-primary", "#36393f");
-        root.style.setProperty("--blurple", "#5865F2");
-        root.style.setProperty("--green", "#3ba55c");
-        root.style.setProperty("--red", "#ed4245");
-        root.style.setProperty("--yellow", "#faa61a");
-        root.style.setProperty("--pink", "#eb459e");
-        root.style.setProperty("--text-normal", "#dcddde");
-        root.style.setProperty("--interactive-normal", "#b9bbbe");
+    // Add the new theme class if it's not default
+    if (theme !== 'default' && themeClasses.includes(`theme-${theme}`)) {
+        root.classList.add(`theme-${theme}`);
     }
 
     localStorage.setItem('klarka_theme', theme);
-
-    // Only show notification if it's not the initial load (optimization)
-    // We can't easily know if it's initial load here without a flag, but for now we'll allow it or rely on caller.
-    // showNotification(`Téma změněno: ${theme}`, "success"); 
-    // Commented out to avoid spam on init, callers can invoke notification if triggered by user.
 }
 
 export function initTheme() {
@@ -95,6 +26,7 @@ export function initTheme() {
 }
 
 export function toggleTheme() {
+    triggerHaptic('medium');
     const current = localStorage.getItem('klarka_theme') || 'default';
     const themes = ['default', 'christmas', 'tetris', 'valentines'];
     const nextIndex = (themes.indexOf(current) + 1) % themes.length;
@@ -104,6 +36,7 @@ export function toggleTheme() {
 }
 
 export function toggleValentineMode() {
+    triggerHaptic('medium');
     const current = localStorage.getItem('klarka_theme');
     if (current === 'valentines') {
         changeTheme('default');
@@ -181,6 +114,8 @@ export function showConfirmDialog(message, confirmLabel = 'Ano', cancelLabel = '
         // Remove any existing confirm dialog
         const existing = document.getElementById('app-confirm-dialog');
         if (existing) existing.remove();
+
+        triggerHaptic('heavy');
 
         const overlay = document.createElement('div');
         overlay.id = 'app-confirm-dialog';

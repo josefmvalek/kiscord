@@ -45,7 +45,8 @@ export const state = {
     gameVotes: [],
     drawStrokes: [],
     pinnedDrawing: null,
-    coopQuests: []
+    coopQuests: [],
+    loadError: false // Track if initial load failed
 };
 
 export async function initializeState() {
@@ -73,6 +74,7 @@ export async function initializeState() {
     state.dailyAnswers = [];
     state.gamePrompts = [];
     state.coopQuests = [];
+    state.loadError = false; // Reset error state on each init
 
     try {
         // OPRAVA #2: Paralelní dotazy místo 10 sekvenčních await
@@ -168,20 +170,27 @@ export async function initializeState() {
             });
         }
 
+        // Always ensure at least the current user's ID is in the correct slot
+        const isMeJose = isJosef(state.currentUser);
+        if (state.currentUser?.id) {
+            if (isMeJose) {
+                state.tetris.jose_id = state.currentUser.id;
+            } else {
+                state.tetris.klarka_id = state.currentUser.id;
+            }
+        }
+
         if (tetrisData) {
             tetrisData.forEach(row => {
-                // Determine whose score this is based on current user
                 if (row.user_id === state.currentUser?.id) {
-                    if (isJosef(state.currentUser)) {
+                    if (isMeJose) {
                         state.tetris.jose = row.score || 0;
-                        state.tetris.jose_id = row.user_id;
                     } else {
                         state.tetris.klarka = row.score || 0;
-                        state.tetris.klarka_id = row.user_id;
                     }
                 } else {
-                    // It's the partner's score
-                    if (isJosef(state.currentUser)) {
+                    // Partner's score and ID discovery
+                    if (isMeJose) {
                         state.tetris.klarka = row.score || 0;
                         state.tetris.klarka_id = row.user_id;
                     } else {
@@ -355,5 +364,6 @@ export async function initializeState() {
 
     } catch (err) {
         console.error("Supabase load error:", err);
+        state.loadError = true;
     }
 }

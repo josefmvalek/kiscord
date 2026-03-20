@@ -123,7 +123,8 @@ function renderSidebarLevel() {
     if (!badge) {
         badge = document.createElement('div');
         badge.id = 'sidebar-level-badge';
-        badge.className = 'mx-2 mb-2 px-3 py-2 rounded-xl bg-[#202225] border border-gray-700/50 flex flex-col gap-1 cursor-help transition-all hover:border-[#faa61a]/30';
+        badge.className = 'mx-2 mb-2 px-3 py-2 rounded-xl bg-[#202225] border border-gray-700/50 flex flex-col gap-1 cursor-pointer transition-all hover:border-[#faa61a]/30';
+        badge.onclick = () => toggleUserPopout();
         // Insert before the user popout trigger
         const trigger = sidebarProfile.querySelector('[onclick="toggleUserPopout()"]');
         sidebarProfile.insertBefore(badge, trigger);

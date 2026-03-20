@@ -6,11 +6,178 @@ import { supabase } from '../core/supabase.js';
 
 // --- LIBRARY RENDERING ---
 
+function ensureModals() {
+    if (!document.getElementById("download-modal")) {
+        const dlModal = document.createElement("div");
+        dlModal.id = "download-modal";
+        dlModal.className = "fixed inset-0 z-[80] hidden modal-backdrop items-center justify-center p-4";
+        dlModal.innerHTML = `
+            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-md border border-white/10 overflow-hidden animate-fade-in">
+                <div class="p-6">
+                    <div class="text-5xl text-center mb-4">🧲</div>
+                    <h3 class="font-bold text-white text-center text-xl mb-2">Stahování</h3>
+                    <p class="text-gray-300 text-center mb-6" id="download-message"></p>
+                    <div class="space-y-4">
+                        <button onclick="import('./js/modules/library.js').then(m => m.openMagnetLink())"
+                            class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-3 rounded-lg font-bold flex items-center justify-center gap-3">
+                            <i class="fas fa-magnet"></i> Otevřít v qBittorrent
+                        </button>
+                        <button onclick="import('./js/modules/library.js').then(m => m.openGoogleDrive())"
+                            class="w-full bg-[#3ba55c] hover:bg-[#2d7d46] text-white py-3 rounded-lg font-bold flex items-center justify-center gap-3">
+                            <i class="fab fa-google-drive"></i> Google Drive (záložní)
+                        </button>
+                        <button onclick="closeModal('download-modal')"
+                            class="w-full bg-[#4f545c] hover:bg-[#5d6269] text-white py-3 rounded-lg">
+                            Zrušit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(dlModal);
+    }
+
+    if (!document.getElementById("history-modal")) {
+        const histModal = document.createElement("div");
+        histModal.id = "history-modal";
+        histModal.className = "fixed inset-0 z-[90] hidden modal-backdrop items-center justify-center p-4";
+        histModal.innerHTML = `
+            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-md border border-white/10 overflow-hidden animate-fade-in">
+                <div class="bg-black/20 p-5 border-b border-white/5 flex justify-between items-center">
+                    <h3 class="font-bold text-white flex items-center gap-2">
+                        <i class="fas fa-history text-[#eb459e]"></i> Deníček sledování
+                    </h3>
+                    <button onclick="closeModal('history-modal')" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="p-5 space-y-4">
+                    <input type="hidden" id="history-item-id" />
+                    <div>
+                        <label class="block text-[#b9bbbe] text-[10px] font-bold uppercase mb-2 tracking-widest text-center">Jak se ti to líbilo?</label>
+                        <div id="star-rating" class="flex justify-center text-3xl mb-4">
+                            ${[1, 2, 3, 4, 5].map(i => `<button onclick="import('./js/modules/library.js').then(m => m.setStarRating(${i}))" class="star-btn transition-transform hover:scale-125 focus:outline-none" data-rating="${i}"><i class="fas fa-star text-gray-700"></i></button>`).join('')}
+                        </div>
+                        <input type="hidden" id="history-rating" value="0" />
+                    </div>
+                    <div>
+                        <label class="block text-[#b9bbbe] text-[10px] font-bold uppercase mb-2 tracking-widest">Stav sledování</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="import('./js/modules/library.js').then(m => m.setHistoryStatus('unseen'))" id="status-unseen" class="status-btn p-3 rounded-xl border border-gray-700 hover:bg-[#40444b] text-center transition opacity-50 flex flex-col items-center">
+                                <span class="text-xl mb-1">💤</span>
+                                <span class="text-[9px] font-black uppercase text-gray-400">V plánu</span>
+                            </button>
+                            <button onclick="import('./js/modules/library.js').then(m => m.setHistoryStatus('watching'))" id="status-watching" class="status-btn p-3 rounded-xl border border-gray-700 hover:bg-[#40444b] text-center transition opacity-50 flex flex-col items-center">
+                                <span class="text-xl mb-1">🍿</span>
+                                <span class="text-[9px] font-black uppercase text-blue-400">Koukáme</span>
+                            </button>
+                            <button onclick="import('./js/modules/library.js').then(m => m.setHistoryStatus('seen'))" id="status-seen" class="status-btn p-3 rounded-xl border border-gray-700 hover:bg-[#40444b] text-center transition opacity-50 flex flex-col items-center">
+                                <span class="text-xl mb-1">🔥</span>
+                                <span class="text-[9px] font-black uppercase text-green-400">Viděno</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="history-date-wrapper" class="hidden animate-slide-up">
+                        <label class="block text-[#b9bbbe] text-[10px] font-bold uppercase mb-1 tracking-widest">Kdy to bylo?</label>
+                        <input type="date" id="history-date" class="w-full bg-[#202225] text-white p-2.5 rounded-lg border border-[#2f3136] focus:border-[#eb459e] outline-none text-sm shadow-inner" />
+                    </div>
+                    <div id="history-reaction-wrapper" class="hidden animate-slide-up space-y-4">
+                        <label class="block text-[#b9bbbe] text-[10px] font-bold uppercase mb-1 tracking-widest leading-none">Tvůj verdikt</label>
+                        <div class="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                            ${[
+            { e: '💖', t: 'Srdcovka', c: 'eb459e' },
+            { e: '🍿', t: 'Pohoda', c: '5865F2' },
+            { e: '🧠', t: 'Hluboké', c: 'faa61a' },
+            { e: '😴', t: 'Nuda', c: 'b9bbbe' },
+            { e: '👎', t: 'Blbost', c: 'ed4245' }
+        ].map(r => `
+                                <button onclick="import('./js/modules/library.js').then(m => m.setReactionInput('${r.e} ${r.t}', this))" class="verdict-btn bg-[#202225] hover:bg-[#${r.c}]/10 border border-[#2f3136] rounded-xl p-2.5 transition flex flex-col items-center gap-1 group">
+                                    <span class="text-xl group-hover:scale-110 transition">${r.e}</span>
+                                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">${r.t}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                        <div class="relative group mt-2">
+                            <textarea id="history-reaction" placeholder="Dojmy, pocity, vzpomínky..." class="w-full bg-[#202225] text-white p-3.5 rounded-xl border border-[#2f3136] focus:border-[#eb459e]/50 outline-none transition min-h-[100px] text-sm resize-none shadow-inner custom-scrollbar italic placeholder:text-gray-600"></textarea>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 mt-4">
+                        <button onclick="import('./js/modules/library.js').then(m => m.deleteHistory())" class="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 py-3 rounded-xl font-bold transition border border-red-500/30"><i class="fas fa-trash-alt mr-2 text-xs"></i>Smazat</button>
+                        <button onclick="import('./js/modules/library.js').then(m => m.saveHistory())" class="flex-[2] bg-[#5865F2] hover:bg-[#4752c4] text-white py-3 rounded-xl font-bold shadow-lg transition">Uložit záznam</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(histModal);
+    }
+
+    if (!document.getElementById("delete-history-modal")) {
+        const delHistModal = document.createElement("div");
+        delHistModal.id = "delete-history-modal";
+        delHistModal.className = "fixed inset-0 z-[150] hidden modal-backdrop items-center justify-center p-4";
+        delHistModal.innerHTML = `
+            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-sm border border-red-500/50 p-8 text-center animate-fade-in">
+                <div class="text-4xl mb-3 text-[#ed4245]"><i class="fas fa-trash-alt"></i></div>
+                <h3 class="text-xl font-bold text-white mb-2">Smazat historii?</h3>
+                <p class="text-gray-300 mb-6 text-sm">Opravdu chceš smazat záznam o tomhle filmu? Tuhle akci nejde vzít zpět.</p>
+                <div class="flex gap-3">
+                    <button onclick="closeModal('delete-history-modal')" class="flex-1 bg-[#2f3136] hover:bg-[#40444b] text-white py-2 rounded font-bold transition">Zrušit</button>
+                    <button onclick="import('./js/modules/library.js').then(m => m.confirmDeleteHistory())" class="flex-1 bg-[#ed4245] hover:bg-[#c03537] text-white py-2 rounded font-bold transition">Smazat</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(delHistModal);
+    }
+
+    if (!document.getElementById("library-plan-modal")) {
+        const planModal = document.createElement("div");
+        planModal.id = "library-plan-modal";
+        planModal.className = "fixed inset-0 z-[140] hidden modal-backdrop items-center justify-center p-4";
+        planModal.innerHTML = `
+            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-md border border-white/10 overflow-hidden animate-fade-in">
+                <div class="bg-black/20 p-5 border-b border-white/5 flex justify-between items-center">
+                    <h3 class="font-bold text-white flex items-center gap-2"><i class="fas fa-calendar-plus text-[#5865F2]"></i> Naplánovat v kalendáři</h3>
+                    <button onclick="closeModal('library-plan-modal')" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="p-5 space-y-4">
+                    <div class="flex items-center gap-3 bg-[#202225] p-3 rounded-lg"><div id="lib-plan-icon" class="text-2xl">🎬</div><div><h4 id="lib-plan-title" class="font-bold text-white text-sm">Název</h4><p id="lib-plan-cat" class="text-[9px] text-gray-500 uppercase font-bold">Kategorie</p></div></div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Datum</label><input type="date" id="lib-plan-date" class="w-full bg-[#202225] text-white p-2 rounded border border-[#2f3136] outline-none focus:border-[#5865F2] text-sm" /></div>
+                        <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Čas (volitelně)</label><input type="time" id="lib-plan-time" class="w-full bg-[#202225] text-white p-2 rounded border border-[#2f3136] outline-none focus:border-[#5865F2] text-sm" /></div>
+                    </div>
+                    <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Poznámka</label><input type="text" id="lib-plan-note" placeholder="Deka, víno, popcorn..." class="w-full bg-[#202225] text-white p-2 rounded border border-[#2f3136] outline-none focus:border-[#5865F2] text-sm" /></div>
+                    <button onclick="import('./js/modules/library.js').then(m => m.confirmLibraryPlan())" class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white font-bold py-2 rounded transition shadow-md mt-2">Uložit do kalendáře</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(planModal);
+    }
+}
+
 export function renderLibrary(category) {
+    ensureModals();
     const container = document.getElementById("messages-container");
     if (!container) return;
 
     const items = state.library[category] || [];
+
+    if (state.loadError) {
+        container.innerHTML = `
+            <div class="h-full flex flex-col items-center justify-center bg-[#36393f] text-gray-400 p-6 text-center animate-fade-in">
+                <div class="text-8xl mb-6 filter drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]">🦉❄️</div>
+                <h3 class="text-xl font-bold text-white mb-2 uppercase tracking-tighter">Sova nemůže najít knížky...</h3>
+                <p class="text-sm text-gray-400 mb-8 max-w-xs leading-relaxed">
+                    Nepodařilo se načíst obsah knihovny. Zkusíme to znovu?
+                </p>
+                <button onclick="import('./js/core/state.js').then(async m => { await m.initializeState(); import('./js/modules/library.js').then(l => l.renderLibrary('${category}')); }); triggerHaptic('light')" 
+                        class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-8 py-3 rounded-xl font-black uppercase tracking-widest transition-all transform hover:scale-105 active:scale-95 shadow-xl flex items-center gap-3">
+                    <i class="fas fa-sync-alt"></i>
+                    Zkusit znovu
+                </button>
+            </div>
+        `;
+        return;
+    }
 
     if (items.length === 0) {
         container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-500"><i class="fas fa-ghost text-4xl mb-4 opacity-50"></i><p>Nic tu není...</p></div>`;
@@ -174,6 +341,8 @@ export function openDownloadModal(magnet, gdrive) {
     const modal = document.getElementById("download-modal");
     if (!modal) return;
 
+    triggerHaptic('light');
+
     // We don't set hrefs on buttons because we use onclick="openMagnetLink()"
     modal.style.display = "flex";
 }
@@ -221,6 +390,7 @@ export function openHistoryModal(id) {
 
     document.getElementById("history-item-id").value = id;
     document.getElementById("history-modal").style.display = "flex";
+    triggerHaptic('light');
     
     // Set date: from item or today
     if (item.date) document.getElementById("history-date").value = item.date;
@@ -248,6 +418,8 @@ export function setReactionInput(text, btn) {
     const input = document.getElementById("history-reaction");
     if (!input) return;
 
+    triggerHaptic('light');
+
     // Reset all verdict buttons
     document.querySelectorAll(".verdict-btn").forEach(b => b.classList.remove("active"));
     
@@ -270,6 +442,7 @@ export function setReactionInput(text, btn) {
 }
 
 export function setStarRating(rating) {
+    triggerHaptic('light');
     document.getElementById("history-rating").value = rating;
     const stars = document.querySelectorAll(".star-btn");
     stars.forEach(btn => {
@@ -285,6 +458,7 @@ export function setStarRating(rating) {
 }
 
 export function setHistoryStatus(status) {
+    triggerHaptic('light');
     currentHistoryStatus = status;
 
     document.querySelectorAll(".status-btn").forEach((btn) => {
@@ -328,7 +502,9 @@ export async function saveHistory() {
         delete state.watchHistory[id];
         delete state.ratings[id];
         await supabase.from('library_ratings').delete().match({ media_id: id });
+        triggerHaptic('heavy');
     } else {
+        triggerHaptic('success');
         // Save to Supabase
         const { error } = await supabase.from('library_ratings').upsert({
             media_id: id,
@@ -385,6 +561,7 @@ export async function saveHistory() {
 }
 
 export function deleteHistory() {
+    triggerHaptic('light');
     const id = document.getElementById("history-item-id").value;
     if (!id) return;
     document.getElementById("delete-history-modal").style.display = "flex";
@@ -393,6 +570,8 @@ export function deleteHistory() {
 export async function confirmDeleteHistory() {
     const id = parseInt(document.getElementById("history-item-id").value);
     if (!id) return;
+
+    triggerHaptic('heavy');
 
     try {
         const { error } = await supabase.from('library_ratings').delete().match({ media_id: id });
@@ -452,6 +631,7 @@ export function openPlanningModal(title, type) {
     const noteInput = document.getElementById("lib-plan-note");
     if (noteInput) noteInput.value = "";
 
+    triggerHaptic('light');
     document.getElementById("library-plan-modal").style.display = "flex";
 }
 
@@ -475,6 +655,7 @@ export async function confirmLibraryPlan() {
 
     state.plannedDates[dateStr] = newPlan;
 
+    triggerHaptic('success');
     await supabase.from('planned_dates').insert(newPlan);
 
     if (window.closeModal) window.closeModal("library-plan-modal");
@@ -545,6 +726,7 @@ export async function clearWatchlist() {
 // --- ADD NEW MEDIA ---
 
 export function showAddMediaModal(category) {
+    triggerHaptic('light');
     const modal = document.createElement('div');
     modal.id = 'media-admin-modal';
     modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in';

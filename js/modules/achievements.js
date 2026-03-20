@@ -115,13 +115,14 @@ function generateAchievementCard(ach, isUnlocked, dateStrRaw) {
     const dateStr = dateStrRaw ? new Date(dateStrRaw).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric', year: 'numeric' }) : '';
     
     // Vizuál podle stavu
-    const cardBg = isUnlocked ? 'bg-[#2f3136] border-gray-700/50' : 'bg-[#202225] border-gray-800 opacity-60 grayscale';
+    const cardBg = isUnlocked ? 'bg-[#2f3136] border-gray-700/50' : 'bg-[#202225]/80 border-gray-800';
     const iconContainer = isUnlocked 
         ? `bg-gradient-to-br ${ach.color} shadow-lg shadow-${ach.color.split(' ')[1].replace('to-', '')}/20` 
-        : 'bg-gray-800';
+        : 'bg-gray-800/50 grayscale opacity-40';
     
-    const titleColor = isUnlocked ? 'text-white font-bold' : 'text-gray-500 font-medium';
-    const descColor = isUnlocked ? 'text-gray-400' : 'text-gray-600 blur-[2px] select-none'; 
+    const titleColor = isUnlocked ? 'text-white font-bold' : 'text-gray-400 font-bold';
+    const descColor = isUnlocked ? 'text-gray-400' : 'text-gray-500'; 
+    const padlockColor = isUnlocked ? 'text-[#3ba55c]' : 'text-gray-600';
     
     // Odemčeni click
     const onClick = isUnlocked 
@@ -129,23 +130,23 @@ function generateAchievementCard(ach, isUnlocked, dateStrRaw) {
         : `onclick="import('./js/modules/achievements.js').then(m => m.toggleAchievement('${ach.id}', true))"`;
 
     return `
-        <div ${onClick} class="${cardBg} border rounded-xl p-4 flex flex-col items-center text-center transition-all duration-300 transform ${isUnlocked ? 'hover:-translate-y-1 hover:shadow-xl cursor-pointer' : 'hover:opacity-100 hover:grayscale-0 cursor-pointer'} group relative overflow-hidden h-full">
+        <div ${onClick} class="${cardBg} border rounded-xl p-4 flex flex-col items-center text-center transition-all duration-300 transform ${isUnlocked ? 'hover:-translate-y-1 hover:shadow-xl cursor-pointer' : 'hover:-translate-y-0.5 hover:bg-[#2f3136]/40 cursor-pointer'} group relative overflow-hidden h-full">
             
             ${isUnlocked ? `<div class="absolute -top-10 -right-10 w-20 h-20 bg-white/5 rounded-full blur-xl group-hover:bg-white/10 transition-colors"></div>` : ''}
 
-            ${isUnlocked ? `<div class="absolute top-2 right-2 text-xs font-mono text-gray-500 font-bold">${dateStr}</div>` : '<div class="absolute top-2 right-2 text-xs text-gray-600"><i class="fas fa-lock"></i></div>'}
+            ${isUnlocked ? `<div class="absolute top-2 right-2 text-xs font-mono text-gray-500 font-bold">${dateStr}</div>` : `<div class="absolute top-2 right-2 text-xs ${padlockColor}"><i class="fas fa-lock"></i></div>`}
 
-            <div class="${iconContainer} w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-4 transition-transform group-hover:scale-110">
+            <div class="${iconContainer} w-16 h-16 rounded-full flex items-center justify-center text-3xl mb-4 transition-transform ${isUnlocked ? 'group-hover:scale-110' : 'group-hover:scale-105 group-hover:grayscale-0 group-hover:opacity-100'}">
                 ${ach.icon}
             </div>
             
             <h3 class="${titleColor} mb-2 line-clamp-2">${ach.title}</h3>
             
-            <p class="text-xs ${descColor} mt-auto transition-all group-hover:blur-none line-clamp-3">
+            <p class="text-xs ${descColor} mt-auto line-clamp-3">
                 ${ach.description}
             </p>
             
-            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-sm z-20">
+            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity backdrop-blur-[2px] z-20">
                 <span class="text-white font-bold text-sm bg-[#5865F2] px-4 py-2 rounded-full shadow-lg">
                     ${isUnlocked ? '<i class="fas fa-undo mr-2"></i> Zamknout' : '<i class="fas fa-unlock mr-2"></i> Odemknout'}
                 </span>
