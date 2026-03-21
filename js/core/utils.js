@@ -113,3 +113,8 @@ export function getInflectedName(name, caseNum) {
     }
     return name;
 }
+
+/**
+ * Simple pause for async functions (useful for retries)
+ */
+export const sleep = ms => new Promise(res => setTimeout(res, ms));

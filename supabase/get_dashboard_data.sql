@@ -32,10 +32,10 @@ BEGIN
     ORDER BY pd.updated_at DESC
     LIMIT 1;
 
-    -- 3. Get Tetris Scores (using Jožka and Klárka names)
+    -- 3. Get Tetris Scores (using auth.users emails)
     SELECT json_build_object(
-        'jose', (SELECT score FROM tetris_scores WHERE user_id = (SELECT id FROM profiles WHERE (name = 'Jožka' OR name = 'Jose') LIMIT 1)),
-        'klarka', (SELECT score FROM tetris_scores WHERE user_id = (SELECT id FROM profiles WHERE (name = 'Klárka' OR name = 'Klarka') LIMIT 1))
+        'jose', COALESCE((SELECT score FROM tetris_scores WHERE user_id = (SELECT id FROM auth.users WHERE email ILIKE '%josef%' OR email ILIKE '%jozk%' LIMIT 1)), 0),
+        'klarka', COALESCE((SELECT score FROM tetris_scores WHERE user_id = (SELECT id FROM auth.users WHERE email ILIKE '%klarka%' OR email ILIKE '%klaris%' OR (email NOT ILIKE '%josef%' AND email NOT ILIKE '%jozk%') LIMIT 1)), 0)
     ) INTO v_tetris;
 
     -- 4. Get Next Upcoming Event (Planned Date)
@@ -61,4 +61,4 @@ BEGIN
 
     RETURN v_result;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

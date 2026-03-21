@@ -111,8 +111,7 @@ export function generateWaterIcons(count) {
 export function generateMovementChips(movement) {
     const activities = [
         { id: 'gym', icon: '💪', label: 'Fitko', color: 'text-red-400', border: 'border-red-500/50', bg: 'bg-red-500/10' },
-        { id: 'walk', icon: '🌲', label: 'Procházka', color: 'text-green-400', border: 'border-green-500/50', bg: 'bg-green-500/10' },
-        { id: 'sport', icon: '🏸', label: 'Sport', color: 'text-blue-400', border: 'border-blue-500/50', bg: 'bg-blue-500/10' }
+        { id: 'walk', icon: '🌲', label: 'Procházka', color: 'text-green-400', border: 'border-green-500/50', bg: 'bg-green-500/10' }
     ];
 
     return activities.map(act => {
@@ -407,64 +406,44 @@ export async function renderDashboard(forceRefresh = false) {
     const todayKey = getTodayKey();
     const hasData = state.healthData && state.healthData[todayKey];
 
-    if (!hasData || forceRefresh) {
-        container.innerHTML = `
-            <div class="h-full flex flex-col items-center justify-center bg-[#36393f] text-gray-400 space-y-4 animate-fade-in">
-                <div class="relative">
-                    <div class="w-16 h-16 border-4 border-[#5865F2]/20 border-t-[#5865F2] rounded-full animate-spin"></div>
-                    <div class="absolute inset-0 flex items-center justify-center text-xl">❤️</div>
-                </div>
-                <p class="text-sm font-bold uppercase tracking-widest animate-pulse">Načítám tvůj den...</p>
-            </div>
-        `;
+    if (!state.healthData) state.healthData = {};
+    if (!state.healthData[todayKey]) {
+        state.healthData[todayKey] = { water: 0, sleep: 0, mood: 5, movement: [], bedtime: null };
+    }
+    if (!state.tetris) state.tetris = { jose: 0, klarka: 0 };
 
-        try {
-            const today = new Date().toISOString().split('T')[0];
-            const { data, error } = await supabase.rpc('get_dashboard_data', {
-                p_user_id: state.currentUser.id,
-                p_date: today
-            });
+    // Tichá synchronizace na pozadí (neblokuje okamžité vykreslení dashboardu)
+    if (navigator.onLine && (!state.dashboardFetched || forceRefresh)) {
+        setTimeout(async () => {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const { data, error } = await supabase.rpc('get_dashboard_data', {
+                    p_user_id: state.currentUser.id,
+                    p_date: today
+                });
 
-            if (error) throw error;
+                if (!error && data) {
+                    state.healthData[todayKey] = data.health || state.healthData[todayKey];
+                    if (data.pinned_drawing) state.pinnedDrawing = data.pinned_drawing;
+                    if (data.tetris) {
+                        state.tetris.jose = data.tetris.jose || 0;
+                        state.tetris.klarka = data.tetris.klarka || 0;
+                    }
+                    if (data.next_event) {
+                        if (!state.plannedDates) state.plannedDates = {};
+                        state.plannedDates[data.next_event.date_key] = data.next_event;
+                    }
 
-            if (data) {
-                // Update State
-                if (!state.healthData) state.healthData = {};
-                state.healthData[todayKey] = data.health;
-                state.pinnedDrawing = data.pinned_drawing;
-                
-                // Tetris Scores
-                if (!state.tetris) state.tetris = { jose: 0, klarka: 0 };
-                state.tetris.jose = data.tetris.jose || 0;
-                state.tetris.klarka = data.tetris.klarka || 0;
-
-                // Next Event
-                if (data.next_event) {
-                    if (!state.plannedDates) state.plannedDates = {};
-                    state.plannedDates[data.next_event.date_key] = data.next_event;
+                    state.dashboardFetched = true;
+                    // Tichý re-render na pozadí, abychom zapsali nová data (jen pokud jsme na obrazovce)
+                    if (state.currentChannel === 'dashboard' && document.getElementById("messages-container")) {
+                        renderDashboard(); // Volá znovu tuto funkci, ale nepustí další fetch, protože dashboardFetched = true
+                    }
                 }
+            } catch (err) {
+                console.warn("Tichá synchronizace dashboardu na pozadí selhala (Lze ignorovat, použijí se lokální data):", err);
             }
-        } catch (err) {
-            console.error("Dashboard RPC Error:", err);
-            
-            // Render Fail State UI
-            container.innerHTML = `
-                <div class="h-full flex flex-col items-center justify-center bg-[#36393f] text-gray-400 p-6 text-center animate-fade-in">
-                    <div class="text-8xl mb-6 filter drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]">🦝💔</div>
-                    <h3 class="text-xl font-bold text-white mb-2 uppercase tracking-tighter">Oups! Mýval v drátech...</h3>
-                    <p class="text-sm text-gray-400 mb-8 max-w-xs leading-relaxed">
-                        Nepodařilo se mi spojit se serverem a načíst tvůj den. Možná je Supabase na kafi nebo zlobí internet.
-                    </p>
-                    <button onclick="import('./js/modules/dashboard.js').then(m => m.renderDashboard(true)); triggerHaptic('light')" 
-                            class="bg-[#ed4245] hover:bg-[#c03537] text-white px-8 py-3 rounded-xl font-black uppercase tracking-widest transition-all transform hover:scale-105 active:scale-95 shadow-xl flex items-center gap-3">
-                        <i class="fas fa-sync-alt"></i>
-                        Zkusit znovu
-                    </button>
-                    ${!navigator.onLine ? '<p class="mt-6 text-[10px] text-red-400 font-bold uppercase animate-pulse">Zdá se, že jsi odpojena od sítě 📶</p>' : ''}
-                </div>
-            `;
-            return;
-        }
+        }, 50);
     }
 
     const data = getTodayData();
