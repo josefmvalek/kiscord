@@ -64,7 +64,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Re-render current or default channel
                 const savedChannel = localStorage.getItem('klarka_last_channel');
                 const defaultChannel = (savedChannel && savedChannel !== 'welcome') ? savedChannel : 'dashboard';
-                switchChannel(defaultChannel);
+                
+                // Initialize history with the starting channel
+                history.replaceState({ channel: defaultChannel }, "", "");
+                
+                switchChannel(defaultChannel, false);
             }
         } else if (event === 'SIGNED_OUT') {
             if (loginEl) loginEl.classList.remove('hidden');
@@ -85,7 +89,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupSearch();
     setupConnectivityListeners();
 
-    // 3. Expose Global Functions
+    // 3. History API Listener (Back button support)
+    window.addEventListener('popstate', (event) => {
+        if (event.state && event.state.channel) {
+            console.log(`[NAV] Popstate: returning to ${event.state.channel}`);
+            switchChannel(event.state.channel, false);
+        } else {
+            // Default to dashboard if no state
+            switchChannel('dashboard', false);
+        }
+    });
+
+    // 4. Expose Global Functions
     exposeGlobals();
 });
 
@@ -520,10 +535,15 @@ function renderChannels() {
     container.innerHTML = html;
 }
 
-export function switchChannel(channelId) {
+export function switchChannel(channelId, push = true) {
     if (state.currentChannel === channelId && document.getElementById("messages-container")?.innerHTML !== "") {
         console.log(`[NAV] Already on channel ${channelId}, skipping full re-render.`);
         return;
+    }
+
+    // Update browser history
+    if (push) {
+        history.pushState({ channel: channelId }, "", "");
     }
     
     // Haptic feedback for navigation

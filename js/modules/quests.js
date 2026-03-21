@@ -84,9 +84,9 @@ async function fetchQuestProgress() {
         console.log(`[Quests] Received data:`, { waterData, sleepData, bucketCount: bucketData?.length });
 
         questData = {
-            water_shared: parseInt(waterData) || 0,
-            sleep_shared: parseInt(sleepData) || 0,
-            bucket_shared: bucketData ? bucketData.length : 0
+            sum_water: parseInt(waterData) || 0,
+            both_sleep: parseInt(sleepData) || 0,
+            count_bucket: bucketData ? bucketData.length : 0
         };
 
         renderQuestCards();
@@ -120,7 +120,7 @@ function renderQuestCards() {
     }
 
     grid.innerHTML = state.coopQuests.map(q => {
-        const progress = questData[q.id] || 0;
+        const progress = questData[q.type] || 0;
         const percentage = Math.min(Math.round((progress / q.goal) * 100), 100);
         const isDone = progress >= q.goal;
 

@@ -50,7 +50,7 @@ export async function renderBucketList() {
                 <div class="bg-[#202225] rounded-2xl p-4 lg:p-6 shadow-2xl border border-white/5 flex flex-col gap-4">
                     <div class="flex flex-col sm:flex-row gap-3">
                         <input type="text" id="bucket-input-title" placeholder="Přidat nápad..." class="flex-1 bg-[#2f3136] text-white px-5 py-4 rounded-xl border border-transparent focus:border-[#faa61a] focus:outline-none transition-all placeholder-gray-500 font-medium text-lg shadow-inner">
-                        <button onclick="import('./js/modules/bucketList.js').then(m => m.addBucketItem())" class="bg-[#faa61a] hover:bg-[#e09115] text-white px-8 py-4 rounded-xl font-black shadow-[0_10px_20px_rgba(250,166,26,0.3)] transition-all transform hover:scale-105 active:scale-95 whitespace-nowrap uppercase tracking-widest text-sm">
+                        <button onclick="import('./js/modules/bucketlist.js').then(m => m.addBucketItem())" class="bg-[#faa61a] hover:bg-[#e09115] text-white px-8 py-4 rounded-xl font-black shadow-[0_10px_20px_rgba(250,166,26,0.3)] transition-all transform hover:scale-105 active:scale-95 whitespace-nowrap uppercase tracking-widest text-sm">
                             <i class="fas fa-plus mr-2"></i> Přidat
                         </button>
                     </div>
@@ -59,13 +59,13 @@ export async function renderBucketList() {
                     <div class="flex items-center gap-3 overflow-x-auto pb-2 no-scrollbar px-1">
                         <span class="text-[10px] font-black uppercase text-white/30 tracking-widest mr-2">Kategorie:</span>
                         ${Object.entries(CATEGORIES).map(([id, data]) => `
-                            <button id="cat-btn-${id}" onclick="import('./js/modules/bucketList.js').then(m => m.setBucketCategory('${id}'))" 
+                            <button id="cat-btn-${id}" onclick="import('./js/modules/bucketlist.js').then(m => m.setBucketCategory('${id}'))" 
                                 class="flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all group/cat">
                                 <span class="text-base group-hover/cat:scale-125 transition-transform">${data.icon}</span>
                                 <span class="text-[10px] font-bold text-gray-400 group-hover/cat:text-white uppercase tracking-tighter">${id}</span>
                             </button>
                         `).join('')}
-                        <button id="cat-btn-auto" onclick="import('./js/modules/bucketList.js').then(m => m.setBucketCategory(null))" 
+                        <button id="cat-btn-auto" onclick="import('./js/modules/bucketlist.js').then(m => m.setBucketCategory(null))" 
                             class="flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl border border-[#faa61a]/30 bg-[#faa61a]/10 transition-all font-black text-[10px] text-[#faa61a] uppercase tracking-widest">
                             Auto ✨
                         </button>
@@ -92,6 +92,17 @@ export async function renderBucketList() {
 
     // 2. První Fetch dat
     await fetchBucketData();
+
+    // 3. Povolit scrollování kolečkem na desktopu pro kategorie
+    const catScroll = container.querySelector('.no-scrollbar');
+    if (catScroll) {
+        catScroll.addEventListener('wheel', (e) => {
+            if (e.deltaY !== 0) {
+                e.preventDefault();
+                catScroll.scrollLeft += e.deltaY;
+            }
+        });
+    }
 }
 
 // --- LOGIKA ---
@@ -188,11 +199,11 @@ function renderGrid() {
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
-                             <button onclick="import('./js/modules/bucketList.js').then(m => m.toggleHeart('${item.id}'))" 
+                             <button onclick="import('./js/modules/bucketlist.js').then(m => m.toggleHeart('${item.id}'))" 
                                 class="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${myHeart ? 'bg-red-500/20 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'bg-white/5 text-gray-500 hover:text-white hover:bg-white/10'}">
                                 <i class="${myHeart ? 'fas' : 'far'} fa-heart transition-transform active:scale-150"></i>
                              </button>
-                             <button onclick="import('./js/modules/bucketList.js').then(m => m.deleteItem('${item.id}'))" class="w-8 h-8 rounded-lg flex items-center justify-center text-transparent group-hover:text-red-500/40 hover:!text-red-500 transition-all active:scale-90">
+                             <button onclick="import('./js/modules/bucketlist.js').then(m => m.deleteItem('${item.id}'))" class="w-8 h-8 rounded-lg flex items-center justify-center text-transparent group-hover:text-red-500/40 hover:!text-red-500 transition-all active:scale-90">
                                 <i class="fas fa-trash text-[10px]"></i>
                              </button>
                         </div>
@@ -218,7 +229,7 @@ function renderGrid() {
                             <span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest ml-1">${hearts.length === 0 ? 'Bez srdíček' : (bothHearted ? 'OBA!' : 'Čeká se...')}</span>
                          </div>
                          
-                         <button onclick="import('./js/modules/bucketList.js').then(m => m.toggleItem('${item.id}', ${!isDone}))" 
+                         <button onclick="import('./js/modules/bucketlist.js').then(m => m.toggleItem('${item.id}', ${!isDone}))" 
                             class="group/btn relative w-12 h-12 rounded-[1.25rem] flex items-center justify-center transition-all duration-300 ${isDone ? 'bg-[#3ba55c] text-white shadow-[#3ba55c]/20 shadow-lg' : 'bg-white/5 text-white/20 hover:bg-[#3ba55c] hover:text-white hover:shadow-[#3ba55c]/30 hover:shadow-xl'}">
                             <i class="fas ${isDone ? 'fa-undo-alt' : 'fa-check'} text-base"></i>
                          </button>
