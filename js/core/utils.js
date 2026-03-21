@@ -3,8 +3,11 @@ let hasUserInteracted = false;
 
 // Sledování interakce uživatele (nutné pro audio/haptiku)
 if (typeof document !== 'undefined') {
-    ['click', 'touchstart', 'keydown'].forEach(evt =>
-        document.addEventListener(evt, () => hasUserInteracted = true, { once: true })
+    ['click', 'touchstart', 'keydown', 'pointerdown'].forEach(evt =>
+        document.addEventListener(evt, () => {
+            hasUserInteracted = true;
+            console.log(`[Utils] User interacted via ${evt}, haptics enabled.`);
+        }, { once: true })
     );
 }
 
@@ -13,12 +16,12 @@ export function triggerHaptic(type = "light") {
     if (!navigator.vibrate || !hasUserInteracted) return;
 
     if (type === "light")
-        navigator.vibrate(5); // Jemné ťuknutí
+        navigator.vibrate(10); // Zvýšeno z 5ms na 10ms
     else if (type === "medium")
-        navigator.vibrate(15); // Potvrzení
+        navigator.vibrate(30); // Zvýšeno z 15ms na 30ms
     else if (type === "heavy")
-        navigator.vibrate(30); // Chyba/Důležité
-    else if (type === "success") navigator.vibrate([10, 30, 10]); // Dvojité
+        navigator.vibrate(60); // Zvýšeno z 30ms na 60ms
+    else if (type === "success") navigator.vibrate([20, 50, 20]); // Výraznější
 }
 
 export function normalizeText(text) {
@@ -116,3 +119,11 @@ export function getInflectedName(name, caseNum) {
  * Simple pause for async functions (useful for retries)
  */
 export const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+/**
+ * Manually force haptics initialization (useful for testing)
+ */
+export function forceEnableHaptics() {
+    hasUserInteracted = true;
+    triggerHaptic('success');
+}
