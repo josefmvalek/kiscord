@@ -14,16 +14,16 @@ let currentModalDateKey = null;
 export function getMoodColor(val) {
     if (val > 10) val = Math.round(val / 10);
     const colors = {
-        1: "#ed4245", // Red
-        2: "#f97316", // Orange
-        3: "#fbbf24", // Amber
-        4: "#facc15", // Yellow
-        5: "#d4d82b", // Lime-Yellow
-        6: "#a3e635", // Lime
-        7: "#4ade80", // Light Green
-        8: "#22c55e", // Green
-        9: "#16a34a", // Dark Green
-        10: "#065f46"  // Emerald
+        1: "#4B3F72", // Deep Purple (Low)
+        2: "#645688", 
+        3: "#7E6D9E", 
+        4: "#9784B4", 
+        5: "#C28CAE", // Soft Pink
+        6: "#E0A6AA", // Dusty Rose
+        7: "#F8D5C4", // Peach
+        8: "#ACE2D1", // Mint Blue
+        9: "#52B788", // Emerald
+        10: "#1B4332"  // Deep Forest (High)
     };
     return colors[val] || "#4b5563";
 }
@@ -126,6 +126,7 @@ function ensureModals() {
 
 export function renderCalendar(year = null, month = null) {
     ensureModals();
+    setupCalendarSync();
     const container = document.getElementById("messages-container");
     if (!container) return; // Guard clause
 
@@ -680,7 +681,10 @@ export async function addCustomPlan() {
     // Save to Supabase
     try {
         const { supabase } = await import('../core/supabase.js');
-        await supabase.from('planned_dates').upsert({
+        const planId = state.plannedDates[currentModalDateKey]?.id?.includes('custom-') ? crypto.randomUUID() : (state.plannedDates[currentModalDateKey]?.id || crypto.randomUUID());
+        
+        const { error } = await supabase.from('planned_dates').upsert({
+            id: planId,
             date_key: currentModalDateKey,
             name: name,
             cat: type,
@@ -688,8 +692,16 @@ export async function addCustomPlan() {
             note: "Vlastní plán",
             updated_at: new Date().toISOString()
         }, { onConflict: 'date_key' });
+
+        if (error) throw error;
+        
+        // Update local ID with the real one
+        state.plannedDates[currentModalDateKey].id = planId;
     } catch (err) {
         console.error('Failed to save custom plan:', err);
+        window.dispatchEvent(new CustomEvent('notification', { 
+            detail: { message: "Chyba synchronizace se serverem ☁️", type: "error" } 
+        }));
     }
 
     showDayDetail(currentModalDateKey);
@@ -857,4 +869,43 @@ export function saveHealthRecord() {
     if (typeof window.dispatchEvent === 'function') {
         window.dispatchEvent(new CustomEvent('notification', { detail: { message: "Zdraví uloženo 🏥", type: "success" } }));
     }
+}
+
+// --- SYNC LISTENERS ---
+let calendarSyncSet = false;
+export function setupCalendarSync() {
+    if (calendarSyncSet) return;
+
+    window.addEventListener('planned-dates-updated', (e) => {
+        const payload = e.detail.payload;
+        const row = payload.new || payload.old;
+        if (!row) return;
+
+        if (payload.eventType === 'DELETE') {
+            delete state.plannedDates[row.date_key];
+        } else {
+            state.plannedDates[row.date_key] = {
+                id: row.id,
+                name: row.name,
+                cat: row.cat,
+                time: row.time,
+                note: row.note
+            };
+        }
+
+        // If we are currently viewing the calendar, re-render the grid
+        if (state.currentChannel === 'calendar') {
+            const grid = document.getElementById('calendar-grid');
+            if (grid) {
+                grid.innerHTML = generateCalendarGrid(currentCalYear, currentCalMonth);
+            }
+            
+            // If the modal for this specific day is open, refresh it too
+            if (currentModalDateKey === row.date_key) {
+                showDayDetail(row.date_key);
+            }
+        }
+    });
+
+    calendarSyncSet = true;
 }

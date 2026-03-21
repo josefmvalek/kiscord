@@ -2,6 +2,7 @@ import { state } from '../core/state.js';
 import { triggerHaptic, getTodayKey } from '../core/utils.js';
 // import { factsLibrary } from '../data.js'; // Smazáno, nyní ze state
 import { supabase } from '../core/supabase.js';
+import { broadcastHealthUpdate } from '../core/sync.js';
 
 // --- DATA LOGIC ---
 
@@ -41,6 +42,9 @@ export async function updateHealth(type, value) {
         else data.water = value;
     }
     else if (type === 'movement') {
+        if (!data.movement || !Array.isArray(data.movement)) {
+            data.movement = [];
+        }
         // Val is ID (e.g. 'gym')
         const activityId = value;
         const index = data.movement.indexOf(activityId);
@@ -69,6 +73,17 @@ export async function updateHealth(type, value) {
         movement: data.movement
     });
     if (error) console.error("Error saving health to Supabase:", error);
+    else {
+        // Successful save - Broadcast the up-to-date row to partner
+        broadcastHealthUpdate({
+            date_key: todayKey,
+            user_id: state.currentUser.id,
+            water: data.water,
+            sleep: data.sleep,
+            mood: data.mood,
+            movement: data.movement
+        });
+    }
 
     // Achievement Hook
     import('./achievements.js').then(m => {
@@ -92,6 +107,17 @@ export function updateBedtime(time) {
     const storageKey = `vault_health_${state.currentUser.name.toLowerCase()}`;
     localStorage.setItem(storageKey, JSON.stringify(state.healthData));
     triggerHaptic('light');
+
+    // Broadcast bedtime update
+    broadcastHealthUpdate({
+        date_key: todayKey,
+        user_id: state.currentUser.id,
+        water: data.water || 0,
+        sleep: data.sleep || 0,
+        mood: data.mood || 5,
+        movement: data.movement || [],
+        bedtime: time
+    });
 }
 
 export function saveDailyNote() {

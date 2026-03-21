@@ -38,44 +38,42 @@ export function getTodayKey() {
 }
 
 export function triggerConfetti() {
-    if (typeof confetti !== 'function') return;
-
-    var duration = 3 * 1000;
-    var animationEnd = Date.now() + duration;
-    var defaults = {
-        startVelocity: 30,
-        spread: 360,
-        ticks: 60,
-        zIndex: 9999,
-    };
-
-    function randomInOut(min, max) {
-        return Math.random() * (max - min) + min;
+    const container = document.createElement('div');
+    container.className = 'aura-fx-container';
+    
+    // 1. The Aura Ring (Halo)
+    const ring = document.createElement('div');
+    ring.className = 'aura-ring';
+    container.appendChild(ring);
+    
+    // 2. The Sparkles (Floating high-quality ✨)
+    const sparkleEmojis = ['✨', '☀️', '💖', '✨'];
+    for (let i = 0; i < 8; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'aura-sparkle';
+        sparkle.innerText = sparkleEmojis[i % sparkleEmojis.length];
+        
+        // Random drift direction
+        const dx = (Math.random() - 0.5) * 300; // -150 to 150px
+        const dy = (Math.random() - 0.5) * 200 - 50; // -150 to 50px
+        
+        sparkle.style.setProperty('--dx', `${dx}px`);
+        sparkle.style.setProperty('--dy', `${dy}px`);
+        sparkle.style.left = '50%';
+        sparkle.style.top = '50%';
+        sparkle.style.animationDelay = `${Math.random() * 0.5}s`;
+        
+        container.appendChild(sparkle);
     }
-
-    var interval = setInterval(function () {
-        var timeLeft = animationEnd - Date.now();
-
-        if (timeLeft <= 0) {
-            return clearInterval(interval);
+    
+    document.body.appendChild(container);
+    
+    // Cleanup
+    setTimeout(() => {
+        if (container.parentNode) {
+            document.body.removeChild(container);
         }
-
-        var particleCount = 50 * (timeLeft / duration);
-
-        // Konfety padají náhodně ze dvou stran
-        confetti(
-            Object.assign({}, defaults, {
-                particleCount,
-                origin: { x: randomInOut(0.1, 0.3), y: Math.random() - 0.2 },
-            }),
-        );
-        confetti(
-            Object.assign({}, defaults, {
-                particleCount,
-                origin: { x: randomInOut(0.7, 0.9), y: Math.random() - 0.2 },
-            }),
-        );
-    }, 250);
+    }, 2500);
 }
 
 /**

@@ -4,7 +4,23 @@ import { triggerHaptic, triggerConfetti } from '../core/utils.js';
 import { showNotification } from '../core/theme.js';
 
 let subscription = null;
-let sessionQuestionIndex = -1; // -1 means use daily seed
+let sessionQuestionIndex = -1; // -1 means find first available
+let eventListenerAdded = false;
+
+function findSmartQuestionIndex() {
+    if (state.gameQuestions.length === 0) return 0;
+    
+    // Find first question where NOT both users have voted
+    for (let i = 0; i < state.gameQuestions.length; i++) {
+        const q = state.gameQuestions[i];
+        const myVote = state.gameVotes.find(v => v.question_id === q.id && v.user_id === state.currentUser?.id);
+        const partnerVote = state.gameVotes.find(v => v.question_id === q.id && v.user_id !== state.currentUser?.id);
+        
+        if (!myVote || !partnerVote) return i;
+    }
+    
+    return 0; // Fallback to first if all answered
+}
 
 export function renderGameWho() {
     const container = document.getElementById("messages-container");
@@ -21,19 +37,34 @@ export function renderGameWho() {
         return;
     }
 
-    // Pick a question
-    let qIndex;
     if (sessionQuestionIndex === -1) {
-        const today = new Date();
-        const dateSeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-        qIndex = dateSeed % state.gameQuestions.length;
-    } else {
-        qIndex = sessionQuestionIndex % state.gameQuestions.length;
+        sessionQuestionIndex = findSmartQuestionIndex();
     }
     
-    const currentQ = state.gameQuestions[qIndex];
+    const currentQ = state.gameQuestions[sessionQuestionIndex % state.gameQuestions.length];
 
-    setupRealtime(currentQ.id);
+    if (!eventListenerAdded) {
+        window.addEventListener('game-vote-updated', (e) => {
+            if (state.currentChannel !== 'game-who') return;
+            
+            const payload = e.detail.payload;
+            const activeQ = state.gameQuestions[sessionQuestionIndex % state.gameQuestions.length];
+            
+            if (activeQ && payload.question_id === activeQ.id) {
+                // Check if already in state
+                const existing = state.gameVotes.find(v => (v.id && v.id === payload.id) || (v.user_id === payload.user_id && v.question_id === payload.question_id));
+                if (!existing) {
+                    state.gameVotes.push(payload);
+                    renderGameWho();
+                } else if (e.detail.source === 'database' && !existing.id) {
+                    // Update the temporary broadcast vote with the real DB record
+                    Object.assign(existing, payload);
+                    renderGameWho();
+                }
+            }
+        });
+        eventListenerAdded = true;
+    }
 
     renderContent(currentQ);
 }
@@ -152,6 +183,9 @@ function renderContent(question) {
             renderContent(question);
             triggerHaptic('medium');
             
+            // 2. Broadcast immediately for partner's UI
+            import('../core/sync.js').then(m => m.broadcastGameVote(data[0]));
+            
             // Check if match was MADE by this vote
             const isJosef = state.currentUser.email.toLowerCase().includes('josef') || state.currentUser.email.toLowerCase().includes('jozk');
             const partnerId = !isJosef; // This is actually logic to check the OTHER vote in state
@@ -171,12 +205,27 @@ function renderContent(question) {
 
     // Handler for next question
     window.nextGameQuestion = () => {
-        if (sessionQuestionIndex === -1) {
-            const today = new Date();
-            const dateSeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-            sessionQuestionIndex = (dateSeed % state.gameQuestions.length) + 1;
-        } else {
-            sessionQuestionIndex++;
+        // Find NEXT unanswered question
+        let nextIdx = (sessionQuestionIndex + 1) % state.gameQuestions.length;
+        let found = false;
+        
+        // Loop through to find next unanswered
+        for (let i = 0; i < state.gameQuestions.length; i++) {
+            const checkIdx = (nextIdx + i) % state.gameQuestions.length;
+            const q = state.gameQuestions[checkIdx];
+            const myVote = state.gameVotes.find(v => v.question_id === q.id && v.user_id === state.currentUser?.id);
+            const partnerVote = state.gameVotes.find(v => v.question_id === q.id && v.user_id !== state.currentUser?.id);
+            
+            if (!myVote || !partnerVote) {
+                sessionQuestionIndex = checkIdx;
+                found = true;
+                break;
+            }
+        }
+        
+        if (!found) {
+            // If all are answered, just move to next linearly
+            sessionQuestionIndex = nextIdx;
         }
         
         triggerHaptic('light');
@@ -184,34 +233,8 @@ function renderContent(question) {
     };
 }
 
-function setupRealtime(questionId) {
-    if (subscription) return;
-
-    subscription = supabase
-        .channel('game-votes-changes')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'game_votes' }, payload => {
-            const newVote = payload.new;
-            if (newVote.question_id === questionId) {
-                // Check if already in state
-                if (!state.gameVotes.find(v => v.id === newVote.id)) {
-                    state.gameVotes.push(newVote);
-                    
-                    // Re-render if we are on this page
-                    if (state.currentChannel === 'game-who') {
-                        const q = state.gameQuestions.find(g => g.id === questionId);
-                        renderContent(q);
-                    }
-                }
-            }
-        })
-        .subscribe();
-}
-
 export function cleanupRealtime() {
-    if (subscription) {
-        supabase.removeChannel(subscription);
-        subscription = null;
-    }
+    // Relying on core sync system
 }
 
 export function showAddGameQuestionModal() {

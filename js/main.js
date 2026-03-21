@@ -13,6 +13,7 @@ import {
 } from './modules/dashboard.js';
 import { setupQuestsRealtime, cleanupQuestsRealtime } from './modules/quests.js';
 import { initLevels, renderLevelUI } from './modules/levels.js';
+import { setupRealtimeSync } from './core/sync.js';
 
 // Lazy-loaded modules mapping (for better maintenance)
 const moduleMap = {
@@ -73,6 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // 1. Initial State Setup (Static/Realtime)
+    setupRealtimeSync();
     setupQuestsRealtime();
     initLevels();
     initTheme();

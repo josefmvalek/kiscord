@@ -21,6 +21,7 @@ let isPanningMode = false;
 let startPanX, startPanY;
 let initialPinchDist = null;
 let initialZoom = 1;
+let userLastPositions = {}; // Track { x, y } per userId to prevent simultaneous interference
 
 function updateCanvasTransform() {
     const c = document.getElementById('duel-canvas');
@@ -468,6 +469,7 @@ function startDrawing(e) {
     ctx.moveTo(x, y);
     
     currentPath = [{ x, y }];
+    userLastPositions[state.currentUser?.id] = { x, y };
     
     // Broadcast start
     broadcastStroke('start', { x, y, color: isEraser ? '#ffffff' : color, size });
@@ -487,12 +489,19 @@ function draw(e) {
     const x = (e.clientX - rect.left - panX) / zoomLevel;
     const y = (e.clientY - rect.top - panY) / zoomLevel;
 
-    ctx.lineTo(x, y);
-    ctx.strokeStyle = isEraser ? '#ffffff' : color;
-    ctx.lineWidth = size;
-    ctx.lineCap = 'round';
-    ctx.stroke();
+    const last = userLastPositions[state.currentUser?.id];
+    if (last) {
+        ctx.beginPath();
+        ctx.moveTo(last.x, last.y);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = isEraser ? '#ffffff' : color;
+        ctx.lineWidth = size;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.closePath();
+    }
 
+    userLastPositions[state.currentUser?.id] = { x, y };
     currentPath.push({ x, y });
 
     // Broadcast move
@@ -510,6 +519,7 @@ async function stopDrawing() {
     }
 
     ctx.closePath();
+    delete userLastPositions[state.currentUser?.id];
     
     // Broadcast end
     broadcastStroke('end', {});
@@ -612,19 +622,25 @@ function broadcastTimer(seconds) {
 }
 
 function handleRemoteStroke(p) {
-    if (!ctx) return;
+    if (!ctx || !p.userId) return;
 
     if (p.type === 'start') {
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
+        userLastPositions[p.userId] = { x: p.x, y: p.y };
     } else if (p.type === 'move') {
-        ctx.lineTo(p.x, p.y);
-        ctx.strokeStyle = p.color;
-        ctx.lineWidth = p.size;
-        ctx.lineCap = 'round';
-        ctx.stroke();
+        const last = userLastPositions[p.userId];
+        if (last) {
+            ctx.beginPath();
+            ctx.moveTo(last.x, last.y);
+            ctx.lineTo(p.x, p.y);
+            ctx.strokeStyle = p.color;
+            ctx.lineWidth = p.size;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            ctx.closePath();
+        }
+        userLastPositions[p.userId] = { x: p.x, y: p.y };
     } else if (p.type === 'end') {
-        ctx.closePath();
+        delete userLastPositions[p.userId];
     }
 }
 

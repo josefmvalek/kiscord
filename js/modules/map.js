@@ -1,7 +1,8 @@
 import { state } from '../core/state.js';
 // import { dateLocations, timelineEvents } from '../data.js'; // Smazáno, nyní ze state
 import { triggerHaptic, getTodayKey } from '../core/utils.js';
-import { showNotification } from '../core/theme.js'; // Fallback or imported
+import { showNotification } from '../core/theme.js';
+import { loadLeaflet } from '../core/loader.js'; // Fallback or imported
 
 // --- STATE ---
 let selectedDateLocation = null;
@@ -190,6 +191,9 @@ export function renderMap() {
 
     // Initialize Map logic
     setTimeout(async () => {
+        // Performance: Load Leaflet only when needed
+        await loadLeaflet();
+
         if (state.mapInstance) {
             state.mapInstance.remove();
             state.mapInstance = null;

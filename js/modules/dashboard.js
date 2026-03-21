@@ -6,6 +6,7 @@ import { getTodayData, updateHealth, updateBedtime, startSleep, wakeUp, startSle
 import { triggerHaptic, triggerConfetti, getInflectedName, getTodayKey } from '../core/utils.js';
 import { showNotification } from '../core/theme.js';
 import { getTetrisScore } from './games.js';
+import { broadcastSunlight } from '../core/sync.js';
 
 // --- HELPERS ---
 
@@ -75,11 +76,11 @@ export function updateMoodVisuals(val) {
         if (span) {
             if (i === value) {
                 span.classList.add('active');
-                if (i <= 3) span.style.textShadow = "0 0 10px rgba(239, 68, 68, 0.8)";
-                else if (i === 5) span.style.textShadow = "0 0 15px rgba(255, 255, 255, 1)"; // Glow for special 5
-                else if (i <= 7) span.style.textShadow = "0 0 10px rgba(245, 158, 11, 0.8)";
-                else if (i === 10) span.style.textShadow = "0 0 20px rgba(0, 229, 255, 1)"; // Glow for diamond
-                else span.style.textShadow = "0 0 10px rgba(16, 185, 129, 0.8)";
+                if (i <= 3) span.style.textShadow = "0 0 10px rgba(100, 86, 136, 0.8)"; // Lavender
+                else if (i === 5) span.style.textShadow = "0 0 15px rgba(194, 140, 174, 1)"; // Glow for Soft Pink 5
+                else if (i <= 7) span.style.textShadow = "0 0 10px rgba(248, 213, 196, 0.8)"; // Peach
+                else if (i === 10) span.style.textShadow = "0 0 20px rgba(27, 67, 50, 1)"; // Emerald
+                else span.style.textShadow = "0 0 10px rgba(82, 183, 136, 0.8)"; // Mint Green shadow
             } else {
                 span.classList.remove('active');
                 span.style.textShadow = "none";
@@ -88,6 +89,13 @@ export function updateMoodVisuals(val) {
     }
 
     triggerHaptic("light");
+    
+    // Vizuálně potichu updatnout slunečnici bez překreslení celého dashboardu
+    const todayKey = getTodayKey();
+    if (state.healthData && state.healthData[todayKey]) {
+        state.healthData[todayKey].mood = value;
+    }
+    updateSunflowersDOM();
 }
 
 export function hideMoodBubble() {
@@ -97,18 +105,53 @@ export function hideMoodBubble() {
     }
 }
 
+export function updateWaterVisuals() {
+    const todayKey = getTodayKey();
+    const data = state.healthData && state.healthData[todayKey] ? state.healthData[todayKey] : { water: 0 };
+    const waterCount = data.water || 0;
+    
+    const container = document.getElementById('water-container');
+    if (container) container.innerHTML = generateWaterIcons(waterCount);
+    
+    const counter = document.getElementById('water-count');
+    if (counter) counter.innerText = `${waterCount}/8`;
+    
+    updateSunflowersDOM();
+}
+
+// Listen for health updates from health.js to keep dashboard in sync
+window.addEventListener('health-updated', () => {
+    // Only update if we are actually on the dashboard
+    if (document.getElementById('sunflower-me-container')) {
+        updateWaterVisuals();
+        updateMovementVisuals();
+        // updateSunflowersDOM is already called inside the visuals updaters
+    }
+});
+
 export function generateWaterIcons(count) {
     let html = "";
     for (let i = 1; i <= 8; i++) {
         const isFull = i <= count;
         const colorClass = isFull ? "text-[#00e5ff] scale-110 drop-shadow-[0_0_5px_rgba(0,229,255,0.5)]" : "text-[#202225] hover:text-[#40444b]";
         const borderStyle = isFull ? "" : "filter: drop-shadow(0 0 1px #555);";
-        html += `<button onclick="import('./js/core/utils.js').then(u => u.triggerHaptic('light')); import('./js/modules/health.js').then(m => { m.updateHealth('water', ${i}); import('./js/modules/dashboard.js').then(d => d.renderDashboard()); })" class="text-2xl transition-all duration-200 p-1 transform active:scale-95 z-20 relative cursor-pointer ${colorClass}" style="${borderStyle}"><i class="fas fa-tint pointer-events-none"></i></button>`;
+        html += `<button onclick="import('./js/core/utils.js').then(u => u.triggerHaptic('light')); import('./js/modules/health.js').then(m => m.updateHealth('water', ${i}))" class="text-2xl transition-all duration-200 p-1 transform active:scale-95 z-20 relative cursor-pointer ${colorClass}" style="${borderStyle}"><i class="fas fa-tint pointer-events-none"></i></button>`;
     }
     return html;
 }
 
-export function generateMovementChips(movement) {
+export function updateMovementVisuals() {
+    const todayKey = getTodayKey();
+    const data = state.healthData && state.healthData[todayKey] ? state.healthData[todayKey] : { movement: [] };
+    const container = document.getElementById('movement-container');
+    if (container) container.innerHTML = generateMovementChips(data.movement);
+    
+    updateSunflowersDOM();
+}
+
+export function generateMovementChips(movement = []) {
+    if (!movement || !Array.isArray(movement)) movement = [];
+    
     const activities = [
         { id: 'gym', icon: '💪', label: 'Fitko', color: 'text-red-400', border: 'border-red-500/50', bg: 'bg-red-500/10' },
         { id: 'walk', icon: '🌲', label: 'Procházka', color: 'text-green-400', border: 'border-green-500/50', bg: 'bg-green-500/10' }
@@ -121,7 +164,7 @@ export function generateMovementChips(movement) {
             : "bg-[#36393f] text-gray-500 border-gray-700 hover:border-gray-500";
 
         return `
-          <button onclick="import('./js/modules/health.js').then(m => { m.updateHealth('movement', '${act.id}'); import('./js/modules/dashboard.js').then(d => d.renderDashboard()); })" 
+          <button onclick="import('./js/modules/health.js').then(m => m.updateHealth('movement', '${act.id}'))" 
                   class="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 transform active:scale-95 ${activeClass}">
               <span class="text-lg">${act.icon}</span>
               <span class="text-xs font-bold uppercase">${act.label}</span>
@@ -138,6 +181,252 @@ function getSleepColor(hours) {
     else return { class: "text-[#eb459e]", hex: "#eb459e", label: "Růženka 👸" };
 }
 
+// --- SUNFLOWER SYNC ---
+
+let sunlightChannel = null;
+
+export function initSunlightRealtime() {
+    // Redundant - functionality moved to sync.js
+    // We just ensure global listeners are attached
+    setupDashboardGlobalListeners();
+}
+
+let dashboardListenersSet = false;
+function setupDashboardGlobalListeners() {
+    if (dashboardListenersSet) return;
+
+    window.addEventListener('health-updated', (e) => {
+        if (state.currentChannel === 'dashboard') {
+            updateSunflowersDOM();
+            // If it's from the other user, we might need to refresh health UI specifically
+            if (e.detail?.source === 'realtime') {
+                updateWaterVisuals();
+                updateMovementVisuals();
+                const mood = state.healthData[getTodayKey()]?.mood;
+                if (mood !== undefined) updateMoodVisuals(mood, true);
+            }
+        }
+    });
+
+    window.addEventListener('sunlight-received', (e) => {
+        triggerHaptic('heavy');
+        
+        // Sunny visual flash
+        const overlay = document.createElement('div');
+        overlay.className = "fixed inset-0 bg-[#ffd700] mix-blend-overlay opacity-60 z-[9999] pointer-events-none transition-opacity duration-1000";
+        document.body.appendChild(overlay);
+        setTimeout(() => { overlay.style.opacity = '0'; }, 300);
+        setTimeout(() => { overlay.remove(); }, 1500);
+        
+        showNotification("Dostal/a jsi sluneční paprsek! ☀️", "success");
+    });
+
+    window.addEventListener('planned-dates-updated', () => {
+        // If we are on the dashboard, we need to refresh the 'next event' card
+        if (state.currentChannel === 'dashboard') {
+            // Simple approach: re-render the dashboard to update the 'next event' logic
+            renderDashboard();
+        }
+    });
+
+    dashboardListenersSet = true;
+}
+
+export async function sendSunlight() {
+    triggerHaptic('light');
+    
+    // Animate local button
+    const btn = document.querySelector('.sun-send-btn');
+    if (btn) {
+        btn.innerHTML = "✨";
+        btn.classList.add('bg-yellow-400/50', 'scale-110');
+        setTimeout(() => {
+            btn.innerHTML = "☀️";
+            btn.classList.remove('bg-yellow-400/50', 'scale-110');
+        }, 2000);
+    }
+
+    await broadcastSunlight();
+}
+
+export function updateSunflowersDOM() {
+    const todayKey = getTodayKey();
+    const data = state.healthData && state.healthData[todayKey] ? state.healthData[todayKey] : { water: 0, sleep: 0, mood: 5, movement: [], bedtime: null };
+    
+    syncSunflowerSVG("sunflower-me-container", data, false);
+    syncSunflowerSVG("sunflower-partner-container", state.partnerHealthData || null, true);
+}
+
+export function syncSunflowerSVG(containerId, data, isPartnerId = false) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    let svg = container.querySelector('svg');
+    if (!svg) {
+        container.innerHTML = generateSunflowerSVG(data, isPartnerId);
+        return; 
+    }
+
+    if (!data) data = { water: 0, sleep: 0, mood: 5, movement: [], bedtime: null };
+
+    // Update global container classes
+    const wrapper = container.querySelector('.sunflower-container');
+    if (wrapper) {
+        if (data.sleep >= 7) wrapper.classList.add('sf-glow');
+        else wrapper.classList.remove('sf-glow');
+        
+        const isSleeping = data.bedtime && !data.wake_time && state.currentSleepSession?.isSleeping;
+        if (isSleeping && !isPartnerId) wrapper.classList.add('sf-sleep');
+        else wrapper.classList.remove('sf-sleep');
+    }
+
+    // Update Stem Leaves based on Water (0-8)
+    const water = data.water || 0;
+    const swellBonus = Math.max(0, water - 4) * 0.175; // Up to +0.7 scale
+    
+    const leafData = [
+        {y: 140, s: 1},
+        {y: 125, s: -1},
+        {y: 110, s: 1},
+        {y: 95,  s: -1}
+    ];
+
+    for (let i = 0; i < 4; i++) {
+        const leaf = svg.querySelector(`.sf-leaf-${i}`);
+        if (leaf) {
+            const isVisible = water > i;
+            // Base scale 0.5 when spawned, swelled up to 1.2
+            const scaleMag = isVisible ? (0.5 + swellBonus) : 0;
+            leaf.style.transform = `scale(${scaleMag * leafData[i].s}, ${scaleMag})`;
+        }
+    }
+
+    // Update Mood Petals (27 total, sequential clockwise)
+    const mood = data.mood || 1;
+    const numPetals = 27;
+    const visiblePetals = Math.min(numPetals, Math.max(0, (mood - 1) * 3)); 
+
+    for (let i = 0; i < numPetals; i++) {
+        const petal = svg.querySelector(`.sf-petal-wrapper-${i}`);
+        if (petal) {
+            const isMissing = i >= visiblePetals;
+            if (isMissing) petal.classList.add('missing');
+            else petal.classList.remove('missing');
+        }
+    }
+
+    // Update Sleep Center
+    const centers = svg.querySelectorAll('.sf-center');
+    if (centers.length >= 2) {
+        centers[0].setAttribute('fill', data.sleep >= 6 ? '#2b1a0d' : '#1a1005');
+        centers[1].setAttribute('fill', data.sleep >= 6 ? '#1f1005' : '#0d0601');
+    }
+}
+
+export function generateSunflowerSVG(data, isPartner = false) {
+    if (!data) data = { water: 0, sleep: 0, mood: 5, movement: [], bedtime: null };
+    
+    let containerClass = "relative flex flex-col items-center justify-end h-36 w-24 sunflower-container";
+    if (data.sleep >= 7) containerClass += " sf-glow";
+    
+    const isSleeping = data.bedtime && !data.wake_time && state.currentSleepSession?.isSleeping;
+    if (isSleeping && !isPartner) containerClass += " sf-sleep";
+
+    const mood = data.mood || 1;
+    const numPetals = 27;
+    const visiblePetals = Math.min(numPetals, Math.max(0, (mood - 1) * 3)); 
+    const defsPrefix = isPartner ? 'p' : 'm';
+    
+    let petalsHTML = "";
+    for (let i = 0; i < numPetals; i++) {
+        const isMissing = i >= visiblePetals;
+        const petalClass = isMissing ? `sf-petal-wrapper sf-petal-wrapper-${i} missing` : `sf-petal-wrapper sf-petal-wrapper-${i}`;
+        
+        // Exact symmetrical rotation
+        const rotation = i * (360 / 27); 
+        const isFront = i % 2 !== 0;
+        
+        // All petals identically shaped, but vastly wider to overlap
+        const length = 46; 
+        const width = 14; 
+        
+        // Very subtle stroke contrast to separate the overlapping layers visually without losing uniformity
+        const strokeColor = isFront ? `#eab308` : `#ca8a04`;
+        
+        petalsHTML += `
+            <g transform="rotate(${rotation})">
+                <g class="${petalClass}" style="transition-delay: ${Math.random() * 0.15}s">
+                    <path d="M 0,-16 Q ${width},-${length/2 + 5} 0,-${length} Q -${width},-${length/2 + 5} 0,-16" 
+                          fill="url(#petal-grad-${defsPrefix})" stroke="${strokeColor}" stroke-width="0.5"/>
+                </g>
+            </g>
+        `;
+    }
+
+    const water = data.water || 0;
+    const swellBonus = Math.max(0, water - 4) * 0.175;
+    
+    const leafData = [
+        {y: 140, s: 1},
+        {y: 120, s: -1},
+        {y: 100, s: 1},
+        {y: 80,  s: -1}
+    ];
+
+    let leavesHTML = "";
+    for (let i = 0; i < 4; i++) {
+        const isVisible = water > i;
+        const scaleMag = isVisible ? (0.5 + swellBonus) : 0;
+        const l = leafData[i];
+        const pathData = 'M 0,0 Q 15,-15 30,-5 Q 15,10 0,0';
+            
+        leavesHTML += `
+            <g style="transform: translate(50px, ${l.y}px)">
+                <g class="sf-leaf sf-leaf-${i}" style="transform: scale(${scaleMag * l.s}, ${scaleMag})">
+                    <path d="${pathData}" fill="#16a34a" stroke="#14532d" stroke-width="1"/>
+                </g>
+            </g>
+        `;
+    }
+
+    const buttonHTML = '';
+
+    return `
+        <div class="${containerClass}">
+            <svg viewBox="0 0 100 150" width="100" height="150" style="overflow: visible; drop-shadow: 0 5px 5px rgba(0,0,0,0.5);">
+                <defs>
+                    <linearGradient id="petal-grad-${defsPrefix}" x1="0%" y1="100%" x2="0%" y2="0%">
+                        <stop offset="0%" stop-color="#f59e0b"/>
+                        <stop offset="25%" stop-color="#facc15"/>
+                        <stop offset="100%" stop-color="#fef08a"/>
+                    </linearGradient>
+
+                </defs>
+                
+                <g class="sf-stem-group">
+                    <path class="sf-stem-main" d="M 50,50 L 50,155" fill="none" stroke="#15803d" stroke-width="8" stroke-linecap="round"/>
+                    ${leavesHTML}
+                </g>
+                
+                <g transform="translate(50, 40)">
+                    <g class="sf-head-group">
+                        <g class="sf-head">
+                            <circle cx="0" cy="0" r="18" fill="#1e1005" />
+                            ${petalsHTML}
+                            <circle cx="0" cy="0" r="18" fill="${data.sleep >= 6 ? '#2b1a0d' : '#1a1005'}" stroke="#1f1005" stroke-width="2" class="sf-center"/>
+                            <circle cx="0" cy="0" r="14" fill="${data.sleep >= 6 ? '#1f1005' : '#0d0601'}" class="sf-center"/>
+                            <circle cx="-5" cy="-2" r="1.5" fill="#facc15" opacity="0.8"/>
+                            <circle cx="5" cy="-2" r="1.5" fill="#facc15" opacity="0.8"/>
+                            <path d="M -3,3 Q 0,7 3,3" fill="none" stroke="#facc15" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/>
+                        </g>
+                    </g>
+                </g>
+            </svg>
+            ${buttonHTML}
+        </div>
+    `;
+}
+
 export function generateSleepSlider(data) {
     const sleepValue = typeof data.sleep === "number" ? data.sleep : 0;
     const sleepColor = getSleepColor(sleepValue);
@@ -150,13 +439,13 @@ export function generateSleepSlider(data) {
         <div class="flex flex-col justify-between">
             <div class="relative w-full h-8 rounded-full bg-[#202225] overflow-hidden mb-2 shadow-inner border border-black/40 ${disabledClass}">
                  <div class="absolute inset-0 opacity-10" style="background: ${trackGradient}"></div>
-                 <input type="range" min="0" max="15" step="0.5" value="${sleepValue}" 
+                 <input type="range" min="0" max="10" step="0.5" value="${sleepValue}" 
                     oninput="import('./js/modules/dashboard.js').then(m => m.updateSleep(this.value))" 
                     onchange="import('./js/modules/health.js').then(m => m.updateHealth('sleep', parseFloat(this.value)))"
                     class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                     ${disabledAttr}>
-                 <div class="absolute top-0 left-0 h-full transition-none pointer-events-none" id="sleep-progress-bar" style="width: ${(sleepValue / 15) * 100}%; background-color: ${sleepColor.hex}; box-shadow: 0 0 15px ${sleepColor.hex}80;"></div>
-                 <div class="absolute top-0 h-full w-1 bg-white shadow-[0_0_5px_black] pointer-events-none transition-none backdrop-blur-sm z-10" id="sleep-marker" style="left: ${(sleepValue / 15) * 100}%; transform: translateX(-50%);"></div>
+                 <div class="absolute top-0 left-0 h-full transition-none pointer-events-none" id="sleep-progress-bar" style="width: ${(sleepValue / 10) * 100}%; background-color: ${sleepColor.hex}; box-shadow: 0 0 15px ${sleepColor.hex}80;"></div>
+                 <div class="absolute top-0 h-full w-1 bg-white shadow-[0_0_5px_black] pointer-events-none transition-none backdrop-blur-sm z-10" id="sleep-marker" style="left: ${(sleepValue / 10) * 100}%; transform: translateX(-50%);"></div>
             </div>
             <div class="flex justify-between items-end px-1 mt-1">
                  <div class="flex items-baseline gap-1" id="sleep-value-wrapper">
@@ -205,12 +494,12 @@ export function updateSleep(val) {
     const textEl = document.getElementById('sleep-value-text');
 
     if (progressBar) {
-        progressBar.style.width = `${(sleepValue / 15) * 100}%`;
+        progressBar.style.width = `${(sleepValue / 10) * 100}%`;
         progressBar.style.backgroundColor = sleepColor.hex;
         progressBar.style.boxShadow = `0 0 15px ${sleepColor.hex}80`;
     }
     if (marker) {
-        marker.style.left = `${(sleepValue / 15) * 100}%`;
+        marker.style.left = `${(sleepValue / 10) * 100}%`;
     }
     if (textEl) {
         textEl.innerText = sleepValue;
@@ -416,7 +705,19 @@ export async function renderDashboard(forceRefresh = false) {
     if (navigator.onLine && (!state.dashboardFetched || forceRefresh)) {
         setTimeout(async () => {
             try {
+                // Tichá inicializace Realtime posluchače
+                initSunlightRealtime();
+
                 const today = new Date().toISOString().split('T')[0];
+                
+                // Fetch partner's data as well for the sunflower!
+                const partnerHealthPromise = supabase.from('health_data')
+                    .select('*')
+                    .eq('date_key', todayKey)
+                    .neq('user_id', state.currentUser.id)
+                    .single();
+
+                state.dashboardFetched = true;
                 const { data, error } = await supabase.rpc('get_dashboard_data', {
                     p_user_id: state.currentUser.id,
                     p_date: today
@@ -433,15 +734,19 @@ export async function renderDashboard(forceRefresh = false) {
                         if (!state.plannedDates) state.plannedDates = {};
                         state.plannedDates[data.next_event.date_key] = data.next_event;
                     }
+                    
+                    // Await partner data
+                    const { data: pData } = await partnerHealthPromise;
+                    if (pData) state.partnerHealthData = pData;
 
-                    state.dashboardFetched = true;
                     // Tichý re-render na pozadí, abychom zapsali nová data (jen pokud jsme na obrazovce)
                     if (state.currentChannel === 'dashboard' && document.getElementById("messages-container")) {
-                        renderDashboard(); // Volá znovu tuto funkci, ale nepustí další fetch, protože dashboardFetched = true
+                        renderDashboard(); 
                     }
                 }
             } catch (err) {
                 console.warn("Tichá synchronizace dashboardu na pozadí selhala (Lze ignorovat, použijí se lokální data):", err);
+                state.dashboardFetched = true; // Still mark as fetched to allow sync re-renders
             }
         }, 50);
     }
@@ -465,35 +770,59 @@ export async function renderDashboard(forceRefresh = false) {
 
     container.innerHTML = `
           <div class="flex-1 overflow-y-auto no-scrollbar bg-[#36393f] relative w-full h-full pb-20">
-              <div class="relative bg-gradient-to-br from-[#5865F2] to-[#eb459e] shadow-lg overflow-hidden flex-shrink-0 pt-6 pb-0 rounded-b-3xl">
+              <div class="relative bg-gradient-to-br from-[#5865F2] to-[#eb459e] shadow-lg overflow-hidden flex-shrink-0 pt-3 pb-0 rounded-b-3xl">
                   <div class="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
-                  <div class="relative z-10 px-6 mb-4 flex justify-between items-start">
-                      <div id="dashboard-welcome-text">
-                          <p class="text-[10px] font-bold uppercase tracking-wider opacity-80 text-white/90 mb-0.5">${niceDate}</p>
-                          <h1 class="text-2xl font-black text-white drop-shadow-md leading-tight">${greeting},<br>${getInflectedName(state.currentUser.name, 5)} 🌞</h1>
+                  <div class="relative z-10 px-6 mb-0 flex justify-between items-end min-h-[140px]">
+                      <div id="dashboard-welcome-text" class="pb-2">
+                           <p class="text-[10px] font-bold uppercase tracking-wider opacity-80 text-white/90 mb-0.5">${niceDate}</p>
+                           <h1 class="text-2xl font-black text-white drop-shadow-md leading-tight">${greeting},<br>${getInflectedName(state.currentUser.name, 5)} 🌞</h1>
+                          <div class="flex items-center gap-2 mt-3">
+                              <div class="bg-white/20 backdrop-blur-md px-2 py-1 rounded text-center shadow-sm border border-white/10 inline-block min-w-[60px]">
+                                  <span class="block text-[8px] uppercase font-bold tracking-widest opacity-90 text-white leading-none mb-0.5">Spolu</span>
+                                  <span class="block text-sm font-black text-white leading-none">${daysTogether} dní</span>
+                              </div>
+                              <button onclick="import('./js/modules/dashboard.js').then(m => m.sendSunlight())" 
+                                      class="sun-send-btn w-9 h-9 bg-white/20 backdrop-blur-sm rounded-xl border border-white/10 flex items-center justify-center text-xl shadow-lg transition-all duration-300 hover:scale-110 active:scale-90 hover:bg-yellow-400/30 group"
+                                      title="Poslat slunce">
+                                  <span class="group-hover:drop-shadow-[0_0_8px_rgba(255,255,0,0.8)]">☀️</span>
+                              </button>
+                          </div>
                       </div>
-                      <div class="bg-white/20 backdrop-blur-md px-2 py-1 rounded text-center shadow-sm border border-white/10">
-                          <span class="block text-[8px] uppercase font-bold tracking-widest opacity-90 text-white">Spolu</span>
-                          <span class="block text-sm font-black text-white">${daysTogether} dní</span>
+                      
+                      <div class="flex gap-2 items-end pb-0">
+                          <div id="sunflower-me-container" class="flex flex-col items-center w-24 mb-[-4px] transform translate-y-[2px] relative group">
+                              ${generateSunflowerSVG(data, false)}
+                              <span class="absolute -bottom-6 left-0 w-full text-center text-[10px] font-black text-white/90 uppercase tracking-widest drop-shadow-md z-30 pointer-events-none group-hover:text-white transition-colors">${state.currentUser.name}</span>
+                          </div>
+                          <div id="sunflower-partner-container" class="flex flex-col items-center w-24 mb-[-4px] transform translate-y-[2px] relative group">
+                              ${generateSunflowerSVG(state.partnerHealthData || null, true)}
+                              <span class="absolute -bottom-6 left-0 w-full text-center text-[10px] font-black text-white/90 uppercase tracking-widest drop-shadow-md z-30 pointer-events-none group-hover:text-white transition-colors">${state.currentUser.name === 'Jožka' ? 'Klárka' : 'Jožka'}</span>
+                          </div>
                       </div>
                   </div>
-                  <div class="bg-black/20 backdrop-blur-md border-t border-white/10 px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-black/30 transition"
+                  <div class="bg-black/20 backdrop-blur-md border-t border-white/10 px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-black/30 transition min-h-[56px]"
                        onclick="${nextDate
             ? `import('./js/modules/calendar.js').then(m => m.showDayDetail('${nextDate[0]}'))`
             : `window.switchChannel('dateplanner')`}">
                       ${nextDate
             ? `<div class="flex items-center gap-3 overflow-hidden">
-                              <div class="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-sm flex-shrink-0">📅</div>
-                              <div class="min-w-0">
-                                  <div class="text-[9px] font-bold text-white/70 uppercase tracking-wide flex items-center gap-1">Nejbližší akce <span class="w-1 h-1 bg-[#3ba55c] rounded-full animate-pulse"></span></div>
-                                  <div class="font-bold text-white text-sm truncate">${nextDate[1].name}</div>
+                                <div class="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-sm flex-shrink-0">📅</div>
+                                 <div class="min-w-0">
+                                    <div class="text-[9px] font-bold text-white/70 uppercase tracking-wide flex items-center gap-1">Nejbližší akce <span class="w-1 h-1 bg-[#3ba55c] rounded-full animate-pulse"></span></div>
+                                    <div class="font-bold text-white text-sm truncate">${nextDate[1].name}</div>
+                                 </div>
                               </div>
-                           </div>
-                           <div class="text-white/80 text-xs font-medium whitespace-nowrap pl-2">${new Date(nextDate[0]).getDate()}.${new Date(nextDate[0]).getMonth() + 1}.</div>`
-            : `<div class="flex items-center gap-3 w-full">
-                              <div class="bg-white/10 w-8 h-8 rounded-full flex items-center justify-center text-sm">❓</div>
-                              <div class="text-white/90 text-sm font-medium">Zatím nic v plánu... <span class="font-bold underline decoration-[#faa61a]">Naplánovat?</span></div>
-                           </div>`
+                              <div class="flex items-center gap-4">
+                                  <div class="text-white/80 text-xs font-black tracking-widest whitespace-nowrap px-3 py-1 bg-white/10 rounded-full border border-white/5 hidden sm:block">${new Date(nextDate[0]).getDate()}.${new Date(nextDate[0]).getMonth() + 1}.</div>
+                                  <i class="fas fa-chevron-right text-white/30 text-[10px]"></i>
+                              </div>`
+             : `<div class="flex items-center gap-3 w-full justify-between">
+                                 <div class="flex items-center gap-3">
+                                     <div class="bg-white/10 w-8 h-8 rounded-full flex items-center justify-center text-sm">❓</div>
+                                     <div class="text-white/90 text-sm font-medium">Zatím nic v plánu... <span class="font-bold underline decoration-[#faa61a]">Naplánovat?</span></div>
+                                 </div>
+                                 <i class="fas fa-chevron-right text-white/30 text-[10px]"></i>
+                              </div>`
         }
                   </div>
               </div>

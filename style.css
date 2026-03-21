@@ -148,6 +148,7 @@ body.theme-valentines .border-\[\#202225\] { border-color: var(--bg-tertiary) !i
 html, body {
   height: 100%;
   margin: 0;
+  font-family: var(--font-main);
 }
 
 body {
@@ -1397,4 +1398,129 @@ button:active i.fa-tint {
 
 #puzzle-gallery-modal {
     z-index: 2000;
+}
+
+/* --- SUNFLOWER SYNC STYLES --- */
+.sunflower-container {
+    position: relative;
+    width: 100px;
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.sf-stem {
+    transform-origin: bottom center;
+    transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275), stroke 1s ease;
+}
+
+.sf-head {
+    transform-origin: center;
+    transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.sf-petal-wrapper {
+    transform-origin: center;
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
+}
+
+.sf-petal-wrapper.missing {
+    transform: translateY(30px) rotate(60deg) scale(0);
+    opacity: 0;
+}
+
+.sf-leaf {
+    transform-origin: 0px 0px;
+    transition: transform 1s cubic-bezier(0.34, 1.56, 0.64, 1), fill 1s ease;
+}
+
+.sf-stem-main {
+    transition: all 1s ease-in-out; /* Note: d attribute transition depends on browser support */
+}
+
+.sf-head-group {
+    transition: transform 1s ease-in-out;
+}
+
+.sf-center {
+    transition: fill 1s ease, filter 1s ease;
+}
+
+.sunflower-sway .sf-stem-group {
+    animation: sf-sway 4s infinite ease-in-out alternate;
+    transform-origin: 50px 150px;
+}
+
+.sunflower-sway .sf-head-group {
+    animation: sf-sway-head 4s infinite ease-in-out alternate;
+}
+
+@keyframes sf-sway {
+    0% { transform: rotate(-2deg); }
+    100% { transform: rotate(2deg); }
+}
+
+@keyframes sf-sway-head {
+    0% { transform: rotate(-2deg) translateY(-1px); }
+    100% { transform: rotate(2deg) translateY(1px); }
+}
+
+.sunflower-droop .sf-stem-group {
+    transform: rotate(12deg) scaleY(0.9);
+    transform-origin: 50px 150px;
+}
+.sunflower-droop .sf-head-group {
+    transform: rotate(12deg) translate(5px, 5px);
+}
+
+.sf-glow {
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
+}
+
+.sf-sleep {
+    filter: brightness(0.7) sepia(0.3) hue-rotate(-20deg);
+}
+
+/* --- AURA REACH VFX (Celebration) --- */
+.aura-fx-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.aura-ring {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.4) 0%, rgba(255, 215, 0, 0) 70%);
+    animation: aura-expand 1.5s ease-out forwards;
+    box-shadow: 0 0 50px rgba(255, 215, 0, 0.2);
+}
+
+@keyframes aura-expand {
+    0% { transform: scale(0.1); opacity: 0; }
+    20% { opacity: 0.8; }
+    100% { transform: scale(5); opacity: 0; }
+}
+
+.aura-sparkle {
+    position: absolute;
+    font-size: 24px;
+    pointer-events: none;
+    animation: aura-sparkle-float 2s ease-out forwards;
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+}
+
+@keyframes aura-sparkle-float {
+    0% { transform: translate(0, 0) rotate(0deg) scale(0); opacity: 0; }
+    30% { opacity: 1; transform: translate(var(--dx), var(--dy)) rotate(45deg) scale(1.2); }
+    100% { transform: translate(calc(var(--dx) * 1.5), calc(var(--dy) * 2 - 100px)) rotate(180deg) scale(0); opacity: 0; }
 }

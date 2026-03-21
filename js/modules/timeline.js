@@ -2,6 +2,7 @@ import { state } from '../core/state.js';
 // import { timelineEvents } from '../data.js'; // Smazáno, nyní ze state
 import { supabase } from '../core/supabase.js';
 import { showConfirmDialog } from '../core/theme.js';
+import { triggerConfetti } from '../core/utils.js';
 
 // --- STATE ---
 let currentGalleryImages = [];
@@ -431,13 +432,8 @@ export async function toggleMilestone(eventId, status) {
         const ev = dbEvents.find(e => Number(e.id) === idNum);
         if (ev) ev.is_milestone = status;
 
-        if (status && window.confetti) {
-            confetti({
-                particleCount: 150,
-                spread: 70,
-                origin: { y: 0.6 },
-                colors: ['#faa61a', '#ffffff', '#5865F2', '#eb459e']
-            });
+        if (status) {
+            triggerConfetti();
         }
         
         renderTimeline();

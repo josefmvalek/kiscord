@@ -9,40 +9,71 @@
   <link rel="stylesheet" href="/style.css" />
   <link rel="icon" type="image/png" href="/img/app/czippel2_kytka-modified.png" />
   <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#202225" />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://kiscord.github.io/" />
-  <meta property="og:title" content="Kiscord Premium: Klárka Edition" />
-  <meta property="og:description" content="Exkluzivní přístup do soukromého serveru." />
-  <meta property="og:image" content="img/app/jozka_profilovka.jpg" />
-  <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:title" content="Kiscord Premium: Klárka Edition" />
-  <meta property="twitter:description"
-    content="Exkluzivní přístup do soukromého serveru. Čeká na tebe Timeline, Knihovna a Plánovač rande." />
-  <meta property="twitter:image" content="img/app/czippel2_vanoce.png" />
+  <!-- Performance Optimization: Preconnect to critical domains -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://nnrorazsiyiedwomgidf.supabase.co">
+  <link rel="preconnect" href="https://cdn.tailwindcss.com">
 
-  <meta name="theme-color" content="#5865F2" />
-  <link rel="apple-touch-icon" href="img/app/jozka_profilovka.jpg" />
+  <script>
+    window.tailwindConfig = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Consolas:wght@400;700&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = window.tailwindConfig;
+  </script>
 
-  <!-- LEAFLET MAPS CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-  <!-- LEAFLET MAPS JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <link rel="stylesheet" href="/style.css" />
+  
+  <!-- Critical CSS: Login screen styles for instant rendering -->
+  <style>
+    body { background-color: #36393f; margin: 0; padding: 0; overflow: hidden; font-family: 'Inter', sans-serif; }
+    #login-screen { position: fixed; inset: 0; z-index: 200; background-color: #202225; display: none; align-items: center; justify-content: center; padding: 1rem; }
+    .login-gradient { position: absolute; inset: 0; background: linear-gradient(to bottom right, rgba(88, 101, 242, 0.2), rgba(235, 69, 158, 0.2)); z-index: 0; }
+    .login-card { position: relative; z-index: 10; width: 100%; max-width: 448px; background-color: #36393f; border-radius: 0.75rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid #202225; padding: 2rem; }
+    #app-interface { opacity: 0; transition: opacity 1s; }
+  </style>
+  <meta name="theme-color" content="#202225" />
+  <link rel="apple-touch-icon" href="img/app/jozka_profilovka.jpg" />
+  
+  <!-- Fonts (Critical) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <!-- Secondary Fonts (Non-blocking) -->
+  <link href="https://fonts.googleapis.com/css2?family=Consolas:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+
   <!-- Early Theme Init to prevent flash -->
   <script>
     (function () {
+      // 1. Theme Init
       const saved = localStorage.getItem('klarka_theme') || 'default';
       if (saved !== 'default') document.documentElement.classList.add('theme-' + saved);
+
+      // 2. Pre-emptive Auth Check: Prevents login screen flicker for logged-in users
+      window.addEventListener('DOMContentLoaded', () => {
+        let hasSession = false;
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+            hasSession = true;
+            break;
+          }
+        }
+        if (!hasSession) {
+          const loginScreen = document.getElementById('login-screen');
+          if (loginScreen) loginScreen.style.display = 'flex';
+        }
+      });
     })();
   </script>
 </head>
@@ -50,9 +81,8 @@
 <body class="h-screen w-screen flex flex-col md:flex-row text-sm select-none transition-colors duration-300">
   <!-- ========== LOGIN SCREEN ========== -->
   <div id="login-screen" class="fixed inset-0 z-[200] bg-[#202225] flex items-center justify-center p-4">
-    <div class="absolute inset-0 bg-gradient-to-br from-[#5865F2]/20 to-[#eb459e]/20 z-0"></div>
-    <div
-      class="relative z-10 w-full max-w-md bg-[#36393f] rounded-xl shadow-2xl border border-[#202225] p-8 animate-fade-in">
+    <div class="login-gradient z-0"></div>
+    <div class="login-card animate-fade-in">
       <div class="text-6xl text-center mb-6">🦝</div>
       <h2 class="text-2xl font-bold text-white text-center mb-2">Vítej v Kiscordu</h2>
       <p class="text-gray-400 text-center mb-8 text-sm">Zadej své údaje pro vstup do našeho světa.</p>
@@ -199,9 +229,11 @@
 
   <!-- ========== MODALS ========== -->
 
-  <script src="js/debug.js"></script> <!-- Core / State -->
-  <script src="data.js"></script> <!-- Temporarily for migration -->
+  <!-- Non-critical scripts/styles loaded at the end -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'" />
+  
+  <script src="js/debug.js"></script>
+  <script src="data.js"></script>
   <script type="module" src="/js/main.js"></script>
 </body>
-
 </html>

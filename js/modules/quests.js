@@ -159,35 +159,25 @@ function renderQuestCards() {
     }).join("");
 }
 
-let questsSubscription = null;
+let questsListenersSet = false;
 
 export function setupQuestsRealtime() {
-    if (questsSubscription) return;
+    if (questsListenersSet) return;
 
-    questsSubscription = supabase
-        .channel('quests-realtime')
-        .on(
-            'postgres_changes',
-            { event: '*', schema: 'public', table: 'health_data' },
-            () => {
-                fetchQuestProgress();
-            }
-        )
-        .on(
-            'postgres_changes',
-            { event: '*', schema: 'public', table: 'bucket_list' },
-            () => {
-                fetchQuestProgress();
-            }
-        )
-        .subscribe();
+    const refreshCallback = () => {
+        if (state.currentChannel === 'quests') {
+            fetchQuestProgress();
+        }
+    };
+
+    window.addEventListener('quests-updated', refreshCallback);
+    window.addEventListener('health-updated', refreshCallback);
+
+    questsListenersSet = true;
 }
 
 export function cleanupQuestsRealtime() {
-    if (questsSubscription) {
-        supabase.removeChannel(questsSubscription);
-        questsSubscription = null;
-    }
+    // Listeners are usually persistent, but we could remove them if needed
 }
 
 // --- ADMIN UI ---

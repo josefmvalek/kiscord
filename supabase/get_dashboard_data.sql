@@ -32,10 +32,10 @@ BEGIN
     ORDER BY pd.updated_at DESC
     LIMIT 1;
 
-    -- 3. Get Tetris Scores (using auth.users emails)
+    -- 3. Get Tetris Scores (Simplified ID-based query to avoid auth.users join issues)
     SELECT json_build_object(
-        'jose', COALESCE((SELECT score FROM tetris_scores WHERE user_id = (SELECT id FROM auth.users WHERE email ILIKE '%josef%' OR email ILIKE '%jozk%' LIMIT 1)), 0),
-        'klarka', COALESCE((SELECT score FROM tetris_scores WHERE user_id = (SELECT id FROM auth.users WHERE email ILIKE '%klarka%' OR email ILIKE '%klaris%' OR (email NOT ILIKE '%josef%' AND email NOT ILIKE '%jozk%') LIMIT 1)), 0)
+        'jose', COALESCE((SELECT score FROM tetris_scores WHERE user_id = p_user_id), 0),
+        'klarka', COALESCE((SELECT score FROM tetris_scores WHERE user_id != p_user_id LIMIT 1), 0)
     ) INTO v_tetris;
 
     -- 4. Get Next Upcoming Event (Planned Date)
