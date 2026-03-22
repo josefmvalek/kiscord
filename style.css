@@ -1078,13 +1078,13 @@ input[type="range"]::-moz-range-track {
 .mood-rating-value {
   position: absolute;
   bottom: -10px;
-  background: #eb459e;
+  background: #7b2cbf; /* Vivid Royal Violet */
   color: white;
   font-weight: 900;
   padding: 2px 10px;
   border-radius: 10px;
   font-size: 14px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 15px rgba(123, 44, 191, 0.4);
   border: 2px solid #202225;
 }
 
@@ -1093,12 +1093,14 @@ input[type="range"]::-moz-range-track {
   width: 100%;
   height: 12px;
   -webkit-appearance: none;
-  appearance: none; /* Added for compatibility */
-  background: linear-gradient(to right, #ef4444, #f59e0b, #10b981);
+  appearance: none; 
+  background-color: #202225; /* Base track color */
+  background-image: none; /* Will be set via JS */
+  background-repeat: no-repeat;
   border-radius: var(--border-radius-md);
   outline: none;
   box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
-  border: 1px solid var(--bg-tertiary);
+  border: 1px solid rgba(0,0,0,0.3);
   position: relative;
   z-index: 10;
 }
@@ -1139,10 +1141,10 @@ input[type="range"]::-moz-range-track {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--pink);
+  background: #7b2cbf;
   cursor: pointer;
-  border: 4px solid var(--text-header);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  border: 4px solid #fff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
   transition: transform 0.1s, background 0.2s;
   margin-top: -8px;
 }

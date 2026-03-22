@@ -1,4 +1,4 @@
-const CACHE_NAME = "kiscord-v5-webp";
+const CACHE_NAME = "kiscord-v6-scrolling-fix";
 // KRITICKÁ OPRAVA: Cachujeme POUZE lokální assety.
 // CDN URL vedly k selhání celé instalace (cache.addAll je atomické).
 const ASSETS_TO_CACHE = [

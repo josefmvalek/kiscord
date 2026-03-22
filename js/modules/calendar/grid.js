@@ -5,16 +5,16 @@ import { getSleepColor } from '../health.js';
 export function getMoodColor(val) {
     if (val > 10) val = Math.round(val / 10);
     const colors = {
-        1: "#4B3F72", // Deep Purple (Low)
-        2: "#645688", 
-        3: "#7E6D9E", 
-        4: "#9784B4", 
-        5: "#C28CAE", // Soft Pink
-        6: "#E0A6AA", // Dusty Rose
-        7: "#F8D5C4", // Peach
-        8: "#ACE2D1", // Mint Blue
-        9: "#52B788", // Emerald
-        10: "#1B4332"  // Deep Forest (High)
+        1: "#10002B", // Dark Amethyst (Low)
+        2: "#240046", 
+        3: "#3C096C", // Indigo Ink
+        4: "#5A189A", 
+        5: "#7B2CBF", // Royal Violet
+        6: "#9D4EDD", 
+        7: "#C77DFF", // Mauve Magic
+        8: "#E0AAFF", // Mauve
+        9: "#F2D5FF", // Soft Lavender
+        10: "#FFFFFF" // Pure Light (High)
     };
     return colors[val] || "#4b5563";
 }
@@ -192,7 +192,8 @@ export function generateCalendarGrid(year, month) {
 
                     bgStyle = ""; 
                     inlineStyles = `background-color: ${hexBg}; opacity: 0.9;`;
-                    cellContent += `<div class="w-full h-full flex items-center justify-center text-white drop-shadow-md">
+                    const textColor = val >= 8 ? 'text-[#10002B]' : 'text-white';
+                    cellContent += `<div class="w-full h-full flex items-center justify-center ${textColor} ${val < 8 ? 'drop-shadow-md' : ''}">
                         <span class="text-2xl font-black">${val}</span>
                     </div>`;
                 } else {

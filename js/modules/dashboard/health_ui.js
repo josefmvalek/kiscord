@@ -4,6 +4,20 @@ import { updateSunflowersDOM } from './sunflowers.js';
 
 // --- VISUAL GENERATORS (Mood/Water/Movement/Sleep) ---
 
+const moodColors = [
+    '#10002B', // 1
+    '#240046', // 2
+    '#3C096C', // 3
+    '#5A189A', // 4
+    '#7B2CBF', // 5
+    '#9D4EDD', // 6
+    '#C77DFF', // 7
+    '#E0AAFF', // 8
+    '#F2D5FF', // 9
+    '#FFFFFF'  // 10
+];
+
+
 export function generateMoodSlider(currentMood) {
     let value = typeof currentMood === 'number' ? currentMood : 5;
     const bubbleImage = `img/mood/${value}.jpg`;
@@ -28,7 +42,8 @@ export function generateMoodSlider(currentMood) {
             ontouchend="document.getElementById('mood-slider-wrapper')?.classList.remove('dragging'); import('./js/modules/dashboard.js').then(m => m.hideMoodBubble())"
             onpointerup="document.getElementById('mood-slider-wrapper')?.classList.remove('dragging'); import('./js/modules/dashboard.js').then(m => m.hideMoodBubble())"
             class="mood-range"
-            id="mood-range-input">
+            id="mood-range-input"
+            style="background: linear-gradient(to right, ${moodColors[value - 1]} ${((value - 1) / 9) * 100}%, #202225 ${((value - 1) / 9) * 100}%)">
         <div class="flex justify-between w-full px-1 mt-2">
             ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n =>
         `<span class="text-[10px] font-bold text-gray-500 mood-number ${n === value ? 'active' : ''}" 
@@ -63,16 +78,20 @@ export function updateMoodVisuals(val, activateBubble = false) {
         }
     }
 
+    const input = document.getElementById('mood-range-input');
+    if (input) {
+        // Fixní barva pro každý stupeň (z palety Vivid Nightfall)
+        const currentColor = moodColors[value - 1];
+        input.style.background = `linear-gradient(to right, ${currentColor} ${percent}%, #202225 ${percent}%)`;
+    }
+
     for (let i = 1; i <= 10; i++) {
         const span = document.getElementById(`mood-num-${i}`);
         if (span) {
             if (i === value) {
                 span.classList.add('active');
-                if (i <= 3) span.style.textShadow = "0 0 10px rgba(100, 86, 136, 0.8)";
-                else if (i === 5) span.style.textShadow = "0 0 15px rgba(194, 140, 174, 1)";
-                else if (i <= 7) span.style.textShadow = "0 0 10px rgba(248, 213, 196, 0.8)";
-                else if (i === 10) span.style.textShadow = "0 0 20px rgba(27, 67, 50, 1)";
-                else span.style.textShadow = "0 0 10px rgba(82, 183, 136, 0.8)";
+                const color = moodColors[i - 1];
+                span.style.textShadow = `0 0 ${i === 10 ? '20px' : '10px'} ${color}80`; // Adjust shadow intensity for 10
             } else {
                 span.classList.remove('active');
                 span.style.textShadow = "none";
