@@ -245,6 +245,63 @@ textarea {
   animation: pulse-glow 2s infinite;
 }
 
+/* --- MODERN GLASSMORPHISM --- */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* --- PREMIUM FACT CARD --- */
+.premium-fact-card {
+  background: linear-gradient(135deg, #2f3136 0%, #202225 100%);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.fact-glowing-heart {
+  color: #eb459e;
+  text-shadow: 0 0 10px rgba(235, 69, 158, 0.5);
+  animation: heart-beat 1.5s ease-in-out infinite;
+}
+
+@keyframes heart-beat {
+  0% { transform: scale(1); }
+  15% { transform: scale(1.15); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+@keyframes fact-slide-in {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-fact-in {
+  animation: fact-slide-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* --- PREMIUM FACT SUBCATEGORY CARD --- */
+.premium-fact-sub-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-fact-sub-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+
 /* Jemná animace pro přepínání měsíců */
 @keyframes calendarFade {
   from {
@@ -1523,4 +1580,61 @@ button:active i.fa-tint {
     0% { transform: translate(0, 0) rotate(0deg) scale(0); opacity: 0; }
     30% { opacity: 1; transform: translate(var(--dx), var(--dy)) rotate(45deg) scale(1.2); }
     100% { transform: translate(calc(var(--dx) * 1.5), calc(var(--dy) * 2 - 100px)) rotate(180deg) scale(0); opacity: 0; }
+}
+
+/* --- ULTRA PREMIUM DASHBOARD POLISH --- */
+
+/* Odstranění ošklivých focus ringů na dashboardu */
+#dashboard-container button:focus,
+#dashboard-container input:focus,
+#water-container button:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Vylepšený glow pro vodu */
+.water-glow {
+    filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.6));
+    transition: filter 0.3s ease;
+}
+
+.water-glow:hover {
+    filter: drop-shadow(0 0 15px rgba(0, 229, 255, 0.9));
+}
+
+/* Animace koruny pro Tetris vítěze */
+@keyframes crown-pulse {
+    0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 5px rgba(250, 166, 26, 0.5)); }
+    50% { transform: scale(1.2) rotate(5deg); filter: drop-shadow(0 0 15px rgba(250, 166, 26, 0.8)); }
+}
+
+.animate-crown {
+    animation: crown-pulse 2s infinite ease-in-out;
+}
+
+/* Plynulejší přechody pro karty */
+.bg-\[var\(--bg-secondary\)\] {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+/* Speciální úprava pro Tetris kartu v dashboardu */
+#tetris-tracker-container > div:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(88, 101, 242, 0.1);
+}
+
+/* --- FIX PRO SCROLLOVÁNÍ NA ANDROIDU (PWA) --- */
+#messages-container {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: auto !important; /* Android Chrome si to někdy zamkne, 'auto' nebo 'pan-y' pomůže */
+    overscroll-behavior-y: contain;
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+/* Fix pro sticky headery v knihovně, aby nežraly touch eventy */
+.sticky.top-0 {
+    touch-action: pan-y !important;
 }

@@ -77,7 +77,7 @@ export async function renderWatchlist() {
 
                         <section id="wl-her-section">
                              <div class="flex items-center gap-4 mb-6">
-                                <h2 class="text-xs font-black text-[#f47fff] uppercase tracking-[0.2em]">Klářina přání 👸</h2>
+                                <h2 class="text-xs font-black text-[#f47fff] uppercase tracking-[0.2em]">Klárčina přání 👸</h2>
                                 <div class="h-px bg-[#f47fff]/20 flex-1"></div>
                             </div>
                             <div id="wl-her-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
@@ -98,7 +98,7 @@ async function fetchAndRenderWatchlist() {
         const { data: watchlistData, error: wlError } = await supabase
             .from('library_watchlist')
             .select('*, library_content(*)');
-        
+
         if (wlError) throw wlError;
 
         const loading = document.getElementById('wl-loading');
@@ -135,7 +135,7 @@ async function fetchAndRenderWatchlist() {
 
         const items = Object.values(itemMap);
         const togetherItems = items.filter(i => new Set(i.users).size >= 2);
-        
+
         // Items ONLY added by me or ONLY by her
         const myEntries = items.filter(i => i.users.length === 1 && i.users[0] === state.currentUser?.id);
         const herEntries = items.filter(i => i.users.length === 1 && i.users[0] !== state.currentUser?.id);
@@ -148,7 +148,7 @@ async function fetchAndRenderWatchlist() {
 
         // Render Mine
         if (myGrid) {
-            myGrid.innerHTML = myEntries.length > 0 
+            myGrid.innerHTML = myEntries.length > 0
                 ? myEntries.map(item => renderWlCard(item, false)).join('')
                 : '<div class="col-span-full py-4 text-center text-xs text-gray-600">Tvůj seznam je prázdný</div>';
         }
@@ -196,7 +196,7 @@ function renderMemories() {
             const title = libItem ? libItem.title : "Neznámý titul";
             const icon = libItem ? libItem.icon : "🎬";
             const ratingStars = "⭐".repeat(item.rating || 0);
-            
+
             return `
                 <div class="bg-[#2f3136] border border-[#202225] rounded-xl p-3 flex items-center gap-4 hover:border-[#eb459e]/30 transition group cursor-pointer" 
                      onclick="import('./js/modules/library.js').then(m => m.openHistoryModal(${item.media_id}))">
@@ -251,7 +251,7 @@ function renderWlCard(item, isTogether) {
 
 export async function rollTheDice() {
     triggerHaptic('medium');
-    
+
     // Fetch Together Items specifically
     const { data: watchlistData } = await supabase
         .from('library_watchlist')
@@ -266,7 +266,7 @@ export async function rollTheDice() {
     });
 
     const pool = Object.values(itemMap).filter(i => i.users.size >= 2);
-    
+
     if (pool.length === 0) {
         if (window.showNotification) window.showNotification("Nenašel jsem nic, co chcete vidět oba. Zkuste nejdřív společně srdíčkovat!", "info");
         return;

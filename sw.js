@@ -1,4 +1,4 @@
-const CACHE_NAME = "kiscord-v4-vercel";
+const CACHE_NAME = "kiscord-v5-webp";
 // KRITICKÁ OPRAVA: Cachujeme POUZE lokální assety.
 // CDN URL vedly k selhání celé instalace (cache.addAll je atomické).
 const ASSETS_TO_CACHE = [
@@ -6,10 +6,10 @@ const ASSETS_TO_CACHE = [
   "/index.html",
   "/style.css",
   "/manifest.json",
-  "/img/app/czippel2_kytka-modified.png",
+  "/img/app/czippel2_kytka-modified.webp",
   "/img/app/klarka_profilovka.webp",
   "/img/app/jozka_profilovka.jpg",
-  "/img/app/czippel2_vanoce.png",
+  "/img/app/czippel2_vanoce.webp",
 ];
 
 // 1. INSTALL

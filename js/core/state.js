@@ -29,7 +29,8 @@ export const state = {
     currentUser: { name: 'Klárka', email: '' },
     isValentine: false,
     messageCount: 0, // Pro achievement Social Butterfly
-    factsLibrary: { octopus: [], owl: [], raccoon: [], fun: [] },
+    factsLibrary: { octopus: [], owl: [], raccoon: [], fun: [], penis: [] },
+    factFavorites: [],
     library: { movies: [], series: [], games: [] },
     timelineEvents: [],
     timelineHighlights: {},
@@ -61,7 +62,8 @@ export async function initializeState() {
     state.movieHistory = {};
     state.dateRatings = {};
     state.quizAnswers = { score: 0, completed: false };
-    state.factsLibrary = { octopus: [], owl: [], raccoon: [], fun: [] };
+    state.factsLibrary = { octopus: [], owl: [], raccoon: [], fun: [], penis: [] };
+    state.factFavorites = [];
     state.library = { movies: [], series: [], games: [] };
     state.timelineEvents = [];
     state.dateLocations = [];
@@ -102,7 +104,8 @@ export async function initializeState() {
             { data: funFactProgressData },
             { data: questData },
             { data: achCatData },
-            { data: achDefData }
+            { data: achDefData },
+            { data: favData }
         ] = await Promise.all([
             supabase.from('health_data').select('*'),
             supabase.from('planned_dates').select('*'),
@@ -126,7 +129,8 @@ export async function initializeState() {
             supabase.from('fun_fact_progress').select('*'),
             supabase.from('coop_quests').select('*').eq('is_active', true),
             supabase.from('achievement_categories').select('*').order('sort_order', { ascending: true }),
-            supabase.from('achievement_definitions').select('*')
+            supabase.from('achievement_definitions').select('*'),
+            supabase.from('app_fact_favorites').select('fact_id')
         ]);
 
         if (gQuestionData) state.gameQuestions = gQuestionData;
@@ -237,11 +241,23 @@ export async function initializeState() {
             });
         }
 
+        if (favData) {
+            state.factFavorites = favData.map(f => f.fact_id);
+        }
+
         if (factsData) {
             factsData.forEach(f => {
-                if (state.factsLibrary[f.category]) {
-                    state.factsLibrary[f.category].push({ icon: f.icon, text: f.text });
+                const cat = f.category;
+                if (!state.factsLibrary[cat]) {
+                    state.factsLibrary[cat] = [];
                 }
+                state.factsLibrary[cat].push({ 
+                    id: f.id,
+                    icon: f.icon, 
+                    text: f.text,
+                    subcategory: f.subcategory || '',
+                    subcategory_level2: f.subcategory_level2 || ''
+                });
             });
         }
 
@@ -261,7 +277,14 @@ export async function initializeState() {
 
         if (funFactProgressData) {
             funFactProgressData.forEach(row => {
-                state.funFactProgress[row.category_id] = {
+                const sub1 = row.subcategory_id || '';
+                const sub2 = row.subcategory_level2_id || '';
+                
+                let key = row.category_id;
+                if (sub1) key += `:${sub1}`;
+                if (sub2) key += `:${sub2}`;
+
+                state.funFactProgress[key] = {
                     index: row.current_index,
                     completed: row.completed
                 };

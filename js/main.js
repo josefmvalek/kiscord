@@ -8,7 +8,6 @@ import {
     updateMoodVisuals,
     updateSleep,
     refreshDashboardFact,
-    showNextFact,
     handleWelcomeChat
 } from './modules/dashboard.js';
 import { setupQuestsRealtime, cleanupQuestsRealtime } from './modules/quests.js';
@@ -810,7 +809,6 @@ function exposeGlobals() {
     window.updateMoodVisuals = updateMoodVisuals;
     window.updateSleep = updateSleep;
     window.refreshDashboardFact = refreshDashboardFact;
-    window.showNextFact = showNextFact;
     window.handleWelcomeChat = handleWelcomeChat;
     window.renderDashboard = renderDashboard;
 

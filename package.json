@@ -20,5 +20,8 @@
   "homepage": "https://github.com/josefmvalek/project-k#readme",
   "devDependencies": {
     "serve": "^14.2.5"
+  },
+  "dependencies": {
+    "cwebp": "^3.2.0"
   }
 }
