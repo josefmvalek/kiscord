@@ -190,10 +190,16 @@ export function openFactCategory(catId, sub1 = '', sub2 = '') {
 
     // Filter actual facts for this leaf node (if not already filtered by bookmarks)
     if (catId !== 'bookmarks') {
-        facts = (state.factsLibrary[catId] || []).filter(f =>
-            (f.subcategory || '') === targetSub1 &&
-            (f.subcategory_level2 || '') === targetSub2
-        );
+        if (targetSub1 === '__random__') {
+            const allFacts = state.factsLibrary[catId] || [];
+            facts = deterministicShuffleLocal(allFacts, `random-${catId}`);
+        } else {
+
+            facts = (state.factsLibrary[catId] || []).filter(f =>
+                (f.subcategory || '') === targetSub1 &&
+                (f.subcategory_level2 || '') === targetSub2
+            );
+        }
     }
 
     const progKey = getProgressKey(catId, targetSub1, targetSub2);
@@ -345,6 +351,39 @@ function renderSubcategorySelection(cat, subcats, level, existingSub1 = '') {
         `;
     });
 
+    // Special: Random All for Penis category
+    if (cat.id === 'penis' && level === 1) {
+        const allFacts = state.factsLibrary[cat.id] || [];
+        const totalCount = allFacts.length;
+        const prog = state.funFactProgress['penis:__random__'] || { index: 0 };
+        const seenCount = prog.index;
+        const percent = totalCount > 0 ? Math.round((seenCount / totalCount) * 100) : 0;
+
+        html += `
+            <div onclick="import('./js/modules/funfacts.js').then(m => m.openFactCategory('${cat.id}', '__random__'))"
+                 class="premium-fact-sub-card rounded-[2rem] p-6 cursor-pointer border-2 border-dashed border-[#eb459e]/30 hover:border-[#eb459e] transition-all duration-500 group relative overflow-hidden flex flex-col min-h-[140px] shadow-2xl bg-[#eb459e]/5">
+                
+                <div class="absolute -right-4 -bottom-4 text-8xl opacity-[0.1] group-hover:opacity-[0.2] transition-all duration-700 pointer-events-none select-none grayscale-0 scale-110 rotate-12">🔀</div>
+
+                <div class="flex items-start justify-between gap-4 mb-auto relative z-10">
+                    <span class="text-xs font-black uppercase tracking-[0.2em] text-[#eb459e] group-hover:text-white transition-colors leading-relaxed drop-shadow-sm flex-1">NÁHODNÝ MIX</span>
+                    <div class="shrink-0 bg-black/40 px-3 py-1.5 rounded-xl border border-[#eb459e]/20 group-hover:border-[#eb459e]/50 transition-all">
+                        <span class="text-[10px] font-mono text-[#eb459e] group-hover:text-white font-bold tracking-wider">${seenCount} / ${totalCount}</span>
+                    </div>
+                </div>
+
+                <p class="text-[9px] text-gray-500 font-bold mb-4 relative z-10">Všechna fakta z této sekce promíchaná dohromady!</p>
+
+                <div class="mt-auto relative z-10">
+                    <div class="w-full h-1.5 bg-black/40 rounded-full overflow-hidden border border-white/5">
+                        <div class="h-full bg-gradient-to-r from-[#eb459e] to-[#5865F2] transition-all duration-1000 ease-out rounded-full" style="width: ${percent}%"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+
     html += `
                 </div>
             </div>
@@ -360,6 +399,9 @@ export function nextFact(catId, sub1 = '', sub2 = '') {
             const list = state.factsLibrary[key].filter(f => state.factFavorites.includes(f.id));
             facts = facts.concat(list);
         });
+    } else if (sub1 === '__random__') {
+        const allFacts = state.factsLibrary[catId] || [];
+        facts = deterministicShuffleLocal(allFacts, `random-${catId}`);
     } else {
         facts = (state.factsLibrary[catId] || []).filter(f =>
             (f.subcategory || '') === sub1 &&
@@ -645,3 +687,24 @@ export async function toggleFactFavorite(factId, catId, sub1, sub2) {
         console.error("Toggle Favorite Error:", err);
     }
 }
+
+/**
+ * Local deterministic shuffle to avoid async issues during render
+ */
+function deterministicShuffleLocal(array, seed = "kiscord") {
+    if (!array || !Array.isArray(array)) return [];
+    const hash = (str) => {
+        let h = 0;
+        for (let j = 0; j < str.length; j++) {
+            h = ((h << 5) - h) + str.charCodeAt(j);
+            h |= 0;
+        }
+        return h;
+    };
+    return [...array].sort((a, b) => {
+        const hA = hash(String(a.id || a) + seed);
+        const hB = hash(String(b.id || b) + seed);
+        return hA - hB;
+    });
+}
+

@@ -121,6 +121,29 @@ export function getInflectedName(name, caseNum) {
 export const sleep = ms => new Promise(res => setTimeout(res, ms));
 
 /**
+ * Deterministic shuffle for persistent random sequences
+ */
+export function deterministicShuffle(array, seed = "kiscord") {
+    if (!array || !Array.isArray(array)) return [];
+    
+    const hash = (str) => {
+        let h = 0;
+        for (let j = 0; j < str.length; j++) {
+            h = ((h << 5) - h) + str.charCodeAt(j);
+            h |= 0;
+        }
+        return h;
+    };
+
+    return [...array].sort((a, b) => {
+        const hA = hash(String(a.id || a) + seed);
+        const hB = hash(String(b.id || b) + seed);
+        return hA - hB;
+    });
+}
+
+
+/**
  * Manually force haptics initialization (useful for testing)
  */
 export function forceEnableHaptics() {

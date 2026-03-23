@@ -57,10 +57,11 @@ function ensureModals() {
                     <input type="hidden" id="history-item-id" />
                     <div>
                         <label class="block text-[#b9bbbe] text-[10px] font-bold uppercase mb-2 tracking-widest text-center">Jak se ti to líbilo?</label>
-                        <div id="star-rating" class="flex justify-center text-3xl mb-4">
-                            ${[1, 2, 3, 4, 5].map(i => `<button onclick="import('./js/modules/library.js').then(m => m.setStarRating(${i}))" class="star-btn transition-transform hover:scale-125 focus:outline-none" data-rating="${i}"><i class="fas fa-star text-gray-700"></i></button>`).join('')}
+                        <div id="star-rating" class="flex justify-center gap-1 text-3xl mb-4">
+                            ${[1, 2, 3, 4, 5].map(i => `<button onclick="import('./js/modules/library.js').then(m => m.setStarRating(${i}))" class="star-btn transition-transform hover:scale-125 focus:outline-none" data-rating="${i}"><i class="fas fa-star"></i></button>`).join('')}
                         </div>
                         <input type="hidden" id="history-rating" value="0" />
+
                     </div>
                     <div>
                         <label class="block text-[#b9bbbe] text-[10px] font-bold uppercase mb-2 tracking-widest">Stav sledování</label>
@@ -338,6 +339,7 @@ export function playTrailer(url_or_title) {
 let currentDownloadLinks = { magnet: "", gdrive: "" };
 
 export function openDownloadModal(magnet, gdrive) {
+    ensureModals();
     currentDownloadLinks = { magnet, gdrive };
 
     const modal = document.getElementById("download-modal");
@@ -377,6 +379,7 @@ export function openGoogleDrive() {
 let currentHistoryStatus = "unseen";
 
 export function openHistoryModal(id) {
+    ensureModals();
     // In current state.js, watchHistory stores an object: { status, date, reaction, rating }
     let item = state.watchHistory[id];
     
@@ -390,9 +393,12 @@ export function openHistoryModal(id) {
         };
     }
 
-    document.getElementById("history-item-id").value = id;
-    document.getElementById("history-modal").style.display = "flex";
+    const idInput = document.getElementById("history-item-id");
+    const modal = document.getElementById("history-modal");
+    if (idInput) idInput.value = id;
+    if (modal) modal.style.display = "flex";
     triggerHaptic('light');
+
     
     // Set date: from item or today
     if (item.date) document.getElementById("history-date").value = item.date;
@@ -445,19 +451,20 @@ export function setReactionInput(text, btn) {
 
 export function setStarRating(rating) {
     triggerHaptic('light');
-    document.getElementById("history-rating").value = rating;
+    const ratingInput = document.getElementById("history-rating");
+    if (ratingInput) ratingInput.value = rating;
+    
     const stars = document.querySelectorAll(".star-btn");
     stars.forEach(btn => {
         const r = parseInt(btn.getAttribute("data-rating"));
         if (r <= rating) {
-            btn.classList.add("text-[#faa61a]");
-            btn.classList.remove("text-gray-600");
+            btn.classList.add("active");
         } else {
-            btn.classList.remove("text-[#faa61a]");
-            btn.classList.add("text-gray-600");
+            btn.classList.remove("active");
         }
     });
 }
+
 
 export function setHistoryStatus(status) {
     triggerHaptic('light');
@@ -490,10 +497,17 @@ export function setHistoryStatus(status) {
 }
 
 export async function saveHistory() {
-    const id = parseInt(document.getElementById("history-item-id").value);
-    const date = document.getElementById("history-date").value;
-    const reaction = document.getElementById("history-reaction").value;
-    const rating = parseInt(document.getElementById("history-rating").value) || 0;
+    const idInput = document.getElementById("history-item-id");
+    if (!idInput) return;
+    const id = parseInt(idInput.value);
+    
+    const dateEl = document.getElementById("history-date");
+    const reactionEl = document.getElementById("history-reaction");
+    const ratingEl = document.getElementById("history-rating");
+
+    const date = dateEl ? dateEl.value : "";
+    const reaction = reactionEl ? reactionEl.value : "";
+    const rating = ratingEl ? parseInt(ratingEl.value) || 0 : 0;
 
     // Logic: if not "unseen", we might want a date. 
     const finalDate = (currentHistoryStatus !== "unseen" && !date) ? new Date().toISOString().split('T')[0] : date;
@@ -561,10 +575,14 @@ export async function saveHistory() {
 }
 
 export function deleteHistory() {
+    ensureModals();
     triggerHaptic('light');
-    const id = document.getElementById("history-item-id").value;
+    const idInput = document.getElementById("history-item-id");
+    if (!idInput) return;
+    const id = idInput.value;
     if (!id) return;
-    document.getElementById("delete-history-modal").style.display = "flex";
+    const modal = document.getElementById("delete-history-modal");
+    if (modal) modal.style.display = "flex";
 }
 
 export async function confirmDeleteHistory() {
@@ -616,6 +634,7 @@ export async function confirmDeleteHistory() {
 let currentPlanData = { title: "", type: "" };
 
 export function openPlanningModal(title, type) {
+    ensureModals();
     currentPlanData = { title, type };
 
     const titleEl = document.getElementById("lib-plan-title");
@@ -634,7 +653,8 @@ export function openPlanningModal(title, type) {
     if (noteInput) noteInput.value = "";
 
     triggerHaptic('light');
-    document.getElementById("library-plan-modal").style.display = "flex";
+    const modal = document.getElementById("library-plan-modal");
+    if (modal) modal.style.display = "flex";
 }
 
 export async function confirmLibraryPlan() {
