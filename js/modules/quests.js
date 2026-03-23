@@ -1,7 +1,10 @@
 import { supabase } from '../core/supabase.js';
 import { state } from '../core/state.js';
+import { safeInsert } from '../core/offline.js';
 import { triggerHaptic } from '../core/utils.js';
 import { isJosef } from '../core/auth.js';
+import { renderModal, renderButton, renderInputGroup } from '../core/ui.js';
+import { showNotification } from '../core/theme.js';
 
 // Quests are now fetched from state.coopQuests (Supabase)
 
@@ -69,39 +72,62 @@ async function fetchQuestProgress() {
         
         console.log(`[Quests] Fetching for prefix: ${monthPrefix}`);
 
-        // 1. Voda (suma pro tento měsíc)
-        const { data: waterData, error: wErr } = await supabase.rpc('get_shared_water_stats', { month_prefix: monthPrefix });
-        if (wErr) console.error("[Quests] Water RPC Error:", wErr);
-        
-        // 2. Spánek (dny kdy oba 7+)
-        const { data: sleepData, error: sErr } = await supabase.rpc('get_shared_sleep_sync', { min_hours: 7, month_prefix: monthPrefix });
-        if (sErr) console.error("[Quests] Sleep RPC Error:", sErr);
+        const [
+            { data: waterData },
+            { data: sleepData },
+            { data: bucketData },
+            { data: movementData },
+            { data: moodData },
+            { data: timelineData },
+            { data: datesData },
+            { data: sunlightData },
+            { data: tetrisData },
+            { data: questionsData },
+            { data: definitionData }
+        ] = await Promise.all([
+            supabase.rpc('get_shared_water_stats', { month_prefix: monthPrefix }),
+            supabase.rpc('get_shared_sleep_sync', { min_hours: 7, month_prefix: monthPrefix }),
+            supabase.from('bucket_list').select('id', { count: 'exact' }).eq('is_completed', true),
+            supabase.rpc('get_shared_movement_stats', { month_prefix: monthPrefix }),
+            supabase.rpc('get_shared_mood_high_stats', { month_prefix: monthPrefix }),
+            supabase.rpc('get_new_timeline_stats', { month_prefix: monthPrefix }),
+            supabase.rpc('get_completed_dates_stats', { month_prefix: monthPrefix }),
+            supabase.rpc('get_sunlight_sent_stats', { month_prefix: monthPrefix }),
+            supabase.rpc('get_tetris_total_score'),
+            supabase.rpc('get_daily_questions_stats', { month_prefix: monthPrefix }),
+            supabase.from('coop_quests').select('*').eq('is_active', true)
+        ]);
 
-        // 3. Bucket (splněné)
-        const { data: bucketData, error: bErr } = await supabase.from('bucket_list').select('id').eq('is_completed', true);
-        if (bErr) console.error("[Quests] Bucket Fetch Error:", bErr);
-
-        console.log(`[Quests] Received data:`, { waterData, sleepData, bucketCount: bucketData?.length });
+        if (definitionData) state.coopQuests = definitionData;
 
         questData = {
             sum_water: parseInt(waterData) || 0,
             both_sleep: parseInt(sleepData) || 0,
-            count_bucket: bucketData ? bucketData.length : 0
+            count_bucket: bucketData?.count || 0,
+            count_shared_movement: parseInt(movementData) || 0,
+            count_shared_mood_high: parseInt(moodData) || 0,
+            count_new_timeline: parseInt(timelineData) || 0,
+            count_completed_dates: parseInt(datesData) || 0,
+            count_sunlight_sent: parseInt(sunlightData) || 0,
+            sum_tetris_score: parseInt(tetrisData) || 0,
+            count_daily_questions: parseInt(questionsData) || 0
         };
 
         renderQuestCards();
         
-        const debugEl = document.getElementById('quests-debug-info');
-        if (debugEl) debugEl.innerHTML = `<pre class="text-[10px] text-gray-500 p-4">${JSON.stringify({ user: state.currentUser, questData }, null, 2)}</pre>`;
-
         if (loader) loader.classList.add('hidden');
         if (grid) grid.classList.remove('hidden');
 
     } catch (e) {
         console.error("[Quests] Unexpected Fetch Error:", e);
-        renderQuestCards();
         if (loader) loader.classList.add('hidden');
-        if (grid) grid.classList.remove('hidden');
+        if (grid) {
+            grid.classList.remove('hidden');
+            grid.innerHTML = window.renderErrorState({
+                message: "Nepodařilo se mi spočítat vaše questy. Zkus to prosím znovu.",
+                onRetry: "import('./js/modules/quests.js').then(m => m.renderQuests())"
+            });
+        }
     }
 }
 
@@ -183,72 +209,69 @@ export function cleanupQuestsRealtime() {
 // --- ADMIN UI ---
 
 export function showAddQuestModal() {
-    const modal = document.createElement('div');
-    modal.id = 'quest-admin-modal';
-    modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in';
-    
-    modal.innerHTML = `
-        <div class="bg-[#36393f] w-full max-w-lg rounded-2xl shadow-2xl border border-gray-700 overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
-                <h3 class="text-xl font-black text-white tracking-widest uppercase">Nová společná mise ⚔️</h3>
-                <button onclick="this.closest('#quest-admin-modal').remove()" class="text-gray-400 hover:text-white transition">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
+    const modalContent = `
+        <div class="space-y-4">
+            ${renderInputGroup({ label: 'Název mise', id: 'q-title', placeholder: 'Např. Lovci zážitků' })}
+            
+            <div class="space-y-1">
+                <label class="block text-[10px] text-gray-500 font-bold uppercase tracking-widest text-left">Popis (co musí Klárka udělat?)</label>
+                <textarea id="q-desc" placeholder="Popiš úkol..." class="w-full bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2]/50 transition-all min-h-[80px]"></textarea>
             </div>
             
-            <div class="p-6 overflow-y-auto space-y-4 custom-scrollbar">
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Název mise</label>
-                    <input type="text" id="q-title" placeholder="Např. Lovci zážitků" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#faa61a] outline-none transition">
-                </div>
-                
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Popis (co musí Klárka udělat?)</label>
-                    <textarea id="q-desc" placeholder="Popiš úkol..." class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#faa61a] outline-none transition min-h-[80px]"></textarea>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Ikona (emoji)</label>
-                        <input type="text" id="q-icon" placeholder="🚀" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#faa61a] outline-none transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Cíl (číslo)</label>
-                        <input type="number" id="q-goal" placeholder="5" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#faa61a] outline-none transition">
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Jednotka</label>
-                        <input type="text" id="q-unit" placeholder="položek" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#faa61a] outline-none transition">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Typ sledování</label>
-                        <select id="q-type" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#faa61a] outline-none transition">
+            <div class="grid grid-cols-2 gap-4">
+                ${renderInputGroup({ label: 'Ikona (emoji)', id: 'q-icon', placeholder: '🚀' })}
+                ${renderInputGroup({ label: 'Cíl (číslo)', id: 'q-goal', type: 'number', placeholder: '5' })}
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                ${renderInputGroup({ label: 'Jednotka', id: 'q-unit', placeholder: 'položek' })}
+                <div class="space-y-1">
+                    <label class="block text-[10px] text-gray-500 font-bold uppercase tracking-widest text-left">Typ sledování</label>
+                    <select id="q-type" class="w-full bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2]/50 transition-all">
+                        <optgroup label="Zdraví">
                             <option value="sum_water" selected>Voda (společně)</option>
                             <option value="both_sleep">Spánek (oba splněno)</option>
-                            <option value="count_bucket">Bucket List (splněné)</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Barva (Tailwind Gradient)</label>
-                    <input type="text" id="q-color" value="from-orange-400 to-red-500" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#faa61a] outline-none transition font-mono text-xs">
-                    <p class="text-[9px] text-gray-500 mt-1">from-{color}-{weight} to-{color}-{weight}</p>
+                            <option value="count_shared_movement">Společný pohyb (dny kdy oba)</option>
+                            <option value="count_shared_mood_high">Vysoká nálada (oba 8+)</option>
+                        </optgroup>
+                        <optgroup label="Zážitky">
+                            <option value="count_bucket">Bucket List (celkem)</option>
+                            <option value="count_new_timeline">Timeline (nové záznamy)</option>
+                            <option value="count_completed_dates">Plánovač (absolvovaná rande)</option>
+                        </optgroup>
+                        <optgroup label="Interakce">
+                            <option value="count_sunlight_sent">Sluneční aura (odesláno)</option>
+                            <option value="sum_tetris_score">Tetris (společné skóre)</option>
+                            <option value="count_daily_questions">Denní otázky (odpovědi)</option>
+                        </optgroup>
+                    </select>
                 </div>
             </div>
             
-            <div class="p-6 bg-[#2f3136] border-t border-gray-700">
-                <button onclick="import('./js/modules/quests.js').then(m => m.saveNewQuest())" class="w-full bg-[#3ba55c] hover:bg-[#2d7d46] text-white py-4 rounded-xl font-black text-lg transition shadow-xl transform active:scale-95">
-                    VYTVOŘIT MISI ⚔️
-                </button>
-            </div>
+            ${renderInputGroup({ label: 'Barva (Tailwind Gradient)', id: 'q-color', value: 'from-orange-400 to-red-500', attr: 'style="font-family: monospace;"' })}
         </div>
     `;
+
+    const modalActions = renderButton({
+        text: 'VYTVOŘIT MISI ⚔️',
+        onclick: "import('./js/modules/quests.js').then(m => m.saveNewQuest())",
+        className: 'w-full py-4 text-lg'
+    });
+
+    const modalHtml = renderModal({
+        id: 'quest-admin-modal',
+        title: 'Nová společná mise',
+        subtitle: 'Vyhlášení nové výzvy',
+        content: modalContent,
+        actions: modalActions,
+        onClose: "document.getElementById('quest-admin-modal').remove()"
+    });
     
-    document.body.appendChild(modal);
+    const container = document.createElement('div');
+    container.innerHTML = modalHtml;
+    const modalElement = container.firstElementChild;
+    document.body.appendChild(modalElement);
+    modalElement.classList.replace('hidden', 'flex');
 }
 
 export async function saveNewQuest() {
@@ -261,14 +284,15 @@ export async function saveNewQuest() {
     const color = document.getElementById('q-color').value.trim();
     
     if (!title || !goal) {
-        alert("Název a cíl jsou povinné!");
+        showNotification("Název a cíl jsou povinné!", "error");
         return;
     }
     
     triggerHaptic('success');
     
     try {
-        const { error } = await supabase.from('coop_quests').insert([{
+        const { error } = await safeInsert('coop_quests', [{
+            id: crypto.randomUUID(),
             title, description, icon, goal, unit, type, color
         }]);
         
@@ -289,6 +313,6 @@ export async function saveNewQuest() {
         
     } catch (err) {
         console.error("Save Quest Error:", err);
-        alert("Chyba při ukládání: " + err.message);
+        showNotification("Chyba při ukládání: " + err.message, "error");
     }
 }

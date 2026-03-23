@@ -307,7 +307,7 @@ export function startCreate() {
 }
 
 export async function startEdit(quizId) {
-    const { data: quiz } = await supabase.from('couple_quizzes').select('*').eq('id', quizId).single();
+    const { data: quiz } = await supabase.from('couple_quizzes').select('*').eq('id', quizId).maybeSingle();
     if (!quiz) return;
 
     currentQuizId = quizId;
@@ -425,7 +425,7 @@ export async function saveQuiz(publish = true) {
 }
 
 export async function startPlay(quizId) {
-    const { data: quiz } = await supabase.from('couple_quizzes').select('*').eq('id', quizId).single();
+    const { data: quiz } = await supabase.from('couple_quizzes').select('*').eq('id', quizId).maybeSingle();
     if (!quiz) return;
 
     currentQuiz = quiz;

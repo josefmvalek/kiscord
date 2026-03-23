@@ -146,7 +146,7 @@ export async function pinDrawing(id) {
         if (error) throw error;
 
         // Update local state for immediate feedback
-        const { data: fullDrawing } = await supabase.from('drawings').select('*').eq('id', id).single();
+        const { data: fullDrawing } = await supabase.from('drawings').select('*').eq('id', id).maybeSingle();
         state.pinnedDrawing = fullDrawing;
 
         showNotification("Výkres připnut na Dashboard! 📌", "success");

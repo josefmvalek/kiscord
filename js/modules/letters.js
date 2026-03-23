@@ -215,7 +215,7 @@ function renderSent(letters) {
 }
 
 export async function openLetter(id) {
-    const { data: letter } = await supabase.from('love_letters').select('*').eq('id', id).single();
+    const { data: letter } = await supabase.from('love_letters').select('*').eq('id', id).maybeSingle();
     if (!letter) return;
 
     // Mark as read

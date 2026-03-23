@@ -1,5 +1,5 @@
 import { state } from '../../core/state.js';
-import { getTodayKey } from '../../core/utils.js';
+import { getTodayKey } from '/js/core/utils.js';
 
 /**
  * Updates both sunflowers (me and partner) in the DOM.
@@ -33,8 +33,11 @@ export function syncSunflowerSVG(containerId, data, isPartnerId = false) {
         if (data.sleep >= 7) wrapper.classList.add('sf-glow');
         else wrapper.classList.remove('sf-glow');
         
-        const isSleeping = data.bedtime && !data.wake_time && state.currentSleepSession?.isSleeping;
-        if (isSleeping && !isPartnerId) wrapper.classList.add('sf-sleep');
+        const isSleeping = isPartnerId 
+            ? (data.bedtime && new Date() - new Date(data.bedtime) < 12 * 60 * 60 * 1000 && (new Date().getHours() >= 21 || new Date().getHours() <= 10))
+            : (data.bedtime && !data.wake_time && state.currentSleepSession?.isSleeping);
+        
+        if (isSleeping) wrapper.classList.add('sf-sleep');
         else wrapper.classList.remove('sf-sleep');
     }
 
@@ -88,8 +91,11 @@ export function generateSunflowerSVG(data, isPartner = false) {
     let containerClass = "relative flex flex-col items-center justify-end h-36 w-24 sunflower-container";
     if (data.sleep >= 7) containerClass += " sf-glow";
     
-    const isSleeping = data.bedtime && !data.wake_time && state.currentSleepSession?.isSleeping;
-    if (isSleeping && !isPartner) containerClass += " sf-sleep";
+    const isSleeping = isPartner 
+        ? (data.bedtime && new Date() - new Date(data.bedtime) < 12 * 60 * 60 * 1000 && (new Date().getHours() >= 21 || new Date().getHours() <= 10))
+        : (data.bedtime && !data.wake_time && state.currentSleepSession?.isSleeping);
+    
+    if (isSleeping) containerClass += " sf-sleep";
 
     const mood = data.mood || 1;
     const numPetals = 27;

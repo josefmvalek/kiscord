@@ -30,13 +30,7 @@ export function setupRealtimeSync() {
             if (!row || row.date_key !== todayKey) return;
             if (payload.payload.from === state.currentUser?.id) return;
 
-            // Update local state
-            state.healthData[row.date_key] = {
-                water: row.water,
-                sleep: row.sleep || 0,
-                mood: row.mood,
-                movement: row.movement || []
-            };
+            // Update partner state (DO NOT update state.healthData - that is for the local user)
             state.partnerHealthData = row;
 
             // Notify UI modules
@@ -62,16 +56,18 @@ export function setupRealtimeSync() {
             const row = payload.new || payload.old;
             if (!row || row.date_key !== todayKey) return;
 
-            // Update local state
-            state.healthData[row.date_key] = {
-                water: row.water,
-                sleep: row.sleep || 0,
-                mood: row.mood,
-                movement: row.movement || []
-            };
-
-            // If it's the partner's data, specificially update partner state for legacy compatibility
-            if (row.user_id !== state.currentUser?.id) {
+            // Route update based on user_id
+            if (row.user_id === state.currentUser?.id) {
+                // Update local state (My data)
+                    state.healthData[row.date_key] = {
+                        water: row.water,
+                        sleep: row.sleep || 0,
+                        mood: row.mood,
+                        movement: row.movement || [],
+                        bedtime: row.bedtime
+                    };
+            } else {
+                // Update partner state (Their data)
                 state.partnerHealthData = row;
             }
 
@@ -125,6 +121,30 @@ export function setupRealtimeSync() {
              window.dispatchEvent(new CustomEvent('game-vote-updated', { 
                  detail: { source: 'database', payload: payload.new } 
              }));
+        })
+        // F. Handle Database Changes (Timeline)
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'timeline_events'
+        }, () => {
+             // We don't update state directly to keep it simple, just notify UI to re-fetch
+             window.dispatchEvent(new CustomEvent('timeline-updated'));
+        })
+        // G. Handle Database Changes (Library)
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'library_content'
+        }, () => {
+             window.dispatchEvent(new CustomEvent('library-updated'));
+        })
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'library_ratings'
+        }, () => {
+             window.dispatchEvent(new CustomEvent('library-updated'));
         })
         .subscribe((status) => {
             console.log(`[Sync] Realtime status: ${status}`);

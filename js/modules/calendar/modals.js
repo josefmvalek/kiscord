@@ -15,8 +15,8 @@ export function ensureModals() {
     if (!document.getElementById("day-modal")) {
         const modalHtml = renderModal({
             id: 'day-modal',
-            title: 'Datum',
-            subtitle: 'Den v týdnu',
+            title: '<span id="modal-date-title">Datum</span>',
+            subtitle: '<span id="modal-date-subtitle">Den v týdnu</span>',
             content: `
                 <div id="modal-section-date" class="space-y-3"></div>
                 <div id="modal-section-school" class="hidden space-y-4 pt-4 border-t border-white/5">
@@ -79,6 +79,7 @@ export function ensureModals() {
 }
 
 export function showDayDetail(dateKey) {
+    ensureModals();
     currentModalDateKey = dateKey;
     const dateObj = new Date(dateKey);
 
@@ -122,11 +123,17 @@ export function showDayDetail(dateKey) {
                 <div class="text-[10px] text-gray-400 mt-1 italic">Kliknutím přejdeš na záznam v Timeline</div>
             </div>`;
         } else if (plannedDate) {
-            let icon = "📍";
-            if (plannedDate.cat === "movie") icon = "🎬";
-            else if (plannedDate.cat === "game") icon = "🎮";
-            else if (plannedDate.cat === "discord") icon = "🎧";
-            else if (plannedDate.cat === "food") icon = "🍔";
+            const iconsMap = {
+                food: '🍔',
+                walk: '🌲',
+                view: '⛰️',
+                fun: '⚡',
+                movie: '🎬',
+                discord: '🎧',
+                game: '🎮',
+                date: '🥂'
+            };
+            const icon = iconsMap[plannedDate.cat] || "📍";
 
             plansHtml += `
             <div class="bg-[#eb459e]/10 border border-[#eb459e]/30 rounded-lg p-3 relative group">

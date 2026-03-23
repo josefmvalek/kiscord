@@ -1640,3 +1640,88 @@ button:active i.fa-tint {
 .sticky.top-0 {
     touch-action: pan-y !important;
 }
+
+/* Icon Picker */
+.icon-picker-tab {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #8e9297;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.icon-picker-tab:hover {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.icon-picker-tab.active {
+  color: #5865F2;
+  background-color: rgba(88, 101, 242, 0.1);
+}
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 8px;
+  background-color: #202225;
+  border-radius: 12px;
+  border: 1px solid #2f3136;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.icon-item {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background-color: #2f3136;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  cursor: pointer;
+  color: white;
+}
+.icon-item:hover {
+  border-color: #5865F2;
+  background-color: rgba(88, 101, 242, 0.1);
+}
+.icon-item.active {
+  border-color: #5865F2;
+  background-color: rgba(88, 101, 242, 0.2);
+  box-shadow: 0 0 15px rgba(88, 101, 242, 0.3);
+}
+.icon-item i {
+  font-size: 16px;
+}
+.icon-item span {
+  font-size: 20px;
+}
+
+/* --- STABILITY & RESILIENCE ANIMATIONS --- */
+@keyframes slide-down {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-slide-down {
+  animation: slide-down 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+@keyframes slide-up-out {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-100%); opacity: 0; }
+}
+.animate-banner-up {
+  animation: slide-up-out 0.4s ease-in forwards;
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0) scale(1.05); opacity: 0.8; }
+  50% { transform: translateY(-10px) scale(0.95); opacity: 1; }
+}
+.animate-bounce-slow {
+  animation: bounce-slow 3s ease-in-out infinite;
+}

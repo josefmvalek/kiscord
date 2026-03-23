@@ -1,5 +1,6 @@
 import { supabase } from '../core/supabase.js';
-import { state } from '../core/state.js';
+import { state, saveStateToCache } from '../core/state.js';
+import { safeInsert } from '../core/offline.js';
 import { triggerHaptic } from '../core/utils.js';
 
 let subscription = null;
@@ -153,7 +154,7 @@ export async function submitAnswer() {
     }
 
     try {
-        const { error } = await supabase.from('daily_answers').insert([{
+        const { error } = await safeInsert('daily_answers', [{
             question_id: state.dailyQuestion.id,
             user_id: state.currentUser.id,
             answer_text: answer
@@ -167,12 +168,12 @@ export async function submitAnswer() {
         const { data } = await supabase.from('daily_answers').select('*').eq('question_id', state.dailyQuestion.id);
         if (data) state.dailyAnswers = data;
         
-        // Check if both answered for the grand reveal
         const partnerAnswer = state.dailyAnswers.find(a => a.user_id !== state.currentUser.id);
         if (partnerAnswer && typeof window.triggerConfetti === 'function') {
             window.triggerConfetti();
         }
 
+        saveStateToCache();
         renderDailyQuestions();
 
     } catch (err) {
@@ -274,8 +275,9 @@ export async function saveNewQuestion() {
     triggerHaptic('success');
     
     try {
-        const { error } = await supabase.from('daily_questions').insert([{
-            text, category
+        const { error } = await safeInsert('daily_questions', [{
+            text, category,
+            user_id: state.currentUser.id
         }]);
         
         if (error) throw error;

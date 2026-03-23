@@ -1,7 +1,9 @@
+import { supabase } from '../core/supabase.js';
 import { state } from '../core/state.js';
-// import { dateLocations, timelineEvents } from '../data.js'; // Smazáno, nyní ze state
+import { safeUpsert, safeInsert } from '../core/offline.js';
 import { triggerHaptic, getTodayKey } from '../core/utils.js';
 import { showNotification } from '../core/theme.js';
+import { uploadFile } from '../core/storage.js';
 import { loadLeaflet } from '../core/loader.js'; // Fallback or imported
 
 // --- STATE ---
@@ -308,7 +310,6 @@ export async function fetchMarkersMemories() {
         return;
     }
     try {
-        const { supabase } = await import('../core/supabase.js');
         const { data } = await supabase.from('timeline_events').select('id, title, event_date, location_id').not('location_id', 'is', null);
         markersMemories = data || [];
     } catch (e) {
@@ -514,16 +515,15 @@ export async function rateDate(id, rating) {
 
     // Save to Supabase
     try {
-        const { supabase } = await import('../core/supabase.js');
         if (rating === 0) {
             await supabase.from('date_ratings').delete().eq('location_id', id);
         } else {
-            await supabase.from('date_ratings').upsert({
+            await safeUpsert('date_ratings', {
                 location_id: id,
-                rating: rating,
                 user_id: state.currentUser?.id,
+                rating: rating,
                 updated_at: new Date().toISOString()
-            }, { onConflict: 'location_id' });
+            });
         }
     } catch (err) {
         console.error('Failed to save date rating:', err);
@@ -560,20 +560,22 @@ export async function saveDateToCalendar() {
 
     // Save to Supabase
     try {
-        const { supabase } = await import('../core/supabase.js');
-        await supabase.from('planned_dates').upsert({
+        await safeUpsert('planned_dates', {
             date_key: dateKey,
+            user_id: state.currentUser?.id,
+            location_id: selectedDateLocation.id,
             name: planEntry.name,
             cat: planEntry.cat,
             time: planEntry.time,
             note: planEntry.note,
             updated_at: new Date().toISOString()
-        }, { onConflict: 'date_key' });
+        });
+        if (window.showNotification) window.showNotification("Rande uloženo do kalendáře! 📅", "success");
     } catch (err) {
         console.error('Failed to save planned date:', err);
+        if (window.showNotification) window.showNotification("Nepodařilo se uložit rande do kalendáře.", "error");
     }
-
-    if (window.showNotification) window.showNotification("Rande uloženo do kalendáře! 📅", "success");
+    
     closeLocationDetail();
 }
 
@@ -691,6 +693,17 @@ export function showAddLocationModal() {
                         <input type="number" id="nl-lng" value="${coords.lng.toFixed(6)}" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-sm">
                     </div>
                 </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Fotka místa</label>
+                    <div class="flex items-center gap-3 bg-[#202225] p-3 rounded-lg border border-transparent">
+                        <button onclick="document.getElementById('nl-photo').click()" class="w-10 h-10 bg-[#2f3136] rounded-lg flex items-center justify-center text-gray-400 hover:text-white transition">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                        <input type="file" id="nl-photo" class="hidden" accept="image/*" onchange="const f = this.files[0]; if(f) document.getElementById('nl-photo-name').innerText = f.name;">
+                        <span id="nl-photo-name" class="text-[10px] text-gray-500 truncate italic">Volitelné: Přidej fotku...</span>
+                    </div>
+                </div>
                 
                  <p class="text-[10px] text-gray-500 italic text-center">💡 Tip: Klikni kamkoliv na mapu před otevřením tohoto okna pro automatické souřadnice.</p>
             </div>
@@ -722,27 +735,40 @@ export async function saveNewLocation() {
     triggerHaptic('success');
     
     try {
-        const { supabase } = await import('../core/supabase.js');
-        const { data: newLocs, error } = await supabase.from('date_locations').insert([{
-            name,
+        const { data: newLocs, error } = await safeInsert('date_locations', [{
+            name: name,
             description: desc,
-            icon,
-            lat,
-            lng,
-            category: cat
-        }]).select();
+            icon: icon,
+            lat: lat,
+            lng: lng,
+            category: cat,
+            user_id: state.currentUser?.id
+        }]);
         
         if (error) throw error;
+
+        const newId = newLocs[0].id;
+
+        // Photo Upload
+        const photoInput = document.getElementById('nl-photo');
+        let photoUrl = null;
+        if (photoInput && photoInput.files && photoInput.files[0] && navigator.onLine) {
+            photoUrl = await uploadFile('location-photos', photoInput.files[0], `locations/${newId}`);
+            if (photoUrl) {
+                await supabase.from('date_locations').update({ image_url: photoUrl }).eq('id', newId);
+            }
+        }
         
         // Update local state
         state.dateLocations.push({
-            id: newLocs[0].id,
+            id: newId,
             name,
             desc,
             icon,
             lat,
             lng,
-            cat
+            cat,
+            image_url: photoUrl
         });
         
         // Notification

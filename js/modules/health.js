@@ -1,8 +1,22 @@
-import { state } from '../core/state.js';
+import { state, saveStateToCache } from '../core/state.js';
 import { triggerHaptic, getTodayKey } from '../core/utils.js';
-// import { factsLibrary } from '../data.js'; // Smazáno, nyní ze state
 import { supabase } from '../core/supabase.js';
 import { broadcastHealthUpdate } from '../core/sync.js';
+import { safeUpsert } from '../core/offline.js';
+
+// --- INITIALIZATION ---
+// Load sleep session if exists
+const savedSession = localStorage.getItem('klarka_sleep_session');
+if (savedSession) {
+    try {
+        state.currentSleepSession = JSON.parse(savedSession);
+        if (state.currentSleepSession && state.currentSleepSession.isSleeping) {
+            startSleepTimer();
+        }
+    } catch (e) {
+        console.error("Error parsing sleep session:", e);
+    }
+}
 
 // --- DATA LOGIC ---
 
@@ -17,11 +31,9 @@ export function getTodayData() {
             water: 0,
             mood: 5,
             sleep: 0,
-            movement: [] // Array of IDs: 'gym', 'walk', 'sex'
+            movement: []
         };
-        // Save empty state immediately fallback - User Specific
-        const storageKey = `vault_health_${state.currentUser.name.toLowerCase()}`;
-        localStorage.setItem(storageKey, JSON.stringify(state.healthData));
+        saveStateToCache();
     }
     return state.healthData[todayKey];
 }
@@ -63,14 +75,15 @@ export async function updateHealth(type, value) {
     // --- SAVE ---
     state.healthData[todayKey] = data;
     
-    // Cloud Save (Supabase)
-    const { error } = await supabase.from('health_data').upsert({
+    // Cloud Save (Supabase) - Offline Ready
+    const { error } = await safeUpsert('health_data', {
         date_key: todayKey,
         user_id: state.currentUser.id,
         water: data.water,
-        sleep: data.sleep,
+        sleep: data.sleep || 0,
         mood: data.mood,
-        movement: data.movement
+        movement: data.movement,
+        bedtime: data.bedtime // Added: persist bedtime
     });
     if (error) console.error("Error saving health to Supabase:", error);
     else {
@@ -108,6 +121,19 @@ export function updateBedtime(time) {
     localStorage.setItem(storageKey, JSON.stringify(state.healthData));
     triggerHaptic('light');
 
+    // Cloud Save (Supabase)
+    safeUpsert('health_data', {
+        date_key: todayKey,
+        user_id: state.currentUser.id,
+        water: data.water || 0,
+        sleep: data.sleep || 0,
+        mood: data.mood || 5,
+        movement: data.movement || [],
+        bedtime: time
+    }).then(({ error }) => {
+        if (error) console.error("Error saving bedtime to Supabase:", error);
+    });
+
     // Broadcast bedtime update
     broadcastHealthUpdate({
         date_key: todayKey,
@@ -139,153 +165,10 @@ export function saveDailyNote() {
     triggerHaptic('success');
 }
 
-// --- UI GENERATORS ---
-
-export function generateWaterIcons() {
-    const data = getTodayData();
-    const waterCount = data.water || 0;
-    let html = '';
-
-    for (let i = 1; i <= 8; i++) {
-        const isFilled = i <= waterCount;
-        const opacity = isFilled ? 'opacity-100' : 'opacity-30 hover:opacity-100';
-        const scale = isFilled ? 'scale-110' : 'scale-100';
-        const shadow = isFilled ? 'drop-shadow-[0_0_8px_rgba(0,229,255,0.6)]' : '';
-
-        html += `
-            <button onclick="import('./js/modules/health.js').then(m => m.updateHealth('water', ${i}))" 
-                    class="transition-all duration-300 transform ${opacity} ${scale} ${shadow} hover:scale-125 active:scale-90"
-                    title="${i * 250}ml">
-                <i class="fas fa-tint text-2xl text-[#00e5ff]"></i>
-            </button>
-        `;
-    }
-    return html;
-}
-
-export function generateMoodSlider() {
-    const data = getTodayData();
-    const currentMood = data.mood || 5; // 1-10
-    
-    // Normalize if it's old 10-100 data
-    const moodVal = currentMood > 10 ? Math.round(currentMood / 10) : currentMood;
-
-    let icon = '😐';
-    if (moodVal === 1) icon = '🤬';
-    else if (moodVal === 2) icon = '💩';
-    else if (moodVal === 3) icon = '🙈';
-    else if (moodVal === 4) icon = '😐';
-    else if (moodVal === 5) icon = '🫤';
-    else if (moodVal === 6) icon = '🚬';
-    else if (moodVal === 7) icon = '🧙‍♀️';
-    else if (moodVal === 8) icon = '🕺';
-    else if (moodVal === 9) icon = '🥰';
-    else if (moodVal >= 10) icon = '💎';
-
-    return `
-        <div class="flex flex-col gap-2">
-            <div class="flex justify-between items-center text-[#eb459e] font-bold">
-                <span id="mood-val-display" class="text-2xl">${moodVal}/10</span>
-                <span id="mood-icon-display" class="text-4xl animate-bounce-slow">${icon}</span>
-            </div>
-            <input type="range" min="1" max="10" step="1" value="${moodVal}" 
-                   class="w-full h-3 bg-[#2f3136] rounded-lg appearance-none cursor-pointer accent-[#eb459e] hover:accent-[#ff69b4] transition-all"
-                   oninput="import('./js/modules/health.js').then(m => m.updateMoodVisuals(this.value));"
-                   onchange="import('./js/modules/health.js').then(m => m.updateHealth('mood', parseInt(this.value)))">
-            <div class="flex justify-between text-[10px] text-gray-500 font-mono mt-1">
-                <span>🤬 Zmar</span>
-                <span>😐 Meh</span>
-                <span>💎 Top</span>
-            </div>
-        </div>
-    `;
-}
-
-export function updateMoodVisuals(val) {
-    const moodVal = parseInt(val);
-    const display = document.getElementById('mood-val-display');
-    const iconDisplay = document.getElementById('mood-icon-display');
-
-    if (display) display.innerText = `${moodVal}/10`;
-
-    let icon = '😐';
-    if (moodVal === 1) icon = '🤬';
-    else if (moodVal === 2) icon = '💩';
-    else if (moodVal === 3) icon = '🙈';
-    else if (moodVal === 4) icon = '😐';
-    else if (moodVal === 5) icon = '🫤';
-    else if (moodVal === 6) icon = '🚬';
-    else if (moodVal === 7) icon = '🧙‍♀️';
-    else if (moodVal === 8) icon = '🕺';
-    else if (moodVal === 9) icon = '🥰';
-    else if (moodVal >= 10) icon = '💎';
-
-    if (iconDisplay) iconDisplay.innerText = icon;
-}
-
-export function generateMovementChips() {
-    const data = getTodayData();
-    const activeMoves = data.movement || [];
-
-    const activities = [
-        { id: 'gym', icon: '💪', label: 'Fitko' },
-        { id: 'walk', icon: '🌲', label: 'Procházka' },
-        { id: 'sport', icon: '🏸', label: 'Sport' },
-        { id: 'dance', icon: '💃', label: 'Tanec' },
-        { id: 'run', icon: '🏃‍♀️', label: 'Běh' },
-        { id: 'yoga', icon: '🧘‍♀️', label: 'Jóga' },
-        { id: 'sex', icon: '🔥', label: 'Love' },
-        { id: 'clean', icon: '🧹', label: 'Úklid' }
-    ];
-
-    return activities.map(act => {
-        const isActive = activeMoves.includes(act.id);
-        const bgClass = isActive ? 'bg-[#3ba55c] text-white border-[#3ba55c] shadow-[0_0_10px_rgba(59,165,92,0.4)]' : 'bg-[#2f3136] text-gray-400 border-gray-700 hover:border-gray-500';
-
-        return `
-            <button onclick="import('./js/modules/health.js').then(m => m.updateHealth('movement', '${act.id}'))" 
-                    class="${bgClass} border px-3 py-2 rounded-xl flex items-center gap-2 transition-all transform hover:scale-105 active:scale-95">
-                <span class="text-lg">${act.icon}</span>
-                <span class="text-xs font-bold uppercase tracking-wide">${act.label}</span>
-            </button>
-        `;
-    }).join('');
-}
 
 // --- SLEEP TRACKER LOGIC ---
 
-export function getSleepColor(hours) {
-    if (hours >= 9) return { hex: '#e040fb', class: 'text-[#e040fb]' }; // Růženka (Purple/Pink)
-    if (hours >= 7) return { hex: '#00e5ff', class: 'text-[#00e5ff]' }; // Ideál (Cyan)
-    if (hours >= 5) return { hex: '#faa61a', class: 'text-[#faa61a]' }; // Nic moc (Orange)
-    return { hex: '#ed4245', class: 'text-[#ed4245]' }; // Zombie (Red)
-}
-
-export function generateSleepSlider() {
-    const data = getTodayData();
-    const currentSleep = data.sleep || 0; // Hours
-    const color = getSleepColor(currentSleep);
-
-    return `
-        <div class="relative pt-6 pb-2 px-2">
-             <div class="absolute -top-1 left-0 right-0 flex justify-between text-xs font-bold text-gray-500 uppercase tracking-widest">
-                <span>Zombie</span>
-                <span>Ideál</span>
-                <span>Růženka</span>
-            </div>
-            
-            <input type="range" min="0" max="12" step="0.5" value="${currentSleep}" 
-                   class="w-full h-4 bg-[#2f3136] rounded-full appearance-none cursor-pointer shadow-inner"
-                   style="background: linear-gradient(to right, #ed4245 0%, #faa61a 40%, #00e5ff 60%, #e040fb 100%); opacity: 0.8;"
-                   oninput="document.getElementById('sleep-val-display').innerText = this.value + 'h'; document.getElementById('sleep-val-display').style.color = import('./js/modules/health.js').then(m => m.getSleepColor(this.value).hex);"
-                   onchange="import('./js/modules/health.js').then(m => m.updateHealth('sleep', parseFloat(this.value)))">
-            
-            <div class="mt-3 text-center">
-                <span id="sleep-val-display" class="text-3xl font-black drop-shadow-md transition-colors" style="color: ${color.hex}">${currentSleep}h</span>
-            </div>
-        </div>
-    `;
-}
+// REMOVED getSleepColor and generateSleepSlider - they are in health_ui.js
 
 // --- SLEEP TIMER (PROGRESSIVE) ---
 
@@ -311,7 +194,8 @@ export function updateSleepVisuals() {
 
     const now = new Date();
     const startTime = new Date(state.currentSleepSession.startTime);
-    const diffMs = now - startTime;
+    let diffMs = now - startTime;
+    if (isNaN(startTime.getTime()) || diffMs < 0) diffMs = 0;
 
     // Convert to decimal hours for slider width
     let diffHours = diffMs / (1000 * 60 * 60);
@@ -325,30 +209,33 @@ export function updateSleepVisuals() {
     const progressBar = document.getElementById('sleep-progress-bar');
     const marker = document.getElementById('sleep-marker');
     const textEl = document.getElementById('sleep-value-text');
-    const labelEl = document.getElementById('sleep-session-label'); // New label in controls
+    const labelEl = document.getElementById('sleep-session-label'); 
 
-    const color = getSleepColor(diffHours);
+    // Import color from health_ui.js (unified source of truth)
+    import('/js/modules/dashboard/health_ui.js').then(m => {
+        const color = m.getSleepColor(diffHours);
 
-    // Update Slider (Visual only, no save)
-    if (progressBar) {
-        progressBar.style.width = `${(diffHours / 12) * 100}%`;
-        progressBar.style.backgroundColor = color.hex;
-        progressBar.style.boxShadow = `0 0 15px ${color.hex}80`;
-    }
-    if (marker) {
-        marker.style.left = `${(diffHours / 12) * 100}%`;
-    }
+        // Update Slider (Visual only, no save)
+        if (progressBar) {
+            progressBar.style.width = `${(diffHours / 10) * 100}%`;
+            progressBar.style.backgroundColor = color.hex;
+            progressBar.style.boxShadow = `0 0 15px ${color.hex}80`;
+        }
+        if (marker) {
+            marker.style.left = `${(diffHours / 10) * 100}%`;
+        }
 
-    // Update Main Text
-    if (textEl) {
-        textEl.innerHTML = `${hours} <span class="text-sm opacity-80 font-bold text-gray-400">hod</span> <span class="text-2xl opacity-60 font-bold text-gray-500">${mins} <span class="text-sm">min</span></span>`;
-        textEl.className = `font-black text-4xl ${color.class} transition-colors duration-200 leading-none drop-shadow-md filter brightness-110 flex items-baseline gap-2`;
-    }
+        // Update Main Text
+        if (textEl) {
+            textEl.innerHTML = `${hours} <span class="text-sm opacity-80 font-bold text-gray-400">hod</span> <span class="text-2xl opacity-60 font-bold text-gray-500">${mins} <span class="text-sm">min</span></span>`;
+            textEl.className = `font-black text-4xl ${color.class} transition-colors duration-200 leading-none drop-shadow-md filter brightness-110 flex items-baseline gap-2`;
+        }
 
-    // Update Small Label
-    if (labelEl) {
-        labelEl.textContent = `Spíš ${hours}h ${mins}m`;
-    }
+        // Update Small Label
+        if (labelEl) {
+            labelEl.textContent = `Spíš ${hours}h ${mins}m`;
+        }
+    });
 }
 
 // --- SLEEP CONTROLS ---
@@ -366,43 +253,80 @@ export function startSleep() {
     startSleepTimer();
 
     // Refresh UI
+    window.dispatchEvent(new CustomEvent('health-updated'));
+    
     const controls = document.getElementById('sleep-controls-container');
-    if (controls) controls.innerHTML = generateSleepControls();
+    if (controls) {
+        import('/js/modules/dashboard/health_ui.js').then(m => {
+            controls.innerHTML = m.generateSleepControls(getTodayData());
+        });
+    }
 }
 
 export async function wakeUp() {
-    if (!state.currentSleepSession) return;
+    if (!state.currentSleepSession || !state.currentSleepSession.isSleeping) return;
 
     const now = new Date();
-    const startTime = new Date(state.currentSleepSession.startTime);
-    const diffMs = now - startTime;
-    const diffHours = diffMs / (1000 * 60 * 60);
+    let startTimeStr = state.currentSleepSession.startTime;
+    
+    // VALIDATION: If startTime is missing or invalid, do not record duration
+    if (!startTimeStr) {
+        console.warn("[Sleep] No startTime found, skipping duration record.");
+    } else {
+        const startTime = new Date(startTimeStr);
+        if (isNaN(startTime.getTime())) {
+            console.warn("[Sleep] Invalid startTime, skipping duration record.");
+        } else {
+            const diffMs = now - startTime;
+            // Prevent Jan 1, 1970 bug (diff would be ~492000 hours)
+            const diffHours = diffMs / (1000 * 60 * 60);
+            
+            if (diffHours > 24 || diffHours < 0) {
+                 console.warn(`[Sleep] Impossible duration detected (${diffHours.toFixed(1)}h), skipping record.`);
+            } else {
+                // Save actual sleep to Today's data
+                const data = getTodayData();
+                data.sleep = parseFloat(diffHours.toFixed(1)); // Round to 1 decimal
+                const todayKey = getTodayKey();
+                state.healthData[todayKey] = data;
 
-    // Save actual sleep to Today's data
-    const data = getTodayData();
-    data.sleep = parseFloat(diffHours.toFixed(1)); // Round to 1 decimal
-    const todayKey = getTodayKey();
-    state.healthData[todayKey] = data;
+                // Cloud Save (Supabase)
+                try {
+                    const { error } = await supabase.from('health_data').upsert({
+                        date_key: todayKey,
+                        user_id: state.currentUser.id,
+                        water: data.water,
+                        sleep: data.sleep,
+                        mood: data.mood,
+                        movement: data.movement
+                    });
+                    if (error) console.error("Error saving sleep to Supabase:", error);
 
-    // Cloud Save
-    const { error } = await supabase.from('health_data').upsert({
-        date_key: todayKey,
-        water: data.water,
-        sleep: data.sleep,
-        mood: data.mood,
-        movement: data.movement
-    });
-    if (error) console.error("Error saving sleep to Supabase:", error);
+                    // Broadcast update so partner sees it immediately
+                    broadcastHealthUpdate({
+                        date_key: todayKey,
+                        user_id: state.currentUser.id,
+                        water: data.water,
+                        sleep: data.sleep,
+                        mood: data.mood,
+                        movement: data.movement
+                    });
 
-    // Achievement Hook
-    import('./achievements.js').then(m => {
-        m.checkHealthAchievements(todayKey, data, state.healthData);
-    });
+                    // Achievement Hook
+                    import('./achievements.js').then(m => {
+                        m.checkHealthAchievements(todayKey, data, state.healthData);
+                    });
 
-    const storageKey = `vault_health_${state.currentUser.name.toLowerCase()}`;
-    localStorage.setItem(storageKey, JSON.stringify(state.healthData));
+                    const storageKey = `vault_health_${state.currentUser.name.toLowerCase()}`;
+                    localStorage.setItem(storageKey, JSON.stringify(state.healthData));
+                } catch (e) {
+                    console.error("[Sleep] Error during wakeUp sequence:", e);
+                }
+            }
+        }
+    }
 
-    // Reset Session
+    // Reset Session ALWAYS
     state.currentSleepSession = { isSleeping: false, startTime: null };
     localStorage.removeItem('klarka_sleep_session');
 
@@ -412,83 +336,69 @@ export async function wakeUp() {
     // Refresh UI
     if (state.currentChannel === 'dashboard') {
         window.dispatchEvent(new CustomEvent('health-updated')); // Re-render dashboard
+        const controls = document.getElementById('sleep-controls-container');
+        if (controls) {
+            import('/js/modules/dashboard/health_ui.js').then(m => {
+                const data = getTodayData();
+                controls.innerHTML = m.generateSleepControls(data);
+                
+                // ALSO reset the visual slider state manually on wake up 
+                m.updateSleep(data.sleep || 0);
+            });
+        }
     }
 }
 
-export function generateSleepControls() {
-    const isSleeping = state.currentSleepSession?.isSleeping;
-
-    if (isSleeping) {
-        return `
-            <div class="bg-[#2f3136] rounded-xl p-4 border border-[#5865F2]/50 shadow-lg animate-pulse-slow">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-bold text-[#5865F2] uppercase tracking-widest animate-pulse">🌙 Režim spánku aktivní</span>
-                    <span id="sleep-session-label" class="text-xs text-gray-400 font-mono">Počítám ovečky...</span>
-                </div>
-                
-                <div class="flex items-center justify-between">
-                     <div id="sleep-value-text" class="text-2xl font-black text-white">
-                        -- <span class="text-sm text-gray-500">min</span>
-                     </div>
-                     <button onclick="import('./js/modules/health.js').then(m => m.wakeUp())" 
-                             class="bg-[#eb459e] hover:bg-[#ff69b4] text-white px-6 py-2 rounded-full font-bold shadow-[0_0_15px_rgba(235,69,158,0.4)] transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
-                         <i class="fas fa-sun text-yellow-300"></i> Vstávat
-                     </button>
-                </div>
-            </div>
-        `;
-    } else {
-        return `
-            <div class="flex gap-2">
-                <button onclick="import('./js/modules/health.js').then(m => m.startSleep())" 
-                        class="flex-1 bg-[#202225] border border-[#5865F2] hover:bg-[#5865F2] text-gray-300 hover:text-white px-4 py-3 rounded-xl font-bold transition group">
-                    <div class="text-2xl mb-1 group-hover:scale-110 transition-transform">😴</div>
-                    <div class="text-[10px] uppercase tracking-wide">Jdu spát</div>
-                </button>
-                
-                 <button onclick="import('./js/modules/health.js').then(m => m.triggerNapOverlay())" 
-                        class="flex-1 bg-[#202225] border border-[#faa61a] hover:bg-[#faa61a] text-gray-300 hover:text-white px-4 py-3 rounded-xl font-bold transition group">
-                    <div class="text-2xl mb-1 group-hover:scale-110 transition-transform">🔋</div>
-                    <div class="text-[10px] uppercase tracking-wide">Šlofík</div>
-                </button>
-            </div>
-        `;
-    }
-}
+// REMOVED duplicate generateSleepControls here. 
+// It is now fully managed in dashboard/health_ui.js for consistency.
 
 // --- OVERLAYS ---
 
 export function triggerGoodnightOverlay() {
     const overlay = document.createElement('div');
-    overlay.className = 'fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center animate-fade-in pointer-events-none';
+    overlay.className = 'fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center animate-fade-in cursor-pointer group';
+    overlay.onclick = () => { 
+        overlay.classList.add('opacity-0');
+        setTimeout(() => overlay.remove(), 300);
+    };
     overlay.innerHTML = `
         <div class="text-6xl mb-4 animate-bounce">🌙</div>
         <h2 class="text-3xl font-bold text-[#5865F2] mb-2">Dobrou noc, ${state.currentUser.name}!</h2>
         <p class="text-gray-400">Sladké sny... 😴</p>
+        <div class="mt-8 text-[10px] text-white/20 uppercase tracking-[0.3em] group-hover:text-white/40 transition-colors">Klikni kamkoliv pro zavření</div>
     `;
     document.body.appendChild(overlay);
 
     setTimeout(() => {
-        overlay.classList.add('opacity-0', 'transition-opacity', 'duration-1000');
-        setTimeout(() => overlay.remove(), 1000);
-    }, 2500);
+        if (overlay.parentNode) {
+            overlay.classList.add('opacity-0', 'transition-opacity', 'duration-1000');
+            setTimeout(() => overlay.remove(), 1000);
+        }
+    }, 4500);
 }
 
 export function triggerGoodMorningOverlay() {
     if (typeof window.triggerConfetti === 'function') window.triggerConfetti();
     const overlay = document.createElement('div');
-    overlay.className = 'fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center animate-fade-in pointer-events-none';
+    overlay.className = 'fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center animate-fade-in cursor-pointer group';
+    overlay.onclick = () => {
+        overlay.classList.add('opacity-0');
+        setTimeout(() => overlay.remove(), 300);
+    };
     overlay.innerHTML = `
         <div class="text-6xl mb-4 animate-spin-slow">☀️</div>
         <h2 class="text-3xl font-bold text-[#faa61a] mb-2">Dobré ráno!</h2>
         <p class="text-gray-400">Vyspaná do růžova? 👸</p>
+        <div class="mt-8 text-[10px] text-white/20 uppercase tracking-[0.3em] group-hover:text-white/40 transition-colors">Klikni kamkoliv pro zavření</div>
     `;
     document.body.appendChild(overlay);
 
     setTimeout(() => {
-        overlay.classList.add('opacity-0', 'transition-opacity', 'duration-1000');
-        setTimeout(() => overlay.remove(), 1000);
-    }, 3000);
+        if (overlay.parentNode) {
+            overlay.classList.add('opacity-0', 'transition-opacity', 'duration-1000');
+            setTimeout(() => overlay.remove(), 1000);
+        }
+    }, 5000);
 }
 
 export function triggerNapOverlay() {

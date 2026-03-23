@@ -1,6 +1,6 @@
-
 import { state } from '../core/state.js';
 // import { conversationTopics } from '../data.js'; // Smazáno, nyní ze state
+import { safeUpsert } from '../core/offline.js';
 import { triggerHaptic } from '../core/utils.js';
 import { supabase } from '../core/supabase.js';
 
@@ -271,11 +271,13 @@ export async function confirmResetTopic() {
         // Clear bookmarks across all topics
         for (const tid in state.topicProgress) {
             state.topicProgress[tid].bookmarks = [];
-            await supabase.from('topic_progress').upsert({
-                user_id: state.currentUser.id,
-                topic_id: tid,
-                bookmarks: []
-            });
+            try {
+                await safeUpsert('topic_progress', {
+                    user_id: state.currentUser.id,
+                    topic_id: tid,
+                    bookmarks: []
+                });
+            } catch (e) { console.error("Error saving topic progress:", e); }
         }
         if (window.showNotification) window.showNotification("Všechny oblíbené otázky smazány! 🗑️", "success");
     } else {
@@ -335,9 +337,11 @@ export function nextQuestion(firstLoad = false) {
     }
 
     const card = document.getElementById("question-card");
-    const textEl = document.getElementById("topic-question-text");
+    const textEl = document.getElementById("topic-question-display");
     const controls = document.getElementById("topic-controls");
     const bookmarkBtn = document.getElementById("topic-bookmark-btn");
+
+    if (!textEl) return; // Guard: modal may not be mounted
 
     if (availableIndices.length === 0) {
         if (state.currentTopicId === "bookmarks") {
@@ -368,7 +372,7 @@ export function nextQuestion(firstLoad = false) {
     updateBackButtonState();
     updateBookmarkIconState();
 
-    if (!firstLoad) {
+    if (!firstLoad && card) {
         card.classList.remove("animate-fade-in");
         card.classList.add("scale-95", "opacity-50");
         setTimeout(() => {
@@ -377,6 +381,7 @@ export function nextQuestion(firstLoad = false) {
         }, 150);
     }
 }
+
 
 // LOCAL HELPERS
 function updateBackButtonState() {
@@ -444,7 +449,7 @@ export function prevQuestion() {
     state.currentQuestionIndex = prevIndex;
 
     // UI Update
-    const textEl = document.getElementById("topic-question-text");
+    const textEl = document.getElementById("topic-question-display");
     if (textEl) textEl.innerText = activeTopicObject.questions[prevIndex];
 
     updateBackButtonState();

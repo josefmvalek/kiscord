@@ -1,8 +1,10 @@
-import { state } from '../core/state.js';
+import { state, saveStateToCache } from '../core/state.js';
 // import { timelineEvents } from '../data.js'; // Smazáno, nyní ze state
 import { supabase } from '../core/supabase.js';
-import { showConfirmDialog } from '../core/theme.js';
+import { showConfirmDialog, showNotification } from '../core/theme.js';
 import { triggerConfetti } from '../core/utils.js';
+import { safeInsert } from '../core/offline.js';
+import { uploadFile } from '../core/storage.js';
 
 // --- STATE ---
 let currentGalleryImages = [];
@@ -11,6 +13,30 @@ let currentGalleryTitle = "";
 let isGalleryGesturesInit = false;
 let dbEvents = []; // Loaded from Supabase
 let searchQuery = "";
+
+// --- ICON PICKER DATA ---
+const CATEGORIZED_ICONS = {
+    favorites: {
+        label: 'Srdce',
+        icon: '❤️',
+        items: ['fa-heart', 'fa-star', '🥰', '❤️', '✨', '🔥', '🌹', '👑', '🕊️', '💍']
+    },
+    activities: {
+        label: 'Zábava',
+        icon: '🎬',
+        items: ['fa-camera', 'fa-film', 'fa-music', 'fa-gamepad', '🎞️', '🎡', '💃', '🕺', '🎨', '🧶', '🎮', '🎧']
+    },
+    food: {
+        label: 'Jídlo',
+        icon: '🍕',
+        items: ['fa-utensils', 'fa-cocktail', '🍕', '🍦', '🥂', '🍣', '🍷', '🍰', '🍫', '🍔', '🥟', '🧉']
+    },
+    travel: {
+        label: 'Místa',
+        icon: '✈️',
+        items: ['fa-plane', 'fa-car', 'fa-map-marked-alt', '🏰', '🌅', '🏖️', '🏔️', '⛺', '🚕', '🚂', '🚲', '🏙️']
+    }
+};
 
 // --- EXPORTED FUNCTIONS ---
 
@@ -412,10 +438,10 @@ export async function saveHighlight(eventId, text) {
         const ev = state.timelineEvents.find(e => Number(e.id) === idNum);
         if (ev) ev.user_highlights = text;
         
-        window.showNotification('Poznámka uložena ✨', 'success');
+        showNotification('Poznámka uložena ✨', 'success');
     } catch (e) {
         console.error("Error saving highlight:", e);
-        window.showNotification('Chyba při ukládání poznámky', 'error');
+        showNotification('Chyba při ukládání poznámky', 'error');
     }
 }
 
@@ -454,34 +480,15 @@ export async function uploadPhoto(eventId, input) {
     btn.disabled = true;
 
     try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${eventId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `${fileName}`;
-
-        // 1. Upload to Storage
-        const { error: uploadError } = await supabase.storage
-            .from('timeline-photos')
-            .upload(filePath, file, {
-                contentType: file.type,
-                upsert: true
-            });
-
-        if (uploadError) throw uploadError;
+        // Use central storage helper
+        const publicUrl = await uploadFile('timeline-photos', file, `events/${eventId}`);
+        if (!publicUrl) throw new Error("Nepodařilo se získat URL po nahrání.");
         
-        // Ensure eventId is a number for state lookup (Supabase usually handles strings in .eq() but local state doesn't)
+        // Ensure eventId is a number for state lookup
         const idNum = Number(eventId);
-
-        // 2. Get Public URL
-        const { data: { publicUrl } } = supabase.storage
-            .from('timeline-photos')
-            .getPublicUrl(filePath);
-
-        // 3. Update Database images array
         const event = state.timelineEvents.find(e => Number(e.id) === idNum);
-        if (!event) {
-            console.error("Event not found in state:", idNum);
-            throw new Error("Událost nebyla nalezena v paměti aplikace.");
-        }
+        
+        if (!event) throw new Error("Událost nebyla nalezena v paměti.");
         
         const newImages = [...(event.images || []), publicUrl];
 
@@ -492,18 +499,14 @@ export async function uploadPhoto(eventId, input) {
 
         if (updateError) throw updateError;
 
-        // 4. Update Global State and Local cache
         event.images = newImages; 
-        dbEvents = state.timelineEvents; // Ensure local cache is in sync
+        dbEvents = state.timelineEvents; 
         
-        renderTimeline(); // Re-render to show new thumbnail
-        window.showNotification('Fotka úspěšně nahrána! 📸', 'success');
-
+        renderTimeline(); 
+        showNotification('Fotka úspěšně nahrána! 📸', 'success');
     } catch (err) {
-        console.error("Upload Error Details:", err);
-        if (err.message) console.error("Error Message:", err.message);
-        if (err.status) console.error("Error Status:", err.status);
-        window.showNotification('Nahrávání se nepovedlo. Zkontroluj bucket timeline-photos v Supabase.', 'error');
+        console.error("Upload Error:", err);
+        showNotification('Nahrávání se nepovedlo. Zkontroluj bucket timeline-photos.', 'error');
     } finally {
         btn.innerHTML = originalContent;
         btn.disabled = false;
@@ -607,7 +610,7 @@ export async function confirmDeletePhoto() {
 
     } catch (err) {
         console.error("Delete Photo Error:", err);
-        window.showNotification('Smazání fotky se nepovedlo.', 'error');
+        showNotification('Smazání fotky se nepovedlo.', 'error');
     }
 }
 
@@ -700,12 +703,9 @@ export function openEventModal(eventId = null) {
                             <div class="flex gap-2 mb-2">
                                 <input type="text" id="edit-icon" value="${event ? event.icon : 'fa-heart'}" placeholder="fa-heart nebo 🍕" class="flex-1 bg-[#202225] text-white p-3 rounded-lg border border-[#2f3136] focus:border-[#5865F2] outline-none">
                             </div>
-                            <div class="flex flex-wrap gap-2 p-2 bg-[#202225] rounded-lg border border-[#2f3136]">
-                                ${['fa-heart', 'fa-star', 'fa-camera', 'fa-film', 'fa-utensils', 'fa-plane', 'fa-gift', 'fa-music', '🍕', '🍦', '🥂', '🎞️', '🎡', '🏰', '🌅', '✨'].map(ico => `
-                                    <button onclick="document.getElementById('edit-icon').value='${ico}'" class="w-8 h-8 flex items-center justify-center rounded hover:bg-[#5865F2]/20 transition-colors ${ico.startsWith('fa') ? 'text-xs' : 'text-lg'}">
-                                        ${ico.startsWith('fa') ? `<i class="fas ${ico}"></i>` : ico}
-                                    </button>
-                                `).join('')}
+                            
+                            <div id="icon-picker-container" class="space-y-2">
+                                ${renderIconPickerHTML(event ? event.icon : 'fa-heart')}
                             </div>
                         </div>
                     </div>
@@ -713,6 +713,23 @@ export function openEventModal(eventId = null) {
                     <div>
                         <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Popis</label>
                         <textarea id="edit-desc" rows="5" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-[#2f3136] focus:border-[#5865F2] outline-none resize-none">${event ? event.description : ''}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Přidat fotku</label>
+                        <div class="flex items-center gap-4 bg-[#202225] p-3 rounded-lg border border-[#2f3136]">
+                            <button onclick="document.getElementById('edit-photo').click()" class="w-12 h-12 bg-[#2f3136] hover:bg-[#4f545c] text-gray-400 hover:text-white rounded-lg flex items-center justify-center transition shadow-inner">
+                                <i class="fas fa-camera text-xl"></i>
+                            </button>
+                            <input type="file" id="edit-photo" class="hidden" accept="image/*" onchange="const f = this.files[0]; if(f) { document.getElementById('photo-preview-name').innerText = f.name; document.getElementById('photo-preview-container').classList.remove('hidden'); }">
+                            <div id="photo-preview-container" class="hidden flex-1 flex items-center justify-between">
+                                <span id="photo-preview-name" class="text-xs text-gray-400 truncate max-w-[150px]"></span>
+                                <button onclick="document.getElementById('edit-photo').value=''; document.getElementById('photo-preview-container').classList.add('hidden')" class="text-red-500 hover:text-red-400 text-xs">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <span id="photo-hint" class="text-[10px] text-gray-500 italic">Klikni pro výběr souboru</span>
+                        </div>
                     </div>
                     
                     ${eventId ? `
@@ -735,6 +752,52 @@ export function openEventModal(eventId = null) {
     modal.style.display = "flex";
 }
 
+export function renderIconPickerHTML(selectedIcon, activeCategory = 'favorites') {
+    const categories = Object.keys(CATEGORIZED_ICONS);
+    
+    const tabsHtml = categories.map(cat => `
+        <button onclick="import('./js/modules/timeline.js').then(m => m.switchIconCategory('${cat}', '${selectedIcon}'))" 
+                class="icon-picker-tab ${cat === activeCategory ? 'active' : ''}" 
+                title="${CATEGORIZED_ICONS[cat].label}">
+            <span>${CATEGORIZED_ICONS[cat].icon}</span>
+        </button>
+    `).join('');
+
+    const iconsHtml = CATEGORIZED_ICONS[activeCategory].items.map(ico => {
+        const isActive = ico === selectedIcon;
+        const isFA = ico.startsWith('fa-');
+        return `
+            <button onclick="document.getElementById('edit-icon').value='${ico}'; import('./js/modules/timeline.js').then(m => m.refreshIconPicker('${ico}', '${activeCategory}'))" 
+                    class="icon-item ${isActive ? 'active' : ''}">
+                ${isFA ? `<i class="fas ${ico}"></i>` : `<span>${ico}</span>`}
+            </button>
+        `;
+    }).join('');
+
+    return `
+        <div class="flex gap-1 mb-2 border-b border-[#2f3136] pb-2">
+            ${tabsHtml}
+        </div>
+        <div class="icon-grid custom-scrollbar">
+            ${iconsHtml}
+        </div>
+    `;
+}
+
+export function switchIconCategory(category, selectedIcon) {
+    const container = document.getElementById('icon-picker-container');
+    if (container) {
+        container.innerHTML = renderIconPickerHTML(selectedIcon, category);
+    }
+}
+
+export function refreshIconPicker(selectedIcon, category) {
+    const container = document.getElementById('icon-picker-container');
+    if (container) {
+        container.innerHTML = renderIconPickerHTML(selectedIcon, category);
+    }
+}
+
 export function closeEventModal() {
     const modal = document.getElementById("event-crud-modal");
     if (modal) modal.style.display = "none";
@@ -746,7 +809,7 @@ export async function saveEvent(eventId) {
     const iconValue = document.getElementById("edit-icon").value || "fa-heart";
     const descValue = document.getElementById("edit-desc").value;
 
-    if (!titleValue) return window.showNotification("Název je povinný!", "error");
+    if (!titleValue) return showNotification("Název je povinný!", "error");
 
     const idNum = eventId ? Number(eventId) : null;
     const eventData = {
@@ -758,41 +821,87 @@ export async function saveEvent(eventId) {
     };
 
     try {
-        if (eventId) {
-            // Update
-            const { error } = await supabase.from('timeline_events').update(eventData).eq('id', eventId);
-            if (error) throw error;
-            window.showNotification("Vzpomínka upravena ✨", "success");
+        let finalEventId = eventId;
+        let isNew = !eventId;
+        let result;
+
+        if (isNew) {
+            // 1. Create event first (to get ID for storage path if online)
+            result = await safeInsert('timeline_events', eventData);
+            if (result.error) throw result.error;
+            
+            if (result.offline) {
+                // Manually add to state for immediate offline feedback
+                const tempId = Date.now();
+                state.timelineEvents.unshift({
+                    id: tempId,
+                    ...eventData,
+                    images: [],
+                    offline_pending: true
+                });
+                finalEventId = tempId;
+            } else if (result.data && result.data[0]) {
+                finalEventId = result.data[0].id;
+            }
         } else {
-            // Create
-            const { error } = await supabase.from('timeline_events').insert([eventData]);
-            if (error) throw error;
-            window.showNotification("Nová vzpomínka přidána! ❤️", "success");
+            // Update
+            result = await supabase.from('timeline_events').update(eventData).eq('id', eventId).select();
+            if (result.error) throw result.error;
         }
 
+        // 2. Handle Photo Upload (only if online and file selected)
+        const photoInput = document.getElementById('edit-photo');
+        if (photoInput && photoInput.files && photoInput.files[0]) {
+            if (!navigator.onLine) {
+                showNotification("Fotku nelze nahrát offline. Vzpomínka uložena bez fotky.", "warning");
+            } else if (finalEventId) {
+                try {
+                    const file = photoInput.files[0];
+                    const publicUrl = await uploadFile('timeline-photos', file, `events/${finalEventId}`);
+                    
+                    if (publicUrl) {
+                        // Append to existing images
+                        const currentEvent = dbEvents.find(e => String(e.id) === String(finalEventId)) || { images: [] };
+                        const updatedImages = [...(currentEvent.images || []), publicUrl];
+                        
+                        await supabase.from('timeline_events')
+                            .update({ images: updatedImages })
+                            .eq('id', finalEventId);
+                    }
+                } catch (uploadErr) {
+                    console.error("Delayed upload error:", uploadErr);
+                    showNotification("Vzpomínka uložena, ale fotka se nenahrála.", "warning");
+                }
+            }
+        }
+
+        showNotification(isNew ? "Nová vzpomínka přidána! ❤️" : "Vzpomínka upravena ✨", "success");
         closeEventModal();
         
-        // Refresh local state directly from Supabase to ensure sync
-        const { data: timelineData, error: loadErr } = await supabase
-            .from('timeline_events')
-            .select('*')
-            .order('event_date', { ascending: false, nullsFirst: false });
+        // Refresh local state (ONLY if online)
+        if (navigator.onLine) {
+            const { data: timelineData, error: loadErr } = await supabase
+                .from('timeline_events')
+                .select('*')
+                .order('event_date', { ascending: false, nullsFirst: false });
             
-        if (!loadErr && timelineData) {
-            state.timelineEvents = timelineData.map(e => ({
-                id: e.id,
-                title: e.title,
-                event_date: e.event_date,
-                icon: e.icon,
-                color: e.color,
-                description: e.description,
-                images: e.images || [],
-                location_id: e.location_id,
-                user_highlights: e.user_highlights || "",
-                is_milestone: e.is_milestone || false
-            }));
+            if (!loadErr && timelineData) {
+                state.timelineEvents = timelineData.map(e => ({
+                    id: e.id,
+                    title: e.title,
+                    event_date: e.event_date,
+                    icon: e.icon,
+                    color: e.color,
+                    description: e.description,
+                    images: e.images || [],
+                    location_id: e.location_id,
+                    user_highlights: e.user_highlights || "",
+                    is_milestone: e.is_milestone || false
+                }));
+            }
         }
         
+        saveStateToCache();
         renderTimeline();
 
     } catch (err) {
@@ -811,6 +920,7 @@ export async function deleteEvent(eventId) {
         if (error) throw error;
 
         state.timelineEvents = state.timelineEvents.filter(e => Number(e.id) !== idNum);
+        saveStateToCache();
         window.showNotification("Vzpomínka smazána.", "info");
         closeEventModal();
         renderTimeline();
@@ -820,3 +930,32 @@ export async function deleteEvent(eventId) {
     }
 }
 
+window.addEventListener('timeline-updated', async () => {
+    try {
+        const { data: timelineData, error: loadErr } = await supabase
+            .from('timeline_events')
+            .select('*')
+            .order('event_date', { ascending: false, nullsFirst: false });
+            
+        if (!loadErr && timelineData) {
+            state.timelineEvents = timelineData.map(e => ({
+                id: e.id,
+                title: e.title,
+                event_date: e.event_date,
+                icon: e.icon,
+                color: e.color,
+                description: e.description,
+                images: e.images || [],
+                location_id: e.location_id,
+                user_highlights: e.user_highlights || "",
+                is_milestone: e.is_milestone || false
+            }));
+            
+            if (state.currentChannel === 'timeline') {
+                renderTimeline();
+            }
+        }
+    } catch (err) {
+        console.error("Realtime Timeline Refresh Error:", err);
+    }
+});

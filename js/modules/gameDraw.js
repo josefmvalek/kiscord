@@ -1,5 +1,6 @@
 import { state } from '../core/state.js';
 import { supabase } from '../core/supabase.js';
+import { safeInsert, safeUpsert } from '../core/offline.js';
 import { showNotification } from '../core/theme.js';
 import { triggerHaptic } from '../core/utils.js';
 
@@ -303,11 +304,11 @@ export function renderGameDraw() {
 
         try {
             // 1. Create drawing record
-            const { data: drawing, error: dError } = await supabase.from('drawings').insert([{
-                user_id: state.currentUser.id,
-                title: promptText,
-                thumbnail: thumbnail
-            }]).select().single();
+            const { data: drawing, error: dError } = await safeInsert('drawings', [{
+                title: promptText || 'Bez názvu', // Assuming 'title' should be 'promptText'
+                thumbnail: thumbnail, // Assuming 'dataURL' should be 'thumbnail'
+                user_id: state.currentUser.id
+            }]);
 
             if (dError) throw dError;
 
@@ -527,12 +528,13 @@ async function stopDrawing() {
     // PERSIST TO DATABASE
     if (currentPath.length > 1) {
         try {
-            const { data, error } = await supabase.from('draw_strokes').insert([{
+            const { data, error } = await safeInsert('draw_strokes', [{
+                drawing_id: null,
                 user_id: state.currentUser.id,
-                path_data: currentPath,
-                color: isEraser ? '#ffffff' : color,
-                size: size
-            }]).select();
+                path_data: currentPath, // Assuming 'points' should be 'path_data'
+                color: isEraser ? '#ffffff' : color, // Assuming 'currentStroke.color' should be this
+                size: size // Assuming 'width' should be 'size'
+            }]);
             
             if (data) state.drawStrokes.push(data[0]);
         } catch (err) {

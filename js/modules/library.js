@@ -1,8 +1,10 @@
-import { state } from '../core/state.js';
+import { state, refreshLibraryState } from '../core/state.js';
 // import { library } from '../data.js'; // Smazáno, nyní ze state
 import { triggerHaptic } from '../core/utils.js';
 import { showNotification } from '../core/theme.js';
 import { supabase } from '../core/supabase.js';
+import { renderModal, renderButton, renderInputGroup } from '../core/ui.js';
+import { safeUpsert, safeInsert } from '../core/offline.js';
 
 // --- LIBRARY RENDERING ---
 
@@ -303,7 +305,7 @@ export async function toggleWatchlist(id) {
         triggerHaptic('success');
         if (typeof window.showNotification === 'function') window.showNotification('Přidáno do seznamu přání ❤️', 'success');
 
-        await supabase.from('library_watchlist').insert({
+        await safeInsert('library_watchlist', {
             media_id: id,
             type: itemType,
             added_by: state.currentUser?.id
@@ -493,8 +495,6 @@ export async function saveHistory() {
     const reaction = document.getElementById("history-reaction").value;
     const rating = parseInt(document.getElementById("history-rating").value) || 0;
 
-    const { supabase } = await import('../core/supabase.js');
-
     // Logic: if not "unseen", we might want a date. 
     const finalDate = (currentHistoryStatus !== "unseen" && !date) ? new Date().toISOString().split('T')[0] : date;
 
@@ -506,7 +506,7 @@ export async function saveHistory() {
     } else {
         triggerHaptic('success');
         // Save to Supabase
-        const { error } = await supabase.from('library_ratings').upsert({
+        const { error } = await safeUpsert('library_ratings', {
             media_id: id,
             rating: rating,
             status: currentHistoryStatus,
@@ -618,11 +618,13 @@ let currentPlanData = { title: "", type: "" };
 export function openPlanningModal(title, type) {
     currentPlanData = { title, type };
 
-    const titleEl = document.getElementById("plan-item-title");
-    const typeEl = document.getElementById("plan-item-type");
+    const titleEl = document.getElementById("lib-plan-title");
+    const catEl = document.getElementById("lib-plan-cat");
+    const iconEl = document.getElementById("lib-plan-icon");
 
     if (titleEl) titleEl.innerText = title;
-    if (typeEl) typeEl.innerText = type === "game" ? "HRA" : "FILM / SERIÁL";
+    if (catEl) catEl.innerText = type === "game" ? "HRA" : "FILM / SERIÁL";
+    if (iconEl) iconEl.innerText = type === "game" ? "🎮" : "🎬";
 
     const today = new Date().toISOString().split("T")[0];
     const dateInput = document.getElementById("lib-plan-date");
@@ -656,7 +658,7 @@ export async function confirmLibraryPlan() {
     state.plannedDates[dateStr] = newPlan;
 
     triggerHaptic('success');
-    await supabase.from('planned_dates').insert(newPlan);
+    await safeInsert('planned_dates', newPlan);
 
     if (window.closeModal) window.closeModal("library-plan-modal");
     else document.getElementById("library-plan-modal").style.display = "none";
@@ -726,69 +728,51 @@ export async function clearWatchlist() {
 // --- ADD NEW MEDIA ---
 
 export function showAddMediaModal(category) {
-    triggerHaptic('light');
-    const modal = document.createElement('div');
-    modal.id = 'media-admin-modal';
-    modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in';
-    
     const displayType = category === 'movies' ? 'film' : (category === 'series' ? 'seriál' : 'hru');
     const categories = category === 'games' 
         ? ["RPG", "FPS", "Strategie", "Simulátor", "Závodní", "Ostatní"]
         : ["Akční", "Sci-Fi", "Komedie", "Animovaný", "Fantasy", "Drama", "Horor", "Romantický", "Dobrodružný", "Ostatní"];
 
-    modal.innerHTML = `
-        <div class="bg-[#36393f] w-full max-w-lg rounded-2xl shadow-2xl border border-gray-700 overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#2f3136]">
-                <h3 class="text-xl font-black text-white tracking-widest uppercase">Přidat nový ${displayType} 🎬</h3>
-                <button onclick="this.closest('#media-admin-modal').remove()" class="text-gray-400 hover:text-white transition">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
+    const modalContent = `
+        <div class="space-y-4 text-left">
+            ${renderInputGroup({ label: 'Název', id: 'm-title', placeholder: 'Např. Inception' })}
             
-            <div class="p-6 overflow-y-auto space-y-5 custom-scrollbar">
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Název</label>
-                    <input type="text" id="m-title" placeholder="Např. Inception" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition">
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Ikona (emoji)</label>
-                        <input type="text" id="m-icon" placeholder="🎬" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-center text-2xl">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Kategorie</label>
-                        <select id="m-cat" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition">
-                            ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
-                        </select>
-                    </div>
-                </div>
-                
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Magnet Link (volitelné)</label>
-                    <input type="text" id="m-magnet" placeholder="magnet:?xt=..." class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-xs font-mono">
-                </div>
-                
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Google Drive Link (volitelné)</label>
-                    <input type="text" id="m-gdrive" placeholder="https://drive.google.com/..." class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-xs">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Mood Tags / Vibes (oddělit čárkou)</label>
-                    <input type="text" id="m-moods" placeholder="Např. Doják, Napínavé, Pohoda" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-xs">
+            <div class="grid grid-cols-2 gap-4">
+                ${renderInputGroup({ label: 'Ikona (emoji)', id: 'm-icon', placeholder: '🎬', attr: 'class="text-center text-2xl w-full bg-[#202225] text-white p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2] transition-all"' })}
+                <div class="space-y-1">
+                    <label class="block text-[10px] text-gray-500 font-bold uppercase tracking-widest">Kategorie</label>
+                    <select id="m-cat" class="w-full bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2] transition-all">
+                        ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
+                    </select>
                 </div>
             </div>
             
-            <div class="p-6 bg-[#2f3136] border-t border-gray-700">
-                <button onclick="import('./js/modules/library.js').then(m => m.saveNewMedia('${category}'))" class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-4 rounded-xl font-black text-lg transition shadow-xl transform active:scale-95">
-                    ULOŽIT DO KNIHOVNY 🚀
-                </button>
-            </div>
+            ${renderInputGroup({ label: 'Magnet Link (volitelné)', id: 'm-magnet', placeholder: 'magnet:?xt=...', attr: 'class="w-full bg-[#202225] text-white text-[10px] p-3 rounded-xl border border-[#2f3136] outline-none font-mono"' })}
+            ${renderInputGroup({ label: 'Google Drive Link (volitelné)', id: 'm-gdrive', placeholder: 'https://drive.google.com/...' })}
+            ${renderInputGroup({ label: 'Mood Tags / Vibes (oddělit čárkou)', id: 'm-moods', placeholder: 'Např. Doják, Napínavé, Pohoda' })}
         </div>
     `;
-    
-    document.body.appendChild(modal);
+
+    const modalActions = renderButton({
+        text: 'ULOŽIT DO KNIHOVNY 🚀',
+        onclick: `import('./js/modules/library.js').then(m => m.saveNewMedia('${category}'))`,
+        className: 'w-full py-4 text-lg'
+    });
+
+    const modalHtml = renderModal({
+        id: 'media-admin-modal',
+        title: `Nový ${displayType}`,
+        subtitle: 'Rozšíření naší sbírky',
+        content: modalContent,
+        actions: modalActions,
+        onClose: "document.getElementById('media-admin-modal').remove()"
+    });
+
+    const container = document.createElement('div');
+    container.innerHTML = modalHtml;
+    const modalElement = container.firstElementChild;
+    document.body.appendChild(modalElement);
+    modalElement.classList.replace('hidden', 'flex');
 }
 
 export async function saveNewMedia(category) {
@@ -800,7 +784,7 @@ export async function saveNewMedia(category) {
     const moodTags = document.getElementById('m-moods').value.split(',').map(t => t.trim()).filter(t => t !== "");
     
     if (!title) {
-        alert("Název je povinný!");
+        showNotification("Název je povinný!", "error");
         return;
     }
     
@@ -809,11 +793,11 @@ export async function saveNewMedia(category) {
     triggerHaptic('success');
     
     try {
-        const { data: newItems, error } = await supabase.from('library_content').insert([{
+        const { data: newItems, error } = await safeInsert('library_content', [{
             type: dbType,
             title, icon, category: cat, magnet, gdrive,
             mood_tags: moodTags
-        }]).select();
+        }]);
         
         if (error) throw error;
         
@@ -842,6 +826,12 @@ export async function saveNewMedia(category) {
         
     } catch (err) {
         console.error("Save Media Error:", err);
-        alert("Chyba při ukládání: " + err.message);
+        showNotification("Chyba při ukládání: " + err.message, "error");
     }
 }
+window.addEventListener('library-updated', async () => {
+    await refreshLibraryState();
+    if (['movies', 'series', 'games', 'watchlist', 'calendar'].includes(state.currentChannel)) {
+        renderLibrary(state.currentChannel);
+    }
+});

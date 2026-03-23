@@ -1,5 +1,6 @@
 import { state } from '../core/state.js';
 import { supabase } from '../core/supabase.js';
+import { safeInsert, safeUpsert } from '../core/offline.js';
 import { triggerHaptic, triggerConfetti } from '../core/utils.js';
 import { showNotification } from '../core/theme.js';
 
@@ -73,11 +74,11 @@ function renderContent(question) {
     const container = document.getElementById("messages-container");
     if (!container) return;
 
-    const josefId = '00000000-0000-0000-0000-000000000001';
-    const klarkaId = '00000000-0000-0000-0000-000000000002';
+    const josefId = state.user_ids?.jose || '00000000-0000-0000-0000-000000000001';
+    const klarkaId = state.user_ids?.klarka || '00000000-0000-0000-0000-000000000002';
 
     // Correctly identify current user identity
-    const isJosef = state.currentUser?.email.toLowerCase().includes('josef') || state.currentUser?.email.toLowerCase().includes('jozk');
+    const isJosef = state.currentUser?.id === josefId;
     const myId = isJosef ? josefId : klarkaId;
     const partnerId = isJosef ? klarkaId : josefId;
 
@@ -272,7 +273,10 @@ export async function saveNewGameQuestion() {
 
     try {
         const fullText = text.startsWith('Kdo spíše') ? text : `Kdo spíše ${text.startsWith('...') ? text.substring(3).trim() : text}`;
-        const { data, error } = await supabase.from('game_questions').insert([{ text: fullText }]).select();
+        const { data, error } = await safeInsert('game_questions', [{
+            text: fullText,
+            user_id: state.currentUser.id
+        }]);
         if (error) throw error;
 
         if (data && data[0]) {

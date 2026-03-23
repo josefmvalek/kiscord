@@ -1,6 +1,6 @@
 import { state } from '../../core/state.js';
 import { triggerHaptic, getTodayKey } from '../../core/utils.js';
-import { getSleepColor } from '../health.js';
+import { getSleepColor } from '../dashboard/health_ui.js';
 
 export function getMoodColor(val) {
     if (val > 10) val = Math.round(val / 10);

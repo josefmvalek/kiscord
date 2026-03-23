@@ -1,5 +1,6 @@
 import { supabase } from '../core/supabase.js';
-import { state } from '../core/state.js';
+import { state, saveStateToCache } from '../core/state.js';
+import { safeInsert, safeDelete } from '../core/offline.js';
 import { isJosef } from '../core/auth.js';
 import { triggerHaptic } from '../core/utils.js';
 
@@ -166,7 +167,7 @@ export async function toggleAchievement(id, unlock) {
                 window.triggerConfetti();
             }
             
-            const { error } = await supabase.from('achievements').insert([{
+            const { error } = await safeInsert('achievements', [{
                 id: id,
                 user_id: state.currentUser.id,
                 unlocked_at: new Date().toISOString()
@@ -174,7 +175,7 @@ export async function toggleAchievement(id, unlock) {
 
             if (error) throw error;
         } else {
-            const { error } = await supabase.from('achievements').delete().eq('id', id);
+            const { error } = await safeDelete('achievements', id);
             if (error) throw error;
         }
     } catch (err) {
@@ -187,6 +188,7 @@ export async function toggleAchievement(id, unlock) {
     const { data } = await supabase.from('achievements').select('*');
     if (data) {
         state.achievements = data;
+        saveStateToCache();
         renderCategories();
     }
 }
@@ -227,7 +229,7 @@ export async function autoUnlock(id) {
     if (state.achievements.some(u => u.id === id)) return;
 
     // Ještě pro jistotu fetch ze Supabase (přece jen to mohl odemknout druhý)
-    const { data } = await supabase.from('achievements').select('id').eq('id', id).single();
+    const { data } = await supabase.from('achievements').select('id').eq('id', id).maybeSingle();
     if (data) {
         // Pokud tam je, ale nebyl v state, updatneme state
         const { data: allData } = await supabase.from('achievements').select('*');
@@ -249,7 +251,7 @@ export async function autoUnlock(id) {
         }));
     }
 
-    const { error } = await supabase.from('achievements').insert([{
+    const { error } = await safeInsert('achievements', [{
         id: id,
         user_id: state.currentUser.id,
         unlocked_at: new Date().toISOString()
@@ -261,6 +263,7 @@ export async function autoUnlock(id) {
          const { data: allData } = await supabase.from('achievements').select('*');
          if (allData) {
              state.achievements = allData;
+             saveStateToCache();
              renderCategories();
          }
     }
@@ -316,6 +319,7 @@ export async function checkHealthAchievements(currentDateKey, healthData, allHea
 
 export function showAddAchievementModal() {
     const modal = document.createElement('div');
+    modal.id = 'add-achievement-modal';
     modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 animate-fade-in text-left';
     modal.innerHTML = `
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="this.parentElement.remove()"></div>
@@ -374,21 +378,36 @@ export async function saveNewAchievement() {
         return;
     }
 
+    // Pozitivní kontrola na frontendu předem
+    if (state.achievementDefinitions.some(a => a.id === id)) {
+        if (window.showNotification) window.showNotification(`ID "${id}" už existuje! Zvol prosím jiné.`, "error");
+        return;
+    }
+
     try {
-        const { data, error } = await supabase.from('achievement_definitions').insert([{
+        const { data, error } = await safeInsert('achievement_definitions', [{
             id, category, title, description, icon, color
-        }]).select();
+        }]);
 
         if (error) throw error;
 
         if (data && data[0]) {
             state.achievementDefinitions.push(data[0]);
             if (window.showNotification) window.showNotification("Achievement vytvořen! 🏆", "success");
-            document.querySelector('.animate-fade-in')?.remove();
+            document.getElementById('add-achievement-modal')?.remove();
             renderCategories();
         }
     } catch (err) {
         console.error("Failed to save achievement:", err);
-        if (window.showNotification) window.showNotification("Chyba při ukládání (ID musí být unikátní).", "error");
+        let errorMsg = "Chyba při ukládání.";
+        
+        if (err.code === '23505') {
+            errorMsg = "ID musí být unikátní (toto ID už v databázi je).";
+        } else if (err.message) {
+            errorMsg = `Chyba: ${err.message}`;
+        }
+        
+        if (window.showNotification) window.showNotification(errorMsg, "error");
     }
+
 }

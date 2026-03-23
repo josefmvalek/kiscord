@@ -1,6 +1,6 @@
 import { state } from '../../core/state.js';
-import { triggerHaptic, getTodayKey } from '../../core/utils.js';
-import { updateSunflowersDOM } from './sunflowers.js';
+import { triggerHaptic, getTodayKey } from '/js/core/utils.js';
+import { updateSunflowersDOM } from '/js/modules/dashboard/sunflowers.js';
 
 // --- VISUAL GENERATORS (Mood/Water/Movement/Sleep) ---
 
@@ -25,10 +25,10 @@ export function generateMoodSlider(currentMood) {
     return `
     <div class="mood-slider-container" id="mood-slider-wrapper" 
         onmousedown="this.classList.add('dragging')"
-        onmouseup="this.classList.remove('dragging'); import('./js/modules/dashboard.js').then(m => m.hideMoodBubble())"
+        onmouseup="this.classList.remove('dragging'); import('/js/modules/dashboard.js').then(m => m.hideMoodBubble())"
         ontouchstart="this.classList.add('dragging')"
-        ontouchend="this.classList.remove('dragging'); import('./js/modules/dashboard.js').then(m => m.hideMoodBubble())"
-        onpointerup="this.classList.remove('dragging'); import('./js/modules/dashboard.js').then(m => m.hideMoodBubble())">
+        ontouchend="this.classList.remove('dragging'); import('/js/modules/dashboard.js').then(m => m.hideMoodBubble())"
+        onpointerup="this.classList.remove('dragging'); import('/js/modules/dashboard.js').then(m => m.hideMoodBubble())">
         <div class="mood-bubble-wrapper" id="mood-bubble">
             <div class="mood-bubble">
                 <img src="${bubbleImage}" id="mood-bubble-img" alt="Mood" onerror="this.src='img/app/czippel2_kytka.jpg'">
@@ -36,11 +36,11 @@ export function generateMoodSlider(currentMood) {
             <div class="mood-rating-value" id="mood-bubble-value">${value}/10</div>
         </div>
         <input type="range" min="1" max="10" step="1" value="${value}"
-            oninput="import('./js/modules/dashboard.js').then(m => m.updateMoodVisuals(this.value, true))"
-            onchange="import('./js/modules/health.js').then(m => m.updateHealth('mood', parseInt(this.value)))"
-            onmouseup="document.getElementById('mood-slider-wrapper')?.classList.remove('dragging'); import('./js/modules/dashboard.js').then(m => m.hideMoodBubble())"
-            ontouchend="document.getElementById('mood-slider-wrapper')?.classList.remove('dragging'); import('./js/modules/dashboard.js').then(m => m.hideMoodBubble())"
-            onpointerup="document.getElementById('mood-slider-wrapper')?.classList.remove('dragging'); import('./js/modules/dashboard.js').then(m => m.hideMoodBubble())"
+            oninput="import('/js/modules/dashboard.js').then(m => m.updateMoodVisuals(this.value, true))"
+            onchange="import('/js/modules/health.js').then(m => m.updateHealth('mood', parseInt(this.value)))"
+            onmouseup="document.getElementById('mood-slider-wrapper')?.classList.remove('dragging'); import('/js/modules/dashboard.js').then(m => m.hideMoodBubble())"
+            ontouchend="document.getElementById('mood-slider-wrapper')?.classList.remove('dragging'); import('/js/modules/dashboard.js').then(m => m.hideMoodBubble())"
+            onpointerup="document.getElementById('mood-slider-wrapper')?.classList.remove('dragging'); import('/js/modules/dashboard.js').then(m => m.hideMoodBubble())"
             class="mood-range"
             id="mood-range-input"
             style="background: linear-gradient(to right, ${moodColors[value - 1]} ${((value - 1) / 9) * 100}%, #202225 ${((value - 1) / 9) * 100}%)">
@@ -48,7 +48,7 @@ export function generateMoodSlider(currentMood) {
             ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n =>
         `<span class="text-[10px] font-bold text-gray-500 mood-number ${n === value ? 'active' : ''}" 
                        id="mood-num-${n}" 
-                       onclick="import('./js/modules/dashboard.js').then(m => m.updateMoodVisuals(${n})); document.getElementById('mood-range-input').value=${n}; import('./js/modules/health.js').then(m => m.updateHealth('mood', ${n}))">
+                       onclick="import('/js/modules/dashboard.js').then(m => m.updateMoodVisuals(${n})); document.getElementById('mood-range-input').value=${n}; import('/js/modules/health.js').then(m => m.updateHealth('mood', ${n}))">
                     ${n}
                 </span>`
     ).join('')}
@@ -136,7 +136,7 @@ export function generateWaterIcons(count) {
         // Použití CSS třídy .water-glow pro prémiový neonový efekt
         const colorClass = isFull ? "text-[#00e5ff] scale-110 water-glow" : "text-[#202225] opacity-40 hover:opacity-100 hover:text-[#40444b]";
         const borderStyle = isFull ? "" : "filter: drop-shadow(0 0 1px #555);";
-        html += `<button onclick="import('./js/core/utils.js').then(u => u.triggerHaptic('light')); import('./js/modules/health.js').then(m => m.updateHealth('water', ${i}))" 
+        html += `<button onclick="import('/js/core/utils.js').then(u => u.triggerHaptic('light')); import('/js/modules/health.js').then(m => m.updateHealth('water', ${i}))" 
                         class="text-2xl transition-all duration-300 p-1 transform active:scale-90 z-20 relative cursor-pointer outline-none ${colorClass}" 
                         style="${borderStyle}">
                     <i class="fas fa-tint pointer-events-none"></i>
@@ -169,7 +169,7 @@ export function generateMovementChips(movement = []) {
             : "bg-[#36393f] text-gray-500 border-gray-700 hover:border-gray-500";
 
         return `
-          <button onclick="import('./js/modules/health.js').then(m => m.updateHealth('movement', '${act.id}'))" 
+          <button onclick="import('/js/modules/health.js').then(m => m.updateHealth('movement', '${act.id}'))" 
                   class="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 transform active:scale-95 ${activeClass}">
               <span class="text-lg">${act.icon}</span>
               <span class="text-xs font-bold uppercase">${act.label}</span>
@@ -199,8 +199,8 @@ export function generateSleepSlider(data) {
             <div class="relative w-full h-8 rounded-full bg-[#202225] overflow-hidden mb-2 shadow-inner border border-black/40 ${disabledClass}">
                  <div class="absolute inset-0 opacity-10" style="background: ${trackGradient}"></div>
                  <input type="range" min="0" max="10" step="0.5" value="${sleepValue}" 
-                    oninput="import('./js/modules/dashboard.js').then(m => m.updateSleep(this.value))" 
-                    onchange="import('./js/modules/health.js').then(m => m.updateHealth('sleep', parseFloat(this.value)))"
+                    oninput="import('/js/modules/dashboard.js').then(m => m.updateSleep(this.value))" 
+                    onchange="import('/js/modules/health.js').then(m => m.updateHealth('sleep', parseFloat(this.value)))"
                     class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                     ${disabledAttr}>
                  <div class="absolute top-0 left-0 h-full transition-none pointer-events-none" id="sleep-progress-bar" style="width: ${(sleepValue / 10) * 100}%; background-color: ${sleepColor.hex}; box-shadow: 0 0 15px ${sleepColor.hex}80;"></div>
@@ -211,7 +211,7 @@ export function generateSleepSlider(data) {
                     <span class="font-black text-4xl ${sleepColor.class} transition-colors duration-200 leading-none drop-shadow-md filter brightness-110" id="sleep-value-text">${sleepValue}</span>
                     <span class="text-sm opacity-80 font-bold text-gray-500 uppercase">hod</span>
                  </div>
-                 <div class="flex gap-2 items-center bg-[#202225] p-1.5 rounded-lg border border-[#36393f] shadow-sm">
+                 <div id="sleep-controls-container" class="flex gap-2 items-center bg-[#202225] p-1.5 rounded-lg border border-[#36393f] shadow-sm">
                     ${generateSleepControls(data)}
                 </div>
             </div>
@@ -229,15 +229,15 @@ export function generateSleepControls(data) {
         const icon = isNap ? '<i class="fas fa-bolt"></i>' : '<i class="fas fa-sun"></i>';
         return `
             <span id="sleep-session-label" class="text-[10px] ${labelClass} font-bold uppercase ml-1 animate-pulse">${labelText} ${timeStr}</span>
-            <button onclick="import('./js/modules/health.js').then(m => m.wakeUp())" class="bg-[#faa61a]/10 hover:bg-[#faa61a] text-[#faa61a] hover:text-black px-3 py-1 rounded border border-[#faa61a] transition flex items-center justify-center gap-2 shadow-sm active:scale-95 h-8 font-bold text-xs">
+            <button onclick="import('/js/modules/health.js').then(m => m.wakeUp())" class="bg-[#faa61a]/10 hover:bg-[#faa61a] text-[#faa61a] hover:text-black px-3 py-1 rounded border border-[#faa61a] transition flex items-center justify-center gap-2 shadow-sm active:scale-95 h-8 font-bold text-xs">
                  ${icon} Vstávat
             </button>
         `;
     } else {
         return `
             <span class="text-[10px] text-gray-400 font-bold uppercase ml-1">Usínání:</span>
-            <input type="time" value="${data.bedtime || ""}" onchange="import('./js/modules/health.js').then(m => m.updateBedtime(this.value))" class="bg-transparent text-white text-sm p-1 rounded focus:bg-[#2f3136] outline-none h-8 w-20 text-center font-mono font-bold">
-            <button onclick="import('./js/modules/health.js').then(m => m.startSleep())" class="bg-[#2f3136] hover:bg-[#9b59b6] text-gray-400 hover:text-white w-8 h-8 rounded border border-[#36393f] transition flex items-center justify-center shadow-sm active:scale-95">
+            <input type="time" value="${data.bedtime || ""}" onchange="import('/js/modules/health.js').then(m => m.updateBedtime(this.value))" class="bg-transparent text-white text-sm p-1 rounded focus:bg-[#2f3136] outline-none h-8 w-20 text-center font-mono font-bold">
+            <button onclick="import('/js/modules/health.js').then(m => m.startSleep())" class="bg-[#2f3136] hover:bg-[#9b59b6] text-gray-400 hover:text-white w-8 h-8 rounded border border-[#36393f] transition flex items-center justify-center shadow-sm active:scale-95">
                  <i class="fas fa-moon"></i>
             </button>
         `;
@@ -281,7 +281,7 @@ export function generateTetrisMiniTracker() {
 
     return `
     <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-xl border border-white/5 p-6 cursor-pointer hover:bg-black/10 transition-all duration-300 group overflow-hidden relative" 
-         onclick="window.switchChannel('games'); import('./js/modules/games.js').then(m => m.renderTetrisTracker())">
+         onclick="window.switchChannel('tetris')">
         
         <div class="absolute inset-0 bg-gradient-to-r from-[#5865F2]/5 via-transparent to-[#eb459e]/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
         

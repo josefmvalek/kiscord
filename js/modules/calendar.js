@@ -31,20 +31,10 @@ export function renderCalendar(year = null, month = null) {
     if (!container) return;
 
     if (state.loadError) {
-        container.innerHTML = `
-            <div class="h-full flex flex-col items-center justify-center bg-[#36393f] text-gray-400 p-6 text-center animate-fade-in">
-                <div class="text-8xl mb-6 filter drop-shadow-[0_0_15px_rgba(0,0,0,0.5)]">📅❄️</div>
-                <h3 class="text-xl font-bold text-white mb-2 uppercase tracking-tighter">Kalendář zamrzl...</h3>
-                <p class="text-sm text-gray-400 mb-8 max-w-xs leading-relaxed">
-                    Nepodařilo se načíst tvé plány a události. Zkusíme to znovu rozmrazit?
-                </p>
-                <button onclick="import('./js/core/state.js').then(async m => { await m.initializeState(); import('./js/modules/calendar.js').then(c => c.renderCalendar(${year}, ${month})); }); triggerHaptic('light')" 
-                        class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-8 py-3 rounded-xl font-black uppercase tracking-widest transition-all transform hover:scale-105 active:scale-95 shadow-xl flex items-center gap-3">
-                    <i class="fas fa-sync-alt"></i>
-                    Zkusit znovu
-                </button>
-            </div>
-        `;
+        container.innerHTML = window.renderErrorState({
+            message: "Nepodařilo se mi načíst tvé plány a události. Zkusíme to znovu rozmrazit?",
+            onRetry: "import('./js/core/state.js').then(async m => { await m.initializeState(); import('./js/modules/calendar.js').then(c => c.renderCalendar()); })"
+        });
         return;
     }
 

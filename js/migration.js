@@ -17,7 +17,8 @@ export async function migrateLocalDataToSupabase() {
                     water: data.water || 0,
                     sleep: data.sleep || 0,
                     mood: data.mood || 50,
-                    movement: data.movement || []
+                    movement: data.movement || [],
+                    bedtime: data.bedtime || null
                 });
             }
             if (healthInserts.length > 0) {

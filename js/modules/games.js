@@ -100,16 +100,16 @@ export function renderTetrisTracker() {
 
             <div class="p-8 relative z-10">
                 <div class="flex items-center justify-between gap-6 mb-8">
-                   <!-- ME -->
-                   <div class="flex-1 flex flex-col items-center group">
-                       <div class="w-24 h-24 rounded-full bg-[#5865F2]/10 flex items-center justify-center border-4 border-[#5865F2] mb-4 relative cursor-pointer transition transform active:scale-95 hover:shadow-[0_0_20px_rgba(88,101,242,0.5)]" 
-                            onclick="window.updateTetrisScore('${currKey}', 1)">
-                           <div class="text-6xl">${currEmoji}</div>
-                           <div class="absolute -bottom-2 -right-2 bg-[#5865F2] w-8 h-8 rounded-full flex items-center justify-center text-sm text-white font-bold shadow-md group-hover:scale-110 transition">+1</div>
-                       </div>
-                       <div class="text-lg font-bold text-gray-300 mb-1">Ty (${currName})</div>
-                       <div class="text-5xl font-black text-[#5865F2] tracking-tighter filter drop-shadow-lg" id="score-${currKey}">${score[currKey]}</div>
-                   </div>
+                    <!-- ME -->
+                    <div class="flex-1 flex flex-col items-center group">
+                        <div class="w-24 h-24 rounded-full bg-[#5865F2]/10 flex items-center justify-center border-4 border-[#5865F2] mb-4 relative cursor-pointer transition transform active:scale-95 hover:shadow-[0_0_20px_rgba(88,101,242,0.5)]" 
+                             onclick="window.updateTetrisScore('${currKey}', 1)">
+                            <div class="text-6xl">${currEmoji}</div>
+                            <div class="absolute -bottom-2 -right-2 bg-[#5865F2] w-8 h-8 rounded-full flex items-center justify-center text-sm text-white font-bold shadow-md group-hover:scale-110 transition">+1</div>
+                        </div>
+                        <div class="text-lg font-bold text-gray-300 mb-1">${(isJose || state.currentUser.name === 'Klárka') ? `Ty (${currName})` : currName}</div>
+                        <div class="text-5xl font-black text-[#5865F2] tracking-tighter filter drop-shadow-lg" id="score-${currKey}">${score[currKey]}</div>
+                    </div>
 
                    <!-- VS -->
                    <div class="flex flex-col items-center opacity-30">

@@ -74,3 +74,29 @@ export function renderInputGroup({ label, id, type = 'text', placeholder = '', v
         </div>
     `;
 }
+
+/**
+ * Renders a standardized error state with a retry button.
+ * @param {Object} config - { message, onRetry, containerId }
+ */
+export function renderErrorState({ message = 'Něco se nepovedlo...', onRetry = '', containerId = '' }) {
+    const retryIcon = 'fas fa-redo-alt';
+    const retryOnClick = onRetry ? `import('./js/core/utils.js').then(u => { u.triggerHaptic('light'); ${onRetry} })` : '';
+
+    return `
+        <div class="flex flex-col items-center justify-center py-20 px-6 text-center animate-fade-in group w-full">
+            <div class="relative mb-6">
+                <div class="text-7xl filter grayscale group-hover:grayscale-0 transition-all duration-500 scale-100 group-hover:scale-110">🦝</div>
+                <div class="absolute -right-2 -bottom-2 text-3xl animate-bounce-slow">💤</div>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Mýval usnul v serverovně...</h3>
+            <p class="text-gray-400 max-w-xs mb-8 text-sm leading-relaxed">${message}</p>
+            ${onRetry ? `
+                <button onclick="${retryOnClick}" class="bg-[#4f545c] hover:bg-[#5d6269] text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95 flex items-center gap-2 border border-white/5">
+                    <i class="${retryIcon} text-xs"></i>
+                    <span>Zkusit znovu</span>
+                </button>
+            ` : ''}
+        </div>
+    `;
+}

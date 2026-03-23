@@ -34,5 +34,14 @@ export function onAuthChange(callback) {
 
 export function isJosef(user) {
     if (!user || !user.email) return false;
-    return user.email.toLowerCase().includes('josef') || user.email.toLowerCase().includes('jozk');
+    const email = user.email.toLowerCase();
+    // Jožka: jozkavalek@email.cz nebo obsahuje josef/jozk
+    return email === 'jozkavalek@email.cz' || email.includes('josef') || email.includes('jozk');
+}
+
+export function isKlarka(user) {
+    if (!user || !user.email) return false;
+    const email = user.email.toLowerCase();
+    // Klárka: vyslouzilova.klara07@gmail.com nebo klarka/vyslouzil
+    return email === 'vyslouzilova.klara07@gmail.com' || email.includes('klarka') || email.includes('vyslouzil');
 }

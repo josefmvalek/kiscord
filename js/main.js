@@ -1,8 +1,10 @@
 // Core imports (kept for initialization)
 import { state, initializeState } from './core/state.js';
+import { renderErrorState } from './core/ui.js';
+window.renderErrorState = renderErrorState; // Global for easy access in modules
 import { initTheme, toggleTheme, showNotification, toggleValentineMode } from './core/theme.js';
 import { triggerConfetti, triggerHaptic } from './core/utils.js';
-import { getCurrentUser, signIn, onAuthChange } from './core/auth.js';
+import { getCurrentUser, signIn, onAuthChange, isJosef, isKlarka } from './core/auth.js';
 import {
     renderDashboard,
     updateMoodVisuals,
@@ -36,9 +38,55 @@ const moduleMap = {
 
 let lastUserId = null;
 
+// --- CONNECTIVITY ---
+
+function setupConnectivityListeners() {
+    const bannerId = 'offline-banner';
+    
+    const updateStatus = () => {
+        const isOffline = !navigator.onLine;
+        let banner = document.getElementById(bannerId);
+        
+        if (isOffline) {
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = bannerId;
+                banner.className = 'fixed top-0 left-0 w-full z-[10000] bg-[#ed4245] text-white py-2 px-4 text-center text-xs font-bold shadow-lg animate-slide-down flex items-center justify-center gap-2';
+                banner.innerHTML = `
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Jsi offline. Změny se nemusí uložit do databáze!</span>
+                `;
+                document.body.prepend(banner);
+                
+                showNotification("Jsi offline. Některé funkce nemusí fungovat ⚠️", "error");
+                triggerHaptic('heavy');
+            }
+        } else {
+            if (banner) {
+                banner.classList.add('animate-banner-up');
+                setTimeout(() => banner.remove(), 500);
+                
+                showNotification("Připojení obnoveno 📶", "success");
+                triggerHaptic('success');
+            }
+        }
+    };
+
+    window.addEventListener('online', updateStatus);
+    window.addEventListener('offline', updateStatus);
+    updateStatus(); // Initial check
+}
+
 // --- INITIALIZATION ---
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW registration failed:', err));
+        });
+    }
+
     // 0. Listen for auth changes
     onAuthChange(async (event, session) => {
         const user = session?.user;
@@ -138,17 +186,6 @@ async function handleMigrations() {
     }
 }
 
-function setupConnectivityListeners() {
-    window.addEventListener('online', () => {
-        showNotification("Připojení obnoveno 📶", "success");
-        triggerHaptic('success');
-    });
-
-    window.addEventListener('offline', () => {
-        showNotification("Jsi offline. Některé funkce nemusí fungovat ⚠️", "error");
-        triggerHaptic('heavy');
-    });
-}
 
 // --- NAVIGATION ---
 
@@ -409,9 +446,10 @@ export function updateUserProfileUI(user) {
     const popoutAvatar = document.getElementById('popout-user-avatar');
     const bioParagraph = document.getElementById('popout-user-bio');
 
-    const isJosef = user.email.toLowerCase().includes('josef') || user.email.toLowerCase().includes('jozk');
+    const isMeJose = isJosef(user);
+    const isMeKlarka = isKlarka(user);
 
-    if (isJosef) {
+    if (isMeJose) {
         const avatarPath = 'img/app/jozka_profilovka.jpg';
         state.currentUser = { name: 'Jožka', email: user.email, id: user.id, avatar: avatarPath };
         if (sidebarName) sidebarName.textContent = 'Jožka';
@@ -427,7 +465,7 @@ export function updateUserProfileUI(user) {
                 🛡️ Upozornění: Pravidelně potřebuje updatovat morální kodex.<br />
             `;
         }
-    } else {
+    } else if (isMeKlarka) {
         const avatarPath = 'img/app/klarka_profilovka.webp';
         state.currentUser = { name: 'Klárka', email: user.email, id: user.id, avatar: avatarPath };
         if (sidebarName) sidebarName.textContent = 'Klárka';
@@ -441,8 +479,17 @@ export function updateUserProfileUI(user) {
                 Bio: 📍 Rezidentka sporného území Podolí-Kunovice.<br />
                 👀 Pasivní skill: Odmítá nosit brýle, přesto vidí všechny tvoje chyby.<br />
                 🦴 Slabina: Vlastní kotníky (a sprchové kouty).<br />
+                👸 Status: Královna mývalů.<br />
             `;
         }
+    } else {
+        const avatarPath = 'img/app/czippel2_kytka.jpg';
+        state.currentUser = { name: 'Host', email: user.email, id: user.id, avatar: avatarPath };
+        if (sidebarName) sidebarName.textContent = 'Host (Admin)';
+        if (popoutName) popoutName.textContent = 'Host';
+        if (sidebarAvatar) sidebarAvatar.src = avatarPath;
+        if (popoutAvatar) popoutAvatar.src = avatarPath;
+        if (bioParagraph) bioParagraph.innerHTML = "Přihlášen jako externí administrátor. Vítejte v systému!";
     }
 }
 
@@ -596,27 +643,27 @@ export function switchChannel(channelId, push = true) {
             renderDashboard();
             break;
         case 'dateplanner':
-            moduleMap.map().then(m => m.renderMap());
+            import('./core/state.js').then(s => s.ensureMapData()).then(() => moduleMap.map()).then(m => m.renderMap());
             break;
         case 'bucketlist':
             moduleMap.bucketlist().then(m => m.renderBucketList());
             break;
         case 'calendar':
-            moduleMap.calendar().then(m => m.renderCalendar());
+            import('./core/state.js').then(s => s.ensureTimelineData()).then(() => moduleMap.calendar()).then(m => m.renderCalendar());
             break;
         case 'timeline':
-            moduleMap.timeline().then(m => m.renderTimeline());
+            import('./core/state.js').then(s => s.ensureTimelineData()).then(() => moduleMap.timeline()).then(m => m.renderTimeline());
             break;
         case 'movies':
         case 'series':
         case 'games':
-            moduleMap.library().then(m => m.renderLibrary(channelId));
+            import('./core/state.js').then(s => s.refreshLibraryState()).then(() => moduleMap.library()).then(m => m.renderLibrary(channelId));
             break;
         case 'watchlist':
-            import('./modules/watchlist.js').then(m => m.renderWatchlist());
+            import('./core/state.js').then(s => s.refreshLibraryState()).then(() => import('./modules/watchlist.js')).then(m => m.renderWatchlist());
             break;
         case 'topics':
-            moduleMap.topics().then(m => m.renderTopics());
+            import('./core/state.js').then(s => s.ensureTopicsData()).then(() => moduleMap.topics()).then(m => m.renderTopics());
             break;
         case 'tetris':
             moduleMap.games().then(m => m.renderTetrisTracker());
@@ -628,19 +675,19 @@ export function switchChannel(channelId, push = true) {
             import('./modules/coupleQuiz.js').then(m => m.renderCoupleQuiz());
             break;
         case 'games-hub':
-            import('./modules/gamesHub.js').then(m => m.renderGamesHub());
+            import('./core/state.js').then(s => s.ensureGamesData()).then(() => import('./modules/gamesHub.js')).then(m => m.renderGamesHub());
             break;
         case 'game-who':
-            import('./modules/gameWho.js').then(m => m.renderGameWho());
+            import('./core/state.js').then(s => s.ensureGamesData()).then(() => import('./modules/gameWho.js')).then(m => m.renderGameWho());
             break;
         case 'game-draw':
-            import('./modules/gameDraw.js').then(m => m.renderGameDraw());
+            import('./core/state.js').then(s => Promise.all([s.ensureGamesData(), s.ensureDrawStrokesData()])).then(() => import('./modules/gameDraw.js')).then(m => m.renderGameDraw());
             break;
         case 'daily-questions':
-            moduleMap['daily-questions']().then(m => m.renderDailyQuestions());
+            import('./core/state.js').then(s => s.ensureDailyQuizData()).then(() => moduleMap['daily-questions']()).then(m => m.renderDailyQuestions());
             break;
         case 'achievements':
-            moduleMap.achievements().then(m => m.renderAchievements());
+            import('./core/state.js').then(s => s.ensureAchievementsData()).then(() => moduleMap.achievements()).then(m => m.renderAchievements());
             break;
         case 'quests':
             import('./modules/quests.js').then(m => m.renderQuests());
