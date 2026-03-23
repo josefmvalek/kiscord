@@ -191,10 +191,11 @@ export function openFactCategory(catId, sub1 = '', sub2 = '') {
     // Filter actual facts for this leaf node (if not already filtered by bookmarks)
     if (catId !== 'bookmarks') {
         if (targetSub1 === '__random__') {
-            const allFacts = state.factsLibrary[catId] || [];
-            facts = deterministicShuffleLocal(allFacts, `random-${catId}`);
+            facts = state.factsLibrary[catId] || [];
+            // In random mode, the order doesn't matter, we just need the pool.
+            // Shuffling here is optional since nextFact will jump randomly,
+            // but for the initial load, we might want a random starting point.
         } else {
-
             facts = (state.factsLibrary[catId] || []).filter(f =>
                 (f.subcategory || '') === targetSub1 &&
                 (f.subcategory_level2 || '') === targetSub2
@@ -204,7 +205,14 @@ export function openFactCategory(catId, sub1 = '', sub2 = '') {
 
     const progKey = getProgressKey(catId, targetSub1, targetSub2);
     const progress = state.funFactProgress[progKey] || { index: 0, completed: false };
-    const currentIndex = progress.index;
+    
+    // For random mode, if index is 0 and it's presumably a fresh entry, pick a random start.
+    let currentIndex = progress.index;
+    if (targetSub1 === '__random__' && currentIndex === 0 && facts.length > 0) {
+        currentIndex = Math.floor(Math.random() * facts.length);
+        progress.index = currentIndex;
+        state.funFactProgress[progKey] = progress;
+    }
 
     const currentFact = facts[currentIndex];
     const remaining = facts.length - currentIndex;
@@ -412,51 +420,78 @@ export function nextFact(catId, sub1 = '', sub2 = '') {
     const progKey = getProgressKey(catId, sub1, sub2);
     const progress = state.funFactProgress[progKey] || { index: 0, completed: false };
 
-    if (progress.index < facts.length) {
+    if (sub1 === '__random__' && facts.length > 1) {
+        // True random jump: pick any DIFFERENT index
+        let newIndex;
+        do {
+            newIndex = Math.floor(Math.random() * facts.length);
+        } while (newIndex === progress.index);
+        
+        progress.index = newIndex;
+        // Optimization: in random mode we can track stats differently, 
+        // but for now let's just use seen counts as "clicks" or total unique?
+        // Let's just keep the last index for persistence.
+    } else if (progress.index < facts.length) {
         progress.index++;
-        state.funFactProgress[progKey] = progress;
-
-        safeUpsert('fun_fact_progress', {
-            category_id: catId,
-            subcategory_id: sub1,
-            subcategory_level2_id: sub2,
-            user_id: state.currentUser.id,
-            current_index: progress.index,
-            completed: progress.index >= facts.length,
-            updated_at: new Date().toISOString()
-        });
-
-        if (progress.index >= facts.length) {
-            import('./achievements.js').then(m => m.autoUnlock('fact_enthusiast'));
-        }
-
-        triggerHaptic('success');
-        openFactCategory(catId, sub1, sub2);
+    } else {
+        return; // Already at end
     }
+
+    state.funFactProgress[progKey] = progress;
+
+    safeUpsert('fun_fact_progress', {
+        category_id: catId,
+        subcategory_id: sub1,
+        subcategory_level2_id: sub2,
+        user_id: state.currentUser.id,
+        current_index: progress.index,
+        completed: sub1 !== '__random__' && progress.index >= facts.length,
+        updated_at: new Date().toISOString()
+    });
+
+    if (sub1 !== '__random__' && progress.index >= facts.length) {
+        import('./achievements.js').then(m => m.autoUnlock('fact_enthusiast'));
+    }
+
+    triggerHaptic('success');
+    openFactCategory(catId, sub1, sub2);
 }
 
 export function prevFact(catId, sub1 = '', sub2 = '') {
     const progKey = getProgressKey(catId, sub1, sub2);
     const progress = state.funFactProgress[progKey] || { index: 0, completed: false };
 
-    if (progress.index > 0) {
+    if (sub1 === '__random__') {
+        const facts = state.factsLibrary[catId] || [];
+        if (facts.length > 1) {
+            let newIndex;
+            do {
+                newIndex = Math.floor(Math.random() * facts.length);
+            } while (newIndex === progress.index);
+            progress.index = newIndex;
+        }
+    } else if (progress.index > 0) {
         progress.index--;
-        state.funFactProgress[progKey] = progress;
-
-        safeUpsert('fun_fact_progress', {
-            category_id: catId,
-            subcategory_id: sub1,
-            subcategory_level2_id: sub2,
-            user_id: state.currentUser.id,
-            current_index: progress.index,
-            completed: false,
-            updated_at: new Date().toISOString()
-        });
-
-        triggerHaptic('light');
-        openFactCategory(catId, sub1, sub2);
+    } else {
+        return; // Already at start
     }
+
+    state.funFactProgress[progKey] = progress;
+
+    safeUpsert('fun_fact_progress', {
+        category_id: catId,
+        subcategory_id: sub1,
+        subcategory_level2_id: sub2,
+        user_id: state.currentUser.id,
+        current_index: progress.index,
+        completed: false,
+        updated_at: new Date().toISOString()
+    });
+
+    triggerHaptic('light');
+    openFactCategory(catId, sub1, sub2);
 }
+
 
 export function resetFactCategory(catId, sub1 = '', sub2 = '') {
     const container = document.getElementById("messages-container");
