@@ -33,8 +33,10 @@ const moduleMap = {
     'funfacts': () => import('./modules/funfacts.js'),
     'map': () => import('./modules/map.js'),
     'search': () => import('./modules/search.js'),
-    'profile': () => import('./modules/profile.js')
+    'profile': () => import('./modules/profile.js'),
+    'tierlist': () => import('./modules/tierlist.js?v=13')
 };
+
 
 let lastUserId = null;
 
@@ -364,6 +366,7 @@ function renderReadme() {
                                  <!-- THE PATCH FILE BLOCK (Authentic Discord Style) -->
                                  <div onclick="import('./js/modules/confession.js').then(m => m.startConfession())" 
                                       class="bg-[#2f3136] border border-[#202225] rounded-md p-3 flex items-center gap-3 md:gap-4 w-full max-w-[432px] cursor-pointer hover:bg-[#32353b] transition-colors duration-150">
+
                                      
                                      <!-- File Icon -->
                                      <div class="w-10 h-11 md:h-12 bg-[#5865F2] rounded-sm flex items-center justify-center text-white text-xl md:text-2xl flex-shrink-0">
@@ -503,9 +506,11 @@ const channelCategories = [
             { id: 'quiz', name: 'kvízy', icon: '<i class="fas fa-brain"></i>', type: 'text', color: '#5865F2', desc: 'Kdo vás lépe zná? 🧠' },
             { id: 'games-hub', name: 'gamesky', icon: '<i class="fas fa-gamepad"></i>', type: 'text', color: '#3ba55c', desc: 'Kdo spíše, Draw Duel... 🎮' },
             { id: 'puzzle', name: 'puzzle', icon: '<i class="fas fa-puzzle-piece"></i>', type: 'text', color: '#eb459e', desc: 'Skládejte naše vzpomínky kousek po kousku.' },
-            { id: 'tetris', name: 'tetris-tracker', icon: '<i class="fas fa-shapes"></i>', type: 'text', color: '#faa61a', desc: 'Sezóna v Tetris War začíná! 🏆' }
+            { id: 'tetris', name: 'tetris-tracker', icon: '<i class="fas fa-shapes"></i>', type: 'text', color: '#faa61a', desc: 'Sezóna v Tetris War začíná! 🏆' },
+            { id: 'tierlist', name: 'tier-listy', icon: '<i class="fas fa-layer-group"></i>', type: 'text', color: '#5865F2', desc: 'Rankujme všechno od rande po filmy! 🏆' }
         ]
     },
+
     {
         name: "PLÁNOVÁNÍ",
         items: [
@@ -630,8 +635,12 @@ export function switchChannel(channelId, push = true) {
     if (typeof cleanupQuestsRealtime === 'function') cleanupQuestsRealtime();
     if (typeof whoCleanup === 'function') whoCleanup();
     if (typeof drawCleanup === 'function') drawCleanup();
+    
+    // Tier List Cleanup
+    import('./modules/tierlist.js').then(m => m.cleanupRealtime());
 
     // Route
+
     switch (channelId) {
         case 'welcome':
             import('./modules/dashboard.js').then(m => m.renderWelcome());
@@ -695,7 +704,11 @@ export function switchChannel(channelId, push = true) {
         case 'funfacts':
             moduleMap.funfacts().then(m => m.renderFunFacts());
             break;
+        case 'tierlist':
+            moduleMap.tierlist().then(m => m.renderTierList());
+            break;
         case 'letters':
+
             import('./modules/letters.js').then(m => m.renderLetters());
             break;
         case 'manual':
@@ -840,6 +853,7 @@ function exposeGlobals() {
     window.deleteEvent = timelineFn('deleteEvent');
     window.jumpToTimeline = timelineFn('jumpToTimeline');
     window.searchTimeline = timelineFn('searchTimeline');
+    window.renderGlobalSearch = (...args) => import('./modules/search.js').then(m => m.renderGlobalSearch(...args));
 
     // Map Lazy Functions
     window.selectLocation = (...args) => import('./modules/map.js').then(m => m.selectLocation(...args));

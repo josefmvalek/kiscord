@@ -145,8 +145,20 @@ export async function renderDashboard(forceRefresh = false) {
             }
         }
     }
+    
+    // Anniversary Check: 3 months (exactly today 2026-03-24)
+    const start = new Date(state.startDate);
+    const now = new Date();
+    const target = new Date(start);
+    target.setMonth(target.getMonth() + 3);
+    if (now.getFullYear() === target.getFullYear() && 
+        now.getMonth() === target.getMonth() && 
+        now.getDate() === target.getDate()) {
+        import('./achievements.js').then(m => m.autoUnlock('quarter_year_anniversary'));
+    }
 
     const data = getTodayData();
+
     const niceDate = new Date().toLocaleDateString("cs-CZ", { weekday: "long", day: "numeric", month: "long" });
     const hour = new Date().getHours();
     let greeting = hour >= 18 ? "Krásný večer" : (hour >= 11 ? "Ahoj" : "Dobré ráno");

@@ -1725,3 +1725,75 @@ button:active i.fa-tint {
 .animate-bounce-slow {
   animation: bounce-slow 3s ease-in-out infinite;
 }
+
+/* --- TIER LIST CREATOR --- */
+.sortable-tier {
+    min-height: 80px;
+    transition: background-color 0.2s;
+}
+
+.sortable-tier:empty::after {
+    content: "Zatáhni sem položky...";
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: rgba(255,255,255,0.1);
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 800;
+    pointer-events: none;
+    padding: 20px;
+}
+
+.sortable-ghost {
+    opacity: 0.3 !important;
+    background: var(--blurple) !important;
+    border: 2px dashed #fff !important;
+}
+
+.sortable-chosen {
+    transform: scale(1.05);
+    z-index: 1000;
+}
+
+.sortable-drag {
+    opacity: 1 !important;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+}
+
+/* Expanding tiers on mobile */
+@media (max-width: 768px) {
+    .sortable-tier {
+        flex-wrap: wrap !important;
+        overflow-x: visible !important;
+        padding: 8px !important;
+        gap: 8px !important;
+    }
+    
+    .sortable-tier > div {
+        flex-shrink: 1 !important;
+        max-width: calc(100% - 10px); /* Ensure it doesn't push the tier label */
+    }
+
+    /* Smaller items on mobile with truncation */
+    .group-item {
+        padding: 6px 10px !important;
+        gap: 8px !important;
+        max-width: 155px; /* Fit 2-3 items on small screens */
+    }
+
+    .group-item span:last-child {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 10px !important;
+    }
+
+    .group-item .w-8 {
+        width: 1.5rem !important; /* w-6 */
+        height: 1.5rem !important;
+        font-size: 14px !important;
+    }
+}

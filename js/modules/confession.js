@@ -119,10 +119,10 @@ export function startConfession() {
                 div.textContent = lines[lineIndex];
                 div.className = "text-gray-300";
                 output.appendChild(div);
-                
+
                 const terminalBody = document.getElementById("terminal-body");
                 if (terminalBody) terminalBody.scrollTop = terminalBody.scrollHeight;
-                
+
                 lineIndex++;
 
                 if (lineIndex === lines.length) {
@@ -130,7 +130,7 @@ export function startConfession() {
                     const cursorSpan = document.createElement("span");
                     cursorSpan.className = "cmd-cursor";
                     cursorSpan.innerText = " ";
-                    
+
                     const pressKey = document.createElement("span");
                     pressKey.className = "animate-pulse text-gray-500 ml-2";
                     pressKey.innerText = "Press any key to continue...";
@@ -247,7 +247,7 @@ function runTypewriter() {
                 currentP.className = "text-[#eb459e] font-bold text-center text-xl my-4";
             if (part.center)
                 currentP.className = "font-bold text-white text-center mt-6 text-xl";
-            
+
             // Re-apply Indent style for normal paragraphs
             if (!part.bold && !part.highlight && !part.center) {
                 currentP.className = "text-gray-300 leading-relaxed";
@@ -283,7 +283,7 @@ export function responseYes() {
 
     content.innerHTML = `
         <div class="animate-fade-in py-8 px-4 text-center">
-            <h2 class="text-3xl font-black text-[#eb459e] mb-4">❤️ VÍDÁME SE! ❤️</h2>
+            <h2 class="text-3xl font-black text-[#eb459e] mb-4">❤️ MÁM TĚ MOC RÁD! ❤️</h2>
             <p class="text-gray-200 text-lg leading-relaxed mb-8">
                 Děkuju, že jsi mi dala šanci. Jsi moje kotva v celém tom mém chaosu a slibuju, že si toho budu vážit každý den.
                 <br><br>
