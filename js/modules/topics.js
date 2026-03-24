@@ -16,11 +16,11 @@ function ensureModals() {
         topicModal.className = "fixed inset-0 z-[130] hidden bg-[var(--bg-primary)]/95 backdrop-blur-md flex flex-col items-center justify-center animate-fade-in";
         topicModal.innerHTML = `
             <div class="absolute top-6 right-6 flex gap-3">
-                <button id="bookmark-filter-btn" onclick="import('./js/modules/topics.js').then(m => m.toggleViewBookmarks())"
+                <button id="bookmark-filter-btn" onclick="import('./js/modules/topics.js?v=14').then(m => m.toggleViewBookmarks())"
                     class="text-gray-400 hover:text-[#faa61a] w-12 h-12 flex items-center justify-center rounded-full hover:bg-white/10 transition-all active:scale-90" title="Zobrazit záložky">
                     <i class="fas fa-bookmark text-2xl"></i>
                 </button>
-                <button onclick="import('./js/modules/topics.js').then(m => m.closeTopicModal())"
+                <button onclick="import('./js/modules/topics.js?v=14').then(m => m.closeTopicModal())"
                     class="text-gray-400 hover:text-white w-12 h-12 flex items-center justify-center rounded-full hover:bg-white/10 transition-all active:scale-90">
                     <i class="fas fa-times text-2xl"></i>
                 </button>
@@ -33,12 +33,12 @@ function ensureModals() {
                 </div>
                 <div class="flex flex-col items-center gap-6">
                     <div class="flex items-center gap-4">
-                        <button onclick="import('./js/modules/topics.js').then(m => m.prevQuestion())" class="w-12 h-12 rounded-full bg-[#2f3136] hover:bg-[#4f545c] text-white flex items-center justify-center transition-all shadow-lg active:scale-90"><i class="fas fa-chevron-left"></i></button>
-                        <button id="done-btn" onclick="import('./js/modules/topics.js').then(m => m.markQuestionDone())" class="px-8 py-4 rounded-full bg-[#3ba55c] hover:bg-[#2d7d44] text-white font-bold text-lg shadow-xl transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3"><i class="fas fa-check-circle"></i> Hotovo!</button>
-                        <button onclick="import('./js/modules/topics.js').then(m => m.nextQuestion())" class="w-12 h-12 rounded-full bg-[#2f3136] hover:bg-[#4f545c] text-white flex items-center justify-center transition-all shadow-lg active:scale-90"><i class="fas fa-chevron-right"></i></button>
+                        <button onclick="import('./js/modules/topics.js?v=14').then(m => m.prevQuestion())" class="w-12 h-12 rounded-full bg-[#2f3136] hover:bg-[#4f545c] text-white flex items-center justify-center transition-all shadow-lg active:scale-90"><i class="fas fa-chevron-left"></i></button>
+                        <button id="done-btn" onclick="import('./js/modules/topics.js?v=14').then(m => m.markQuestionDone())" class="px-8 py-4 rounded-full bg-[#3ba55c] hover:bg-[#2d7d44] text-white font-bold text-lg shadow-xl transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3"><i class="fas fa-check-circle"></i> Hotovo!</button>
+                        <button onclick="import('./js/modules/topics.js?v=14').then(m => m.nextQuestion())" class="w-12 h-12 rounded-full bg-[#2f3136] hover:bg-[#4f545c] text-white flex items-center justify-center transition-all shadow-lg active:scale-90"><i class="fas fa-chevron-right"></i></button>
                     </div>
                     <div class="flex items-center gap-6">
-                        <button id="topic-bookmark-btn" onclick="import('./js/modules/topics.js').then(m => m.toggleQuestionBookmark())" class="text-gray-500 hover:text-[#faa61a] transition-colors flex items-center gap-2 text-sm font-bold"><i class="far fa-bookmark"></i> Uložit si na potom</button>
+                        <button id="topic-bookmark-btn" onclick="import('./js/modules/topics.js?v=14').then(m => m.toggleQuestionBookmark())" class="text-gray-500 hover:text-[#faa61a] transition-colors flex items-center gap-2 text-sm font-bold"><i class="far fa-bookmark"></i> Uložit si na potom</button>
                         <div id="topic-progress-text" class="text-gray-500 text-xs font-mono tracking-widest uppercase">Otázka 0 z 0</div>
                     </div>
                 </div>
@@ -58,7 +58,7 @@ function ensureModals() {
                 <p class="text-gray-400 mb-8 text-sm leading-relaxed">Opravdu chceš smazat všechnu historii v tomhle tématu a začít od první otázky?</p>
                 <div class="flex gap-3">
                     <button onclick="window.closeModal ? window.closeModal('reset-confirm-modal') : this.closest('#reset-confirm-modal').style.display='none'" class="flex-1 text-gray-400 hover:text-white font-bold py-2 transition text-xs uppercase tracking-widest">Zrušit</button>
-                    <button onclick="import('./js/modules/topics.js').then(m => m.confirmResetTopic())" class="flex-[2] bg-[#faa61a] hover:bg-[#c88515] text-white py-3 rounded-xl font-bold shadow-lg transition active:scale-95">Ano, resetovat</button>
+                    <button onclick="import('./js/modules/topics.js?v=14').then(m => m.confirmResetTopic())" class="flex-[2] bg-[#faa61a] hover:bg-[#c88515] text-white py-3 rounded-xl font-bold shadow-lg transition active:scale-95">Ano, resetovat</button>
                 </div>
             </div>
         `;
@@ -87,11 +87,11 @@ export function renderTopics() {
                       <p class="text-gray-400 text-sm">Hluboké otázky, abychom se poznali ještě líp.</p>
                   </div>
                   <div class="flex gap-2">
-                      <button onclick="import('./js/modules/topics.js').then(m => m.showAddTopicQuestionModal())" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-4 py-2 rounded-lg font-bold transition shadow-lg flex items-center gap-2">
+                      <button onclick="import('./js/modules/topics.js?v=14').then(m => m.showAddTopicQuestionModal())" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-4 py-2 rounded-lg font-bold transition shadow-lg flex items-center gap-2">
                           <i class="fas fa-plus"></i>
                           <span class="hidden sm:inline">Nová otázka</span>
                       </button>
-                      <button onclick="import('./js/modules/topics.js').then(m => m.openRandomTopic())" class="bg-[#2f3136] hover:bg-[#eb459e] text-white px-4 py-2 rounded-lg font-bold transition border border-gray-600 hover:border-[#eb459e] shadow-lg flex items-center gap-2 group">
+                      <button onclick="import('./js/modules/topics.js?v=14').then(m => m.openRandomTopic())" class="bg-[#2f3136] hover:bg-[#eb459e] text-white px-4 py-2 rounded-lg font-bold transition border border-gray-600 hover:border-[#eb459e] shadow-lg flex items-center gap-2 group">
                           <i class="fas fa-random group-hover:rotate-180 transition-transform duration-500"></i>
                           <span class="hidden sm:inline">Náhodná</span>
                       </button>
@@ -102,13 +102,13 @@ export function renderTopics() {
 
     // 1. SPECIÁLNÍ KARTA: ULOŽENÉ
     const resetBookmarksBtn = totalBookmarks > 0
-        ? `<button onclick="event.stopPropagation(); import('./js/modules/topics.js').then(m => m.requestResetBookmarks())" class="absolute top-3 right-3 text-gray-600 hover:text-red-400 p-2 transition z-20 hover:bg-[#202225] rounded-full" title="Vymazat všechny oblíbené">
+        ? `<button onclick="event.stopPropagation(); import('./js/modules/topics.js?v=14').then(m => m.requestResetBookmarks())" class="absolute top-3 right-3 text-gray-600 hover:text-red-400 p-2 transition z-20 hover:bg-[#202225] rounded-full" title="Vymazat všechny oblíbené">
             <i class="fas fa-undo-alt"></i>
           </button>`
         : "";
 
     html += `
-                  <div onclick="import('./js/modules/topics.js').then(m => m.openTopic('bookmarks'))" class="bg-gradient-to-br from-[#2f3136] to-[#202225] rounded-xl p-6 cursor-pointer border border-[#faa61a]/50 hover:border-[#faa61a] hover:-translate-y-1 transition-all duration-300 shadow-lg group relative overflow-hidden flex flex-col h-full">
+                  <div onclick="import('./js/modules/topics.js?v=14').then(m => m.openTopic('bookmarks'))" class="bg-gradient-to-br from-[#2f3136] to-[#202225] rounded-xl p-6 cursor-pointer border border-[#faa61a]/50 hover:border-[#faa61a] hover:-translate-y-1 transition-all duration-300 shadow-lg group relative overflow-hidden flex flex-col h-full">
                       ${resetBookmarksBtn}
                       <div class="absolute -right-6 -bottom-6 text-9xl opacity-10 group-hover:opacity-20 transition-opacity rotate-12 select-none pointer-events-none grayscale-0">💖</div>
                       <div class="flex items-start justify-between mb-4">
@@ -141,13 +141,13 @@ export function renderTopics() {
         const progressColor = percent === 100 ? "#3ba55c" : topic.color;
 
         const resetButton = doneCount > 0
-            ? `<button onclick="event.stopPropagation(); import('./js/modules/topics.js').then(m => m.requestResetTopic('${topic.id}'))" class="absolute top-3 right-3 text-gray-600 hover:text-red-400 p-2 transition z-20 hover:bg-[#202225] rounded-full" title="Resetovat postup">
+            ? `<button onclick="event.stopPropagation(); import('./js/modules/topics.js?v=14').then(m => m.requestResetTopic('${topic.id}'))" class="absolute top-3 right-3 text-gray-600 hover:text-red-400 p-2 transition z-20 hover:bg-[#202225] rounded-full" title="Resetovat postup">
              <i class="fas fa-undo-alt"></i>
            </button>`
             : "";
 
         html += `
-                  <div onclick="import('./js/modules/topics.js').then(m => m.openTopic('${topic.id}'))" class="bg-[#2f3136] rounded-xl p-6 cursor-pointer border border-[#202225] hover:border-[${topic.color}] hover:-translate-y-1 transition-all duration-300 shadow-lg group relative overflow-hidden flex flex-col h-full">
+                  <div onclick="import('./js/modules/topics.js?v=14').then(m => m.openTopic('${topic.id}'))" class="bg-[#2f3136] rounded-xl p-6 cursor-pointer border border-[#202225] hover:border-[${topic.color}] hover:-translate-y-1 transition-all duration-300 shadow-lg group relative overflow-hidden flex flex-col h-full">
                       ${resetButton}
                       <div class="absolute -right-6 -bottom-6 text-9xl opacity-5 group-hover:opacity-10 transition-opacity grayscale group-hover:grayscale-0 rotate-12 select-none pointer-events-none">${topic.icon}</div>
                       <div class="flex items-start justify-between mb-4">
@@ -545,7 +545,7 @@ export function showAddTopicQuestionModal() {
             </div>
             
             <div class="p-6 bg-[#2f3136] border-t border-gray-700">
-                <button onclick="import('./js/modules/topics.js').then(m => m.saveNewTopicQuestion())" class="w-full bg-[#eb459e] hover:bg-[#d63b8c] text-white py-4 rounded-xl font-black text-lg transition shadow-xl transform active:scale-95">
+                <button onclick="import('./js/modules/topics.js?v=14').then(m => m.saveNewTopicQuestion())" class="w-full bg-[#eb459e] hover:bg-[#d63b8c] text-white py-4 rounded-xl font-black text-lg transition shadow-xl transform active:scale-95">
                     PŘIDAT OTÁZKU 💖
                 </button>
             </div>

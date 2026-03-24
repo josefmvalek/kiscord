@@ -25,7 +25,7 @@ export async function renderWatchlist() {
                         <p class="text-gray-400 text-sm mt-1">Co si dneska dáme za dobrodružství? 🍿🎮</p>
                     </div>
                     <div class="flex items-center gap-3">
-                        <button onclick="import('./js/modules/watchlist.js').then(m => m.rollTheDice())" 
+                        <button onclick="import('./js/modules/watchlist.js?v=14').then(m => m.rollTheDice())" 
                             class="bg-gradient-to-r from-[#5865F2] to-[#eb459e] text-white px-6 py-3 rounded-xl font-black text-sm shadow-xl hover:shadow-[#5865F2]/40 transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
                             <i class="fas fa-dice"></i> NÁHODA ROZHODNE
                         </button>
@@ -199,7 +199,7 @@ function renderMemories() {
 
             return `
                 <div class="bg-[#2f3136] border border-[#202225] rounded-xl p-3 flex items-center gap-4 hover:border-[#eb459e]/30 transition group cursor-pointer" 
-                     onclick="import('./js/modules/library.js').then(m => m.openHistoryModal(${item.media_id}))">
+                     onclick="import('./js/modules/library.js?v=14').then(m => m.openHistoryModal(${item.media_id}))">
                     <div class="w-12 h-12 rounded-lg bg-[#202225] flex items-center justify-center text-3xl group-hover:scale-110 transition">
                         ${icon}
                     </div>
@@ -222,7 +222,7 @@ function renderMemories() {
 function renderWlCard(item, isTogether) {
     const iconClass = item.type === 'game' ? 'fa-gamepad' : 'fa-film';
     return `
-        <div class="relative group cursor-pointer" onclick="import('./js/modules/library.js').then(m => m.openHistoryModal(${item.id}))">
+        <div class="relative group cursor-pointer" onclick="import('./js/modules/library.js?v=14').then(m => m.openHistoryModal(${item.id}))">
             <!-- Card Overlay with Moods -->
             <div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10 rounded-xl pointer-events-none">
                 <div class="flex flex-wrap gap-1">
@@ -294,7 +294,7 @@ function showWinnerModal(item) {
             <p class="text-[#FAA61A] font-bold text-sm mb-8 uppercase tracking-widest">${item.type === 'game' ? 'Hra' : 'Filmový večer'}</p>
             
             <div class="flex flex-col gap-3">
-                <button onclick="this.closest('div.fixed').remove(); import('./js/modules/library.js').then(m => m.openPlanningModal('${item.title.replace(/'/g, "\\'")}', '${item.type === 'game' ? 'game' : 'movie'}'))" 
+                <button onclick="this.closest('div.fixed').remove(); import('./js/modules/library.js?v=14').then(m => m.openPlanningModal('${item.title.replace(/'/g, "\\'")}', '${item.type === 'game' ? 'game' : 'movie'}'))" 
                     class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-4 rounded-xl font-black transition transform hover:scale-105">
                     NAPLÁNOVAT TEĎ! 📅
                 </button>

@@ -23,7 +23,7 @@ export async function renderTierList() {
                 <p class="relative z-10 text-gray-400 font-medium mt-2 text-center max-w-md">Rankuj vše od nejlepších vzpomínek po oblíbené filmy.</p>
                 
                 <div class="mt-6 flex gap-4 relative z-10">
-                    <button onclick="import('./js/modules/tierlist.js?v=13').then(m => m.showCreateModal())" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-6 py-2.5 rounded-xl font-bold shadow-lg transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
+                    <button onclick="import('./js/modules/tierlist.js?v=14').then(m => m.showCreateModal())" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-6 py-2.5 rounded-xl font-bold shadow-lg transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
                         <i class="fas fa-plus"></i> Nový Tier List
                     </button>
                 </div>
@@ -128,7 +128,7 @@ function renderListView(tierLists) {
             <div class="col-span-full py-20 flex flex-col items-center justify-center text-gray-500">
                 <i class="fas fa-ghost text-5xl mb-4 opacity-20"></i>
                 <p>Zatím jsi nevytvořil žádný Tier List.</p>
-                <button onclick="import('./js/modules/tierlist.js?v=13').then(m => m.showCreateModal())" class="mt-4 text-[#5865F2] hover:underline font-bold">Začni teď!</button>
+                <button onclick="import('./js/modules/tierlist.js?v=14').then(m => m.showCreateModal())" class="mt-4 text-[#5865F2] hover:underline font-bold">Začni teď!</button>
             </div>
         `;
         return;
@@ -138,13 +138,13 @@ function renderListView(tierLists) {
         const isCreator = tl.creator_id === state.currentUser?.id;
         
         return `
-            <div onclick="import('./js/modules/tierlist.js?v=13').then(m => m.openEditor('${tl.id}'))" 
+            <div onclick="import('./js/modules/tierlist.js?v=14').then(m => m.openEditor('${tl.id}'))" 
                  class="bg-[#2f3136] border border-white/5 rounded-2xl p-6 hover:border-[#5865F2]/50 hover:bg-[#32353b] cursor-pointer transition-all group overflow-hidden relative">
                 
                 <div class="absolute top-0 right-0 w-32 h-32 bg-[#5865F2]/5 rounded-bl-full -mr-16 -mt-16 group-hover:bg-[#5865F2]/10 transition-colors pointer-events-none"></div>
                 
                 ${isCreator ? `
-                    <button id="delete-btn-${tl.id}" onclick="event.stopPropagation(); import('./js/modules/tierlist.js?v=13').then(m => m.showDeleteModal('${tl.id}', '${tl.title.replace(/'/g, "\\'")}'))" 
+                    <button id="delete-btn-${tl.id}" onclick="event.stopPropagation(); import('./js/modules/tierlist.js?v=14').then(m => m.showDeleteModal('${tl.id}', '${tl.title.replace(/'/g, "\\'")}'))" 
                             class="absolute top-3 right-3 w-8 h-8 rounded-full bg-[#ed4245] text-white flex items-center justify-center transition-all z-50 shadow-xl">
                         <i class="fas fa-trash-alt text-xs"></i>
                     </button>
@@ -199,7 +199,7 @@ export function showDeleteModal(id, title) {
         ${renderButton({ 
             text: 'Smazat žebříček', 
             variant: 'danger', 
-            onclick: `import('./js/modules/tierlist.js?v=13').then(m => { m.deleteTierList('${id}'); document.getElementById('delete-confirm-modal').remove(); })`,
+            onclick: `import('./js/modules/tierlist.js?v=14').then(m => { m.deleteTierList('${id}'); document.getElementById('delete-confirm-modal').remove(); })`,
             className: 'flex-1'
         })}
     `;
@@ -306,7 +306,7 @@ export function showCreateModal() {
                     </div>
                 </div>
 
-                <button onclick="import('./js/modules/tierlist.js?v=13').then(m => m.handleCreate())" class="w-full mt-8 bg-[#5865F2] hover:bg-[#4752c4] text-white font-black py-4 rounded-2xl shadow-lg transition transform hover:scale-[1.02] active:scale-95 text-lg">
+                <button onclick="import('./js/modules/tierlist.js?v=14').then(m => m.handleCreate())" class="w-full mt-8 bg-[#5865F2] hover:bg-[#4752c4] text-white font-black py-4 rounded-2xl shadow-lg transition transform hover:scale-[1.02] active:scale-95 text-lg">
                     Vytvořit žebříček
                 </button>
             </div>
@@ -401,7 +401,7 @@ function renderEditorUI() {
             <!-- Discord-style Header -->
             <div class="min-h-12 border-b border-[#202225] flex flex-wrap items-center justify-between px-4 py-2 gap-2 bg-[#36393f] z-20 shadow-sm flex-shrink-0">
                 <div class="flex items-center gap-2 md:gap-3">
-                    <button onclick="import('./js/modules/tierlist.js?v=13').then(m => m.renderTierList())" class="text-gray-400 hover:text-white transition-colors p-1">
+                    <button onclick="import('./js/modules/tierlist.js?v=14').then(m => m.renderTierList())" class="text-gray-400 hover:text-white transition-colors p-1">
                         <i class="fas fa-chevron-left"></i>
                     </button>
                     <div class="w-px h-6 bg-white/5 mx-0.5 md:mx-1"></div>
@@ -413,11 +413,11 @@ function renderEditorUI() {
                 </div>
                 
                 <div class="flex items-center gap-2">
-                    <button id="duel-toggle-btn" onclick="import('./js/modules/tierlist.js?v=13').then(m => m.toggleDuelMode())" 
+                    <button id="duel-toggle-btn" onclick="import('./js/modules/tierlist.js?v=14').then(m => m.toggleDuelMode())" 
                             class="${activeTierList.is_duel ? 'bg-[#eb459e] text-white shadow-[0_0_15px_rgba(235,69,158,0.5)]' : 'bg-[#5865F2] text-white border-2 border-white/20 hover:bg-[#4752c4]'} px-3 md:px-5 py-2 rounded-xl text-xs font-black transition-all duration-200 flex items-center gap-2 active:scale-90 uppercase tracking-wider">
                         <i class="fas fa-swords"></i> <span>${activeTierList.is_duel ? 'Duel Aktivní' : 'Duel'}</span>
                     </button>
-                    <button onclick="import('./js/modules/tierlist.js?v=13').then(m => m.saveTierList())" class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-2 md:px-3 py-1.5 rounded text-[10px] md:text-xs font-bold transition flex items-center gap-1.5 shadow-lg shadow-[#5865F2]/20">
+                    <button onclick="import('./js/modules/tierlist.js?v=14').then(m => m.saveTierList())" class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-2 md:px-3 py-1.5 rounded text-[10px] md:text-xs font-bold transition flex items-center gap-1.5 shadow-lg shadow-[#5865F2]/20">
                         <i class="fas fa-save"></i> <span class="hidden xs:inline">Uložit</span>
                     </button>
                 </div>
@@ -658,14 +658,14 @@ function renderDuelStatusBar() {
             <div class="h-4 md:h-6 w-px bg-white/5 mx-1 md:mx-2"></div>
             
             ${!isRevealed ? `
-                <button onclick="import('./js/modules/tierlist.js').then(m => m.markReady())" 
+                <button onclick="import('./js/modules/tierlist.js?v=14').then(m => m.markReady())" 
                         class="${amIReady ? 'bg-[#3ba55c] shadow-green-900/40' : 'bg-[#eb459e] shadow-[#eb459e]/20'} text-white px-3 md:px-5 py-1.5 rounded-full text-[9px] md:text-[10px] font-black shadow-lg transition-all transform hover:scale-105 active:scale-95 flex-shrink-0">
                     ${amIReady ? 'PŘIPRAVEN ✅' : 'HOTOVO'}
                 </button>
             ` : ''}
             
             ${joseReady && klarkaReady && !isRevealed ? `
-                <button onclick="import('./js/modules/tierlist.js').then(m => m.revealDuel())" 
+                <button onclick="import('./js/modules/tierlist.js?v=14').then(m => m.revealDuel())" 
                         class="bg-yellow-500 text-black px-5 py-1.5 rounded-full text-[10px] font-black shadow-lg shadow-yellow-500/20 animate-bounce active:scale-95">
                     ODHALIT VÝSLEDKY! 🔥
                 </button>
@@ -675,6 +675,10 @@ function renderDuelStatusBar() {
 }
 
 export async function markReady() {
+    if (!activeTierList || !activeTierList.duel_data) {
+        console.error("[TIERLIST] markReady failed: No active tier list or duel data.");
+        return;
+    }
     const user = state.currentUser.name?.toLowerCase().includes('klárka') ? 'klarka' : 'jose';
     const currentReady = activeTierList.duel_data[`${user}_ready`];
     const isReady = !currentReady;
@@ -691,6 +695,10 @@ export async function markReady() {
 }
 
 export async function revealDuel() {
+    if (!activeTierList || !activeTierList.duel_data) {
+        console.error("[TIERLIST] revealDuel failed: No active tier list or duel data.");
+        return;
+    }
     triggerConfetti();
     triggerHaptic('heavy');
     

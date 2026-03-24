@@ -18,23 +18,23 @@ import { setupRealtimeSync } from './core/sync.js';
 
 // Lazy-loaded modules mapping (for better maintenance)
 const moduleMap = {
-    'calendar': () => import('./modules/calendar.js'),
-    'timeline': () => import('./modules/timeline.js'),
-    'library': () => import('./modules/library.js'),
-    'topics': () => import('./modules/topics.js'),
-    'games': () => import('./modules/games.js'),
-    'confession': () => import('./modules/confession.js'),
-    'health': () => import('./modules/health.js'),
-    'bucketlist': () => import('./modules/bucketlist.js'),
-    'achievements': () => import('./modules/achievements.js'),
-    'daily-questions': () => import('./modules/dailyQuestions.js'),
-    'game-who': () => import('./modules/gameWho.js'),
-    'game-draw': () => import('./modules/gameDraw.js'),
-    'funfacts': () => import('./modules/funfacts.js'),
-    'map': () => import('./modules/map.js'),
-    'search': () => import('./modules/search.js'),
-    'profile': () => import('./modules/profile.js'),
-    'tierlist': () => import('./modules/tierlist.js?v=13')
+    'calendar': () => import('./modules/calendar.js?v=14'),
+    'timeline': () => import('./modules/timeline.js?v=14'),
+    'library': () => import('./modules/library.js?v=14'),
+    'topics': () => import('./modules/topics.js?v=14'),
+    'games': () => import('./modules/games.js?v=14'),
+    'confession': () => import('./modules/confession.js?v=14'),
+    'health': () => import('./modules/health.js?v=14'),
+    'bucketlist': () => import('./modules/bucketlist.js?v=14'),
+    'achievements': () => import('./modules/achievements.js?v=14'),
+    'daily-questions': () => import('./modules/dailyQuestions.js?v=14'),
+    'game-who': () => import('./modules/gameWho.js?v=14'),
+    'game-draw': () => import('./modules/gameDraw.js?v=14'),
+    'funfacts': () => import('./modules/funfacts.js?v=14'),
+    'map': () => import('./modules/map.js?v=14'),
+    'search': () => import('./modules/search.js?v=14'),
+    'profile': () => import('./modules/profile.js?v=14'),
+    'tierlist': () => import('./modules/tierlist.js?v=14')
 };
 
 
@@ -853,7 +853,7 @@ function exposeGlobals() {
     window.deleteEvent = timelineFn('deleteEvent');
     window.jumpToTimeline = timelineFn('jumpToTimeline');
     window.searchTimeline = timelineFn('searchTimeline');
-    window.renderGlobalSearch = (...args) => import('./modules/search.js').then(m => m.renderGlobalSearch(...args));
+    window.renderGlobalSearch = (...args) => import('./modules/search.js?v=14').then(m => m.renderGlobalSearch(...args));
 
     // Map Lazy Functions
     window.selectLocation = (...args) => import('./modules/map.js').then(m => m.selectLocation(...args));
