@@ -1,0 +1,119 @@
+/* ==========================================================
+   MODULES.CSS — Feature / Screen-Specific Styles
+   Overrides and layouts that apply to a single module only.
+   ========================================================== */
+
+/* --- MAP MODULE --- */
+#leaflet-map {
+  width: 100%; height: 100%;
+  background: #e3e8eb; z-index: 1;
+}
+.custom-div-icon { background: transparent; border: none; }
+.marker-pin {
+  width: 30px; height: 30px;
+  border-radius: 50% 50% 50% 0;
+  background: #5865f2;
+  position: absolute;
+  transform: rotate(-45deg);
+  left: 50%; top: 50%;
+  margin: -15px 0 0 -15px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+  border: 2px solid white;
+}
+.marker-pin i { transform: rotate(45deg); color: white; font-size: 14px; }
+.marker-pin:hover { transform: rotate(-45deg) scale(1.2); z-index: 1000; transition: transform 0.2s; }
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip { background: #2f3136; color: #dcddde; border: 1px solid #202225; box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4); }
+.leaflet-container a { color: #5865f2; }
+.leaflet-popup-content b { color: #fff; font-size: 14px; }
+.leaflet-container a.leaflet-popup-close-button { color: #b9bbbe; }
+@media (max-width: 768px) {
+  #leaflet-map { min-height: 350px; }
+}
+
+/* --- MAP MOBILE BOTTOM SHEET --- */
+.mobile-map-overlay {
+  background: var(--bg-secondary);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+  display: flex; flex-direction: column; z-index: 999;
+}
+@media (max-width: 768px) {
+  .mobile-map-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 85vh !important;
+    will-change: transform;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1);
+  }
+  #detail-content { overscroll-behavior: contain; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+  .mobile-list-overlay { position: absolute; inset: 0; background: var(--bg-secondary); z-index: 900; display: none; }
+  .mobile-list-overlay.active { display: flex; }
+}
+@media (min-width: 769px) {
+  .mobile-map-overlay {
+    height: auto !important;
+    max-height: 60vh;
+    bottom: 20px; left: 20px; right: 20px;
+    border-radius: 20px;
+    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.8);
+  }
+  #sheet-handle { display: none !important; }
+  .mobile-map-overlay .fa-times { top: 10px !important; right: 10px !important; }
+  #detail-content { padding-bottom: 10px; }
+}
+
+/* --- MAP MOBILE GESTURES --- */
+.touch-none { touch-action: none; }
+.sheet-handle-area {
+  width: 100%; height: 40px;
+  position: relative; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  cursor: grab; z-index: 50; background: transparent;
+}
+.sheet-handle-bar { width: 40px; height: 5px; background-color: #4f545c; border-radius: 10px; transition: background-color 0.2s; }
+.sheet-handle-area:active .sheet-handle-bar { background-color: #eb459e; }
+.sheet-transition { transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+/* --- GOODNIGHT OVERLAY STARS --- */
+#stars-container { display: block; }
+#stars-container::after {
+  content: " ";
+  position: absolute; top: 0; left: 0;
+  width: 2px; height: 2px;
+  border-radius: 50%; background: white;
+  box-shadow:
+    10vw 10vh 0px 0px white, 20vw 80vh 0px 0px white,
+    30vw 30vh 1px 0px white, 40vw 50vh 0px 0px white,
+    50vw 10vh 0px 0px white, 60vw 90vh 1px 0px white,
+    70vw 20vh 0px 0px white, 80vw 60vh 0px 0px white,
+    90vw 40vh 1px 0px white, 15vw 45vh 0px 0px white,
+    55vw 25vh 1px 0px white, 85vw 75vh 0px 0px white,
+    25vw 95vh 0px 0px white, 65vw 15vh 1px 0px white;
+  animation: twinkle 3s infinite ease-in-out alternate;
+}
+
+/* --- GOOD MORNING OVERLAY --- */
+#good-morning-overlay { background: linear-gradient(135deg, #fceabb 0%, #f8b500 100%); }
+.sun-rays {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 70%);
+  z-index: 0; pointer-events: none;
+}
+
+/* --- TIER LIST MOBILE LAYOUT --- */
+@media (max-width: 768px) {
+  .sortable-tier {
+    flex-wrap: wrap !important;
+    overflow-x: visible !important;
+    padding: 8px !important;
+    gap: 8px !important;
+  }
+  .sortable-tier > div { flex-shrink: 1 !important; max-width: calc(100% - 10px); }
+  .group-item { padding: 6px 10px !important; gap: 8px !important; max-width: 155px; }
+  .group-item span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px !important; }
+  .group-item .w-8 { width: 1.5rem !important; height: 1.5rem !important; font-size: 14px !important; }
+}

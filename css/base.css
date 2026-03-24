@@ -1,0 +1,107 @@
+/* ==========================================================
+   BASE.CSS — Reset, Global Styles & FontAwesome Fixes
+   ========================================================== */
+
+/* Global Font Overrides for Theme */
+.theme-valentines, .theme-valentines *,
+.theme-tetris, .theme-tetris * {
+  font-family: var(--font-main);
+}
+
+/* Protect FontAwesome Icons from theme font overrides */
+.fas, .fa-solid, .fa, .far, .fa-regular, .fab, .fa-brands {
+  font-family: inherit;
+}
+.fas, .fa-solid, .fa { font-family: "Font Awesome 6 Free", sans-serif !important; font-weight: 900 !important; }
+.far, .fa-regular { font-family: "Font Awesome 6 Free", sans-serif !important; font-weight: 400 !important; }
+.fab, .fa-brands { font-family: "Font Awesome 6 Brands", sans-serif !important; font-weight: 400 !important; }
+
+/* Valentine theme color overrides for Tailwind classes */
+body.theme-valentines .text-white { color: var(--text-header) !important; }
+body.theme-valentines .text-gray-300,
+body.theme-valentines .text-gray-400 { color: var(--text-normal) !important; }
+body.theme-valentines .text-gray-500 { color: var(--text-muted) !important; }
+body.theme-valentines .bg-\[\#36393f\] { background-color: var(--bg-primary) !important; }
+body.theme-valentines .bg-\[\#2f3136\] { background-color: var(--bg-secondary) !important; }
+body.theme-valentines .bg-\[\#202225\] { background-color: var(--bg-tertiary) !important; }
+body.theme-valentines .bg-\[\#5865F2\] { background-color: var(--blurple) !important; }
+body.theme-valentines .hover\:bg-\[\#4752c4\]:hover { background-color: var(--blurple-hover) !important; }
+body.theme-valentines .border-\[\#202225\] { border-color: var(--bg-tertiary) !important; }
+
+/* Global Focus Styles */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--blurple);
+  outline-offset: 2px;
+}
+
+/* Base Layout */
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: var(--font-main);
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-primary);
+  color: var(--text-normal);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html { scroll-behavior: smooth; }
+
+/* Inputs: ensure text is always selectable */
+input, textarea {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+/* Global Interaction Utility */
+.active\:scale-95:active { transform: scale(0.95); }
+
+/* Scrollbar — Custom Discord-style */
+.custom-scrollbar { -webkit-overflow-scrolling: touch; }
+
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  transition: background 0.3s;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* Scrollbar Utilities — Hide but keep scrolling */
+.hide-scrollbar::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar,
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Premium Sidebar Background */
+.bg-\[var\(--bg-secondary\)\] {
+  border-right: 1px solid var(--bg-tertiary);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+/* Messages Container — Android PWA fix */
+#messages-container {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: auto !important;
+  overscroll-behavior-y: contain;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+/* Fix for sticky headers in library */
+.sticky.top-0 { touch-action: pan-y !important; }
+
+/* Mobile Map Layout */
+@media (max-width: 768px) {
+  .flex-col-mobile { flex-direction: column; }
+}

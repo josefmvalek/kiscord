@@ -1,0 +1,114 @@
+/* ==========================================================
+   TOKENS.CSS — Design Tokens & Themes
+   All CSS custom properties and theme overrides live here.
+   ========================================================== */
+
+:root {
+  /* --- DESIGN TOKENS (Discord Defaults) --- */
+  --bg-tertiary: #202225;
+  --bg-secondary: #2f3136;
+  --bg-primary: #36393f;
+  --bg-modifier-hover: rgba(79, 84, 92, 0.16);
+  --bg-modifier-active: rgba(79, 84, 92, 0.24);
+  --bg-modifier-selected: rgba(79, 84, 92, 0.32);
+  
+  --text-normal: #dcddde;
+  --text-muted: #72767d;
+  --text-header: #ffffff;
+  --text-link: #00aff4;
+  
+  --interactive-normal: #b9bbbe;
+  --interactive-hover: #dcddde;
+  --interactive-active: #ffffff;
+  --interactive-muted: #4f545c;
+  
+  --blurple: #5865f2;
+  --blurple-hover: #4752c4;
+  --green: #3ba55c;
+  --red: #ed4245;
+  --yellow: #faa61a;
+  --pink: #eb459e;
+  
+  --font-main: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: "Inter", sans-serif;
+  
+  --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  --modal-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+}
+
+/* --- VALENTINE'S THEME --- */
+.theme-valentines {
+  --bg-tertiary: #2d0a12;
+  --bg-secondary: #4a101e;
+  --bg-primary: #6d2232;
+  --bg-modifier-hover: rgba(255, 105, 180, 0.1);
+  --bg-modifier-active: rgba(255, 105, 180, 0.2);
+  --text-normal: #ffd1dc;
+  --text-muted: #fab1c6;
+  --text-header: #fff0f5;
+  --text-link: #ff69b4;
+  --interactive-normal: #fab1c6;
+  --interactive-hover: #ffffff;
+  --blurple: #ff69b4;
+  --blurple-hover: #ff1493;
+  --green: #00ff00;
+  --red: #ff0000;
+  --yellow: #ffff00;
+  --pink: #ff1493;
+  --font-main: "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive;
+  --font-display: "Indie Flower", cursive;
+}
+
+/* --- CHRISTMAS THEME --- */
+.theme-christmas {
+  --bg-tertiary: #420d0d;
+  --bg-secondary: #5c1414;
+  --bg-primary: #240a0a;
+  --bg-modifier-hover: rgba(255, 215, 0, 0.1);
+  --blurple: #c92a2a;
+  --green: #ffd700;
+  --text-normal: #f0f0f0;
+  --interactive-normal: #e8e8e8;
+}
+
+/* --- TETRIS THEME --- */
+.theme-tetris {
+  --bg-tertiary: #0d0e15;
+  --bg-secondary: #151620;
+  --bg-primary: #1c1d29;
+  --blurple: #00e5ff;
+  --green: #69f0ae;
+  --red: #ff5252;
+  --yellow: #ffd740;
+  --pink: #e040fb;
+  --text-normal: #33ff00;
+  --interactive-normal: #33ff00;
+  --font-main: "Press Start 2P", cursive;
+}
+
+/* --- FOREST THEME --- */
+.theme-forest {
+  --bg-tertiary: #1a2a1a;
+  --bg-secondary: #243a24;
+  --bg-primary: #2d4a2d;
+  --blurple: #5a8a5a;
+  --green: #8ebf8e;
+  --text-normal: #d1e0d1;
+  --interactive-normal: #94a894;
+}
+
+/* --- GOLD THEME --- */
+.theme-gold {
+  --bg-tertiary: #1a160d;
+  --bg-secondary: #2f2814;
+  --bg-primary: #42381c;
+  --blurple: #d4af37;
+  --green: #ffd700;
+  --text-normal: #f1e5ac;
+  --interactive-normal: #d4af37;
+}
+
+.theme-tetris { font-size: 0.8rem; }
