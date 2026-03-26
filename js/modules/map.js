@@ -8,6 +8,8 @@ import { loadLeaflet } from '../core/loader.js'; // Fallback or imported
 
 // --- STATE ---
 let selectedDateLocation = null;
+let lastMapClick = { lat: 49.069, lng: 17.464 };
+let selectedLocCat = null;
 
 // --- ROUTE LOGIC ---
 
@@ -60,7 +62,7 @@ export function updateRouteUI() {
                 <span class="text-[10px] bg-[#2f3136] text-gray-400 w-4 h-4 rounded-full flex items-center justify-center font-bold">${i + 1}</span>
                 <span class="text-xs text-gray-200 truncate font-medium">${loc.name}</span>
             </div>
-            <button onclick="import('./js/modules/map.js').then(m => m.removeFromRoute(${i}))" class="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition">
+            <button onclick="KiscordMap.removeFromRoute(${i})" class="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -88,6 +90,16 @@ export function openGoogleMapsRoute() {
 // --- EXPORTED FUNCTIONS ---
 
 export function renderMap() {
+    // Expose API to window
+    window.KiscordMap = { 
+        renderMap, addToRoute, removeFromRoute, clearRoute, updateRouteUI, 
+        openGoogleMapsRoute, renderMarkers, fetchMarkersMemories, 
+        renderLocationList, filterMap, selectLocation, rateDate, 
+        saveDateToCalendar, closeLocationDetail, pickRandomLocation, 
+        searchLocations, jumpToLocation, showAddLocationModal, saveNewLocation,
+        setLocCat: (cat) => { selectedLocCat = cat; }
+    };
+
     const container = document.getElementById("messages-container");
     if (!container) return;
 
@@ -112,14 +124,14 @@ export function renderMap() {
                         <div class="text-xs font-bold text-[#eb459e] flex items-center gap-1">
                             <i class="fas fa-map"></i> TRASA (<span id="route-count">0</span>)
                         </div>
-                        <button onclick="import('./js/modules/map.js').then(m => m.clearRoute())" class="text-[10px] text-gray-400 hover:text-red-400 transition">
+                        <button onclick="KiscordMap.clearRoute()" class="text-[10px] text-gray-400 hover:text-red-400 transition">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                     <div id="route-list" class="space-y-1 mb-2">
                         <div class="text-[10px] text-gray-500 italic text-center py-2">Vyber místa a klikni na "+ Přidat do trasy"</div>
                     </div>
-                    <button onclick="import('./js/modules/map.js').then(m => m.openGoogleMapsRoute())" class="w-full bg-[#202225] hover:bg-[#2f3136] text-gray-300 hover:text-white text-xs font-bold py-2 rounded transition border border-[#2f3136]">
+                    <button onclick="KiscordMap.openGoogleMapsRoute()" class="w-full bg-[#202225] hover:bg-[#2f3136] text-gray-300 hover:text-white text-xs font-bold py-2 rounded transition border border-[#2f3136]">
                         Otevřít v Google Maps ↗
                     </button>
                 </div>
@@ -149,13 +161,13 @@ export function renderMap() {
                                 <i class="fas fa-search text-gray-400 group-focus-within:text-white transition"></i>
                             </div>
                             <input type="text" id="planner-search" placeholder="Kam vyrazíme?" 
-                                oninput="import('./js/modules/map.js').then(m => m.searchLocations(this.value))"
+                                oninput="KiscordMap.searchLocations(this.value)"
                                 class="w-full bg-[#2f3136] text-gray-200 placeholder-gray-500 text-sm rounded-lg pl-10 pr-4 py-3 border border-[#202225] outline-none focus:border-[#5865F2] focus:ring-1 focus:ring-[#5865F2] transition h-[46px]">
                         </div>
-                        <button onclick="import('./js/modules/map.js').then(m => m.showAddLocationModal())" class="w-12 h-[46px] bg-[#3ba55c] hover:bg-[#2d7d46] text-white rounded-lg shadow-lg flex items-center justify-center transition transform hover:scale-105 active:scale-95" title="Přidat místo">
+                        <button onclick="KiscordMap.showAddLocationModal()" class="w-12 h-[46px] bg-[#3ba55c] hover:bg-[#2d7d46] text-white rounded-lg shadow-lg flex items-center justify-center transition transform hover:scale-105 active:scale-95" title="Přidat místo">
                             <i class="fas fa-plus text-xl"></i>
                         </button>
-                        <button onclick="import('./js/modules/map.js').then(m => m.pickRandomLocation())" class="w-12 h-[46px] bg-[#eb459e] hover:bg-[#d63b8c] text-white rounded-lg shadow-lg flex items-center justify-center transition transform hover:scale-105 active:scale-95" title="Náhodné místo">
+                        <button onclick="KiscordMap.pickRandomLocation()" class="w-12 h-[46px] bg-[#eb459e] hover:bg-[#d63b8c] text-white rounded-lg shadow-lg flex items-center justify-center transition transform hover:scale-105 active:scale-95" title="Náhodné místo">
                             <i class="fas fa-dice text-xl"></i>
                         </button>
                         <button onclick="document.getElementById('planner-sidebar').classList.toggle('-translate-x-full')" class="w-12 h-[46px] bg-[#5865F2] hover:bg-[#4752c4] text-white rounded-lg shadow-lg flex items-center justify-center transition transform hover:scale-105 active:scale-95">
@@ -165,19 +177,19 @@ export function renderMap() {
 
                     <!-- Filters Row -->
                     <div class="flex gap-2 overflow-x-auto pointer-events-auto no-scrollbar pb-1 mask-linear-fade">
-                        <button onclick="import('./js/modules/map.js').then(m => m.filterMap('all'))" data-filter="all" class="filter-btn active whitespace-nowrap px-4 py-1.5 rounded-full bg-[#5865F2] text-white text-xs font-bold shadow-md transition transform hover:scale-105">
+                        <button onclick="KiscordMap.filterMap('all')" data-filter="all" class="filter-btn active whitespace-nowrap px-4 py-1.5 rounded-full bg-[#5865F2] text-white text-xs font-bold shadow-md transition transform hover:scale-105">
                             Vše
                         </button>
-                        <button onclick="import('./js/modules/map.js').then(m => m.filterMap('walk'))" data-filter="walk" class="filter-btn whitespace-nowrap px-4 py-1.5 rounded-full bg-[#2f3136] text-gray-300 border border-[#202225] text-xs font-bold shadow-md transition hover:bg-[#36393f] hover:text-white flex items-center gap-1">
+                        <button onclick="KiscordMap.filterMap('walk')" data-filter="walk" class="filter-btn whitespace-nowrap px-4 py-1.5 rounded-full bg-[#2f3136] text-gray-300 border border-[#202225] text-xs font-bold shadow-md transition hover:bg-[#36393f] hover:text-white flex items-center gap-1">
                             <i class="fas fa-tree text-[#3ba55c]"></i> Procházky
                         </button>
-                        <button onclick="import('./js/modules/map.js').then(m => m.filterMap('view'))" data-filter="view" class="filter-btn whitespace-nowrap px-4 py-1.5 rounded-full bg-[#2f3136] text-gray-300 border border-[#202225] text-xs font-bold shadow-md transition hover:bg-[#36393f] hover:text-white flex items-center gap-1">
+                        <button onclick="KiscordMap.filterMap('view')" data-filter="view" class="filter-btn whitespace-nowrap px-4 py-1.5 rounded-full bg-[#2f3136] text-gray-300 border border-[#202225] text-xs font-bold shadow-md transition hover:bg-[#36393f] hover:text-white flex items-center gap-1">
                             <i class="fas fa-binoculars text-[#eb459e]"></i> Výhledy
                         </button>
-                        <button onclick="import('./js/modules/map.js').then(m => m.filterMap('fun'))" data-filter="fun" class="filter-btn whitespace-nowrap px-4 py-1.5 rounded-full bg-[#2f3136] text-gray-300 border border-[#202225] text-xs font-bold shadow-md transition hover:bg-[#36393f] hover:text-white flex items-center gap-1">
+                        <button onclick="KiscordMap.filterMap('fun')" data-filter="fun" class="filter-btn whitespace-nowrap px-4 py-1.5 rounded-full bg-[#2f3136] text-gray-300 border border-[#202225] text-xs font-bold shadow-md transition hover:bg-[#36393f] hover:text-white flex items-center gap-1">
                             <i class="fas fa-bolt text-[#ed4245]"></i> Zábava
                         </button>
-                         <button onclick="import('./js/modules/map.js').then(m => m.filterMap('food'))" data-filter="food" class="filter-btn whitespace-nowrap px-4 py-1.5 rounded-full bg-[#2f3136] text-gray-300 border border-[#202225] text-xs font-bold shadow-md transition hover:bg-[#36393f] hover:text-white flex items-center gap-1">
+                         <button onclick="KiscordMap.filterMap('food')" data-filter="food" class="filter-btn whitespace-nowrap px-4 py-1.5 rounded-full bg-[#2f3136] text-gray-300 border border-[#202225] text-xs font-bold shadow-md transition hover:bg-[#36393f] hover:text-white flex items-center gap-1">
                             <i class="fas fa-utensils text-[#faa61a]"></i> Jídlo
                         </button>
                     </div>
@@ -216,7 +228,7 @@ export function renderMap() {
         // Add Click Listener for quick Adding
         map.on('click', (e) => {
             if (window.showNotification) window.showNotification("Klikni na '+' nahoře pro přidání tohoto místa! 📍", "info");
-            window.lastMapClick = e.latlng;
+            lastMapClick = e.latlng;
         });
 
         // Use state.timelineEvents if already loaded
@@ -291,7 +303,7 @@ export function renderMarkers(locations) {
                 <div style="color:#fff; font-size:12px; font-weight:bold;">${memory.event_date || ''}</div>
                 <div style="color:#dcddde; font-size:11px; font-style:italic;">"${memory.title}"</div>
                 
-                <button onclick="import('./js/modules/timeline.js').then(m => m.jumpToTimeline('${memory.id}'))" style="margin-top: 5px; background: #eb459e; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; width: 100%;">
+                <button onclick="Timeline.jumpToTimeline('${memory.id}')" style="margin-top: 5px; background: #eb459e; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; width: 100%;">
                     <i class="fas fa-external-link-alt"></i> Přejít na vzpomínku
                 </button>
             </div>`;
@@ -343,7 +355,7 @@ export function renderLocationList(locations) {
         const borderClass = rating > 0 ? "border-[#faa61a]/50" : "border-[#202225]";
 
         listContainer.innerHTML += `
-        <div onclick="import('./js/modules/map.js').then(m => m.selectLocation(${loc.id}))" class="p-3 bg-[#36393f] hover:bg-[#40444b] rounded cursor-pointer transition flex items-center gap-3 border ${borderClass} group mb-1 relative overflow-hidden">
+        <div onclick="KiscordMap.selectLocation(${loc.id})" class="p-3 bg-[#36393f] hover:bg-[#40444b] rounded cursor-pointer transition flex items-center gap-3 border ${borderClass} group mb-1 relative overflow-hidden">
             ${rating > 0 ? '<div class="absolute top-0 right-0 w-3 h-3 bg-[#faa61a] rounded-bl-lg"></div>' : ""}
             <div class="text-lg group-hover:scale-110 transition">${icon}</div>
             <div class="min-w-0">
@@ -414,7 +426,7 @@ export function selectLocation(id) {
     let starsHtml = "";
     for (let i = 1; i <= 5; i++) {
         const color = i <= currentRating ? "text-[#faa61a]" : "text-gray-600";
-        starsHtml += `<i class="fas fa-star ${color} cursor-pointer hover:text-yellow-400 transition" onclick="import('./js/modules/map.js').then(m => m.rateDate(${loc.id}, ${i}))"></i>`;
+        starsHtml += `<i class="fas fa-star ${color} cursor-pointer hover:text-yellow-400 transition" onclick="KiscordMap.rateDate(${loc.id}, ${i})"></i>`;
     }
 
     // Google Maps URL
@@ -430,7 +442,7 @@ export function selectLocation(id) {
                         <span class="font-medium">-1°C • Jasno</span>
                     </div>
                 </div>
-                <button onclick="import('./js/modules/map.js').then(m => m.closeLocationDetail())" 
+                <button onclick="KiscordMap.closeLocationDetail()" 
                         class="flex-shrink-0 w-10 h-10 bg-[#2f3136] hover:bg-[#ed4245] text-white rounded-xl flex items-center justify-center transition shadow-lg border border-white/5 group">
                     <i class="fas fa-times text-xl group-hover:rotate-90 transition-transform"></i>
                 </button>
@@ -447,7 +459,7 @@ export function selectLocation(id) {
 
             <!-- Action Buttons -->
             <div class="grid grid-cols-3 gap-3 mb-6">
-                <button onclick="import('./js/modules/map.js').then(m => m.addToRoute(${loc.id}))" class="bg-[#5865F2] hover:bg-[#4752c4] text-white py-2.5 rounded-lg font-bold shadow-lg flex items-center justify-center gap-2 transition transform hover:scale-105 active:scale-95">
+                <button onclick="KiscordMap.addToRoute(${loc.id})" class="bg-[#5865F2] hover:bg-[#4752c4] text-white py-2.5 rounded-lg font-bold shadow-lg flex items-center justify-center gap-2 transition transform hover:scale-105 active:scale-95">
                     <i class="fas fa-plus"></i> Přidat
                 </button>
                 <button onclick="window.showNotification('Galerie se připravuje 📸', 'info')" class="bg-[#2f3136] hover:bg-[#36393f] text-gray-300 hover:text-white border border-[#202225] py-2.5 rounded-lg font-medium shadow-md flex items-center justify-center gap-2 transition">
@@ -464,7 +476,7 @@ export function selectLocation(id) {
                     <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Kdy to vidíš?</label>
                     <div class="flex gap-2">
                         <input type="datetime-local" id="date-input" class="flex-1 bg-[#2f3136] text-white text-sm p-2.5 rounded-lg border border-[#202225] outline-none focus:border-[#eb459e] focus:bg-[#36393f] transition h-10">
-                        <button onclick="import('./js/modules/map.js').then(m => m.saveDateToCalendar())" class="w-10 h-10 bg-[#5865F2] text-white rounded-lg flex items-center justify-center hover:bg-[#4752c4] transition shadow-lg" title="Uložit do kalendáře">
+                        <button onclick="KiscordMap.saveDateToCalendar()" class="w-10 h-10 bg-[#5865F2] text-white rounded-lg flex items-center justify-center hover:bg-[#4752c4] transition shadow-lg" title="Uložit do kalendáře">
                             <i class="far fa-calendar-plus text-lg"></i>
                         </button>
                     </div>
@@ -474,7 +486,7 @@ export function selectLocation(id) {
                     <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Poznámka</label>
                     <div class="flex gap-2">
                          <input type="text" id="note-input" placeholder="Dáme pak kafe?" class="flex-1 bg-[#2f3136] text-white text-sm p-2.5 rounded-lg border border-[#202225] outline-none focus:border-[#3ba55c] focus:bg-[#36393f] transition">
-                         <button onclick="import('./js/modules/map.js').then(m => m.saveDateToCalendar())" class="w-10 h-10 bg-[#3ba55c] text-white rounded-lg flex items-center justify-center hover:bg-[#2d7d46] shadow-lg transition transform hover:scale-105 active:scale-95">
+                         <button onclick="KiscordMap.saveDateToCalendar()" class="w-10 h-10 bg-[#3ba55c] text-white rounded-lg flex items-center justify-center hover:bg-[#2d7d46] shadow-lg transition transform hover:scale-105 active:scale-95">
                             <i class="fas fa-save"></i>
                         </button>
                     </div>
@@ -629,7 +641,7 @@ export function jumpToLocation(id) {
 // --- ADD NEW LOCATION ---
 
 export function showAddLocationModal() {
-    const coords = window.lastMapClick || { lat: 49.069, lng: 17.464 };
+    const coords = lastMapClick;
     
     const modal = document.createElement('div');
     modal.id = 'location-add-modal';
@@ -648,19 +660,19 @@ export function showAddLocationModal() {
                 <div>
                      <label class="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest text-center">Typ místa</label>
                      <div class="grid grid-cols-4 gap-2">
-                        <button onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.selectedLocCat = 'view'" class="p-3 rounded-xl border-2 border-transparent bg-[#2f3136] transition flex flex-col items-center gap-1 group">
+                        <button onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.KiscordMap.setLocCat('view')" class="p-3 rounded-xl border-2 border-transparent bg-[#2f3136] transition flex flex-col items-center gap-1 group">
                             <span class="text-xl">⛰️</span>
                             <span class="text-[8px] font-black text-white group-hover:text-[#eb459e]">VÝHLED</span>
                         </button>
-                        <button onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.selectedLocCat = 'food'" class="p-3 rounded-xl border-2 border-transparent bg-[#2f3136] transition flex flex-col items-center gap-1 group">
+                        <button onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.KiscordMap.setLocCat('food')" class="p-3 rounded-xl border-2 border-transparent bg-[#2f3136] transition flex flex-col items-center gap-1 group">
                             <span class="text-xl">🍔</span>
                             <span class="text-[8px] font-black text-white group-hover:text-[#faa61a]">JÍDLO</span>
                         </button>
-                        <button onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.selectedLocCat = 'walk'" class="p-3 rounded-xl border-2 border-transparent bg-[#2f3136] transition flex flex-col items-center gap-1 group">
+                        <button onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.KiscordMap.setLocCat('walk')" class="p-3 rounded-xl border-2 border-transparent bg-[#2f3136] transition flex flex-col items-center gap-1 group">
                             <span class="text-xl">🌲</span>
                             <span class="text-[8px] font-black text-white group-hover:text-[#3ba55c]">POHYB</span>
                         </button>
-                        <button onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.selectedLocCat = 'fun'" class="p-3 rounded-xl border-2 border-transparent bg-[#2f3136] transition flex flex-col items-center gap-1 group">
+                        <button onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.KiscordMap.setLocCat('fun')" class="p-3 rounded-xl border-2 border-transparent bg-[#2f3136] transition flex flex-col items-center gap-1 group">
                             <span class="text-xl">⚡</span>
                             <span class="text-[8px] font-black text-white group-hover:text-[#ed4245]">ZÁBAVA</span>
                         </button>
@@ -709,7 +721,7 @@ export function showAddLocationModal() {
             </div>
             
             <div class="p-6 bg-[#2f3136] border-t border-gray-700">
-                <button onclick="import('./js/modules/map.js').then(m => m.saveNewLocation())" class="w-full bg-[#3ba55c] hover:bg-[#2d7d46] text-white py-4 rounded-xl font-black text-lg transition shadow-xl transform active:scale-95">
+                <button onclick="KiscordMap.saveNewLocation()" class="w-full bg-[#3ba55c] hover:bg-[#2d7d46] text-white py-4 rounded-xl font-black text-lg transition shadow-xl transform active:scale-95">
                     ULOŽIT MÍSTO 🗺️
                 </button>
             </div>
@@ -725,7 +737,7 @@ export async function saveNewLocation() {
     const icon = document.getElementById('nl-icon').value.trim() || '📍';
     const lat = parseFloat(document.getElementById('nl-lat').value);
     const lng = parseFloat(document.getElementById('nl-lng').value);
-    const cat = window.selectedLocCat;
+    const cat = selectedLocCat;
     
     if (!name || isNaN(lat) || isNaN(lng) || !cat) {
         alert("Vyplň název, kategorii a souřadnice!");

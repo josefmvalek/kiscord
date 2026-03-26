@@ -13,6 +13,12 @@ let subscription = null;
 // --- RENDER ---
 
 export async function renderAchievements() {
+    // Expose API to window
+    window.Achievements = { 
+        renderAchievements, toggleAchievement, autoUnlock, 
+        showAddAchievementModal, saveNewAchievement 
+    };
+
     const container = document.getElementById("messages-container");
     if (!container) return;
 
@@ -29,7 +35,7 @@ export async function renderAchievements() {
                 <p class="relative z-10 text-gray-400 font-medium mt-2 text-center max-w-md">Naše příběhy a milníky vytesané do kamene.</p>
                 
                 ${isJosef(state.currentUser) ? `
-                    <button onclick="import('./js/modules/achievements.js').then(m => m.showAddAchievementModal())" class="relative z-10 mt-4 bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-4 py-2 rounded-lg font-bold shadow-lg transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
+                    <button onclick="window.Achievements.showAddAchievementModal()" class="relative z-10 mt-4 bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-4 py-2 rounded-lg font-bold shadow-lg transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
                         <i class="fas fa-plus"></i> Nový Achievement
                     </button>
                 ` : ''}
@@ -127,8 +133,8 @@ function generateAchievementCard(ach, isUnlocked, dateStrRaw) {
     
     // Odemčeni click
     const onClick = isUnlocked 
-        ? `onclick="import('./js/modules/achievements.js').then(m => m.toggleAchievement('${ach.id}', false))"` 
-        : `onclick="import('./js/modules/achievements.js').then(m => m.toggleAchievement('${ach.id}', true))"`;
+        ? `onclick="window.Achievements.toggleAchievement('${ach.id}', false)"` 
+        : `onclick="window.Achievements.toggleAchievement('${ach.id}', true)"`;
 
     return `
         <div ${onClick} class="${cardBg} border rounded-xl p-4 flex flex-col items-center text-center transition-all duration-300 transform ${isUnlocked ? 'hover:-translate-y-1 hover:shadow-xl cursor-pointer' : 'hover:-translate-y-0.5 hover:bg-[#2f3136]/40 cursor-pointer'} group relative overflow-hidden h-full">
@@ -270,7 +276,7 @@ export async function autoUnlock(id) {
 }
 
 // Hook zavolaný z calendar.js:saveHealthRecord
-export async function checkHealthAchievements(currentDateKey, healthData, allHealthState = {}) {
+export async function checkHealthAchievements(currentDateKey, healthData, healthDataMap = {}) {
     // 1. Piháchův Vodník: 8/8 kapek
     if (healthData.water >= 8) {
         await autoUnlock('hydration_master');
@@ -287,7 +293,7 @@ export async function checkHealthAchievements(currentDateKey, healthData, allHea
     }
 
     // 4. Šípková Růženka (7 dní v kuse 7+ spánek)
-    if (healthData.sleep >= 7 && allHealthState) {
+    if (healthData.sleep >= 7 && healthDataMap) {
         // Zkusíme najít 6 předchozích dní a zkontrolovat jejich spánek
         const d = new Date(currentDateKey);
         let consecutiveGoodSleep = 1; // Dnešek už víme, že má 7+
@@ -295,7 +301,7 @@ export async function checkHealthAchievements(currentDateKey, healthData, allHea
         for (let i = 1; i < 7; i++) {
             d.setDate(d.getDate() - 1);
             const pastKey = d.toISOString().split('T')[0];
-            const pastData = allHealthState[pastKey];
+            const pastData = healthDataMap[pastKey];
 
             let pastSleep = pastData?.sleep;
             if (typeof pastSleep === 'string') {
@@ -356,7 +362,7 @@ export function showAddAchievementModal() {
                         <input type="text" id="ach-color" class="w-full bg-[#202225] text-white p-2.5 rounded-xl border border-white/5 outline-none focus:border-[#faa61a] transition" value="from-amber-200 to-yellow-500">
                     </div>
                 </div>
-                <button onclick="import('./js/modules/achievements.js').then(m => m.saveNewAchievement())" class="w-full mt-6 bg-[#faa61a] hover:bg-[#e09216] text-black font-black py-3 rounded-xl shadow-lg transition transform hover:scale-[1.02] active:scale-95">
+                <button onclick="window.Achievements.saveNewAchievement()" class="w-full mt-6 bg-[#faa61a] hover:bg-[#e09216] text-black font-black py-3 rounded-xl shadow-lg transition transform hover:scale-[1.02] active:scale-95">
                     Vytvořit milník
                 </button>
             </div>

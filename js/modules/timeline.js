@@ -46,11 +46,11 @@ function ensureModals() {
         galleryModal.id = "gallery-modal";
         galleryModal.className = "fixed inset-0 z-[120] hidden bg-black/90 backdrop-blur-xl flex-col items-center justify-center animate-fade-in";
         galleryModal.innerHTML = `
-            <button onclick="import('./js/modules/timeline.js?v=14').then(m => m.closeGallery())" class="absolute top-6 right-6 text-gray-400 hover:text-white z-50 w-12 h-12 flex items-center justify-center rounded-full hover:bg-white/10 transition-all active:scale-90">
+            <button onclick="Timeline.closeGallery()" class="absolute top-6 right-6 text-gray-400 hover:text-white z-50 w-12 h-12 flex items-center justify-center rounded-full hover:bg-white/10 transition-all active:scale-90">
                 <i class="fas fa-times text-2xl"></i>
             </button>
             <div class="relative w-full h-full flex items-center justify-center p-4 md:p-10">
-                <button onclick="import('./js/modules/timeline.js?v=14').then(m => m.changeGalleryImage(-1))"
+                <button onclick="Timeline.changeGalleryImage(-1)"
                     class="absolute left-2 md:left-8 text-white hover:text-[#5865F2] transition p-4 z-50 bg-black/50 hover:bg-black/80 rounded-full">
                     <i class="fas fa-chevron-left text-2xl md:text-4xl"></i>
                 </button>
@@ -60,13 +60,13 @@ function ensureModals() {
                     <div class="mt-4 text-center">
                         <h3 id="gallery-title" class="text-white font-bold text-xl mb-1">Název</h3>
                         <p id="gallery-counter" class="text-gray-400 text-sm">1 / 5</p>
-                        <button onclick="import('./js/modules/timeline.js?v=14').then(m => m.deleteCurrentPhoto())"
+                        <button onclick="Timeline.deleteCurrentPhoto()"
                             class="mt-4 text-xs text-red-500 hover:text-red-400 transition flex items-center gap-1 mx-auto">
                             <i class="fas fa-trash-alt"></i> Smazat tuhle fotku
                         </button>
                     </div>
                 </div>
-                <button onclick="import('./js/modules/timeline.js?v=14').then(m => m.changeGalleryImage(1))"
+                <button onclick="Timeline.changeGalleryImage(1)"
                     class="absolute right-2 md:right-8 text-white hover:text-[#5865F2] transition p-4 z-50 bg-black/50 hover:bg-black/80 rounded-full">
                     <i class="fas fa-chevron-right text-2xl md:text-4xl"></i>
                 </button>
@@ -86,7 +86,7 @@ function ensureModals() {
                 <p class="text-gray-400 mb-8 text-sm leading-relaxed">Opravdu chceš tuhle fotku smazat? Tuhle akci nejde vzít zpět.</p>
                 <div class="flex gap-3">
                     <button onclick="closeModal('delete-photo-modal')" class="flex-1 text-gray-400 hover:text-white font-bold py-2 transition text-xs uppercase tracking-widest">Zrušit</button>
-                    <button onclick="import('./js/modules/timeline.js?v=14').then(m => m.confirmDeletePhoto())" class="flex-[2] bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-bold shadow-lg transition active:scale-95">Smazat</button>
+                    <button onclick="Timeline.confirmDeletePhoto()" class="flex-[2] bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl font-bold shadow-lg transition active:scale-95">Smazat</button>
                 </div>
             </div>
         `;
@@ -95,6 +95,16 @@ function ensureModals() {
 }
 
 export async function renderTimeline() {
+    // Expose API to window
+    window.Timeline = { 
+        renderTimeline, toggleTimelineCard, openGallery, closeGallery, 
+        changeGalleryImage, deleteCurrentPhoto, confirmDeletePhoto, 
+        searchTimeline, uploadPhoto, saveHighlight, toggleMilestone, 
+        openEventModal, closeEventModal, saveEvent, deleteEvent,
+        switchIconCategory, refreshIconCategory: refreshIconPicker, // Alias if needed
+        jumpToTimeline
+    };
+    
     ensureModals();
     const container = document.getElementById("messages-container");
     if (!container) return;
@@ -173,7 +183,7 @@ export async function renderTimeline() {
                           
                           <div class="flex items-center gap-3">
                               <!-- Add Event Button -->
-                              <button onclick="import('./js/modules/timeline.js?v=14').then(m => m.openEventModal())" 
+                              <button onclick="Timeline.openEventModal()" 
                                       class="bg-[#3ba55c] hover:bg-[#2d7d44] text-white text-xs px-3 py-2 rounded font-bold shadow-lg flex items-center gap-2 transition-all transform hover:scale-105 active:scale-95">
                                   <i class="fas fa-plus"></i> Nová vzpomínka
                               </button>
@@ -184,7 +194,7 @@ export async function renderTimeline() {
                                          id="timeline-search"
                                          placeholder="Hledat vzpomínku..." 
                                          value="${searchQuery}"
-                                         oninput="import('./js/modules/timeline.js?v=14').then(m => m.searchTimeline(this.value))"
+                                         oninput="Timeline.searchTimeline(this.value)"
                                          class="w-full bg-[#202225] text-xs text-white px-3 py-2 rounded-full border border-[#2f3136] focus:border-[#5865F2] outline-none transition-all pl-8">
                                   <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-[10px]"></i>
                               </div>
@@ -232,7 +242,7 @@ export async function renderTimeline() {
                 let galleryBtn = "";
                 if (event.images && event.images.length > 0) {
                     const thumbnails = event.images.slice(0, 3).map(src => `
-                        <div class="polaroid-frame polaroid-thumb polaroid-stack" onclick="event.stopPropagation(); import('./js/modules/timeline.js?v=14').then(m => m.openGallery('${event.id}'))">
+                        <div class="polaroid-frame polaroid-thumb polaroid-stack" onclick="event.stopPropagation(); Timeline.openGallery('${event.id}')">
                             <img src="${src}" loading="lazy">
                             <div class="polaroid-date">${polaroidDate}</div>
                             <div class="polaroid-tape"></div>
@@ -247,7 +257,7 @@ export async function renderTimeline() {
                             ${thumbnails}
                             ${moreThumbnails}
                         </div>
-                        <button onclick="event.stopPropagation(); import('./js/modules/timeline.js?v=14').then(m => m.openGallery('${event.id}'))" class="flex items-center gap-2 bg-[#5865F2] hover:bg-[#4752c4] text-white px-3 py-1.5 rounded transition shadow group/btn">
+                        <button onclick="event.stopPropagation(); Timeline.openGallery('${event.id}')" class="flex items-center gap-2 bg-[#5865F2] hover:bg-[#4752c4] text-white px-3 py-1.5 rounded transition shadow group/btn">
                             <i class="fas fa-images group-hover/btn:scale-110 transition-transform"></i>
                             <span class="text-xs font-bold">Zobrazit galerii (${event.images.length})</span>
                         </button>
@@ -269,7 +279,7 @@ export async function renderTimeline() {
                                  <i class="fas fa-camera"></i> Přidat fotku
                              </button>
                              <input type="file" id="photo-upload-${event.id}" class="hidden" accept="image/*" 
-                                 onchange="import('./js/modules/timeline.js?v=14').then(m => m.uploadPhoto('${event.id}', this))">
+                                 onchange="Timeline.uploadPhoto('${event.id}', this)">
                 </div>
             `;
 
@@ -285,7 +295,7 @@ export async function renderTimeline() {
                         </div>
                         <textarea 
                             onclick="event.stopPropagation()"
-                            onblur="import('./js/modules/timeline.js?v=14').then(m => m.saveHighlight('${event.id}', this.value))"
+                            onblur="Timeline.saveHighlight('${event.id}', this.value)"
                             class="w-full bg-transparent text-xs text-gray-200 resize-none border-none focus:ring-0 p-0 placeholder-gray-500" 
                             placeholder="Přidej svůj postřeh k tomuhle momentu..."
                             rows="2">${highlightText}</textarea>
@@ -296,7 +306,7 @@ export async function renderTimeline() {
                 const crownIcon = event.is_milestone ? `<i class="fas fa-crown milestone-crown text-[#faa61a] absolute -top-1 -right-1 z-10 text-xs"></i>` : '';
 
                 html += `
-                <div id="timeline-event-${event.id}" class="timeline-forum-card bg-[#36393f] rounded-lg border border-[#202225] hover:border-[#4f545c] transition-colors relative overflow-hidden group cursor-pointer ${milestoneClass}" onclick="import('./js/modules/timeline.js?v=14').then(m => m.toggleTimelineCard(this))">
+                <div id="timeline-event-${event.id}" class="timeline-forum-card bg-[#36393f] rounded-lg border border-[#202225] hover:border-[#4f545c] transition-colors relative overflow-hidden group cursor-pointer ${milestoneClass}" onclick="Timeline.toggleTimelineCard(this)">
                     ${crownIcon}
                     <div class="p-4 flex items-center gap-4">
                         <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm ${gradientClass}" style="${iconBgColor}">
@@ -306,10 +316,10 @@ export async function renderTimeline() {
                             <div class="flex items-center gap-2">
                                 <h4 class="font-bold text-white text-base md:text-lg truncate group-hover:text-[#5865F2] transition-colors">${event.title}</h4>
                                 <div class="flex items-center gap-2">
-                                    <button onclick="event.stopPropagation(); import('./js/modules/timeline.js?v=14').then(m => m.toggleMilestone('${event.id}', ${!event.is_milestone}))" class="text-[#4f545c] hover:text-[#faa61a] transition-colors" title="Označit jako milník">
+                                    <button onclick="event.stopPropagation(); Timeline.toggleMilestone('${event.id}', ${!event.is_milestone})" class="text-[#4f545c] hover:text-[#faa61a] transition-colors" title="Označit jako milník">
                                         <i class="fas fa-crown ${event.is_milestone ? 'text-[#faa61a]' : ''}"></i>
                                     </button>
-                                    <button onclick="event.stopPropagation(); import('./js/modules/timeline.js?v=14').then(m => m.openEventModal('${event.id}'))" class="text-[#4f545c] hover:text-[#5865F2] transition-colors" title="Upravit událost">
+                                    <button onclick="event.stopPropagation(); Timeline.openEventModal('${event.id}')" class="text-[#4f545c] hover:text-[#5865F2] transition-colors" title="Upravit událost">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                 </div>
@@ -317,7 +327,7 @@ export async function renderTimeline() {
                             <div class="text-xs text-[#8e9297] flex items-center gap-2 mt-0.5">
                                 ${dateStr ? `<span class="flex items-center gap-1"><i class="far fa-calendar-alt"></i> ${dateStr}</span>` : ''}
                                 ${event.location_id ? `
-                                    <button onclick="event.stopPropagation(); import('./js/modules/map.js?v=14').then(m => m.jumpToLocation(${event.location_id}))" class="flex items-center gap-1 text-[#5865F2] hover:underline">
+                                    <button onclick="event.stopPropagation(); import('./js/modules/map.js').then(m => m.jumpToLocation(${event.location_id}))" class="flex items-center gap-1 text-[#5865F2] hover:underline">
                                         <i class="fas fa-map-marker-alt"></i> Lokace uložena
                                     </button>` : ''}
                             </div>
@@ -366,7 +376,7 @@ export async function renderTimeline() {
                 <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
                 <h3 class="text-white font-bold text-xl mb-2">Chyba při načítání Timeline</h3>
                 <p class="text-gray-400 mb-4">${err.message || 'Nepodařilo se připojit k Supabase.'}</p>
-                <button onclick="import('./js/modules/timeline.js?v=14').then(m => m.renderTimeline())" class="bg-[#5865F2] text-white px-6 py-2 rounded-lg font-bold">Zkusit znovu</button>
+                <button onclick="Timeline.renderTimeline()" class="bg-[#5865F2] text-white px-6 py-2 rounded-lg font-bold">Zkusit znovu</button>
             </div>
         `;
     }
@@ -481,7 +491,7 @@ export async function uploadPhoto(eventId, input) {
 
     try {
         // Use central storage helper
-        const publicUrl = await uploadFile('timeline-photos', file, `events/${eventId}`);
+        const publicUrl = await uploadFile('media', file, `timeline/${eventId}`);
         if (!publicUrl) throw new Error("Nepodařilo se získat URL po nahrání.");
         
         // Ensure eventId is a number for state lookup
@@ -588,7 +598,7 @@ export async function confirmDeletePhoto() {
         try {
             const urlParts = photoUrl.split('/');
             const fileName = urlParts[urlParts.length - 1];
-            await supabase.storage.from('timeline-photos').remove([fileName]);
+            await supabase.storage.from('media').remove([`timeline/${event.id}/${fileName}`]);
         } catch (storageErr) {
             console.warn("Could not delete from storage, but removed from DB:", storageErr);
         }
@@ -682,7 +692,7 @@ export function openEventModal(eventId = null) {
                     <h3 class="text-xl font-bold text-white flex items-center gap-2">
                         <i class="fas ${event ? 'fa-edit' : 'fa-plus-circle'} text-[#5865F2]"></i> ${title}
                     </h3>
-                    <button onclick="import('./js/modules/timeline.js?v=14').then(m => m.closeEventModal())" class="text-gray-400 hover:text-white transition-colors">
+                    <button onclick="Timeline.closeEventModal()" class="text-gray-400 hover:text-white transition-colors">
                         <i class="fas fa-times text-lg"></i>
                     </button>
                 </div>
@@ -734,7 +744,7 @@ export function openEventModal(eventId = null) {
                     
                     ${eventId ? `
                     <div class="pt-2">
-                        <button onclick="import('./js/modules/timeline.js?v=14').then(m => m.deleteEvent('${eventId}'))" class="text-xs text-red-500 hover:text-red-400 flex items-center gap-1 transition-colors">
+                        <button onclick="Timeline.deleteEvent('${eventId}')" class="text-xs text-red-500 hover:text-red-400 flex items-center gap-1 transition-colors">
                             <i class="fas fa-trash-alt"></i> Smazat tuhle vzpomínku
                         </button>
                     </div>
@@ -742,8 +752,8 @@ export function openEventModal(eventId = null) {
                 </div>
 
                 <div class="mt-8 flex gap-3">
-                    <button onclick="import('./js/modules/timeline.js?v=14').then(m => m.closeEventModal())" class="flex-1 bg-[#4f545c] hover:bg-[#5d6269] text-white py-3 rounded-lg font-bold transition">Zrušit</button>
-                    <button onclick="import('./js/modules/timeline.js?v=14').then(m => m.saveEvent(${eventId ? `'${eventId}'` : 'null'}))" class="flex-1 bg-[#5865F2] hover:bg-[#4752c4] text-white py-3 rounded-lg font-bold shadow-lg transition transform hover:scale-105">Uložit</button>
+                    <button onclick="Timeline.closeEventModal()" class="flex-1 bg-[#4f545c] hover:bg-[#5d6269] text-white py-3 rounded-lg font-bold transition">Zrušit</button>
+                    <button onclick="Timeline.saveEvent(${eventId ? `'${eventId}'` : 'null'})" class="flex-1 bg-[#5865F2] hover:bg-[#4752c4] text-white py-3 rounded-lg font-bold shadow-lg transition transform hover:scale-105">Uložit</button>
                 </div>
             </div>
         </div>
@@ -756,7 +766,7 @@ export function renderIconPickerHTML(selectedIcon, activeCategory = 'favorites')
     const categories = Object.keys(CATEGORIZED_ICONS);
     
     const tabsHtml = categories.map(cat => `
-        <button onclick="import('./js/modules/timeline.js?v=14').then(m => m.switchIconCategory('${cat}', '${selectedIcon}'))" 
+        <button onclick="Timeline.switchIconCategory('${cat}', '${selectedIcon}')" 
                 class="icon-picker-tab ${cat === activeCategory ? 'active' : ''}" 
                 title="${CATEGORIZED_ICONS[cat].label}">
             <span>${CATEGORIZED_ICONS[cat].icon}</span>
@@ -767,7 +777,7 @@ export function renderIconPickerHTML(selectedIcon, activeCategory = 'favorites')
         const isActive = ico === selectedIcon;
         const isFA = ico.startsWith('fa-');
         return `
-            <button onclick="document.getElementById('edit-icon').value='${ico}'; import('./js/modules/timeline.js?v=14').then(m => m.refreshIconPicker('${ico}', '${activeCategory}'))" 
+            <button onclick="document.getElementById('edit-icon').value='${ico}'; Timeline.refreshIconPicker('${ico}', '${activeCategory}')" 
                     class="icon-item ${isActive ? 'active' : ''}">
                 ${isFA ? `<i class="fas ${ico}"></i>` : `<span>${ico}</span>`}
             </button>

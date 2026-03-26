@@ -65,6 +65,43 @@ export function renderButton({ text, icon = '', variant = 'primary', onclick = '
 /**
  * Generates a standardized input group.
  */
+/**
+ * Renders a standardized card.
+ */
+export function renderCard({ content, className = '', onclick = '' }) {
+    return `
+        <div ${onclick ? `onclick="${onclick}"` : ''} 
+            class="bg-[var(--bg-secondary)] rounded-2xl border border-white/5 shadow-xl transition-all duration-300 ${onclick ? 'cursor-pointer hover:bg-white/5 active:scale-[0.98]' : ''} ${className}">
+            ${content}
+        </div>
+    `;
+}
+
+/**
+ * Standardized status/category badge.
+ */
+export function renderBadge({ text, icon = '', color = '#5865F2', className = '' }) {
+    return `
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/20 border border-white/5 ${className}">
+            ${icon ? `<span class="text-xs">${icon}</span>` : ''}
+            <span class="text-[9px] font-black uppercase tracking-wider" style="color: ${color}">${text}</span>
+        </div>
+    `;
+}
+
+/**
+ * Specifically for status badges (e.g. Bucket List or Planner)
+ */
+export function renderStatusBadge({ status, config }) {
+    const s = config[status] || { label: status, color: '#b9bbbe', icon: '❓' };
+    return `
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-black/20 border border-white/5 backdrop-blur-sm">
+            <span class="text-[10px] drop-shadow-sm">${s.icon}</span>
+            <span class="text-[9px] font-black uppercase tracking-widest leading-none outline-none" style="color: ${s.color}">${s.label}</span>
+        </div>
+    `;
+}
+
 export function renderInputGroup({ label, id, type = 'text', placeholder = '', value = '', attr = '' }) {
     return `
         <div class="space-y-1">

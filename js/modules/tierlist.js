@@ -7,6 +7,13 @@ let activeTierList = null; // { id, title, category, tiers: [], pool: [] }
 let subscription = null;
 
 export async function renderTierList() {
+    // Expose API to window
+    window.TierList = { 
+        showCreateModal, handleCreate, openEditor, saveTierList, 
+        toggleDuelMode, renderTierList, showDeleteModal, deleteTierList,
+        markReady, revealDuel
+    };
+
     const container = document.getElementById("messages-container");
     if (!container) return;
 
@@ -23,7 +30,7 @@ export async function renderTierList() {
                 <p class="relative z-10 text-gray-400 font-medium mt-2 text-center max-w-md">Rankuj vše od nejlepších vzpomínek po oblíbené filmy.</p>
                 
                 <div class="mt-6 flex gap-4 relative z-10">
-                    <button onclick="import('./js/modules/tierlist.js?v=14').then(m => m.showCreateModal())" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-6 py-2.5 rounded-xl font-bold shadow-lg transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
+                    <button onclick="TierList.showCreateModal()" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-6 py-2.5 rounded-xl font-bold shadow-lg transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
                         <i class="fas fa-plus"></i> Nový Tier List
                     </button>
                 </div>
@@ -128,7 +135,7 @@ function renderListView(tierLists) {
             <div class="col-span-full py-20 flex flex-col items-center justify-center text-gray-500">
                 <i class="fas fa-ghost text-5xl mb-4 opacity-20"></i>
                 <p>Zatím jsi nevytvořil žádný Tier List.</p>
-                <button onclick="import('./js/modules/tierlist.js?v=14').then(m => m.showCreateModal())" class="mt-4 text-[#5865F2] hover:underline font-bold">Začni teď!</button>
+                <button onclick="TierList.showCreateModal()" class="mt-4 text-[#5865F2] hover:underline font-bold">Začni teď!</button>
             </div>
         `;
         return;
@@ -138,13 +145,13 @@ function renderListView(tierLists) {
         const isCreator = tl.creator_id === state.currentUser?.id;
         
         return `
-            <div onclick="import('./js/modules/tierlist.js?v=14').then(m => m.openEditor('${tl.id}'))" 
+            <div onclick="TierList.openEditor('${tl.id}')" 
                  class="bg-[#2f3136] border border-white/5 rounded-2xl p-6 hover:border-[#5865F2]/50 hover:bg-[#32353b] cursor-pointer transition-all group overflow-hidden relative">
                 
                 <div class="absolute top-0 right-0 w-32 h-32 bg-[#5865F2]/5 rounded-bl-full -mr-16 -mt-16 group-hover:bg-[#5865F2]/10 transition-colors pointer-events-none"></div>
                 
                 ${isCreator ? `
-                    <button id="delete-btn-${tl.id}" onclick="event.stopPropagation(); import('./js/modules/tierlist.js?v=14').then(m => m.showDeleteModal('${tl.id}', '${tl.title.replace(/'/g, "\\'")}'))" 
+                    <button id="delete-btn-${tl.id}" onclick="event.stopPropagation(); TierList.showDeleteModal('${tl.id}', '${tl.title.replace(/'/g, "\\'")}')" 
                             class="absolute top-3 right-3 w-8 h-8 rounded-full bg-[#ed4245] text-white flex items-center justify-center transition-all z-50 shadow-xl">
                         <i class="fas fa-trash-alt text-xs"></i>
                     </button>
@@ -199,7 +206,7 @@ export function showDeleteModal(id, title) {
         ${renderButton({ 
             text: 'Smazat žebříček', 
             variant: 'danger', 
-            onclick: `import('./js/modules/tierlist.js?v=14').then(m => { m.deleteTierList('${id}'); document.getElementById('delete-confirm-modal').remove(); })`,
+            onclick: `TierList.deleteTierList('${id}'); document.getElementById('delete-confirm-modal').remove();`,
             className: 'flex-1'
         })}
     `;
@@ -306,7 +313,7 @@ export function showCreateModal() {
                     </div>
                 </div>
 
-                <button onclick="import('./js/modules/tierlist.js?v=14').then(m => m.handleCreate())" class="w-full mt-8 bg-[#5865F2] hover:bg-[#4752c4] text-white font-black py-4 rounded-2xl shadow-lg transition transform hover:scale-[1.02] active:scale-95 text-lg">
+                <button onclick="TierList.handleCreate()" class="w-full mt-8 bg-[#5865F2] hover:bg-[#4752c4] text-white font-black py-4 rounded-2xl shadow-lg transition transform hover:scale-[1.02] active:scale-95 text-lg">
                     Vytvořit žebříček
                 </button>
             </div>
@@ -330,7 +337,7 @@ export async function handleCreate() {
         // Fetch pool items based on category
         let pool = [];
         if (cat === 'movies') {
-            await import('../core/state.js').then(s => s.refreshLibraryState());
+            await import('../core/state.js').then(s => s.ensureLibraryData(true));
             pool = state.library.movies.filter(m => state.ratings[m.id]).map(m => ({ id: m.id, name: m.title, icon: m.icon || '🎬' }));
         } else if (cat === 'timeline') {
             await import('../core/state.js').then(s => s.ensureTimelineData());
@@ -401,7 +408,7 @@ function renderEditorUI() {
             <!-- Discord-style Header -->
             <div class="min-h-12 border-b border-[#202225] flex flex-wrap items-center justify-between px-4 py-2 gap-2 bg-[#36393f] z-20 shadow-sm flex-shrink-0">
                 <div class="flex items-center gap-2 md:gap-3">
-                    <button onclick="import('./js/modules/tierlist.js?v=14').then(m => m.renderTierList())" class="text-gray-400 hover:text-white transition-colors p-1">
+                    <button onclick="TierList.renderTierList()" class="text-gray-400 hover:text-white transition-colors p-1">
                         <i class="fas fa-chevron-left"></i>
                     </button>
                     <div class="w-px h-6 bg-white/5 mx-0.5 md:mx-1"></div>
@@ -413,11 +420,11 @@ function renderEditorUI() {
                 </div>
                 
                 <div class="flex items-center gap-2">
-                    <button id="duel-toggle-btn" onclick="import('./js/modules/tierlist.js?v=14').then(m => m.toggleDuelMode())" 
+                    <button id="duel-toggle-btn" onclick="TierList.toggleDuelMode()" 
                             class="${activeTierList.is_duel ? 'bg-[#eb459e] text-white shadow-[0_0_15px_rgba(235,69,158,0.5)]' : 'bg-[#5865F2] text-white border-2 border-white/20 hover:bg-[#4752c4]'} px-3 md:px-5 py-2 rounded-xl text-xs font-black transition-all duration-200 flex items-center gap-2 active:scale-90 uppercase tracking-wider">
                         <i class="fas fa-swords"></i> <span>${activeTierList.is_duel ? 'Duel Aktivní' : 'Duel'}</span>
                     </button>
-                    <button onclick="import('./js/modules/tierlist.js?v=14').then(m => m.saveTierList())" class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-2 md:px-3 py-1.5 rounded text-[10px] md:text-xs font-bold transition flex items-center gap-1.5 shadow-lg shadow-[#5865F2]/20">
+                    <button onclick="TierList.saveTierList()" class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-2 md:px-3 py-1.5 rounded text-[10px] md:text-xs font-bold transition flex items-center gap-1.5 shadow-lg shadow-[#5865F2]/20">
                         <i class="fas fa-save"></i> <span class="hidden xs:inline">Uložit</span>
                     </button>
                 </div>
@@ -473,9 +480,10 @@ function renderTierRow(tier) {
             const joseItems = activeTierList.duel_data.jose?.tiers?.find(t => t.id === tier.id)?.items || [];
             const klarkaItems = activeTierList.duel_data.klarka?.tiers?.find(t => t.id === tier.id)?.items || [];
             
-            displayItems = joseItems.filter(ji => klarkaItems.find(ki => ki.id === ji.id));
+            // Items in BOTH (Matches)
+            const matches = joseItems.filter(ji => klarkaItems.find(ki => ki.id === ji.id));
             const onlyJose = joseItems.filter(ji => !klarkaItems.find(ki => ki.id === ji.id));
-            const onlyKlarka = klarkaItems.filter(ji => !joseItems.find(ji => ji.id === ki.id));
+            const onlyKlarka = klarkaItems.filter(ki => !joseItems.find(ji => ji.id === ki.id));
             
             return `
                 <div class="flex min-h-[110px] mb-1.5 group/row transition-all duration-300">
@@ -483,7 +491,7 @@ function renderTierRow(tier) {
                         ${tier.name}
                     </div>
                     <div class="flex-1 bg-[#2f3136]/40 backdrop-blur-sm rounded-r-2xl border border-white/5 p-2 md:p-4 flex flex-wrap gap-2 md:gap-3 items-center group-hover/row:bg-[#2f3136]/60 transition-colors">
-                        ${displayItems.map(item => renderItem(item, 'both')).join('')}
+                        ${matches.map(item => renderItem(item, 'match')).join('')}
                         ${onlyJose.map(item => renderItem(item, 'jose')).join('')}
                         ${onlyKlarka.map(item => renderItem(item, 'klarka')).join('')}
                     </div>
@@ -494,7 +502,7 @@ function renderTierRow(tier) {
 
     return `
         <div class="flex min-h-[90px] group/row mb-1.5 transition-all duration-300">
-            <div class="w-16 md:w-28 flex-shrink-0 flex items-center justify-center rounded-l-2xl text-black/80 font-black text-xl md:text-2xl shadow-[inset_-4px_0_8_rgba(0,0,0,0.1)] border-r border-black/5" style="background-color: ${tier.color}">
+            <div class="w-16 md:w-28 flex-shrink-0 flex items-center justify-center rounded-l-2xl text-black/80 font-black text-xl md:text-2xl shadow-[inset_-4px_0_8px_rgba(0,0,0,0.1)] border-r border-black/5" style="background-color: ${tier.color}">
                 ${tier.name}
             </div>
             <div id="${tier.id}" class="flex-1 bg-[#2f3136]/40 backdrop-blur-sm rounded-r-2xl border border-white/5 p-2 md:p-3 flex flex-wrap gap-2 md:gap-3 items-center sortable-tier group-hover/row:bg-[#2f3136]/60 transition-colors" data-tier-id="${tier.id}">
@@ -506,25 +514,34 @@ function renderTierRow(tier) {
 
 function renderItem(item, badge = null) {
     let badgeHtml = '';
-    if (badge === 'both') badgeHtml = `
-        <div class="absolute -top-2 -right-2 flex -space-x-1">
-            <div class="w-5 h-5 rounded-full bg-blue-500 border-2 border-[#202225] flex items-center justify-center text-[8px] text-white font-bold shadow-lg">M</div>
-            <div class="w-5 h-5 rounded-full bg-pink-500 border-2 border-[#202225] flex items-center justify-center text-[8px] text-white font-bold shadow-lg">S</div>
-        </div>`;
-    if (badge === 'jose') badgeHtml = '<div class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-blue-500 border-2 border-[#202225] flex items-center justify-center text-[8px] text-white font-bold shadow-lg">M</div>';
-    if (badge === 'klarka') badgeHtml = '<div class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-pink-500 border-2 border-[#202225] flex items-center justify-center text-[8px] text-white font-bold shadow-lg">S</div>';
+    let extraClasses = '';
+    
+    if (badge === 'match') {
+        badgeHtml = `
+            <div class="absolute -top-2 -right-2 flex items-center justify-center w-6 h-6 rounded-full bg-[#faa61a] border-2 border-[#202225] text-black shadow-lg z-10 animate-bounce">
+                <i class="fas fa-check text-[10px] font-black"></i>
+            </div>
+            <div class="absolute inset-0 rounded-xl border-2 border-[#faa61a]/50 animate-pulse pointer-events-none"></div>
+        `;
+        extraClasses = 'ring-2 ring-[#faa61a]/30 scale-105 z-10';
+    } else if (badge === 'jose') {
+        badgeHtml = '<div class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-blue-500 border-2 border-[#202225] flex items-center justify-center text-[8px] text-white font-bold shadow-lg">M</div>';
+    } else if (badge === 'klarka') {
+        badgeHtml = '<div class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-pink-500 border-2 border-[#202225] flex items-center justify-center text-[8px] text-white font-bold shadow-lg">S</div>';
+    }
 
     const isFontAwesome = item.icon && item.icon.startsWith('fa-');
     const iconHtml = isFontAwesome ? `<i class="fas ${item.icon} text-[#5865F2] group-hover:scale-110 transition-transform"></i>` : item.icon;
 
     return `
-        <div class="bg-[#202225] hover:bg-[#32353b] border border-white/5 hover:border-[#5865F2]/30 rounded-xl p-3 flex items-center gap-3 shadow-md cursor-grab active:cursor-grabbing transition-all hover:-translate-y-0.5 group relative" data-item-id="${item.id}">
+        <div class="bg-[#202225] hover:bg-[#32353b] border border-white/5 hover:border-[#5865F2]/30 rounded-xl p-3 flex items-center gap-3 shadow-md cursor-grab active:cursor-grabbing transition-all hover:-translate-y-0.5 group relative ${extraClasses}" data-item-id="${item.id}">
              ${badgeHtml}
              <div class="w-8 h-8 rounded-lg bg-black/20 flex items-center justify-center text-lg">${iconHtml}</div>
              <span class="text-xs font-bold text-gray-200 select-none whitespace-nowrap pointer-events-none">${item.name}</span>
         </div>
     `;
 }
+
 
 function initSortable() {
     if (typeof Sortable === 'undefined') {
@@ -658,14 +675,14 @@ function renderDuelStatusBar() {
             <div class="h-4 md:h-6 w-px bg-white/5 mx-1 md:mx-2"></div>
             
             ${!isRevealed ? `
-                <button onclick="import('./js/modules/tierlist.js?v=14').then(m => m.markReady())" 
+                <button onclick="TierList.markReady()" 
                         class="${amIReady ? 'bg-[#3ba55c] shadow-green-900/40' : 'bg-[#eb459e] shadow-[#eb459e]/20'} text-white px-3 md:px-5 py-1.5 rounded-full text-[9px] md:text-[10px] font-black shadow-lg transition-all transform hover:scale-105 active:scale-95 flex-shrink-0">
                     ${amIReady ? 'PŘIPRAVEN ✅' : 'HOTOVO'}
                 </button>
             ` : ''}
             
             ${joseReady && klarkaReady && !isRevealed ? `
-                <button onclick="import('./js/modules/tierlist.js?v=14').then(m => m.revealDuel())" 
+                <button onclick="TierList.revealDuel()" 
                         class="bg-yellow-500 text-black px-5 py-1.5 rounded-full text-[10px] font-black shadow-lg shadow-yellow-500/20 animate-bounce active:scale-95">
                     ODHALIT VÝSLEDKY! 🔥
                 </button>

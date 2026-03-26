@@ -1,12 +1,22 @@
 import { state } from '../core/state.js';
 import { supabase } from '../core/supabase.js';
 import { triggerHaptic } from '../core/utils.js';
+import { isKlarka, isJosef } from '../core/auth.js';
 
 // --- MODERN WATCHLIST HUB ---
 
 export async function renderWatchlist() {
+    // Expose API to window
+    window.Watchlist = { renderWatchlist, rollTheDice };
+
     const container = document.getElementById("messages-container");
     if (!container) return;
+
+    // Dynamic naming
+    const user = state.currentUser;
+    const partnerName = isKlarka(user) ? "Jožkova přání" : "Klárčina přání";
+    const partnerIcon = isKlarka(user) ? "🤴" : "👸";
+    const partnerColor = isKlarka(user) ? "#5865F2" : "#f47fff"; // Match their vibes
 
     // Prvotní UI (skelet)
     container.innerHTML = `
@@ -25,7 +35,7 @@ export async function renderWatchlist() {
                         <p class="text-gray-400 text-sm mt-1">Co si dneska dáme za dobrodružství? 🍿🎮</p>
                     </div>
                     <div class="flex items-center gap-3">
-                        <button onclick="import('./js/modules/watchlist.js?v=14').then(m => m.rollTheDice())" 
+                        <button onclick="Watchlist.rollTheDice()" 
                             class="bg-gradient-to-r from-[#5865F2] to-[#eb459e] text-white px-6 py-3 rounded-xl font-black text-sm shadow-xl hover:shadow-[#5865F2]/40 transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
                             <i class="fas fa-dice"></i> NÁHODA ROZHODNE
                         </button>
@@ -77,8 +87,8 @@ export async function renderWatchlist() {
 
                         <section id="wl-her-section">
                              <div class="flex items-center gap-4 mb-6">
-                                <h2 class="text-xs font-black text-[#f47fff] uppercase tracking-[0.2em]">Klárčina přání 👸</h2>
-                                <div class="h-px bg-[#f47fff]/20 flex-1"></div>
+                                <h2 class="text-xs font-black text-[${partnerColor}] uppercase tracking-[0.2em]">${partnerName} ${partnerIcon}</h2>
+                                <div class="h-px bg-[${partnerColor}]/20 flex-1"></div>
                             </div>
                             <div id="wl-her-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></div>
                         </section>
@@ -155,9 +165,10 @@ async function fetchAndRenderWatchlist() {
 
         // Render Hers
         if (herGrid) {
+            const partnerEmptyText = isKlarka(state.currentUser) ? "Jožka tu ještě nic nemá" : "Klárka tu ještě nic nemá";
             herGrid.innerHTML = herEntries.length > 0
                 ? herEntries.map(item => renderWlCard(item, false)).join('')
-                : '<div class="col-span-full py-4 text-center text-xs text-gray-600">Klárka tu ještě nic nemá</div>';
+                : `<div class="col-span-full py-4 text-center text-xs text-gray-600">${partnerEmptyText}</div>`;
         }
 
         // Render Memories
@@ -199,7 +210,7 @@ function renderMemories() {
 
             return `
                 <div class="bg-[#2f3136] border border-[#202225] rounded-xl p-3 flex items-center gap-4 hover:border-[#eb459e]/30 transition group cursor-pointer" 
-                     onclick="import('./js/modules/library.js?v=14').then(m => m.openHistoryModal(${item.media_id}))">
+                     onclick="Library.openHistoryModal(${item.media_id})">
                     <div class="w-12 h-12 rounded-lg bg-[#202225] flex items-center justify-center text-3xl group-hover:scale-110 transition">
                         ${icon}
                     </div>
@@ -222,7 +233,7 @@ function renderMemories() {
 function renderWlCard(item, isTogether) {
     const iconClass = item.type === 'game' ? 'fa-gamepad' : 'fa-film';
     return `
-        <div class="relative group cursor-pointer" onclick="import('./js/modules/library.js?v=14').then(m => m.openHistoryModal(${item.id}))">
+        <div class="relative group cursor-pointer" onclick="Library.openHistoryModal(${item.id})">
             <!-- Card Overlay with Moods -->
             <div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10 rounded-xl pointer-events-none">
                 <div class="flex flex-wrap gap-1">
@@ -294,7 +305,7 @@ function showWinnerModal(item) {
             <p class="text-[#FAA61A] font-bold text-sm mb-8 uppercase tracking-widest">${item.type === 'game' ? 'Hra' : 'Filmový večer'}</p>
             
             <div class="flex flex-col gap-3">
-                <button onclick="this.closest('div.fixed').remove(); import('./js/modules/library.js?v=14').then(m => m.openPlanningModal('${item.title.replace(/'/g, "\\'")}', '${item.type === 'game' ? 'game' : 'movie'}'))" 
+                <button onclick="this.closest('div.fixed').remove(); Library.openPlanningModal('${item.title.replace(/'/g, "\\'")}', '${item.type === 'game' ? 'game' : 'movie'}')" 
                     class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-4 rounded-xl font-black transition transform hover:scale-105">
                     NAPLÁNOVAT TEĎ! 📅
                 </button>

@@ -18,12 +18,144 @@ import {
     generateMovementChips,
     generateTetrisMiniTracker,
     updateWaterVisuals,
-    updateMovementVisuals
+    updateMovementVisuals,
+    updateMoodVisuals,
+    updateSleep
 } from '/js/modules/dashboard/health_ui.js';
 import { handleWelcomeChat, refreshDashboardFact } from '/js/modules/dashboard/chat.js';
 
 let dashboardListenersSet = false;
 let dashboardTimer = null; // Ticker pro odpočet
+let bedtimeReminderInterval = null;
+
+// --- FACT OF THE DAY ---
+function getDailyFactSeed() {
+    // Deterministic seed from today's date string
+    const dateStr = getTodayKey(); // YYYY-MM-DD
+    let hash = 0;
+    for (let i = 0; i < dateStr.length; i++) {
+        hash = ((hash << 5) - hash) + dateStr.charCodeAt(i);
+        hash |= 0;
+    }
+    return Math.abs(hash);
+}
+
+function generateFactOfTheDay() {
+    // Collect all facts from all categories
+    const allFacts = [];
+    const catMap = {
+        raccoon: '🦝', owl: '🦉', octopus: '🐙', fun: '✨', penis: '🍌'
+    };
+    Object.entries(catMap).forEach(([catId, icon]) => {
+        const facts = state.factsLibrary?.[catId] || [];
+        facts.forEach(f => allFacts.push({ ...f, _catId: catId, _catIcon: icon }));
+    });
+
+    if (allFacts.length === 0) return '';
+
+    const seed = getDailyFactSeed();
+    const fact = allFacts[seed % allFacts.length];
+    const isFav = state.factFavorites?.some(id => String(id) === String(fact.id));
+    const heartClass = isFav ? 'text-[#eb459e]' : 'text-gray-500 hover:text-[#eb459e]';
+    const heartIcon = isFav ? 'fas' : 'far';
+
+    return `
+        <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-xl border border-white/5 p-5 relative group overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#5865F2] to-[#eb459e]"></div>
+            <div class="flex justify-between items-start mb-3">
+                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 leading-none">
+                    <i class="fas fa-lightbulb text-[#faa61a]"></i> Dnešní moudrost
+                </h3>
+                <div class="flex items-center gap-2">
+                    <button onclick="import('/js/modules/funfacts.js').then(m => { window.switchChannel('funfacts'); })"
+                            class="text-[10px] text-gray-500 hover:text-[#5865F2] transition font-bold uppercase tracking-widest flex items-center gap-1">
+                        více <i class="fas fa-chevron-right text-[8px]"></i>
+                    </button>
+                    <button id="fotd-heart-btn"
+                            onclick="import('/js/modules/funfacts.js').then(m => m.toggleFactFavorite('${fact.id}', '${fact._catId}', '${fact.subcategory || ''}', '${fact.subcategory_level2 || ''}')).then(() => import('/js/modules/dashboard.js').then(d => d.refreshFactOfTheDayHeart('${fact.id}')))"
+                            class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center transition-all hover:bg-white/10 active:scale-90">
+                        <i class="${heartIcon} fa-heart ${heartClass} transition-colors"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="flex items-start gap-4">
+                <div class="text-3xl bg-[#202225] p-2.5 rounded-xl flex-shrink-0 border border-white/5">${fact.icon || fact._catIcon}</div>
+                <p class="text-gray-200 text-sm font-medium leading-relaxed flex-1">${fact.text}</p>
+            </div>
+        </div>
+    `;
+}
+
+export function refreshFactOfTheDayHeart(factId) {
+    // Re-render just the heart button after toggle
+    const btn = document.getElementById('fotd-heart-btn');
+    if (!btn) return;
+    const isFav = state.factFavorites?.some(id => String(id) === String(factId));
+    btn.querySelector('i').className = `${isFav ? 'fas' : 'far'} fa-heart ${
+        isFav ? 'text-[#eb459e]' : 'text-gray-500 hover:text-[#eb459e]'
+    } transition-colors`;
+}
+
+// --- BEDTIME REMINDER ---
+export function initBedtimeReminder() {
+    // Only for Klárka
+    if (state.currentUser?.name !== 'Klárka') return;
+
+    if (bedtimeReminderInterval) clearInterval(bedtimeReminderInterval);
+
+    const savedTime = localStorage.getItem('kiscord_bedtime_reminder_time') || '23:00';
+    const [remindHour, remindMin] = savedTime.split(':').map(Number);
+
+    const check = () => {
+        // Don't show if already sleeping or widget already visible
+        if (state.currentSleepSession?.isSleeping) return;
+        if (document.getElementById('bedtime-reminder-widget')) return;
+        if (state.currentChannel !== 'dashboard') return;
+
+        const now = new Date();
+        const h = now.getHours();
+        const m = now.getMinutes();
+        if (h > remindHour || (h === remindHour && m >= remindMin)) {
+            showBedtimeReminderWidget();
+        }
+    };
+
+    check(); // Immediate check on render
+    bedtimeReminderInterval = setInterval(check, 60000);
+}
+
+function showBedtimeReminderWidget() {
+    // Don't create duplicates
+    if (document.getElementById('bedtime-reminder-widget')) return;
+
+    const widget = document.createElement('div');
+    widget.id = 'bedtime-reminder-widget';
+    widget.className = 'fixed bottom-6 right-4 z-[90] animate-slide-up';
+    widget.innerHTML = `
+        <div class="bg-[#1e1f22] border border-[#5865F2]/40 rounded-2xl p-4 shadow-2xl max-w-[220px] relative overflow-hidden group">
+            <div class="absolute inset-0 bg-[#5865F2]/5 group-hover:bg-[#5865F2]/10 transition-colors"></div>
+            <button onclick="document.getElementById('bedtime-reminder-widget')?.remove()" 
+                    class="absolute top-2 right-2 text-gray-600 hover:text-white text-[10px] transition z-10">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="relative z-10">
+                <div class="text-3xl mb-2 animate-pulse">🌙</div>
+                <p class="text-white text-xs font-bold mb-3 leading-snug">Čas spát,<br>Klárko! 😴</p>
+                <button onclick="import('/js/modules/health.js').then(m => m.startSleep()); document.getElementById('bedtime-reminder-widget')?.remove();"
+                        class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-2 px-3 rounded-xl text-[11px] font-black transition active:scale-95 shadow-lg">
+                    <i class="fas fa-moon mr-1"></i> Jít spát
+                </button>
+                <button onclick="document.getElementById('bedtime-reminder-widget')?.remove()"
+                        class="w-full mt-2 text-gray-500 hover:text-gray-300 text-[10px] font-bold transition py-1">
+                    Ještě chvíli
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(widget);
+    // Auto-dismiss after 2 minutes
+    setTimeout(() => widget.remove(), 120000);
+}
 
 // Helpers
 function getDaysTogether() {
@@ -279,6 +411,7 @@ export async function renderDashboard(forceRefresh = false) {
                       <div class="flex flex-wrap gap-3" id="movement-container">${generateMovementChips(data.movement)}</div>
                   </div>
 
+                  ${generateFactOfTheDay()}
                   <div id="tetris-tracker-container">${generateTetrisMiniTracker()}</div>
               </div>
           </div>
@@ -286,6 +419,7 @@ export async function renderDashboard(forceRefresh = false) {
 
     setupDashboardEvents();
     updateSunflowersDOM();
+    initBedtimeReminder();
 }
 
 export function setupDashboardEvents() {

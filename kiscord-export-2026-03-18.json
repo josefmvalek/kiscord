@@ -1,0 +1,592 @@
+{
+  "exportedAt": "2026-03-18T16:08:42.412Z",
+  "version": "1.0",
+  "app": "Kiscord – Klárka Edition",
+  "data": {
+    "klarka_health": {
+      "2026-01-11": {
+        "water": 1,
+        "sleep": "good",
+        "period": false,
+        "mood": "sad",
+        "movement": []
+      },
+      "2026-01-12": {
+        "water": 1,
+        "sleep": "zombie",
+        "period": false,
+        "mood": "tired",
+        "movement": []
+      },
+      "2026-01-13": {
+        "water": 1,
+        "sleep": "zombie",
+        "period": false,
+        "mood": "sad",
+        "movement": []
+      },
+      "2026-01-14": {
+        "water": 1,
+        "sleep": "zombie",
+        "period": false,
+        "mood": "tired",
+        "movement": [
+          "gym"
+        ]
+      },
+      "2026-01-15": {
+        "water": 3,
+        "sleep": "zombie",
+        "period": false,
+        "mood": "tired",
+        "movement": [
+          "gym"
+        ]
+      },
+      "2026-01-16": {
+        "water": 1,
+        "sleep": "zombie",
+        "period": false,
+        "mood": "happy",
+        "movement": [
+          "gym",
+          "walk"
+        ]
+      },
+      "2026-01-17": {
+        "water": 0,
+        "sleep": "good",
+        "period": false,
+        "mood": "happy",
+        "movement": [
+          "gym"
+        ]
+      },
+      "2026-01-18": {
+        "water": 1,
+        "sleep": "good",
+        "period": false,
+        "mood": "happy",
+        "movement": []
+      },
+      "2026-01-19": {
+        "water": 3,
+        "sleep": "ok",
+        "period": false,
+        "mood": null,
+        "movement": []
+      },
+      "2026-01-20": {
+        "water": 2,
+        "sleep": "ok",
+        "period": false,
+        "mood": "tired",
+        "movement": []
+      },
+      "2026-01-21": {
+        "water": 1,
+        "sleep": "zombie",
+        "period": false,
+        "mood": "tired",
+        "movement": [
+          "gym"
+        ]
+      },
+      "2026-01-22": {
+        "water": 3,
+        "sleep": "zombie",
+        "period": false,
+        "mood": "tired",
+        "movement": [
+          "gym"
+        ]
+      },
+      "2026-01-23": {
+        "water": 1,
+        "sleep": "zombie",
+        "period": false,
+        "mood": "happy",
+        "movement": [
+          "gym",
+          "walk",
+          "sex"
+        ]
+      },
+      "2026-01-24": {
+        "water": 1,
+        "sleep": "ok",
+        "period": false,
+        "mood": null,
+        "movement": []
+      },
+      "2026-01-25": {
+        "water": 3,
+        "sleep": "good",
+        "period": false,
+        "mood": "sad",
+        "movement": []
+      },
+      "2026-01-26": {
+        "water": 2,
+        "sleep": "zombie",
+        "period": false,
+        "mood": "sad",
+        "movement": []
+      },
+      "2026-01-27": {
+        "water": 2,
+        "sleep": "ok",
+        "period": false,
+        "mood": "sad",
+        "movement": [
+          "walk"
+        ]
+      },
+      "2026-01-28": {
+        "water": 1,
+        "sleep": "ok",
+        "period": false,
+        "mood": "sad",
+        "movement": []
+      },
+      "2026-01-29": {
+        "water": 0,
+        "sleep": "ok",
+        "period": false,
+        "mood": null,
+        "movement": []
+      },
+      "2026-01-30": {
+        "water": 0,
+        "sleep": "ok",
+        "period": true,
+        "mood": "sad",
+        "movement": []
+      },
+      "2026-01-31": {
+        "water": 2,
+        "sleep": "ok",
+        "period": true,
+        "mood": "sad",
+        "movement": []
+      },
+      "2026-02-01": {
+        "water": 2,
+        "sleep": "good",
+        "period": true,
+        "mood": "happy",
+        "movement": []
+      },
+      "2026-02-02": {
+        "water": 4,
+        "sleep": "ok",
+        "period": true,
+        "mood": "sad",
+        "movement": []
+      },
+      "2026-02-03": {
+        "water": 2,
+        "sleep": "zombie",
+        "period": true,
+        "mood": "tired",
+        "movement": [
+          "gym"
+        ]
+      },
+      "2026-02-04": {
+        "water": 1,
+        "sleep": "zombie",
+        "period": false,
+        "mood": "tired",
+        "movement": [
+          "gym"
+        ]
+      },
+      "2026-02-05": {
+        "water": 3,
+        "sleep": "ok",
+        "period": false,
+        "mood": "tired",
+        "movement": [
+          "gym"
+        ]
+      },
+      "2026-02-07": {
+        "water": 3,
+        "sleep": "ok",
+        "period": false,
+        "mood": "angry",
+        "movement": []
+      },
+      "2026-02-08": {
+        "water": 4,
+        "sleep": "good",
+        "period": false,
+        "mood": "happy",
+        "movement": []
+      },
+      "2026-02-09": {
+        "water": 3,
+        "sleep": "ok",
+        "period": false,
+        "mood": "tired",
+        "movement": []
+      },
+      "2026-02-10": {
+        "water": 3,
+        "sleep": "zombie",
+        "period": false,
+        "mood": "tired",
+        "movement": [
+          "gym"
+        ]
+      },
+      "2026-02-12": {
+        "water": 2,
+        "sleep": "zombie",
+        "period": false,
+        "mood": "sad",
+        "movement": [
+          "gym"
+        ]
+      },
+      "2026-02-13": {
+        "water": 1,
+        "sleep": "zombie",
+        "period": false,
+        "mood": "tired",
+        "movement": [
+          "gym"
+        ]
+      },
+      "2026-02-14": {
+        "water": 0,
+        "mood": 10,
+        "sleep": 0,
+        "movement": [],
+        "bedtime": ""
+      },
+      "2026-02-15": {
+        "water": 3,
+        "mood": 4,
+        "sleep": 0,
+        "movement": [],
+        "bedtime": "00:45"
+      },
+      "2026-02-16": {
+        "water": 1,
+        "mood": 3,
+        "sleep": 5.4,
+        "movement": [],
+        "bedtime": "17:34"
+      },
+      "2026-02-17": {
+        "water": 1,
+        "mood": 5,
+        "sleep": 6,
+        "movement": [],
+        "bedtime": "00:26"
+      },
+      "2026-02-18": {
+        "water": 2,
+        "mood": 4,
+        "sleep": 5,
+        "movement": [],
+        "bedtime": "00:26"
+      },
+      "2026-02-19": {
+        "water": 4,
+        "mood": 6,
+        "sleep": 7,
+        "movement": [],
+        "bedtime": "15:14"
+      },
+      "2026-02-20": {
+        "water": 2,
+        "mood": 7,
+        "sleep": 6,
+        "movement": []
+      },
+      "2026-02-21": {
+        "water": 0,
+        "mood": 7,
+        "sleep": 8,
+        "movement": []
+      },
+      "2026-02-22": {
+        "water": 3,
+        "mood": 9,
+        "sleep": 8,
+        "movement": []
+      },
+      "2026-02-23": {
+        "water": 2,
+        "mood": 1,
+        "sleep": 5,
+        "movement": []
+      },
+      "2026-02-24": {
+        "water": 3,
+        "mood": 6,
+        "sleep": 7,
+        "movement": []
+      },
+      "2026-02-25": {
+        "water": 2,
+        "mood": 5,
+        "sleep": 6,
+        "movement": []
+      },
+      "2026-02-26": {
+        "water": 1,
+        "mood": 1,
+        "sleep": 5,
+        "movement": [
+          "gym"
+        ]
+      },
+      "2026-02-27": {
+        "water": 2,
+        "mood": 7,
+        "sleep": 6,
+        "movement": []
+      },
+      "2026-02-28": {
+        "water": 1,
+        "mood": 9,
+        "sleep": 8,
+        "movement": [
+          "walk"
+        ]
+      },
+      "2026-03-01": {
+        "water": 2,
+        "mood": 9,
+        "sleep": 9,
+        "movement": []
+      },
+      "2026-03-02": {
+        "water": 1,
+        "mood": 5,
+        "sleep": 6,
+        "movement": [
+          "gym"
+        ]
+      },
+      "2026-03-03": {
+        "water": 0,
+        "mood": 2,
+        "sleep": 8,
+        "movement": [
+          "gym",
+          "walk"
+        ]
+      },
+      "2026-03-04": {
+        "water": 1,
+        "mood": 7,
+        "sleep": 6,
+        "movement": [
+          "gym"
+        ]
+      },
+      "2026-03-05": {
+        "water": 1,
+        "mood": 6,
+        "sleep": 6,
+        "movement": []
+      },
+      "2026-03-08": {
+        "water": 1,
+        "mood": 4,
+        "sleep": 8,
+        "movement": []
+      },
+      "2026-03-09": {
+        "water": 0,
+        "mood": 50,
+        "sleep": 0,
+        "movement": []
+      },
+      "2026-03-11": {
+        "water": 3,
+        "mood": 5,
+        "sleep": 6,
+        "movement": [
+          "gym"
+        ]
+      },
+      "2026-03-12": {
+        "water": 3,
+        "mood": 1,
+        "sleep": 6,
+        "movement": [
+          "gym"
+        ]
+      },
+      "2026-03-13": {
+        "water": 0,
+        "mood": 4,
+        "sleep": 7,
+        "movement": [
+          "gym",
+          "walk"
+        ]
+      },
+      "2026-03-14": {
+        "water": 2,
+        "mood": 6,
+        "sleep": 8,
+        "movement": [
+          "gym"
+        ]
+      },
+      "2026-03-16": {
+        "water": 3,
+        "mood": 4,
+        "sleep": 6,
+        "movement": []
+      },
+      "2026-03-17": {
+        "water": 0,
+        "mood": 4,
+        "sleep": 0,
+        "movement": []
+      },
+      "2026-03-18": {
+        "water": 0,
+        "mood": 50,
+        "sleep": 0,
+        "movement": []
+      }
+    },
+    "klarka_sleep_session": {
+      "startTime": null,
+      "isSleeping": false
+    },
+    "klarka_plans": null,
+    "klarka_planned_dates": {},
+    "klarka_timeline": null,
+    "klarka_school": null,
+    "klarka_watchlist": [],
+    "klarka_watch_history": null,
+    "klarka_ratings": null,
+    "klarka_date_ratings": {
+      "208": 4
+    },
+    "klarka_topic_progress": {
+      "relationships": [
+        40,
+        22,
+        13,
+        5
+      ]
+    },
+    "klarka_topic_bookmarks": {
+      "relationships": [
+        9,
+        25,
+        8,
+        13,
+        21,
+        4,
+        3,
+        11,
+        17,
+        19,
+        1,
+        15
+      ],
+      "fun_dilemmas": [
+        43,
+        24
+      ]
+    },
+    "klarka_quiz": {
+      "score": 50,
+      "completed": true
+    },
+    "klarka_tetris_score": {
+      "jose": 10,
+      "klarka": 9,
+      "history": [
+        {
+          "winner": "jose",
+          "date": "2026-02-15T21:26:51.462Z"
+        },
+        {
+          "winner": "jose",
+          "date": "2026-02-15T21:28:43.742Z"
+        },
+        {
+          "winner": "jose",
+          "date": "2026-02-15T21:31:38.880Z"
+        },
+        {
+          "winner": "jose",
+          "date": "2026-03-08T20:38:48.322Z"
+        },
+        {
+          "winner": "jose",
+          "date": "2026-03-08T20:38:48.666Z"
+        },
+        {
+          "winner": "jose",
+          "date": "2026-03-08T20:38:48.948Z"
+        },
+        {
+          "winner": "jose",
+          "date": "2026-03-08T20:38:49.260Z"
+        },
+        {
+          "winner": "jose",
+          "date": "2026-03-08T20:38:49.500Z"
+        },
+        {
+          "winner": "jose",
+          "date": "2026-03-08T20:38:49.812Z"
+        },
+        {
+          "winner": "jose",
+          "date": "2026-03-08T20:38:50.453Z"
+        },
+        {
+          "winner": "klarka",
+          "date": "2026-03-08T20:38:51.104Z"
+        },
+        {
+          "winner": "klarka",
+          "date": "2026-03-08T20:38:51.346Z"
+        },
+        {
+          "winner": "klarka",
+          "date": "2026-03-08T20:38:51.566Z"
+        },
+        {
+          "winner": "klarka",
+          "date": "2026-03-08T20:38:51.774Z"
+        },
+        {
+          "winner": "klarka",
+          "date": "2026-03-08T20:38:51.972Z"
+        },
+        {
+          "winner": "klarka",
+          "date": "2026-03-08T20:38:52.183Z"
+        },
+        {
+          "winner": "klarka",
+          "date": "2026-03-08T20:38:52.394Z"
+        },
+        {
+          "winner": "klarka",
+          "date": "2026-03-08T20:38:52.599Z"
+        },
+        {
+          "winner": "klarka",
+          "date": "2026-03-08T20:38:53.218Z"
+        }
+      ]
+    }
+  }
+}

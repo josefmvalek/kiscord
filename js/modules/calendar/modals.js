@@ -27,14 +27,14 @@ export function ensureModals() {
                     </div>
                     <div id="school-add-form" class="flex gap-2">
                        <input type="text" id="school-input" placeholder="Zkouška, test..." class="flex-1 bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#faa61a]/50 transition-all">
-                       <button onclick="import('./js/modules/calendar.js').then(m => m.addSchoolEvent())" class="bg-[#faa61a] hover:bg-[#c88515] text-white px-4 rounded-xl transition shadow-lg active:scale-95"><i class="fas fa-plus"></i></button>
+                       <button onclick="Calendar.addSchoolEvent()" class="bg-[#faa61a] hover:bg-[#c88515] text-white px-4 rounded-xl transition shadow-lg active:scale-95"><i class="fas fa-plus"></i></button>
                     </div>
                 </div>
                 
                 <div id="modal-section-health" class="space-y-4 pt-4 border-t border-white/5">
                     <div class="flex items-center justify-between">
                         <h4 class="text-xs font-bold text-[#3ba55c] uppercase flex items-center gap-2"><i class="fas fa-heartbeat"></i> Zdraví & Restart</h4>
-                        <button onclick="import('./js/modules/calendar.js').then(m => m.toggleHealthEdit())" class="text-[10px] font-bold text-gray-400 hover:text-white uppercase tracking-widest transition">Upravit</button>
+                        <button onclick="Calendar.toggleHealthEdit()" class="text-[10px] font-bold text-gray-400 hover:text-white uppercase tracking-widest transition">Upravit</button>
                     </div>
                     
                     <div id="health-display-grid" class="grid grid-cols-2 gap-3">
@@ -65,8 +65,8 @@ export function ensureModals() {
                         ${renderInputGroup({ label: 'Pohyb (gym, walk...)', id: 'edit-health-movement' })}
                         
                         <div class="flex gap-2 pt-2">
-                             ${renderButton({ text: 'Zrušit', variant: 'secondary', className: 'flex-1', onclick: "import('./js/modules/calendar.js').then(m => m.toggleHealthEdit())" })}
-                             ${renderButton({ text: 'Uložit', variant: 'success', className: 'flex-[2]', onclick: "import('./js/modules/calendar.js').then(m => m.saveHealthRecord())" })}
+                             ${renderButton({ text: 'Zrušit', variant: 'secondary', className: 'flex-1', onclick: "Calendar.toggleHealthEdit()" })}
+                             ${renderButton({ text: 'Uložit', variant: 'success', className: 'flex-[2]', onclick: "Calendar.saveHealthRecord()" })}
                         </div>
                     </div>
                 </div>
@@ -112,7 +112,7 @@ export function showDayDetail(dateKey) {
         if (timelineEvent) {
             plansHtml += `
             <div class="bg-gradient-to-r from-[#5865F2]/10 to-[#eb459e]/10 border border-[#5865F2]/30 rounded-lg p-3 relative group hover:border-[#eb459e] transition cursor-pointer"
-                 onclick="import('./js/modules/calendar.js').then(m => m.closeDayModal()); import('./js/modules/timeline.js').then(m => m.jumpToTimeline('${timelineEvent.id}'))">
+                 onclick="Calendar.closeDayModal(); import('./js/modules/timeline.js').then(m => m.jumpToTimeline('${timelineEvent.id}'))">
                 <div class="font-bold text-white text-sm flex items-center justify-between gap-2">
                     <span class="flex items-center gap-2">
                         <i class="fas ${timelineEvent.icon || "fa-star"} text-[#faa61a]"></i>
@@ -124,24 +124,62 @@ export function showDayDetail(dateKey) {
             </div>`;
         } else if (plannedDate) {
             const iconsMap = {
-                food: '🍔',
-                walk: '🌲',
-                view: '⛰️',
-                fun: '⚡',
-                movie: '🎬',
-                discord: '🎧',
-                game: '🎮',
-                date: '🥂'
+                food: '🍔', walk: '🌲', view: '⛰️', fun: '⚡',
+                movie: '🎬', discord: '🎧', game: '🎮', date: '🥂'
             };
-            const icon = iconsMap[plannedDate.cat] || "📍";
+            const icon = iconsMap[plannedDate.cat] || '📍';
+
+            // Status
+            const planStatusDefs = {
+                idea:      { icon: '💭', label: 'Nápad',       color: 'text-gray-400',    bg: 'bg-gray-500/10',   border: 'border-gray-500/20' },
+                confirmed: { icon: '📅', label: 'Potvrzeno',    color: 'text-[#5865F2]', bg: 'bg-[#5865F2]/10', border: 'border-[#5865F2]/30' },
+                happened:  { icon: '🎉', label: 'Proběhlo',     color: 'text-[#3ba55c]', bg: 'bg-[#3ba55c]/10', border: 'border-[#3ba55c]/30' }
+            };
+            const planStatusOrder = ['idea', 'confirmed', 'happened'];
+            const planStatus = plannedDate.status || 'idea';
+            const planStatusDef = planStatusDefs[planStatus] || planStatusDefs.idea;
+
+            // Checklist
+            const checklist = plannedDate.checklist || [];
+            const checklistHtml = checklist.length > 0 ? `
+                <div class="mt-3 space-y-1.5">
+                    <div class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Checklist</div>
+                    ${checklist.map((item, idx) => `
+                        <div class="flex items-center gap-2 group/check">
+                            <button onclick="Calendar.toggleChecklistItem('${dateKey}', ${idx})" 
+                                    class="w-5 h-5 rounded flex items-center justify-center border transition-all flex-shrink-0 ${item.done ? 'bg-[#3ba55c] border-[#3ba55c] text-white' : 'border-gray-600 text-transparent hover:border-gray-400'}">
+                                <i class="fas fa-check text-[8px]"></i>
+                            </button>
+                            <span class="text-xs ${item.done ? 'line-through text-gray-600' : 'text-gray-300'}">${item.text}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : '';
 
             plansHtml += `
-            <div class="bg-[#eb459e]/10 border border-[#eb459e]/30 rounded-lg p-3 relative group">
-                <div class="font-bold text-white text-sm flex items-center gap-2"><span>${icon}</span> ${plannedDate.name}</div>
-                <div class="text-xs text-gray-300 mt-1">Čas: ${plannedDate.time || "Neurčeno"}</div>
-                <div class="text-xs text-gray-400 mt-1 italic">${plannedDate.note || ""}</div>
-                <button onclick="import('./js/modules/calendar.js').then(m => m.deletePlannedDate('${dateKey}'))" class="absolute top-2 right-2 text-red-400 hover:text-red-200 p-2 transition"><i class="fas fa-trash"></i></button>
+            <div class="bg-[#eb459e]/10 border border-[#eb459e]/30 rounded-xl p-4 relative group">
+                <div class="flex items-start justify-between gap-2 mb-2">
+                    <div class="font-bold text-white text-sm flex items-center gap-2">
+                        <span>${icon}</span> ${plannedDate.name}
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <!-- Status badge - clickable cycle -->
+                        <button onclick="Calendar.cyclePlanStatus('${dateKey}')"
+                                title="Klik pro změnu stavu"
+                                class="flex items-center gap-1 px-2 py-1 rounded-lg ${planStatusDef.bg} ${planStatusDef.border} border ${planStatusDef.color} text-[9px] font-black uppercase tracking-widest transition-all hover:opacity-80 active:scale-95">
+                            ${planStatusDef.icon} ${planStatusDef.label}
+                        </button>
+                        <button onclick="Calendar.deletePlannedDate('${dateKey}')" class="text-red-400 hover:text-red-200 p-1 transition">
+                            <i class="fas fa-trash text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+                ${plannedDate.time ? `<div class="text-xs text-gray-400 mb-1"><i class="far fa-clock text-[#5865F2] mr-1"></i>${plannedDate.time}</div>` : ''}
+                ${plannedDate.note && plannedDate.note !== 'Vlastní plán' ? `<div class="text-xs text-gray-400 italic">${plannedDate.note}</div>` : ''}
+                ${plannedDate.backup_plan ? `<div class="mt-2 bg-black/20 rounded-lg p-2 text-xs text-gray-400"><i class="fas fa-umbrella mr-1 text-[#faa61a]"></i><span class="text-[#faa61a] font-bold">Záloha:</span> ${plannedDate.backup_plan}</div>` : ''}
+                ${checklistHtml}
             </div>`;
+
         } else {
             plansHtml += `
             <div class="flex flex-col gap-2">
@@ -154,10 +192,14 @@ export function showDayDetail(dateKey) {
                     </select>
                     <input type="time" id="plan-time" class="bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none w-20">
                 </div>
-                <div class="flex gap-2">
-                    <input type="text" id="plan-name" placeholder="Co podnikneme?" class="flex-1 bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none">
-                    <button onclick="import('./js/modules/calendar.js').then(m => m.addCustomPlan())" class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-3 rounded transition"><i class="fas fa-plus"></i></button>
-                </div>
+                <input type="text" id="plan-name" placeholder="Co podnikneme?" class="flex-1 bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none">
+                <input type="text" id="plan-backup" placeholder="Záložní plán (pokud prší...)" 
+                       class="flex-1 bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none focus:border-[#faa61a]/50 transition">
+                <input type="text" id="plan-checklist" placeholder="Checklist položky oddělené přípoji: deka, víno..." 
+                       class="flex-1 bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none focus:border-[#5865F2]/50 transition">
+                <button onclick="Calendar.addCustomPlan()" class="bg-[#5865F2] hover:bg-[#4752c4] text-white py-2 rounded transition font-bold text-xs flex items-center justify-center gap-2">
+                    <i class="fas fa-plus"></i> Přidat plán
+                </button>
             </div>`;
         }
 
@@ -298,19 +340,28 @@ export async function addCustomPlan() {
     const type = document.getElementById("plan-type").value;
     const name = document.getElementById("plan-name").value;
     const time = document.getElementById("plan-time").value;
+    const backup = document.getElementById("plan-backup")?.value?.trim() || '';
+    const checklistRaw = document.getElementById("plan-checklist")?.value?.trim() || '';
+    const checklist = checklistRaw
+        ? checklistRaw.split(',').map(s => ({ text: s.trim(), done: false })).filter(i => i.text)
+        : [];
 
     if (!name || !currentModalDateKey) return;
 
     if (!state.plannedDates) state.plannedDates = {};
     
     const planId = crypto.randomUUID();
-    state.plannedDates[currentModalDateKey] = {
+    const planData = {
         id: planId,
         name: name,
         cat: type,
         time: time,
-        note: "Vlastní plán",
+        note: '',
+        status: 'idea',
+        backup_plan: backup,
+        checklist: checklist
     };
+    state.plannedDates[currentModalDateKey] = planData;
 
     try {
         const { supabase } = await import('../../core/supabase.js');
@@ -320,7 +371,10 @@ export async function addCustomPlan() {
             name: name,
             cat: type,
             time: time,
-            note: "Vlastní plán",
+            note: '',
+            status: 'idea',
+            backup_plan: backup,
+            checklist: JSON.stringify(checklist),
             updated_at: new Date().toISOString()
         }, { onConflict: 'date_key' });
 
@@ -490,4 +544,49 @@ export function saveHealthRecord() {
     
     triggerHaptic("success");
     window.dispatchEvent(new CustomEvent('notification', { detail: { message: "Zdraví uloženo 🏥", type: "success" } }));
+}
+
+// --- RANDE PLANNER HELPERS ---
+
+export async function cyclePlanStatus(dateKey) {
+    const plan = (state.plannedDates || {})[dateKey];
+    if (!plan) return;
+
+    const statusOrder = ['idea', 'confirmed', 'happened'];
+    const current = plan.status || 'idea';
+    const nextStatus = statusOrder[(statusOrder.indexOf(current) + 1) % statusOrder.length];
+
+    plan.status = nextStatus;
+    triggerHaptic('light');
+
+    try {
+        const { supabase } = await import('../../core/supabase.js');
+        await supabase.from('planned_dates')
+            .update({ status: nextStatus })
+            .eq('date_key', dateKey);
+    } catch (err) {
+        console.error('Failed to update plan status:', err);
+    }
+
+    showDayDetail(dateKey);
+    renderCalendar();
+}
+
+export async function toggleChecklistItem(dateKey, itemIndex) {
+    const plan = (state.plannedDates || {})[dateKey];
+    if (!plan || !plan.checklist) return;
+
+    plan.checklist[itemIndex].done = !plan.checklist[itemIndex].done;
+    triggerHaptic('light');
+
+    try {
+        const { supabase } = await import('../../core/supabase.js');
+        await supabase.from('planned_dates')
+            .update({ checklist: JSON.stringify(plan.checklist) })
+            .eq('date_key', dateKey);
+    } catch (err) {
+        console.error('Failed to update checklist:', err);
+    }
+
+    showDayDetail(dateKey);
 }

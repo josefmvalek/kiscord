@@ -42,7 +42,7 @@ export function generateFilterButtons() {
             ? "px-3 py-1.5"
             : "w-9 h-9 flex items-center justify-center p-0";
 
-        return `<button onclick="import('./js/modules/calendar.js').then(m => m.setCalendarFilter('${v.id}'))" 
+        return `<button onclick="Calendar.setCalendarFilter('${v.id}')" 
                       class="${padding} rounded-lg text-xs font-bold border transition-all duration-200 whitespace-nowrap flex items-center gap-2 ${style}">
                 ${content}
               </button>`;
@@ -208,7 +208,7 @@ export function generateCalendarGrid(year, month) {
         }
 
         html += `
-          <div onclick="import('./js/modules/calendar.js').then(m => m.showDayDetail('${dateKey}'))" 
+          <div onclick="Calendar.showDayDetail('${dateKey}')" 
                class="${cellClasses} ${bgStyle} ${borderStyle} calendar-fade"
                style="${inlineStyles}">
               <span class="absolute top-1 left-1.5 md:top-2 md:left-2 text-[10px] z-20 ${textStyle}">${d}</span>

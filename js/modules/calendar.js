@@ -12,7 +12,16 @@ import {
 import { 
     ensureModals, 
     showDayDetail,
-    getCurrentModalDateKey
+    getCurrentModalDateKey,
+    closeDayModal,
+    addSchoolEvent,
+    deleteSchoolEvent,
+    toggleHealthEdit,
+    saveHealthRecord,
+    deletePlannedDate,
+    addCustomPlan,
+    cyclePlanStatus,
+    toggleChecklistItem
 } from './calendar/modals.js';
 
 // --- SESSION STATE (Internal to calendar controller) ---
@@ -24,6 +33,14 @@ let currentCalMonth = new Date().getMonth();
  * Orchestrates grid generation and event setup.
  */
 export function renderCalendar(year = null, month = null) {
+    // Expose API to window
+    window.Calendar = { 
+        renderCalendar, setCalendarFilter, setupCalendarSync,
+        addSchoolEvent, deleteSchoolEvent, toggleHealthEdit, saveHealthRecord,
+        showDayDetail, closeDayModal, deletePlannedDate, addCustomPlan,
+        cyclePlanStatus, toggleChecklistItem
+    };
+
     ensureModals();
     setupCalendarSync();
     
@@ -33,7 +50,7 @@ export function renderCalendar(year = null, month = null) {
     if (state.loadError) {
         container.innerHTML = window.renderErrorState({
             message: "Nepodařilo se mi načíst tvé plány a události. Zkusíme to znovu rozmrazit?",
-            onRetry: "import('./js/core/state.js').then(async m => { await m.initializeState(); import('./js/modules/calendar.js').then(c => c.renderCalendar()); })"
+            onRetry: "import('./js/core/state.js').then(async m => { await m.initializeState(); Calendar.renderCalendar(); })"
         });
         return;
     }
@@ -68,10 +85,10 @@ export function renderCalendar(year = null, month = null) {
                           ${monthNames[month]} <span class="text-gray-500 font-light text-xl">${year}</span>
                       </h2>
                       <div class="flex gap-1">
-                          <button onclick="import('./js/modules/calendar.js').then(m => m.renderCalendar(${prevYear}, ${prevMonth}))" class="w-8 h-8 rounded-lg bg-[#202225] hover:bg-[#40444b] text-gray-300 flex items-center justify-center transition border border-[#202225] hover:border-gray-500">
+                          <button onclick="Calendar.renderCalendar(${prevYear}, ${prevMonth})" class="w-8 h-8 rounded-lg bg-[#202225] hover:bg-[#40444b] text-gray-300 flex items-center justify-center transition border border-[#202225] hover:border-gray-500">
                               <i class="fas fa-chevron-left text-sm"></i>
                           </button>
-                          <button onclick="import('./js/modules/calendar.js').then(m => m.renderCalendar(${nextYear}, ${nextMonth}))" class="w-8 h-8 rounded-lg bg-[#202225] hover:bg-[#40444b] text-gray-300 flex items-center justify-center transition border border-[#202225] hover:border-gray-500">
+                          <button onclick="Calendar.renderCalendar(${nextYear}, ${nextMonth})" class="w-8 h-8 rounded-lg bg-[#202225] hover:bg-[#40444b] text-gray-300 flex items-center justify-center transition border border-[#202225] hover:border-gray-500">
                               <i class="fas fa-chevron-right text-sm"></i>
                           </button>
                       </div>

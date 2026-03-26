@@ -150,3 +150,47 @@ export function forceEnableHaptics() {
     hasUserInteracted = true;
     triggerHaptic('success');
 }
+
+/**
+ * Requests push notification permission and returns boolean
+ */
+export async function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+        console.warn("This browser does not support desktop notification");
+        return false;
+    }
+
+    if (Notification.permission === "granted") {
+        return true;
+    }
+
+    if (Notification.permission !== "denied") {
+        const permission = await Notification.requestPermission();
+        return permission === "granted";
+    }
+
+    return false;
+}
+
+/**
+ * Sends a local notification (fallback or for testing)
+ */
+export function sendLocalNotification(title, options = {}) {
+    if (Notification.permission === "granted") {
+        const defaultOptions = {
+            icon: '/icons/icon-192x192.png',
+            badge: '/icons/badge-72x72.png',
+            vibrate: [100, 50, 100],
+            ...options
+        };
+        
+        // Try to use service worker registration if available for better PWA support
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(registration => {
+                registration.showNotification(title, defaultOptions);
+            });
+        } else {
+            new Notification(title, defaultOptions);
+        }
+    }
+}

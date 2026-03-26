@@ -1,0 +1,86 @@
+/* Kiscord UI Kit — Standardized premium components */
+
+:root {
+    --glass-bg: rgba(47, 49, 54, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.05);
+    --premium-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    --premium-glow-pink: 0 0 15px rgba(235, 69, 158, 0.3);
+    --premium-glow-blue: 0 0 15px rgba(88, 101, 242, 0.3);
+}
+
+/* Glassmorphism Cards */
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--premium-shadow);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+    background: rgba(47, 49, 54, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Premium Buttons */
+.btn-premium {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn-premium::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+    transform: rotate(45deg);
+    transition: 0.5s;
+    pointer-events: none;
+}
+
+.btn-premium:hover::after {
+    left: 120%;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(4px);
+}
+
+/* Micro-animations */
+.hover-glow-pink:hover { box-shadow: var(--premium-glow-pink); }
+.hover-glow-blue:hover { box-shadow: var(--premium-glow-blue); }
+
+/* Input Styling */
+.kiscord-input {
+    background: #202225;
+    border: 1px solid #2f3136;
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: white;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.kiscord-input:focus {
+    border-color: rgba(88, 101, 242, 0.5);
+    box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.1);
+    outline: none;
+}

@@ -1,20 +1,21 @@
 import { supabase } from './supabase.js';
 import { isJosef, isKlarka } from './auth.js';
 
-// Cache buster: 2026-03-23-17-00
+// Cache buster: 2026-03-25-20-30
 const STATE_CACHE_KEY = 'kiscord_state_cache';
+const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
 const state = {
     tetris: { jose: 0, klarka: 0 },
     currentChannel: "welcome",
     topicProgress: {},
-    schoolEvents: {},
+    schoolEvents: [],
     calendarFilter: "all",
     isViewingBookmarks: false,
     currentTopicId: null,
     currentQuestionIndex: null,
     topicSessionHistory: [],
-    funFactProgress: {}, // { raccoon: { index: 0, completed: false } }
+    funFactProgress: {},
     pendingResetId: null,
     startDate: "2025-12-24",
     healthData: {},
@@ -36,6 +37,7 @@ const state = {
     factFavorites: [],
     library: { movies: [], series: [], games: [] },
     timelineEvents: [],
+    bucketList: [],
     timelineHighlights: {},
     dateLocations: [],
     conversationTopics: [],
@@ -52,6 +54,31 @@ const state = {
     coopQuests: [],
     user_ids: { jose: null, klarka: null },
     loadError: false // Track if initial load failed
+};
+
+// --- PUB/SUB EVENT BUS ---
+// Lightweight reactive notifications for state changes.
+// Usage: stateEvents.on('bucketlist', () => re-render); stateEvents.emit('bucketlist');
+const _listeners = {};
+export const stateEvents = {
+    on(event, callback) {
+        if (!_listeners[event]) _listeners[event] = [];
+        _listeners[event].push(callback);
+        // Return unsubscribe function
+        return () => {
+            _listeners[event] = _listeners[event].filter(cb => cb !== callback);
+        };
+    },
+    emit(event, data) {
+        (_listeners[event] || []).forEach(cb => {
+            try { cb(data); } catch (e) { console.error(`[stateEvents] Error in '${event}' listener:`, e); }
+        });
+    },
+    off(event, callback) {
+        if (_listeners[event]) {
+            _listeners[event] = _listeners[event].filter(cb => cb !== callback);
+        }
+    }
 };
 
 function saveStateToCache() {
@@ -120,13 +147,12 @@ async function initializeState() {
     state.gamePrompts = [];
     state.coopQuests = [];
     state.user_ids = { jose: null, klarka: null };
+    state.bucketList = [];
     state.tetris = { jose: 0, klarka: 0 }; // Reset Tetris scores before fresh load
     state.loadError = false; // Reset error state on each init
 
     try {
-        const date30DaysAgo = new Date();
-        date30DaysAgo.setDate(date30DaysAgo.getDate() - 30);
-        const dateStr30DaysAgo = date30DaysAgo.toISOString().split('T')[0];
+
 
         const [
             { data: healthData },
@@ -139,10 +165,9 @@ async function initializeState() {
             { data: favData },
             pinnedData
         ] = await Promise.all([
-            // Stáhnout pouze poslední měsíc (zvyšuje rychlost min. 10x)
-            supabase.from('health_data').select('*').gte('date_key', dateStr30DaysAgo),
-            // Plány od minulého měsíce do budoucna
-            supabase.from('planned_dates').select('*').gte('date_key', dateStr30DaysAgo),
+            // Stáhnout všechna data pro kalendář a statistiky
+            supabase.from('health_data').select('*'),
+            supabase.from('planned_dates').select('*'),
             supabase.from('school_events').select('*'),
             supabase.from('tetris_scores').select('*'),
             supabase.from('app_facts').select('*'),
@@ -176,7 +201,10 @@ async function initializeState() {
                     name: row.name,
                     cat: row.cat,
                     time: row.time,
-                    note: row.note
+                    note: row.note,
+                    status: row.status || 'idea',
+                    backup_plan: row.backup_plan || '',
+                    checklist: typeof row.checklist === 'string' ? JSON.parse(row.checklist) : (row.checklist || [])
                 };
             });
         }
@@ -317,7 +345,9 @@ async function initializeState() {
     saveStateToCache();
 }
 
-async function refreshLibraryState() {
+let libraryLoaded = false;
+async function ensureLibraryData(force = false) {
+    if (libraryLoaded && !force && !isStale('library')) return;
     try {
         const [libData, watchData, ratingData] = await Promise.all([
             supabase.from('library_content').select('*'),
@@ -375,16 +405,46 @@ async function refreshLibraryState() {
                 }
             });
         }
+        libraryLoaded = true;
+        markLoaded('library');
+        stateEvents.emit('library');
     } catch (err) {
         console.error("Refresh Library State Error:", err);
     }
 }
 
-// --- LAZY LOADING FUNKCE PRO MODULY ---
+let bucketListLoaded = false;
+async function ensureBucketListData(force = false) {
+    if (bucketListLoaded && !force && !isStale('bucketlist')) return;
+    try {
+        const { data, error } = await supabase
+            .from('bucket_list')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        state.bucketList = data || [];
+        bucketListLoaded = true;
+        markLoaded('bucketlist');
+        stateEvents.emit('bucketlist');
+    } catch (e) {
+        console.error("Error loading bucket list data:", e);
+    }
+}
+
+// --- LAZY LOADING TIMESTAMPS (for stale detection) ---
+const _loadedAt = {};
+function isStale(key) {
+    if (!_loadedAt[key]) return true;
+    return Date.now() - _loadedAt[key] > STALE_THRESHOLD_MS;
+}
+function markLoaded(key) {
+    _loadedAt[key] = Date.now();
+}
 
 let timelineLoaded = false;
-async function ensureTimelineData() {
-    if (timelineLoaded) return;
+async function ensureTimelineData(force = false) {
+    if (timelineLoaded && !force && !isStale('timeline')) return;
     try {
         const { data } = await supabase.from('timeline_events').select('*').order('event_date', { ascending: false, nullsFirst: false });
         if (data) {
@@ -402,14 +462,16 @@ async function ensureTimelineData() {
             }));
         }
         timelineLoaded = true;
+        markLoaded('timeline');
+        stateEvents.emit('timeline');
     } catch (e) {
         console.error("Error loading timeline data:", e);
     }
 }
 
 let mapDataLoaded = false;
-async function ensureMapData() {
-    if (mapDataLoaded) return;
+async function ensureMapData(force = false) {
+    if (mapDataLoaded && !force && !isStale('map')) return;
     try {
         const [{ data: ratingData }, { data: locData }] = await Promise.all([
             supabase.from('date_ratings').select('*'),
@@ -428,14 +490,16 @@ async function ensureMapData() {
             }));
         }
         mapDataLoaded = true;
+        markLoaded('map');
+        stateEvents.emit('map');
     } catch (e) {
         console.error("Error loading map data", e);
     }
 }
 
 let achievementsLoaded = false;
-async function ensureAchievementsData() {
-    if (achievementsLoaded) return;
+async function ensureAchievementsData(force = false) {
+    if (achievementsLoaded && !force && !isStale('achievements')) return;
     try {
         const [{ data: ach }, { data: cat }, { data: def }] = await Promise.all([
             supabase.from('achievements').select('*'),
@@ -446,14 +510,16 @@ async function ensureAchievementsData() {
         if (cat) state.achievementCategories = cat;
         if (def) state.achievementDefinitions = def;
         achievementsLoaded = true;
+        markLoaded('achievements');
+        stateEvents.emit('achievements');
     } catch (e) {
         console.error("Error loading achievements data:", e);
     }
 }
 
 let topicsLoaded = false;
-async function ensureTopicsData() {
-    if (topicsLoaded) return;
+async function ensureTopicsData(force = false) {
+    if (topicsLoaded && !force && !isStale('topics')) return;
     try {
         const { data } = await supabase.from('conversation_topics').select('*');
         if (data) Object.assign(state, {
@@ -462,6 +528,8 @@ async function ensureTopicsData() {
             }))
         });
         topicsLoaded = true;
+        markLoaded('topics');
+        stateEvents.emit('topics');
     } catch(e) { console.error("Error topics:", e); }
 }
 
@@ -512,11 +580,27 @@ async function ensureDailyQuizData() {
     } catch(e) { console.error("Error daily quiz:", e); }
 }
 
+// --- UTILITY: Reset all lazy loaders (e.g. on logout or forced re-init) ---
+export function resetLazyLoaders() {
+    timelineLoaded = false;
+    mapDataLoaded = false;
+    achievementsLoaded = false;
+    topicsLoaded = false;
+    gamesLoaded = false;
+    drawLoaded = false;
+    dailyLoaded = false;
+    libraryLoaded = false;
+    bucketListLoaded = false;
+    Object.keys(_loadedAt).forEach(k => delete _loadedAt[k]);
+    console.log('[State] All lazy loaders reset.');
+}
+
 export {
     state,
     saveStateToCache,
     initializeState,
-    refreshLibraryState,
+    ensureLibraryData,
+    ensureBucketListData,
     ensureTimelineData,
     ensureMapData,
     ensureAchievementsData,

@@ -1,5 +1,5 @@
 // Core imports (kept for initialization)
-import { state, initializeState } from './core/state.js';
+import { state, initializeState, resetLazyLoaders, ensureBucketListData, ensureLibraryData } from './core/state.js';
 import { renderErrorState } from './core/ui.js';
 window.renderErrorState = renderErrorState; // Global for easy access in modules
 import { initTheme, toggleTheme, showNotification, toggleValentineMode } from './core/theme.js';
@@ -18,23 +18,25 @@ import { setupRealtimeSync } from './core/sync.js';
 
 // Lazy-loaded modules mapping (for better maintenance)
 const moduleMap = {
-    'calendar': () => import('./modules/calendar.js?v=14'),
-    'timeline': () => import('./modules/timeline.js?v=14'),
-    'library': () => import('./modules/library.js?v=14'),
-    'topics': () => import('./modules/topics.js?v=14'),
-    'games': () => import('./modules/games.js?v=14'),
-    'confession': () => import('./modules/confession.js?v=14'),
-    'health': () => import('./modules/health.js?v=14'),
-    'bucketlist': () => import('./modules/bucketlist.js?v=14'),
-    'achievements': () => import('./modules/achievements.js?v=14'),
-    'daily-questions': () => import('./modules/dailyQuestions.js?v=14'),
-    'game-who': () => import('./modules/gameWho.js?v=14'),
-    'game-draw': () => import('./modules/gameDraw.js?v=14'),
-    'funfacts': () => import('./modules/funfacts.js?v=14'),
-    'map': () => import('./modules/map.js?v=14'),
-    'search': () => import('./modules/search.js?v=14'),
-    'profile': () => import('./modules/profile.js?v=14'),
-    'tierlist': () => import('./modules/tierlist.js?v=14')
+    'calendar': () => import('./modules/calendar.js?v=19'),
+    'timeline': () => import('./modules/timeline.js?v=19'),
+    'library': () => import('./modules/library.js?v=19'),
+    'topics': () => import('./modules/topics.js?v=19'),
+    'games': () => import('./modules/games.js?v=19'),
+    'confession': () => import('./modules/confession.js?v=19'),
+    'health': () => import('./modules/health.js?v=19'),
+    'bucketlist': () => import('./modules/bucketlist.js?v=19'),
+    'achievements': () => import('./modules/achievements.js?v=19'),
+    'daily-questions': () => import('./modules/dailyQuestions.js?v=19'),
+    'game-who': () => import('./modules/gameWho.js?v=19'),
+    'game-draw': () => import('./modules/gameDraw.js?v=19'),
+    'funfacts': () => import('./modules/funfacts.js?v=19'),
+    'map': () => import('./modules/map.js?v=19'),
+    'search': () => import('./modules/search.js?v=19'),
+    'profile': () => import('./modules/profile.js?v=19'),
+    'tierlist': () => import('./modules/tierlist.js?v=19'),
+    'stats': () => import('./modules/stats.js?v=19'),
+    'restore-data': () => import('./modules/restore.js')
 };
 
 
@@ -84,9 +86,17 @@ function setupConnectivityListeners() {
 document.addEventListener('DOMContentLoaded', async () => {
     // Register Service Worker
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
+        // Zlepšení: Na localhostu SW vypneme, aby se změny projevovaly hned bez nutnosti bumpovat verzi.
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for (let registration of registrations) {
+                    registration.unregister();
+                    console.log('[Dev] Service Worker odhlášen pro localhost.');
+                }
+            });
+        } else {
             navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW registration failed:', err));
-        });
+        }
     }
 
     // 0. Listen for auth changes
@@ -123,6 +133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (loginEl) loginEl.classList.remove('hidden');
             if (appEl) appEl.classList.remove('show');
             lastUserId = null;
+            resetLazyLoaders(); // Clear all cached data so next login fetches fresh
         }
     });
 
@@ -540,6 +551,7 @@ const channelCategories = [
     {
         name: "SYSTÉM",
         items: [
+            { id: 'stats', name: 'statistiky', icon: '<i class="fas fa-chart-bar"></i>', type: 'text', color: '#faa61a', desc: 'Čísla našeho vztahu.' },
             { id: 'welcome', name: 'uvítání', icon: '<i class="fas fa-door-open"></i>', type: 'text', desc: 'Vítejte na našem soukromém serveru! ❤️' },
             { id: 'manual', name: 'návod', icon: '<i class="fas fa-book"></i>', type: 'text', color: '#99aab5', desc: 'Jak ovládat tuhle aplikaci.' },
             { id: 'readme', name: 'README.md', icon: '<i class="fas fa-file-alt"></i>', type: 'text', color: '#99aab5', desc: 'Krásného Valentýna té nejúžasnější holce pod sluncem! ❤️' }
@@ -655,7 +667,7 @@ export function switchChannel(channelId, push = true) {
             import('./core/state.js').then(s => s.ensureMapData()).then(() => moduleMap.map()).then(m => m.renderMap());
             break;
         case 'bucketlist':
-            moduleMap.bucketlist().then(m => m.renderBucketList());
+            ensureBucketListData().then(() => moduleMap.bucketlist()).then(m => m.renderBucketList());
             break;
         case 'calendar':
             import('./core/state.js').then(s => s.ensureTimelineData()).then(() => moduleMap.calendar()).then(m => m.renderCalendar());
@@ -666,10 +678,10 @@ export function switchChannel(channelId, push = true) {
         case 'movies':
         case 'series':
         case 'games':
-            import('./core/state.js').then(s => s.refreshLibraryState()).then(() => moduleMap.library()).then(m => m.renderLibrary(channelId));
+            ensureLibraryData().then(() => moduleMap.library()).then(m => m.renderLibrary(channelId));
             break;
         case 'watchlist':
-            import('./core/state.js').then(s => s.refreshLibraryState()).then(() => import('./modules/watchlist.js')).then(m => m.renderWatchlist());
+            ensureLibraryData().then(() => import('./modules/watchlist.js')).then(m => m.renderWatchlist());
             break;
         case 'topics':
             import('./core/state.js').then(s => s.ensureTopicsData()).then(() => moduleMap.topics()).then(m => m.renderTopics());
@@ -706,6 +718,12 @@ export function switchChannel(channelId, push = true) {
             break;
         case 'tierlist':
             moduleMap.tierlist().then(m => m.renderTierList());
+            break;
+        case 'stats':
+            moduleMap.stats().then(m => m.renderStats());
+            break;
+        case 'restore-data':
+            moduleMap['restore-data']().then(m => m.renderRestoreData());
             break;
         case 'letters':
 
@@ -789,6 +807,7 @@ function exposeGlobals() {
     // UI Toggles
     window.toggleUserPopout = toggleUserPopout;
     window.toggleMobileMenu = toggleMobileMenu;
+    window.handleLogin = handleLogin;
 
     // Modals & Library
     window.closeModal = (id) => {
@@ -798,7 +817,10 @@ function exposeGlobals() {
     };
 
     // Library Lazy Functions
-    const libraryFn = (fn) => (...args) => import('./modules/library.js').then(m => m[fn](...args));
+    const libraryFn = (fn) => (...args) => {
+        if (window.Library && window.Library[fn]) return window.Library[fn](...args);
+        return import('./modules/library.js').then(m => m[fn](...args));
+    };
     window.openDownloadModal = libraryFn('openDownloadModal');
     window.openMagnetLink = libraryFn('openMagnetLink');
     window.openGoogleDrive = libraryFn('openGoogleDrive');
@@ -820,7 +842,10 @@ function exposeGlobals() {
     window.responseNo = confessionFn('responseNo');
 
     // Topics Lazy Functions
-    const topicsFn = (fn) => (...args) => import('./modules/topics.js').then(m => m[fn](...args));
+    const topicsFn = (fn) => (...args) => {
+        if (window.Topics && window.Topics[fn]) return window.Topics[fn](...args);
+        return import('./modules/topics.js').then(m => m[fn](...args));
+    };
     window.closeTopicModal = topicsFn('closeTopicModal');
     window.toggleViewBookmarks = topicsFn('toggleViewBookmarks');
     window.toggleQuestionBookmark = topicsFn('toggleQuestionBookmark');
@@ -830,14 +855,20 @@ function exposeGlobals() {
     window.confirmResetTopic = topicsFn('confirmResetTopic');
 
     // Calendar Lazy Functions
-    const calendarFn = (fn) => (...args) => import('./modules/calendar.js').then(m => m[fn](...args));
+    const calendarFn = (fn) => (...args) => {
+        if (window.Calendar && window.Calendar[fn]) return window.Calendar[fn](...args);
+        return import('./modules/calendar.js').then(m => m[fn](...args));
+    };
     window.showDayDetail = calendarFn('showDayDetail');
     window.closeDayModal = calendarFn('closeDayModal');
     window.addSchoolEvent = calendarFn('addSchoolEvent');
     window.deleteSchoolEvent = calendarFn('deleteSchoolEvent');
 
     // Timeline Lazy Functions
-    const timelineFn = (fn) => (...args) => import('./modules/timeline.js').then(m => m[fn](...args));
+    const timelineFn = (fn) => (...args) => {
+        if (window.Timeline && window.Timeline[fn]) return window.Timeline[fn](...args);
+        return import('./modules/timeline.js').then(m => m[fn](...args));
+    };
     window.openGallery = timelineFn('openGallery');
     window.closeGallery = timelineFn('closeGallery');
     window.changeGalleryImage = timelineFn('changeGalleryImage');
@@ -853,10 +884,13 @@ function exposeGlobals() {
     window.deleteEvent = timelineFn('deleteEvent');
     window.jumpToTimeline = timelineFn('jumpToTimeline');
     window.searchTimeline = timelineFn('searchTimeline');
-    window.renderGlobalSearch = (...args) => import('./modules/search.js?v=14').then(m => m.renderGlobalSearch(...args));
+    window.renderGlobalSearch = (...args) => import('./modules/search.js?v=19').then(m => m.renderGlobalSearch(...args));
 
     // Map Lazy Functions
-    window.selectLocation = (...args) => import('./modules/map.js').then(m => m.selectLocation(...args));
+    window.selectLocation = (...args) => {
+        if (window.KiscordMap && window.KiscordMap.selectLocation) return window.KiscordMap.selectLocation(...args);
+        return import('./modules/map.js').then(m => m.selectLocation(...args));
+    };
 
     // Health (for dashboard inline handlers)
     const healthFn = (fn) => (...args) => import('./modules/health.js').then(m => m[fn](...args));
@@ -873,16 +907,14 @@ function exposeGlobals() {
     window.handleWelcomeChat = handleWelcomeChat;
     window.renderDashboard = renderDashboard;
 
-    // Bucket List
-    window.addBucketItem = (...args) => import('./modules/bucketlist.js').then(m => m.addBucketItem(...args));
-    window.toggleItem = (...args) => import('./modules/bucketlist.js').then(m => m.toggleItem(...args));
-    window.deleteItem = (...args) => import('./modules/bucketlist.js').then(m => m.deleteItem(...args));
-
     // Achievements
     window.toggleAchievement = (...args) => import('./modules/achievements.js').then(m => m.toggleAchievement(...args));
 
     // Watchlist
-    window.rollTheDice = () => import('./modules/watchlist.js').then(m => m.rollTheDice());
+    window.rollTheDice = () => {
+        if (window.Watchlist && window.Watchlist.rollTheDice) return window.Watchlist.rollTheDice();
+        return import('./modules/watchlist.js').then(m => m.rollTheDice());
+    };
 
     // Extra Timeline
     window.renderTimeline = timelineFn('renderTimeline');
@@ -913,6 +945,16 @@ function updateChannelHeader(channelId) {
         if (descEl) descEl.textContent = 'Plánování našich akcí a školy 📅';
         if (iconEl) {
             iconEl.className = 'fas fa-calendar-alt text-[#5865F2] text-xl mr-2';
+            iconEl.innerHTML = '';
+        }
+        return;
+    }
+
+    if (channelId === 'restore-data') {
+        if (nameEl) nameEl.textContent = 'Obnova Dat';
+        if (descEl) descEl.textContent = 'Migrace historických záznamů 🛠️';
+        if (iconEl) {
+            iconEl.className = 'fas fa-history text-blue-400 text-xl mr-2';
             iconEl.innerHTML = '';
         }
         return;
