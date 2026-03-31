@@ -111,4 +111,27 @@
   --interactive-normal: #d4af37;
 }
 
+/* --- LIGHT THEME --- */
+.theme-light {
+  --bg-tertiary: #ebedef;
+  --bg-secondary: #f2f3f5;
+  --bg-primary: #ffffff;
+  --bg-modifier-hover: rgba(181, 186, 193, 0.2);
+  --bg-modifier-active: rgba(181, 186, 193, 0.3);
+  --bg-modifier-selected: rgba(181, 186, 193, 0.4);
+  
+  --text-normal: #2e3338;
+  --text-muted: #747f8d;
+  --text-header: #060607;
+  --text-link: #0067e0;
+  
+  --interactive-normal: #4f5660;
+  --interactive-hover: #2e3338;
+  --interactive-active: #060607;
+  --interactive-muted: #c7ccd1;
+  
+  --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  --modal-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
 .theme-tetris { font-size: 0.8rem; }

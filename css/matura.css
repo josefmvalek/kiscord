@@ -1,0 +1,326 @@
+/* ==========================================================
+   MATURA.CSS — High School Graduation Exam Styles
+   ========================================================== */
+
+.matura-card {
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.matura-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.matura-progress-bar {
+    position: relative;
+    overflow: hidden;
+}
+
+.matura-progress-bar::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+    );
+    animation: matura-shimmer 2s infinite;
+}
+
+@keyframes matura-shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+@keyframes bounce-slow {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.animate-bounce-slow {
+    animation: bounce-slow 3s infinite;
+}
+
+/* Base Responsive Tweaks */
+@media (max-width: 768px) {
+    .matura-content-wrapper {
+        padding: 1.25rem !important;
+    }
+    
+    .markdown-body h1 { font-size: 1.5rem; }
+    .markdown-body h2 { font-size: 1.25rem; }
+    
+    /* Make tables horizontally scrollable on mobile */
+    .markdown-body table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Floating Action Button for Mobile TOC */
+#kb-sidebar-overlay {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Tooltip for Matura cards */
+.tooltip {
+    position: relative;
+}
+
+.tooltip::before {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s;
+    z-index: 100;
+    pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tooltip:hover::before {
+    opacity: 1;
+    visibility: visible;
+    bottom: 140%;
+}
+
+/* Neon glow for dashboard elements */
+.neon-text-pink {
+    text-shadow: 0 0 10px rgba(235, 69, 158, 0.5), 0 0 20px rgba(235, 69, 158, 0.3);
+}
+
+.neon-border-pink {
+    box-shadow: 0 0 15px rgba(235, 69, 158, 0.2), inset 0 0 15px rgba(235, 69, 158, 0.1);
+}
+
+/* ==========================================================
+   MARKDOWN & KNOWLEDGE BASE STYLING
+   ========================================================== */
+
+.markdown-body {
+    color: var(--text-normal);
+    line-height: 1.625;
+    font-size: 15px;
+}
+
+.markdown-body h1 {
+    font-size: 1.875rem; /* 30px */
+    font-weight: 900;
+    color: var(--text-header);
+    margin-bottom: 1.5rem;
+    margin-top: 2rem;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: -0.05em;
+    line-height: 1.1;
+    text-shadow: var(--card-shadow);
+}
+
+.markdown-body h2 {
+    font-size: 1.5rem; /* 24px */
+    font-weight: 800;
+    color: var(--text-header);
+    margin-bottom: 1rem;
+    margin-top: 1.75rem;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    border-bottom: 1px solid var(--bg-modifier-hover);
+    padding-bottom: 0.5rem;
+    line-height: 1.2;
+}
+
+.markdown-body h3 {
+    font-size: 1.125rem; /* 18px */
+    font-weight: 700;
+    color: var(--text-header);
+    margin-bottom: 0.75rem;
+    margin-top: 1.25rem;
+    letter-spacing: 0.025em;
+}
+
+.markdown-body p {
+    margin-bottom: 1.125rem;
+}
+
+.markdown-body strong {
+    color: var(--text-header);
+    font-weight: 700;
+}
+
+.markdown-body ul, .markdown-body ol {
+    margin-bottom: 1.25rem;
+    padding-left: 1.5rem;
+}
+
+.markdown-body ul { list-style-type: disc; }
+.markdown-body ol { list-style-type: decimal; }
+
+.markdown-body li {
+    margin-bottom: 0.5rem;
+}
+
+.markdown-body li > ul, .markdown-body li > ol {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.markdown-body code {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.85em;
+    color: #e2e2e2;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.markdown-body pre {
+    background: #2b2d31 !important;
+    padding: 1.25rem !important;
+    border-radius: 12px !important;
+    margin-bottom: 1.5rem !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    overflow-x: auto;
+}
+
+.markdown-body blockquote {
+    border-left: 4px solid #5865F2;
+    background: rgba(88, 101, 242, 0.05);
+    padding: 1rem 1.25rem;
+    margin: 0 0 1.25rem 0;
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+    color: #b5bac1;
+}
+
+.markdown-body hr {
+    height: 2px;
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    margin: 2rem 0;
+}
+
+.markdown-body table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.markdown-body th, .markdown-body td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    text-align: left;
+}
+
+.markdown-body th:last-child, .markdown-body td:last-child {
+    border-right: none;
+}
+
+.markdown-body tr:last-child td {
+    border-bottom: none;
+}
+
+.markdown-body th {
+    background-color: rgba(255, 255, 255, 0.04);
+    font-weight: 800;
+    color: #ffffff;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+.markdown-body a {
+    color: #00aff4;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.markdown-body a:hover {
+    text-decoration: underline;
+}
+
+.markdown-body img {
+    max-width: 100%;
+    border-radius: 12px;
+    margin: 1.5rem 0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================================
+   SECTION CHECKBOXES & SIDEBAR
+   ========================================================== */
+
+.section-check {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    margin-left: 1rem;
+    vertical-align: middle;
+    background: transparent;
+    color: transparent;
+    font-size: 8px;
+}
+
+.section-check:hover {
+    border-color: #3ba55c;
+    transform: scale(1.1);
+}
+
+/* Tailwind-compatible helper for the 'done' state */
+.section-check-done {
+    background-color: #3ba55c !important;
+    border-color: #3ba55c !important;
+    color: white !important;
+    box-shadow: 0 0 15px rgba(59, 165, 92, 0.4);
+}
+
+#kb-highlights-list li {
+    position: relative;
+    padding-left: 1.25rem;
+    transition: all 0.2s;
+}
+
+#kb-highlights-list li:hover {
+    color: var(--text-header);
+    background: var(--bg-modifier-hover);
+    border-radius: 4px;
+}
+
+/* Local Theme Toggle Icons */
+.theme-dark .theme-dark\:hidden { display: none !important; }
+.theme-dark .theme-dark\:block { display: block !important; }
+:not(.theme-dark).theme-light .theme-dark\:hidden { display: block !important; }
+:not(.theme-dark).theme-light .theme-dark\:block { display: none !important; }
+
+/* Dashboard Titles in Light Mode */
+.theme-light h1, .theme-light h2, .theme-light h3 {
+    color: var(--text-header) !important;
+}
+.theme-light .text-white {
+    color: var(--text-header) !important;
+}

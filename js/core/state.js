@@ -53,7 +53,13 @@ const state = {
     pinnedDrawing: null,
     coopQuests: [],
     user_ids: { jose: null, klarka: null },
-    loadError: false // Track if initial load failed
+    loadError: false, // Track if initial load failed
+    maturaProgress: {}, // { item_id: { jose: { status, notes }, klarka: { status, notes } } }
+    maturaStreaks: { jose: 0, klarka: 0 },
+    maturaSchedule: [],
+    maturaAchievements: [],
+    maturaTopics: {}, // { category_id: [topics] }
+    maturaKBContent: {} // { item_id: { content, updated_at } }
 };
 
 // --- PUB/SUB EVENT BUS ---
@@ -149,6 +155,7 @@ async function initializeState() {
     state.user_ids = { jose: null, klarka: null };
     state.bucketList = [];
     state.tetris = { jose: 0, klarka: 0 }; // Reset Tetris scores before fresh load
+    state.maturaTopics = {};
     state.loadError = false; // Reset error state on each init
 
     try {
@@ -163,6 +170,7 @@ async function initializeState() {
             { data: funFactProgressData },
             { data: questData },
             { data: favData },
+            { data: maturaProgData },
             pinnedData
         ] = await Promise.all([
             // Stáhnout všechna data pro kalendář a statistiky
@@ -174,6 +182,7 @@ async function initializeState() {
             supabase.from('fun_fact_progress').select('*'),
             supabase.from('coop_quests').select('*').eq('is_active', true),
             supabase.from('app_fact_favorites').select('fact_id'),
+            supabase.from('matura_topic_progress').select('*'),
             supabase.from('pinned_drawings').select('*, drawings(*)').maybeSingle()
         ]);
 
@@ -321,7 +330,39 @@ async function initializeState() {
             state.coopQuests = questData;
         }
 
-        // quiz_answers závisí na user_id → samostatně po inicializaci uživatele
+        if (maturaProgData) {
+            maturaProgData.forEach(row => {
+                if (!state.maturaProgress[row.item_id]) {
+                    state.maturaProgress[row.item_id] = { 
+                        jose: { status: 'none', notes: '' }, 
+                        klarka: { status: 'none', notes: '' } 
+                    };
+                }
+                const key = (row.user_id === state.user_ids.jose) ? 'jose' : 'klarka';
+                state.maturaProgress[row.item_id][key] = {
+                    status: row.status,
+                    notes: row.notes || ''
+                };
+            });
+        }
+
+        // 5. Matura Gamification & Schedule (Async parallel)
+        const [streaks, schedule, badges] = await Promise.all([
+            supabase.from('matura_streaks').select('*'),
+            supabase.from('matura_schedule').select('*').gte('scheduled_date', new Date().toISOString().split('T')[0]),
+            supabase.from('matura_achievements').select('*')
+        ]);
+
+        if (streaks.data) {
+            streaks.data.forEach(s => {
+                const key = (s.user_id === state.user_ids.jose) ? 'jose' : 'klarka';
+                state.maturaStreaks[key] = s.current_streak;
+            });
+        }
+        if (schedule.data) state.maturaSchedule = schedule.data;
+        if (badges.data) state.maturaAchievements = badges.data;
+
+        // quiz_answers závisí na user_id...
         if (state.currentUser?.id) {
             const { data: quizData } = await supabase
                 .from('quiz_answers')

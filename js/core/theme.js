@@ -5,7 +5,7 @@ export function changeTheme(theme) {
     const root = document.documentElement;
 
     // List of all managed theme classes
-    const themeClasses = ['theme-christmas', 'theme-tetris', 'theme-valentines', 'theme-forest', 'theme-gold'];
+    const themeClasses = ['theme-christmas', 'theme-tetris', 'theme-valentines', 'theme-forest', 'theme-gold', 'theme-light'];
     
     // Remove all existing theme classes
     root.classList.remove(...themeClasses);
@@ -28,7 +28,7 @@ export function initTheme() {
 export function toggleTheme() {
     triggerHaptic('medium');
     const current = localStorage.getItem('klarka_theme') || 'default';
-    const themes = ['default', 'christmas', 'tetris', 'valentines'];
+    const themes = ['default', 'light', 'christmas', 'tetris', 'valentines'];
     const nextIndex = (themes.indexOf(current) + 1) % themes.length;
     const newTheme = themes[nextIndex];
     changeTheme(newTheme);

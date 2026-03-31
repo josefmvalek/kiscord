@@ -41,11 +41,17 @@ export function setupRealtimeSync() {
         // A3. Handle Broadcasts (Game Vote Cast - Instant feedback)
         .on('broadcast', { event: 'game-vote-cast' }, (payload) => {
             if (payload.payload.user_id === state.currentUser?.id) return;
-            
-            // Dispatch event for UI re-render
-            window.dispatchEvent(new CustomEvent('game-vote-updated', { 
-                detail: { payload: payload.payload } 
-            }));
+            window.dispatchEvent(new CustomEvent('game-vote-updated', { detail: { payload: payload.payload } }));
+        })
+        // A4. Handle Broadcasts (Matura SOS)
+        .on('broadcast', { event: 'matura-sos' }, (payload) => {
+            if (payload.payload.user_id === state.currentUser?.id) return;
+            window.dispatchEvent(new CustomEvent('matura-sos-received', { detail: payload.payload }));
+        })
+        // A5. Handle Broadcasts (Pomodoro Update)
+        .on('broadcast', { event: 'pomodoro-update' }, (payload) => {
+            if (payload.payload.user_id === state.currentUser?.id) return;
+            window.dispatchEvent(new CustomEvent('pomodoro-updated', { detail: payload.payload }));
         })
         // B. Handle Database Changes (Health Data)
         .on('postgres_changes', { 
@@ -146,6 +152,14 @@ export function setupRealtimeSync() {
         }, () => {
              window.dispatchEvent(new CustomEvent('library-updated'));
         })
+        // H. Handle Database Changes (Matura Pomodoro)
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'matura_pomodoro'
+        }, (payload) => {
+             window.dispatchEvent(new CustomEvent('pomodoro-updated', { detail: { source: 'database', payload: payload.new || payload.old } }));
+        })
         .subscribe((status) => {
             console.log(`[Sync] Realtime status: ${status}`);
         });
@@ -186,10 +200,33 @@ export async function broadcastSunlight() {
  */
 export async function broadcastGameVote(payload) {
     if (!mainChannel) return;
-    
     await mainChannel.send({
         type: 'broadcast',
         event: 'game-vote-cast',
+        payload: { ...payload, user_id: state.currentUser?.id }
+    });
+}
+
+/**
+ * Sends a Matura SOS signal to the other user.
+ */
+export async function broadcastMaturaSOS() {
+    if (!mainChannel) return;
+    await mainChannel.send({
+        type: 'broadcast',
+        event: 'matura-sos',
+        payload: { user_id: state.currentUser?.id, name: state.currentUser?.name }
+    });
+}
+
+/**
+ * Broadcasts a Pomodoro timer update.
+ */
+export async function broadcastPomodoroUpdate(payload) {
+    if (!mainChannel) return;
+    await mainChannel.send({
+        type: 'broadcast',
+        event: 'pomodoro-update',
         payload: { ...payload, user_id: state.currentUser?.id }
     });
 }

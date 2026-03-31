@@ -5,26 +5,38 @@
 
 /**
  * Renders a standardized modal.
- * @param {Object} config - { id, title, subtitle, content, actions, onClose }
+ * @param {Object} config - { id, title, subtitle, content, actions, onClose, size }
  * @returns {string} HTML string for the modal
  */
-export function renderModal({ id, title, subtitle, content, actions = '', onClose = "closeDayModal()" }) {
+export function renderModal({ id, title, subtitle, content, actions = '', onClose = "closeDayModal()", size = 'md' }) {
+    const sizeClasses = {
+        'md': 'max-w-md',
+        'lg': 'max-w-2xl',
+        'xl': 'max-w-4xl',
+        '6xl': 'max-w-6xl',
+        'full': 'max-w-[95vw] w-full h-[95vh]'
+    };
+    const sizeClass = sizeClasses[size] || sizeClasses.md;
+
     return `
         <div id="${id}" class="fixed inset-0 z-[100] hidden modal-backdrop items-center justify-center p-4">
-            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-md border border-white/10 overflow-hidden animate-fade-in flex flex-col max-h-[90vh]">
+            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full ${sizeClass} border border-white/10 overflow-hidden animate-fade-in flex flex-col ${size === 'full' ? '' : 'max-h-[90vh]'}">
                 <!-- Modal Header -->
-                <div class="bg-black/20 p-5 border-b border-white/5 flex justify-between items-center">
+                <div class="bg-black/10 p-5 border-b border-white/5 flex justify-between items-center backdrop-blur-md">
                     <div>
-                        <h3 class="font-bold text-white text-lg leading-tight">${title}</h3>
-                        ${subtitle ? `<p class="text-[10px] text-gray-400 uppercase font-black tracking-widest mt-0.5">${subtitle}</p>` : ''}
+                        <h3 class="font-bold text-[var(--text-header)] text-lg leading-tight drop-shadow-sm">${title}</h3>
+                        ${subtitle ? `<p class="text-[10px] text-[var(--text-muted)] uppercase font-black tracking-widest mt-0.5 opacity-80">${subtitle}</p>` : ''}
                     </div>
-                    <button onclick="${onClose}" class="text-gray-400 hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10">
-                        <i class="fas fa-times"></i>
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <div id="${id}-header-extra"></div>
+                        <button onclick="${onClose}" class="text-[var(--interactive-normal)] hover:text-[var(--text-header)] transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- Modal Body -->
-                <div class="p-6 overflow-y-auto custom-scrollbar space-y-6">
+                <div class="p-6 overflow-y-auto custom-scrollbar space-y-6 ${size === 'full' ? 'flex-1 flex flex-col !p-0' : ''}">
                     ${content}
                 </div>
 

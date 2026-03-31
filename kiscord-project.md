@@ -42,15 +42,7 @@ kiscord/
 ├── js/
 │   ├── main.js             # Inicializace, routing, auth, sidebar
 │   ├── core/
-│   │   ├── state.js       - [x] **Sprint 4: Bezpečnost a Infrastruktura**
-    - [x] Zapnutí RLS u všech tabulek v Supabase
-    - [x] Implementace nahrávání médií (Supabase Storage)
-    - [x] Integrace fotek do Timeline a Bucket Listu
-    - [x] Příprava na Push Notifikace (Permissions & Test button)
-- [x] **Závěrečná Kontrola a Verifikace**
-    - [x] Testování všech nových UI prvků
-    - [x] Verifikace RLS funkčnosti
-    - [x] Kontrola DB schématu a oprava mappingu v state.jsi
+│   │   ├── state.js        # Globální state objekt + Supabase fetch
 │   │   ├── auth.js         # Supabase Auth wrapper
 │   │   ├── supabase.js     # Supabase client inicializace
 │   │   ├── theme.js        # Témata, notifikace, confetti
@@ -593,14 +585,14 @@ Probíhá přes dvě metody:
 
 ## 10. Verze a cache-busting
 
-Všechny dynamické importy používají `?v=19`:
+Všechny dynamické importy používají `?v=14`:
 ```js
-import('./modules/tierlist.js?v=19')
+import('./modules/tierlist.js?v=14')
 ```
 
 Service Worker cache: `kiscord-v14`
 
-Statické soubory v HTML: `style.css?v=19`, `main.js?v=19`
+Statické soubory v HTML: `style.css?v=14`, `main.js?v=14`
 
 Při bumpu verze je třeba aktualizovat na všech místech konzistentně.
 

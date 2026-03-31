@@ -117,3 +117,13 @@
   .group-item span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px !important; }
   .group-item .w-8 { width: 1.5rem !important; height: 1.5rem !important; font-size: 14px !important; }
 }
+
+/* Wellness Dashboard Chart Optimization */
+#chart-mood, #chart-sleep, #chart-water {
+    touch-action: pan-y !important;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* --- MATURA MODULE --- */
+@import url('./matura.css');

@@ -36,6 +36,7 @@ const moduleMap = {
     'profile': () => import('./modules/profile.js?v=19'),
     'tierlist': () => import('./modules/tierlist.js?v=19'),
     'stats': () => import('./modules/stats.js?v=19'),
+    'matura': () => import('./modules/matura.js?v=20'),
     'restore-data': () => import('./modules/restore.js')
 };
 
@@ -549,6 +550,14 @@ const channelCategories = [
         ]
     },
     {
+        name: "MATURITA 2026",
+        items: [
+            { id: 'matura-dashboard', name: 'dashboard', icon: '<i class="fas fa-rocket"></i>', type: 'text', color: '#eb459e', desc: 'Naše cesta ke svobodě! 🎓' },
+            { id: 'matura-czech', name: 'čeština', icon: '<i class="fas fa-book"></i>', type: 'text', color: '#5865F2', desc: 'Rozbory děl a literatura.' },
+            { id: 'matura-it', name: 'informatika', icon: '<i class="fas fa-laptop-code"></i>', type: 'text', color: '#3ba55c', desc: 'Data, sítě a algoritmy.' }
+        ]
+    },
+    {
         name: "SYSTÉM",
         items: [
             { id: 'stats', name: 'statistiky', icon: '<i class="fas fa-chart-bar"></i>', type: 'text', color: '#faa61a', desc: 'Čísla našeho vztahu.' },
@@ -734,6 +743,11 @@ export function switchChannel(channelId, push = true) {
             break;
         case 'readme':
             renderReadme();
+            break;
+        case 'matura-dashboard':
+        case 'matura-czech':
+        case 'matura-it':
+            moduleMap.matura().then(m => m.renderMatura(channelId));
             break;
         case 'upgrade':
             renderUpgrade();

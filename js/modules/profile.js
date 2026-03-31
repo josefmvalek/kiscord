@@ -26,8 +26,13 @@ export function ensureProfileModal() {
                     </p>
                 </div>
 
+                <button onclick="window.toggleTheme()"
+                    class="w-full mt-4 bg-purple-500/10 hover:bg-purple-500 text-purple-400 hover:text-white py-2 rounded text-xs font-bold transition border border-purple-500/20 flex items-center justify-center gap-2">
+                    <i class="fas fa-palette"></i> Změnit téma
+                </button>
+
                 <button onclick="window.switchChannel('restore-data'); document.getElementById('user-popout').classList.remove('active')"
-                    class="w-full mt-4 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white py-2 rounded text-xs font-bold transition border border-blue-500/20 flex items-center justify-center gap-2">
+                    class="w-full mt-2 bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white py-2 rounded text-xs font-bold transition border border-blue-500/20 flex items-center justify-center gap-2">
                     <i class="fas fa-history"></i> Obnovit data (z JSON)
                 </button>
 

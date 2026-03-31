@@ -42,7 +42,21 @@ export function renderGlobalSearch(query) {
         normalizeText(loc.desc).includes(safeQuery)
     ).map(l => ({ ...l, originalType: 'location' }));
 
-    const totalResults = foundLibrary.length + foundLocations.length;
+    // 3. Filter Matura Topics
+    const foundMatura = [];
+    if (state.maturaTopics) {
+        Object.keys(state.maturaTopics).forEach(catId => {
+            state.maturaTopics[catId].forEach(topic => {
+                if (normalizeText(topic.title).includes(safeQuery) || 
+                    (topic.author && normalizeText(topic.author).includes(safeQuery)) ||
+                    (topic.cat && normalizeText(topic.cat).includes(safeQuery))) {
+                    foundMatura.push({ ...topic, originalType: 'matura' });
+                }
+            });
+        });
+    }
+
+    const totalResults = foundLibrary.length + foundLocations.length + foundMatura.length;
 
     if (totalResults === 0) {
         container.innerHTML = `
@@ -83,10 +97,32 @@ export function renderGlobalSearch(query) {
         html += `</div></div>`;
     }
 
+    // --- MATURA RESULTS ---
+    if (foundMatura.length > 0) {
+        html += `<div><h3 class="text-gray-400 font-bold uppercase text-[10px] tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-graduation-cap text-[#eb459e]"></i> Maturitní Akademie (${foundMatura.length})</h3>
+               <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">`;
+
+        foundMatura.forEach(topic => {
+            html += `
+              <div class="bg-[#2f3136] p-4 rounded-2xl border border-white/5 hover:border-[#5865F2] transition-all shadow-xl cursor-pointer flex gap-4 items-center group relative overflow-hidden"
+                   onclick="import('./js/modules/matura.js').then(m => m.openKnowledgeBase('${topic.id}'))">
+                  <div class="text-3xl transform group-hover:scale-110 transition duration-300 transform-gpu">${topic.icon}</div>
+                  <div class="flex-1 min-w-0">
+                      <div class="text-[9px] font-black uppercase text-[#5865F2] tracking-widest mb-0.5 opacity-60">${topic.cat || 'Ostatní'}</div>
+                      <h4 class="font-bold text-white group-hover:text-[#5865F2] transition text-sm truncate">${highlightText(topic.title, query)}</h4>
+                      ${topic.author ? `<p class="text-[10px] text-gray-500 italic truncate">${highlightText(topic.author, query)}</p>` : ''}
+                  </div>
+                  <div class="absolute -right-2 -bottom-2 w-12 h-12 bg-[#5865F2]/5 rounded-full blur-xl group-hover:bg-[#5865F2]/10 transition-all"></div>
+              </div>
+           `;
+        });
+        html += `</div></div>`;
+    }
+
     // --- LOCATION RESULTS ---
     if (foundLocations.length > 0) {
-        html += `<div><h3 class="text-gray-400 font-bold uppercase text-xs mb-3">Rande Místa (${foundLocations.length})</h3>
-               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">`;
+        html += `<div><h3 class="text-gray-400 font-bold uppercase text-[10px] tracking-widest mb-3 flex items-center gap-2"><i class="fas fa-map-marker-alt text-[#eb459e]"></i> Rande Místa (${foundLocations.length})</h3>
+               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">`;
 
         foundLocations.forEach(loc => {
             html += `

@@ -267,12 +267,32 @@ function updateVitalitySummary() {
     const container = document.getElementById('vitality-summary');
     if (!container) return;
 
-    const data = (state.healthData && Object.values(state.healthData).slice(-14)) || [];
-    if (data.length === 0) return;
+    // Use exact 14-day window matching charts.js logic
+    const moodArr = [];
+    const sleepArr = [];
+    const waterArr = [];
+    const now = new Date();
+    
+    for (let i = 13; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        const key = `${y}-${m}-${day}`;
+        const entry = state.healthData[key] || {};
+        
+        let mVal = entry.mood || 0;
+        if (mVal > 10) mVal = Math.round(mVal / 10);
+        moodArr.push(mVal);
+        sleepArr.push(entry.sleep || 0);
+        waterArr.push(entry.water || 0);
+    }
 
-    const avgMood = (data.reduce((a, b) => a + (b.mood || 5), 0) / data.length).toFixed(1);
-    const avgSleep = (data.reduce((a, b) => a + (b.sleep || 0), 0) / data.length).toFixed(1);
-    const avgWater = (data.reduce((a, b) => a + (b.water || 0), 0) / data.length).toFixed(1);
+    const validMoods = moodArr.filter(v => v > 0);
+    const avgMood = validMoods.length > 0 ? (validMoods.reduce((a,b)=>a+b,0)/validMoods.length).toFixed(1) : "0.0";
+    const avgSleep = (sleepArr.reduce((a,b)=>a+b,0)/14).toFixed(1);
+    const avgWater = (waterArr.reduce((a,b)=>a+b,0)/14).toFixed(1);
 
     container.innerHTML = `
         <!-- Mood Tile -->

@@ -2,12 +2,7 @@ import { state } from '../../core/state.js';
 
 /**
  * Transforms health data into sorted arrays for ApexCharts.
- * Returns { dates: [], mood: [], sleep: [], water: [] }
- */
-/**
- * Transforms health data into sorted arrays for ApexCharts.
- * Generates MUST be a continuous range of days to match calendar.
- * Returns { dates: [], mood: [], sleep: [], water: [] }
+ * Generates a continuous range of days to match calendar.
  */
 function getChartData(days = 14) {
     const dates = [];
@@ -43,11 +38,6 @@ function getChartData(days = 14) {
     return { dates, mood, sleep, water };
 }
 
-function sanitizeValue(val, max) {
-    if (val === undefined || val === null) return 0;
-    return Math.min(Number(val), max);
-}
-
 // Royal Violet Palette from grid.js
 const MOOD_COLORS = {
     1: "#10002B", 2: "#240046", 3: "#3C096C", 4: "#5A189A", 
@@ -73,7 +63,21 @@ export function renderVitalityPanels(containers) {
             rotateAlways: isMobile
         },
         axisTicks: { show: false },
-        axisBorder: { show: false }
+        axisBorder: { show: false },
+        crosshairs: { 
+            show: true,
+            stroke: { color: '#ffffff', width: 1, dashArray: 4 }
+        }
+    };
+
+    // Shared Tooltip Config (Enables synchronization across all charts)
+    const commonTooltip = {
+        theme: 'dark',
+        shared: true,
+        intersect: false,
+        followCursor: true,
+        x: { show: true },
+        y: { formatter: (v) => v !== null ? v : '-' }
     };
 
     // Calculate dynamic average for annotation
@@ -87,8 +91,10 @@ export function renderVitalityPanels(containers) {
             id: 'mood', group: syncGroupId, type: 'area',
             height: isMobile ? 150 : 200,
             toolbar: { show: false },
+            zoom: { enabled: false },
+            selection: { enabled: false },
             animations: { enabled: true, easing: 'easeinout', speed: 800 },
-            dropShadow: { enabled: false } // Flattened
+            dropShadow: { enabled: false } 
         },
         colors: ['#7B2CBF'],
         stroke: { curve: 'smooth', width: 3 },
@@ -104,7 +110,7 @@ export function renderVitalityPanels(containers) {
         xaxis: commonXAxis,
         grid: { borderColor: '#2f3136', strokeDashArray: 4, padding: { bottom: -10 } },
         markers: { size: 3, strokeColors: '#7B2CBF', hover: { size: 6 } },
-        dataLabels: { enabled: false }, // Pročištěno
+        dataLabels: { enabled: false }, 
         annotations: {
             yaxis: [
                 { y: 0, y2: 3, fillOpacity: 0.1, fillColor: MOOD_COLORS[2] },
@@ -120,7 +126,7 @@ export function renderVitalityPanels(containers) {
                 }
             ]
         },
-        tooltip: { theme: 'dark' }
+        tooltip: commonTooltip
     };
 
     // 2. Sleep Chart (Goal-Based Coloring)
@@ -129,15 +135,16 @@ export function renderVitalityPanels(containers) {
         chart: {
             id: 'sleep', group: syncGroupId, type: 'bar',
             height: isMobile ? 140 : 160,
-            toolbar: { show: false }
+            toolbar: { show: false },
+            zoom: { enabled: false },
+            selection: { enabled: false }
         },
-        // Dynamické barvy: zelená if >= 8h
         colors: [({ value }) => value >= 8 ? '#3ba55c' : '#7289da'],
         plotOptions: { 
             bar: { 
                 borderRadius: 4, 
                 columnWidth: '60%', 
-                distributed: true, // Nutné pro barvy per sloupci
+                distributed: true, 
                 dataLabels: { position: 'top' } 
             } 
         },
@@ -160,8 +167,8 @@ export function renderVitalityPanels(containers) {
                 label: { text: isMobile ? '8h' : 'Cíl 8h 🌙', style: { color: '#fff', background: '#3ba55c' } }
             }]
         },
-        legend: { show: false }, // Skrýt legendu pro distributed barvy
-        tooltip: { theme: 'dark' }
+        legend: { show: false }, 
+        tooltip: commonTooltip
     };
 
     // 3. Water Chart (Focused & Clean)
@@ -171,11 +178,13 @@ export function renderVitalityPanels(containers) {
             id: 'water', group: syncGroupId, type: 'line',
             height: isMobile ? 160 : 180,
             toolbar: { show: false },
-            dropShadow: { enabled: false } // Flattened
+            zoom: { enabled: false },
+            selection: { enabled: false },
+            dropShadow: { enabled: false } 
         },
         colors: ['#00e5ff'],
         stroke: { curve: 'smooth', width: 3 },
-        dataLabels: { enabled: false }, // Skryto pro přehlednost
+        dataLabels: { enabled: false }, 
         yaxis: {
             min: 0, max: 8, tickAmount: 4,
             title: { text: isMobile ? "" : "Sklenic", style: { color: '#8e9297', fontWeight: 600 } },
@@ -186,7 +195,6 @@ export function renderVitalityPanels(containers) {
         markers: { 
             size: 4, 
             strokeColors: '#00e5ff',
-            // Zelený bod if 8 sklenic
             colors: data.water.map(v => v >= 8 ? '#3ba55c' : '#00e5ff'), 
             hover: { size: 7 } 
         },
@@ -196,7 +204,7 @@ export function renderVitalityPanels(containers) {
                 label: { text: isMobile ? '8' : 'Cíl 8 💧', style: { color: '#fff', background: '#00e5ff' } }
             }]
         },
-        tooltip: { theme: 'dark' }
+        tooltip: commonTooltip
     };
 
     new ApexCharts(document.querySelector(`#${containers.mood}`), moodOptions).render();
