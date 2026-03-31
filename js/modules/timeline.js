@@ -96,15 +96,15 @@ function ensureModals() {
 
 export async function renderTimeline() {
     // Expose API to window
-    window.Timeline = { 
-        renderTimeline, toggleTimelineCard, openGallery, closeGallery, 
-        changeGalleryImage, deleteCurrentPhoto, confirmDeletePhoto, 
-        searchTimeline, uploadPhoto, saveHighlight, toggleMilestone, 
+    window.Timeline = {
+        renderTimeline, toggleTimelineCard, openGallery, closeGallery,
+        changeGalleryImage, deleteCurrentPhoto, confirmDeletePhoto,
+        searchTimeline, uploadPhoto, saveHighlight, toggleMilestone,
         openEventModal, closeEventModal, saveEvent, deleteEvent,
         switchIconCategory, refreshIconCategory: refreshIconPicker, // Alias if needed
         jumpToTimeline
     };
-    
+
     ensureModals();
     const container = document.getElementById("messages-container");
     if (!container) return;
@@ -127,7 +127,7 @@ export async function renderTimeline() {
                 .select('*')
                 .order('event_date', { ascending: false, nullsFirst: false })
                 .order('created_at', { ascending: false });
-            
+
             if (!error && data) {
                 dbEvents = data.map(e => ({
                     id: e.id,
@@ -146,7 +146,7 @@ export async function renderTimeline() {
         }
 
         // Filter by Search
-        const filteredEvents = searchQuery 
+        const filteredEvents = searchQuery
             ? dbEvents.filter(e => e.title.toLowerCase().includes(searchQuery.toLowerCase()))
             : dbEvents;
 
@@ -155,7 +155,7 @@ export async function renderTimeline() {
         const groupedEvents = {};
         filteredEvents.forEach((event, index) => {
             let groupKey = "Dávné vzpomínky";
-            
+
             if (event.event_date) {
                 const dateObj = new Date(event.event_date);
                 if (!isNaN(dateObj.getTime())) {
@@ -165,7 +165,7 @@ export async function renderTimeline() {
                     groupKey = `${monthCapitalized} ${year}`;
                 }
             }
-            
+
             if (!groupedEvents[groupKey]) {
                 groupedEvents[groupKey] = [];
             }
@@ -224,7 +224,7 @@ export async function renderTimeline() {
                 const isGradient = event.color === "gradient";
                 const iconBgColor = isGradient ? "" : `background-color: ${event.color}`;
                 const gradientClass = isGradient ? "bg-gradient-to-r from-[#5865F2] to-[#eb459e]" : "bg-[#2f3136]";
-                
+
                 let dateStr = "";
                 if (event.event_date) {
                     const d = new Date(event.event_date);
@@ -250,7 +250,7 @@ export async function renderTimeline() {
                     `).join("");
                     const moreThumbnails = event.images.length > 3 ? `<div class="w-8 h-8 rounded bg-[#202225] flex items-center justify-center text-[10px] text-gray-400 border border-[#202225] ml-2">+${event.images.length - 3}</div>` : "";
 
-                galleryBtn = `
+                    galleryBtn = `
                 <div class="mt-4 pt-4 border-t border-[#4f545c]/10 flex flex-col gap-3">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-1">
@@ -264,15 +264,15 @@ export async function renderTimeline() {
                     </div>
                 </div>
                 `;
-            } else {
-                // If no images, still show a way to add one
-                galleryBtn = `
+                } else {
+                    // If no images, still show a way to add one
+                    galleryBtn = `
                     <div class="mt-4 pt-4 border-t border-[#4f545c]/10"></div>
                 `;
-            }
+                }
 
-            // Upload Button
-            const uploadBtnHtml = `
+                // Upload Button
+                const uploadBtnHtml = `
                 <div class="mt-2 text-right">
                              <button onclick="document.getElementById('photo-upload-${event.id}').click()" 
                                  class="mt-3 text-[#5865F2] hover:text-white text-xs font-bold transition-colors flex items-center gap-1.5 px-2 py-1 rounded hover:bg-[#5865F2]/10">
@@ -387,16 +387,16 @@ export async function renderTimeline() {
 export function toggleTimelineCard(cardElement) {
     const body = cardElement.querySelector('.card-body');
     const icon = cardElement.querySelector('.dropdown-icon');
-    
+
     const isOpen = !body.classList.contains('max-h-0');
-    
+
     if (isOpen) {
         body.classList.add('max-h-0', 'opacity-0');
-        body.style.maxHeight = '0px'; 
-        setTimeout(() => { 
-            if(body.classList.contains('max-h-0')) {
-                body.style.visibility = 'hidden'; 
-                body.style.maxHeight = null; 
+        body.style.maxHeight = '0px';
+        setTimeout(() => {
+            if (body.classList.contains('max-h-0')) {
+                body.style.visibility = 'hidden';
+                body.style.maxHeight = null;
             }
         }, 500);
         icon.classList.remove('rotate-180');
@@ -407,9 +407,9 @@ export function toggleTimelineCard(cardElement) {
         icon.classList.add('rotate-180');
         cardElement.classList.add('bg-[#32353b]', 'border-[#5865F2]');
         body.style.maxHeight = (body.scrollHeight + 100) + "px"; // Buffer for padding/margins
-        
-        setTimeout(() => { 
-            if(!body.classList.contains('max-h-0')) body.style.maxHeight = 'none'; 
+
+        setTimeout(() => {
+            if (!body.classList.contains('max-h-0')) body.style.maxHeight = 'none';
         }, 500);
     }
 }
@@ -440,14 +440,14 @@ export async function saveHighlight(eventId, text) {
             .from('timeline_events')
             .update({ user_highlights: text })
             .eq('id', eventId);
-        
+
         if (error) throw error;
-        
+
         // Update local state
         const idNum = Number(eventId);
         const ev = state.timelineEvents.find(e => Number(e.id) === idNum);
         if (ev) ev.user_highlights = text;
-        
+
         showNotification('Poznámka uložena ✨', 'success');
     } catch (e) {
         console.error("Error saving highlight:", e);
@@ -461,9 +461,9 @@ export async function toggleMilestone(eventId, status) {
             .from('timeline_events')
             .update({ is_milestone: status })
             .eq('id', eventId);
-        
+
         if (error) throw error;
-        
+
         const idNum = Number(eventId);
         const ev = dbEvents.find(e => Number(e.id) === idNum);
         if (ev) ev.is_milestone = status;
@@ -471,9 +471,9 @@ export async function toggleMilestone(eventId, status) {
         if (status) {
             triggerConfetti();
         }
-        
+
         renderTimeline();
-        
+
     } catch (err) {
         console.error("Toggle Milestone Error:", err);
     }
@@ -482,7 +482,7 @@ export async function toggleMilestone(eventId, status) {
 export async function uploadPhoto(eventId, input) {
     if (!input.files || input.files.length === 0) return;
     const file = input.files[0];
-    
+
     // UI Feedback
     const btn = input.previousElementSibling;
     const originalContent = btn.innerHTML;
@@ -490,16 +490,16 @@ export async function uploadPhoto(eventId, input) {
     btn.disabled = true;
 
     try {
-        // Use central storage helper
-        const publicUrl = await uploadFile('media', file, `timeline/${eventId}`);
+        // Use central storage helper - confirmed bucket name is 'timeline-photos'
+        const publicUrl = await uploadFile('timeline-photos', file, `timeline/${eventId}`);
         if (!publicUrl) throw new Error("Nepodařilo se získat URL po nahrání.");
-        
+
         // Ensure eventId is a number for state lookup
         const idNum = Number(eventId);
         const event = state.timelineEvents.find(e => Number(e.id) === idNum);
-        
+
         if (!event) throw new Error("Událost nebyla nalezena v paměti.");
-        
+
         const newImages = [...(event.images || []), publicUrl];
 
         const { error: updateError } = await supabase
@@ -509,10 +509,10 @@ export async function uploadPhoto(eventId, input) {
 
         if (updateError) throw updateError;
 
-        event.images = newImages; 
-        dbEvents = state.timelineEvents; 
-        
-        renderTimeline(); 
+        event.images = newImages;
+        dbEvents = state.timelineEvents;
+
+        renderTimeline();
         showNotification('Fotka úspěšně nahrána! 📸', 'success');
     } catch (err) {
         console.error("Upload Error:", err);
@@ -576,7 +576,7 @@ export async function confirmDeletePhoto() {
     if (modal) modal.style.display = "none";
 
     if (currentGalleryImages.length === 0) return;
-    
+
     const photoUrl = currentGalleryImages[currentImageIndex];
 
     try {
@@ -684,7 +684,7 @@ export function openEventModal(eventId = null) {
     const idNum = eventId ? Number(eventId) : null;
     const event = idNum ? dbEvents.find(e => Number(e.id) === idNum) : null;
     const title = event ? "Upravit vzpomínku" : "Nová vzpomínka";
-    
+
     modal.innerHTML = `
         <div class="bg-[#36393f] w-full max-w-lg rounded-xl shadow-2xl border border-[#202225] overflow-hidden animate-scale-in">
             <div class="p-6">
@@ -764,7 +764,7 @@ export function openEventModal(eventId = null) {
 
 export function renderIconPickerHTML(selectedIcon, activeCategory = 'favorites') {
     const categories = Object.keys(CATEGORIZED_ICONS);
-    
+
     const tabsHtml = categories.map(cat => `
         <button onclick="Timeline.switchIconCategory('${cat}', '${selectedIcon}')" 
                 class="icon-picker-tab ${cat === activeCategory ? 'active' : ''}" 
@@ -839,7 +839,7 @@ export async function saveEvent(eventId) {
             // 1. Create event first (to get ID for storage path if online)
             result = await safeInsert('timeline_events', eventData);
             if (result.error) throw result.error;
-            
+
             if (result.offline) {
                 // Manually add to state for immediate offline feedback
                 const tempId = Date.now();
@@ -868,12 +868,12 @@ export async function saveEvent(eventId) {
                 try {
                     const file = photoInput.files[0];
                     const publicUrl = await uploadFile('timeline-photos', file, `events/${finalEventId}`);
-                    
+
                     if (publicUrl) {
                         // Append to existing images
                         const currentEvent = dbEvents.find(e => String(e.id) === String(finalEventId)) || { images: [] };
                         const updatedImages = [...(currentEvent.images || []), publicUrl];
-                        
+
                         await supabase.from('timeline_events')
                             .update({ images: updatedImages })
                             .eq('id', finalEventId);
@@ -887,14 +887,14 @@ export async function saveEvent(eventId) {
 
         showNotification(isNew ? "Nová vzpomínka přidána! ❤️" : "Vzpomínka upravena ✨", "success");
         closeEventModal();
-        
+
         // Refresh local state (ONLY if online)
         if (navigator.onLine) {
             const { data: timelineData, error: loadErr } = await supabase
                 .from('timeline_events')
                 .select('*')
                 .order('event_date', { ascending: false, nullsFirst: false });
-            
+
             if (!loadErr && timelineData) {
                 state.timelineEvents = timelineData.map(e => ({
                     id: e.id,
@@ -910,7 +910,7 @@ export async function saveEvent(eventId) {
                 }));
             }
         }
-        
+
         saveStateToCache();
         renderTimeline();
 
@@ -946,7 +946,7 @@ window.addEventListener('timeline-updated', async () => {
             .from('timeline_events')
             .select('*')
             .order('event_date', { ascending: false, nullsFirst: false });
-            
+
         if (!loadErr && timelineData) {
             state.timelineEvents = timelineData.map(e => ({
                 id: e.id,
@@ -960,7 +960,7 @@ window.addEventListener('timeline-updated', async () => {
                 user_highlights: e.user_highlights || "",
                 is_milestone: e.is_milestone || false
             }));
-            
+
             if (state.currentChannel === 'timeline') {
                 renderTimeline();
             }

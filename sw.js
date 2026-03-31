@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kiscord-v19';
+const CACHE_NAME = 'kiscord-v20';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -20,7 +20,7 @@ self.addEventListener('install', (event) => {
     self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            console.log('[SW] Caching system assets (v6)');
+            console.log('[SW] Caching system assets (v7)');
             return cache.addAll(ASSETS_TO_CACHE);
         })
     );
@@ -33,7 +33,7 @@ self.addEventListener('activate', (event) => {
             return Promise.all(
                 keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
             );
-        })
+        }).then(() => self.clients.claim())
     );
 });
 

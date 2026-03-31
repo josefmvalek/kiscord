@@ -18,24 +18,24 @@ import { setupRealtimeSync } from './core/sync.js';
 
 // Lazy-loaded modules mapping (for better maintenance)
 const moduleMap = {
-    'calendar': () => import('./modules/calendar.js?v=19'),
-    'timeline': () => import('./modules/timeline.js?v=19'),
-    'library': () => import('./modules/library.js?v=19'),
-    'topics': () => import('./modules/topics.js?v=19'),
-    'games': () => import('./modules/games.js?v=19'),
-    'confession': () => import('./modules/confession.js?v=19'),
-    'health': () => import('./modules/health.js?v=19'),
-    'bucketlist': () => import('./modules/bucketlist.js?v=19'),
-    'achievements': () => import('./modules/achievements.js?v=19'),
-    'daily-questions': () => import('./modules/dailyQuestions.js?v=19'),
-    'game-who': () => import('./modules/gameWho.js?v=19'),
-    'game-draw': () => import('./modules/gameDraw.js?v=19'),
-    'funfacts': () => import('./modules/funfacts.js?v=19'),
-    'map': () => import('./modules/map.js?v=19'),
-    'search': () => import('./modules/search.js?v=19'),
-    'profile': () => import('./modules/profile.js?v=19'),
-    'tierlist': () => import('./modules/tierlist.js?v=19'),
-    'stats': () => import('./modules/stats.js?v=19'),
+    'calendar': () => import('./modules/calendar.js?v=20'),
+    'timeline': () => import('./modules/timeline.js?v=20'),
+    'library': () => import('./modules/library.js?v=20'),
+    'topics': () => import('./modules/topics.js?v=20'),
+    'games': () => import('./modules/games.js?v=20'),
+    'confession': () => import('./modules/confession.js?v=20'),
+    'health': () => import('./modules/health.js?v=20'),
+    'bucketlist': () => import('./modules/bucketlist.js?v=20'),
+    'achievements': () => import('./modules/achievements.js?v=20'),
+    'daily-questions': () => import('./modules/dailyQuestions.js?v=20'),
+    'game-who': () => import('./modules/gameWho.js?v=20'),
+    'game-draw': () => import('./modules/gameDraw.js?v=20'),
+    'funfacts': () => import('./modules/funfacts.js?v=20'),
+    'map': () => import('./modules/map.js?v=20'),
+    'search': () => import('./modules/search.js?v=20'),
+    'profile': () => import('./modules/profile.js?v=20'),
+    'tierlist': () => import('./modules/tierlist.js?v=20'),
+    'stats': () => import('./modules/stats.js?v=20'),
     'matura': () => import('./modules/matura.js?v=20'),
     'restore-data': () => import('./modules/restore.js')
 };
@@ -47,11 +47,11 @@ let lastUserId = null;
 
 function setupConnectivityListeners() {
     const bannerId = 'offline-banner';
-    
+
     const updateStatus = () => {
         const isOffline = !navigator.onLine;
         let banner = document.getElementById(bannerId);
-        
+
         if (isOffline) {
             if (!banner) {
                 banner = document.createElement('div');
@@ -62,7 +62,7 @@ function setupConnectivityListeners() {
                     <span>Jsi offline. Změny se nemusí uložit do databáze!</span>
                 `;
                 document.body.prepend(banner);
-                
+
                 showNotification("Jsi offline. Některé funkce nemusí fungovat ⚠️", "error");
                 triggerHaptic('heavy');
             }
@@ -70,7 +70,7 @@ function setupConnectivityListeners() {
             if (banner) {
                 banner.classList.add('animate-banner-up');
                 setTimeout(() => banner.remove(), 500);
-                
+
                 showNotification("Připojení obnoveno 📶", "success");
                 triggerHaptic('success');
             }
@@ -124,10 +124,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Re-render current or default channel
                 const savedChannel = localStorage.getItem('klarka_last_channel');
                 const defaultChannel = (savedChannel && savedChannel !== 'welcome') ? savedChannel : 'dashboard';
-                
+
                 // Initialize history with the starting channel
                 history.replaceState({ channel: defaultChannel }, "", "");
-                
+
                 switchChannel(defaultChannel, false);
             }
         } else if (event === 'SIGNED_OUT') {
@@ -617,7 +617,7 @@ export function switchChannel(channelId, push = true) {
     if (push) {
         history.pushState({ channel: channelId }, "", "");
     }
-    
+
     // Haptic feedback for navigation
     triggerHaptic('light');
 
@@ -656,7 +656,7 @@ export function switchChannel(channelId, push = true) {
     if (typeof cleanupQuestsRealtime === 'function') cleanupQuestsRealtime();
     if (typeof whoCleanup === 'function') whoCleanup();
     if (typeof drawCleanup === 'function') drawCleanup();
-    
+
     // Tier List Cleanup
     import('./modules/tierlist.js').then(m => m.cleanupRealtime());
 

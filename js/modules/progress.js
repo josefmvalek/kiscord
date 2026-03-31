@@ -11,18 +11,18 @@ export async function initProgress(containerId, itemId) {
     currentItemId = itemId;
     rootContainerId = containerId;
     completedSections.clear();
-    
+
     try {
         const { data, error } = await supabase
             .from('matura_sections_done')
             .select('section_id')
             .eq('item_id', itemId)
             .eq('creator_name', state.currentUser?.name);
-            
+
         if (!error && data) {
             data.forEach(row => completedSections.add(row.section_id));
         }
-    } catch (e) { 
+    } catch (e) {
         console.warn('Progress DB error:', e);
     }
 
@@ -35,7 +35,7 @@ export async function initProgress(containerId, itemId) {
  */
 export async function getTopicProgress(itemId) {
     if (!state.currentUser) return { done: 0, total: 0 };
-    
+
     try {
         // 1. Get total sections count from KB metadata
         const { data: kbData } = await supabase
@@ -52,9 +52,9 @@ export async function getTopicProgress(itemId) {
             .select('*', { count: 'exact', head: true })
             .eq('item_id', itemId)
             .eq('creator_name', state.currentUser?.name);
-            
-        if (error) return { done: 0, total };
-        return { done: count || 0, total };
+
+        if (error) return { done: 0, total: total };
+        return { done: count || 0, total: total };
     } catch (e) {
         return { done: 0, total: 0 };
     }
@@ -90,7 +90,7 @@ export function mountCheckboxes(explicitContainerId) {
             e.stopPropagation();
             toggleSection(btn, slug);
         });
-        
+
         heading.appendChild(btn);
     });
 }
@@ -98,9 +98,9 @@ export function mountCheckboxes(explicitContainerId) {
 async function toggleSection(btn, slug) {
     if (isSaving) return;
     isSaving = true;
-    
+
     const wasDone = completedSections.has(slug);
-    
+
     // UI Update (Optimistic)
     if (wasDone) {
         completedSections.delete(slug);
@@ -113,7 +113,7 @@ async function toggleSection(btn, slug) {
         btn.title = 'Přečteno';
         triggerHaptic('success');
         triggerConfetti(btn);
-        
+
         // Trigger Matura Streak Update
         import('./matura.js').then(m => m.updateMaturaStreak());
     }

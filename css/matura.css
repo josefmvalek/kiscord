@@ -19,24 +19,37 @@
 .matura-progress-bar::after {
     content: "";
     position: absolute;
-    top: 0; left: 0; bottom: 0; right: 0;
-    background: linear-gradient(
-        90deg,
-        transparent,
-        rgba(255, 255, 255, 0.2),
-        transparent
-    );
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(255, 255, 255, 0.2),
+            transparent);
     animation: matura-shimmer 2s infinite;
 }
 
 @keyframes matura-shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
 }
 
 @keyframes bounce-slow {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
 }
 
 .animate-bounce-slow {
@@ -48,10 +61,15 @@
     .matura-content-wrapper {
         padding: 1.25rem !important;
     }
-    
-    .markdown-body h1 { font-size: 1.5rem; }
-    .markdown-body h2 { font-size: 1.25rem; }
-    
+
+    .markdown-body h1 {
+        font-size: 1.5rem;
+    }
+
+    .markdown-body h2 {
+        font-size: 1.25rem;
+    }
+
     /* Make tables horizontally scrollable on mobile */
     .markdown-body table {
         display: block;
@@ -116,7 +134,8 @@
 }
 
 .markdown-body h1 {
-    font-size: 1.875rem; /* 30px */
+    font-size: 1.875rem;
+    /* 30px */
     font-weight: 900;
     color: var(--text-header);
     margin-bottom: 1.5rem;
@@ -129,7 +148,8 @@
 }
 
 .markdown-body h2 {
-    font-size: 1.5rem; /* 24px */
+    font-size: 1.5rem;
+    /* 24px */
     font-weight: 800;
     color: var(--text-header);
     margin-bottom: 1rem;
@@ -143,7 +163,8 @@
 }
 
 .markdown-body h3 {
-    font-size: 1.125rem; /* 18px */
+    font-size: 1.125rem;
+    /* 18px */
     font-weight: 700;
     color: var(--text-header);
     margin-bottom: 0.75rem;
@@ -160,19 +181,26 @@
     font-weight: 700;
 }
 
-.markdown-body ul, .markdown-body ol {
+.markdown-body ul,
+.markdown-body ol {
     margin-bottom: 1.25rem;
     padding-left: 1.5rem;
 }
 
-.markdown-body ul { list-style-type: disc; }
-.markdown-body ol { list-style-type: decimal; }
+.markdown-body ul {
+    list-style-type: disc;
+}
+
+.markdown-body ol {
+    list-style-type: decimal;
+}
 
 .markdown-body li {
     margin-bottom: 0.5rem;
 }
 
-.markdown-body li > ul, .markdown-body li > ol {
+.markdown-body li>ul,
+.markdown-body li>ol {
     margin-top: 0.5rem;
     margin-bottom: 0.5rem;
 }
@@ -214,23 +242,42 @@
 }
 
 .markdown-body table {
-    width: 100%;
+    width: auto;
+    min-width: 280px;
+    max-width: 100%;
     border-collapse: separate;
     border-spacing: 0;
     margin-bottom: 1.5rem;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
     overflow: hidden;
+    background: rgba(0, 0, 0, 0.15);
 }
 
-.markdown-body th, .markdown-body td {
-    padding: 0.75rem 1rem;
+.markdown-body th,
+.markdown-body td {
+    padding: 0.35rem 0.75rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     border-right: 1px solid rgba(255, 255, 255, 0.05);
     text-align: left;
+    font-size: 0.78rem;
+    line-height: 1.35;
 }
 
-.markdown-body th:last-child, .markdown-body td:last-child {
+.markdown-body tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Hide rows that contain only dashes (manual separators in MD) */
+.markdown-body td:only-child:is([align="center"]),
+.markdown-body td:empty {
+    display: none;
+}
+
+
+
+.markdown-body th:last-child,
+.markdown-body td:last-child {
     border-right: none;
 }
 
@@ -312,15 +359,29 @@
 }
 
 /* Local Theme Toggle Icons */
-.theme-dark .theme-dark\:hidden { display: none !important; }
-.theme-dark .theme-dark\:block { display: block !important; }
-:not(.theme-dark).theme-light .theme-dark\:hidden { display: block !important; }
-:not(.theme-dark).theme-light .theme-dark\:block { display: none !important; }
+.theme-dark .theme-dark\:hidden {
+    display: none !important;
+}
+
+.theme-dark .theme-dark\:block {
+    display: block !important;
+}
+
+:not(.theme-dark).theme-light .theme-dark\:hidden {
+    display: block !important;
+}
+
+:not(.theme-dark).theme-light .theme-dark\:block {
+    display: none !important;
+}
 
 /* Dashboard Titles in Light Mode */
-.theme-light h1, .theme-light h2, .theme-light h3 {
+.theme-light h1,
+.theme-light h2,
+.theme-light h3 {
     color: var(--text-header) !important;
 }
+
 .theme-light .text-white {
     color: var(--text-header) !important;
 }

@@ -4,6 +4,7 @@ import { showNotification } from '../core/theme.js';
 import { supabase } from '../core/supabase.js';
 import { renderModal } from '../core/ui.js';
 import { broadcastMaturaSOS, broadcastPomodoroUpdate } from '../core/sync.js';
+import { uploadFile } from '../core/storage.js';
 
 let pomodoroInterval = null;
 let pomodoroState = { status: 'stopped', timeLeft: 0, partnerStudying: false };
@@ -36,10 +37,10 @@ export async function renderMatura(channelId) {
 export function toggleLocalTheme(containerId) {
     const el = document.getElementById(containerId);
     if (!el) return;
-    
+
     triggerHaptic('medium');
     const isLight = el.classList.contains('theme-light');
-    
+
     if (isLight) {
         el.classList.remove('theme-light');
         el.classList.add('theme-dark');
@@ -81,10 +82,10 @@ export function closeKnowledgeBase(modalId) {
 
 function renderDashboard(container) {
     const user = state.currentUser?.name;
-    const maturityDate = user === 'Jožka' 
-        ? new Date('2026-05-19T08:00:00') 
+    const maturityDate = user === 'Jožka'
+        ? new Date('2026-05-19T08:00:00')
         : new Date('2026-05-25T08:00:00');
-        
+
     const now = new Date();
     const diff = maturityDate - now;
     const days = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
@@ -96,8 +97,8 @@ function renderDashboard(container) {
 
     subjects.forEach(sub => {
         const items = state.maturaTopics?.[sub] || [];
-        totalItems += items.length; 
-        
+        totalItems += items.length;
+
         items.forEach(item => {
             const prog = state.maturaProgress[item.id] || {};
             // We check progress for BOTH users if it's the partner view, 
@@ -246,7 +247,7 @@ function renderDashboard(container) {
         const subjects = ['czech', 'it'];
         let totalMasterySum = 0;
         let totalSubjectsCount = 0;
-        
+
         for (const sub of subjects) {
             const items = state.maturaTopics?.[sub] || [];
             for (const item of items) {
@@ -254,7 +255,7 @@ function renderDashboard(container) {
                 totalSubjectsCount++;
             }
         }
-        
+
         const finalMastery = totalSubjectsCount > 0 ? Math.round(totalMasterySum / totalSubjectsCount) : 0;
         const textEl = document.getElementById('total-mastery-text');
         const barEl = document.getElementById('total-mastery-bar');
@@ -312,18 +313,18 @@ function renderList(container, subject) {
     `;
 
     items.forEach(item => {
-        const prog = state.maturaProgress[item.id] || { 
-            jose: { status: 'none', notes: '' }, 
-            klarka: { status: 'none', notes: '' } 
+        const prog = state.maturaProgress[item.id] || {
+            jose: { status: 'none', notes: '' },
+            klarka: { status: 'none', notes: '' }
         };
-        
+
         const joseProg = prog.jose || { status: 'none', notes: '' };
         const klarkaProg = prog.klarka || { status: 'none', notes: '' };
 
         // Jožka Status
         const jStatusIcon = joseProg.status === 'done' ? '✅' : (joseProg.status === 'started' ? '📖' : '⚪');
         const jStatusClass = joseProg.status === 'done' ? 'text-green-400' : (joseProg.status === 'started' ? 'text-blue-400' : 'text-gray-600');
-        
+
         // Klárka Status
         const kStatusIcon = klarkaProg.status === 'done' ? '✅' : (klarkaProg.status === 'started' ? '✍️' : '⚪');
         const kStatusClass = klarkaProg.status === 'done' ? 'text-[#eb459e]' : (klarkaProg.status === 'started' ? 'text-purple-400' : 'text-gray-600');
@@ -452,7 +453,7 @@ function renderList(container, subject) {
             const mastery = await sr.getTopicMastery(item.id);
             const mTextEl = document.getElementById(`mastery-text-${item.id}`);
             const mBarEl = document.getElementById(`mastery-bar-${item.id}`);
-            
+
             if (mTextEl && mBarEl) {
                 mTextEl.textContent = `${mastery}%`;
                 mBarEl.style.width = `${mastery}%`;
@@ -473,8 +474,12 @@ function renderList(container, subject) {
                     const progressWidth = Math.round((done / total) * 100);
                     rBarEl.style.width = `${progressWidth}%`;
                 } else {
+                    // Try to trigger a silent backfill if total is 0 but item might have content
+                    if (item.has_content) {
+                        import('./matura.js').then(m => m.silentBackfillCount(item.id));
+                    }
                     rTextEl.textContent = done > 0 ? `${done} kap. hotovo` : 'Zatím nečteno';
-                    const progressWidth = Math.min(100, done * 20); 
+                    const progressWidth = Math.min(100, done * 20);
                     rBarEl.style.width = `${progressWidth}%`;
                 }
             }
@@ -485,9 +490,9 @@ function renderList(container, subject) {
 // --- ACTIONS ---
 
 export async function cycleStatus(itemId) {
-    const prog = state.maturaProgress[itemId] || { 
-        jose: { status: 'none', notes: '' }, 
-        klarka: { status: 'none', notes: '' } 
+    const prog = state.maturaProgress[itemId] || {
+        jose: { status: 'none', notes: '' },
+        klarka: { status: 'none', notes: '' }
     };
     const userKey = state.currentUser?.name === 'Jožka' ? 'jose' : 'klarka';
     const current = prog[userKey].status;
@@ -509,7 +514,7 @@ export async function cycleStatus(itemId) {
             item_id: itemId,
             user_id: state.currentUser?.id,
             status: next,
-            notes: prog[userKey].notes, 
+            notes: prog[userKey].notes,
             updated_at: new Date().toISOString()
         });
     } catch (e) {
@@ -528,11 +533,11 @@ export async function updateTopicCardUI(itemId) {
     if (!card) return;
 
     // 1. Get latest progress from state (locally updated in cycleStatus)
-    const prog = state.maturaProgress[itemId] || { 
-        jose: { status: 'none', notes: '' }, 
-        klarka: { status: 'none', notes: '' } 
+    const prog = state.maturaProgress[itemId] || {
+        jose: { status: 'none', notes: '' },
+        klarka: { status: 'none', notes: '' }
     };
-    
+
     // Find item info
     let item = null;
     for (const cat in state.maturaTopics) {
@@ -587,9 +592,9 @@ export async function updateTopicCardUI(itemId) {
     const rTextEl = document.getElementById(`read-text-${itemId}`);
     const rBarEl = document.getElementById(`read-bar-${itemId}`);
     if (rTextEl && rBarEl) {
-         const { done, total } = stats;
-         rTextEl.textContent = total > 0 ? `${done} / ${total} kap. hotovo` : (done > 0 ? `${done} kap. hotovo` : 'Zatím nečteno');
-         rBarEl.style.width = `${total > 0 ? Math.round((done / total) * 100) : Math.min(100, done * 20)}%`;
+        const { done, total } = stats;
+        rTextEl.textContent = total > 0 ? `${done} / ${total} kap. hotovo` : (done > 0 ? `${done} kap. hotovo` : 'Zatím nečteno');
+        rBarEl.style.width = `${total > 0 ? Math.round((done / total) * 100) : Math.min(100, done * 20)}%`;
     }
 
     // Update "Write" to "Show" if content was just saved
@@ -607,7 +612,7 @@ export function triggerSOS() {
     triggerHaptic('heavy');
     const partnerName = state.currentUser?.name === 'Jožka' ? 'Klárce' : 'Jožkovi';
     showNotification(`SOS SIGNÁL VYSLÁN! 🚨 ${partnerName} právě přišlo upozornění.`, 'error');
-    
+
     // Broadcast to partner
     broadcastMaturaSOS();
     playBellSound();
@@ -627,7 +632,7 @@ function playBellSound() {
         const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
         audio.volume = 0.5;
         audio.play();
-    } catch(e) { console.warn("Bell sound failed", e); }
+    } catch (e) { console.warn("Bell sound failed", e); }
 }
 
 // --- POMODORO LOGIC ---
@@ -635,7 +640,7 @@ function playBellSound() {
 async function initPomodoro() {
     // 1. Fetch initial state from DB
     const { data } = await supabase.from('matura_pomodoro').select('*').eq('id', 'global').single();
-    
+
     if (data) {
         updatePomodoroFromData(data);
     } else {
@@ -647,15 +652,15 @@ async function initPomodoro() {
     window.addEventListener('pomodoro-updated', (e) => {
         const data = e.detail.source === 'database' ? e.detail.payload : e.detail;
         if (data.type === 'schedule-sync') {
-             // Fetch entire schedule to be safe
-             supabase.from('matura_schedule').select('*').gte('scheduled_date', new Date().toISOString().split('T')[0])
-                .then(({data}) => {
+            // Fetch entire schedule to be safe
+            supabase.from('matura_schedule').select('*').gte('scheduled_date', new Date().toISOString().split('T')[0])
+                .then(({ data }) => {
                     if (data) {
                         state.maturaSchedule = data;
                         renderTodaysMissions();
                     }
                 });
-             return;
+            return;
         }
         updatePomodoroFromData(data);
     });
@@ -663,14 +668,14 @@ async function initPomodoro() {
 
 function updatePomodoroFromData(data) {
     pomodoroState.status = data.status;
-    
+
     if (data.status === 'running' && data.started_at) {
         const startedAt = new Date(data.started_at);
         const now = new Date();
         const elapsed = Math.floor((now - startedAt) / 1000);
         const total = data.duration_minutes * 60;
         pomodoroState.timeLeft = Math.max(0, total - elapsed);
-        
+
         if (pomodoroState.timeLeft > 0) {
             startLocalTimer();
         } else {
@@ -681,7 +686,7 @@ function updatePomodoroFromData(data) {
         stopLocalTimer();
         pomodoroState.timeLeft = data.duration_minutes * 60;
     }
-    
+
     updatePomodoroUI();
 }
 
@@ -720,11 +725,11 @@ export async function togglePomodoro() {
 
     // Update DB
     await supabase.from('matura_pomodoro').upsert(update);
-    
+
     // Broadcast for instant effect
     broadcastPomodoroUpdate(update);
     updatePomodoroFromData(update);
-    
+
     triggerHaptic(nextStatus === 'running' ? 'success' : 'medium');
 }
 
@@ -732,16 +737,16 @@ function updatePomodoroUI() {
     const timerEl = document.getElementById('pomodoro-timer');
     const btnEl = document.getElementById('pomodoro-btn');
     const statusListEl = document.getElementById('pomodoro-status-list');
-    
+
     if (timerEl) {
         const mins = Math.floor(pomodoroState.timeLeft / 60);
         const secs = pomodoroState.timeLeft % 60;
         timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
     }
-    
+
     if (btnEl) {
         btnEl.textContent = pomodoroState.status === 'running' ? 'Stop 🛑' : 'Start 🧠';
-        btnEl.className = pomodoroState.status === 'running' 
+        btnEl.className = pomodoroState.status === 'running'
             ? "bg-[#ed4245] hover:bg-[#c03537] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg transition active:scale-95"
             : "bg-[#5865F2] hover:bg-[#4752c4] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg transition active:scale-95";
     }
@@ -774,7 +779,7 @@ export async function updateMaturaStreak() {
 
     try {
         const { data, error } = await supabase.from('matura_streaks').select('*').eq('user_id', state.currentUser.id).maybeSingle();
-        
+
         let newStreak = 1;
         let lastDate = data?.last_study_date;
 
@@ -799,7 +804,7 @@ export async function updateMaturaStreak() {
         });
 
         state.maturaStreaks[userKey] = newStreak;
-        
+
         // Unlock Achievements
         if (newStreak === 3) import('./achievements.js').then(a => a.autoUnlock('matura_streak_3'));
         if (newStreak === 7) import('./achievements.js').then(a => a.autoUnlock('matura_streak_7'));
@@ -830,7 +835,7 @@ export function showScheduleMenu(itemId, btn) {
             </div>
         </div>
     `;
-    
+
     document.getElementById('schedule-popover')?.remove();
     document.body.insertAdjacentHTML('beforeend', menuHtml);
 
@@ -868,7 +873,7 @@ export async function scheduleTopic(itemId, dateOption) {
 
         const { data, error } = await supabase.from('matura_schedule').insert(newMission).select();
         if (error) throw error;
-        
+
         // Dynamic update
         if (data && data[0]) {
             state.maturaSchedule.push(data[0]);
@@ -910,7 +915,7 @@ function renderTodaysMissions() {
                 }
             }
         }
-        
+
         if (!item) return;
 
         const div = document.createElement('div');
@@ -946,7 +951,7 @@ export async function removeMission(missionId) {
         // Dynamic local update
         state.maturaSchedule = state.maturaSchedule.filter(m => m.id !== missionId);
         renderTodaysMissions();
-        
+
         // Broadcast to partner
         broadcastPomodoroUpdate({ type: 'schedule-sync' });
 
@@ -1018,11 +1023,23 @@ export async function openKnowledgeBase(itemId) {
 
         if (error) throw error;
         dbContent = data?.content || '';
-        
+
+        // --- BACKFILL sections_count IF MISSING ---
+        if (data && (!data.sections_count || data.sections_count === 0) && dbContent) {
+            const count = dbContent.split('\n').filter(l => l.trim().match(/^#{1,3}\s+.+$/)).length;
+            if (count > 0) {
+                console.log(`[Matura] Backfilling sections_count for ${itemId}: ${count}`);
+                await supabase.from('matura_kb').update({ sections_count: count }).eq('item_id', itemId);
+                // Update local state to reflect change immediately if card is re-rendered
+                if (state.maturaKBContent[itemId]) state.maturaKBContent[itemId].sections_count = count;
+                updateTopicCardUI(itemId);
+            }
+        }
+
         // Update Cache
-        state.maturaKBContent[itemId] = { 
-            content: dbContent, 
-            updated_at: data?.updated_at || data?.created_at || new Date().toISOString() 
+        state.maturaKBContent[itemId] = {
+            content: dbContent,
+            updated_at: data?.updated_at || data?.created_at || new Date().toISOString()
         };
     } catch (e) {
         console.error("Supabase Matura fetch error:", e);
@@ -1139,20 +1156,20 @@ export async function openKnowledgeBase(itemId) {
 
     // 1. Chapters Checkboxes
     import('./progress.js').then(m => m.initProgress(modalId, itemId));
-    
+
     // 2. Highlighting System
     import('./highlighter.js').then(m => {
         // Setup internal hook for highlighter to trigger re-renders
         window.refreshKBContent = (highlights, applyFn) => {
             const contentDiv = document.getElementById(`kb-content-${itemId}`);
             if (!contentDiv) return;
-            
+
             // Re-render core markdown first to clean any messy spans
             contentDiv.innerHTML = formattedContent;
-            
+
             // Re-apply chapter checkboxes
             import('./progress.js').then(pr => pr.mountCheckboxes(modalId));
-            
+
             // Apply highlights
             highlights.forEach(hl => applyFn(contentDiv, hl));
         };
@@ -1173,10 +1190,10 @@ function generateTOC(html, itemId) {
         const level = h.tagName.toLowerCase();
         const text = h.textContent.trim();
         const slug = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-        
+
         // Add ID to the original heading in the HTML if possible (will do in refactor if needed)
         // For now, TOC links rely on finding the same slug
-        
+
         const indent = level === 'h1' ? 'pl-0 font-bold text-[var(--text-header)]' : (level === 'h2' ? 'pl-3 text-[var(--text-normal)]' : 'pl-6 opacity-60 text-[var(--text-muted)]');
         return `
             <li class="${indent} hover:text-[var(--blurple)] cursor-pointer transition py-2 md:py-0.5 truncate font-medium text-[11px]" 
@@ -1201,7 +1218,7 @@ export function toggleMobileTOC(itemId) {
     const sidebar = document.getElementById(`kb-sidebar-${itemId}`);
     const backdrop = document.getElementById(`kb-sidebar-backdrop-${itemId}`);
     if (!sidebar) return;
-    
+
     const isShowing = sidebar.classList.contains('translate-y-0');
     if (isShowing) {
         sidebar.classList.remove('translate-y-0');
@@ -1234,24 +1251,24 @@ export function switchEditorTab(tab) {
     const previewCol = document.getElementById('preview-col');
     const tabWrite = document.getElementById('tab-write');
     const tabPreview = document.getElementById('tab-preview');
-    
+
     if (!editorCol || !previewCol || !tabWrite || !tabPreview) return;
-    
+
     if (tab === 'write') {
         editorCol.classList.remove('hidden');
         previewCol.classList.add('hidden');
         previewCol.classList.remove('flex');
-        
+
         tabWrite.className = 'flex-1 py-3 text-[10px] font-black uppercase tracking-widest text-[#5865F2] bg-white/5 rounded-xl border border-[#5865F2]/30 transition-all';
         tabPreview.className = 'flex-1 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-300 transition-all';
     } else {
         editorCol.classList.add('hidden');
         previewCol.classList.remove('hidden');
         previewCol.classList.add('flex');
-        
+
         tabPreview.className = 'flex-1 py-3 text-[10px] font-black uppercase tracking-widest text-[#eb459e] bg-white/5 rounded-xl border border-[#eb459e]/30 transition-all';
         tabWrite.className = 'flex-1 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-300 transition-all';
-        
+
         // Trigger Preview Update
         if (window.updateKBPreview) window.updateKBPreview();
     }
@@ -1280,7 +1297,7 @@ export async function openEditor(itemId, existingContent = null) {
         const { data: kbData } = await supabase.from('matura_kb').select('*').eq('item_id', itemId).maybeSingle();
         currentContent = kbData?.content || '';
         lastUpdatedAt = kbData?.updated_at || kbData?.created_at;
-        
+
         // Sync cache
         state.maturaKBContent[itemId] = { content: currentContent, updated_at: lastUpdatedAt };
     }
@@ -1375,7 +1392,7 @@ export async function openEditor(itemId, existingContent = null) {
 
     document.getElementById('edit-modal').classList.remove('hidden');
     document.getElementById('edit-modal').classList.add('flex');
-    
+
     // Safely set initial content
     const textareaEl = document.getElementById('textarea-kb');
     if (textareaEl) textareaEl.value = initialContent;
@@ -1424,8 +1441,8 @@ export async function openEditor(itemId, existingContent = null) {
         }
         const { data } = await supabase.from('matura_kb').select('updated_at').eq('item_id', itemId).maybeSingle();
         const serverUpdate = data?.updated_at;
-        const localFetched = document.getElementById('kb-fetched-at').value;
-        
+        const localFetched = document.getElementById('kb-fetched-at')?.value;
+
         if (serverUpdate && localFetched && serverUpdate !== localFetched) {
             document.getElementById('save-warning')?.classList.remove('hidden');
             document.getElementById('save-warning').textContent = "⚠️ POZOR: Tento zápis byl změněn někým jiným!";
@@ -1437,13 +1454,13 @@ export async function saveKBContent(itemId) {
     const textarea = document.getElementById('textarea-kb');
     if (!textarea) return;
     const content = textarea.value;
-    
+
     try {
         // Concurrency Check (Safe check for updated_at)
         const { data: latest } = await supabase.from('matura_kb').select('*').eq('item_id', itemId).maybeSingle();
         const serverUpdate = latest?.updated_at || latest?.created_at;
-        const localFetched = document.getElementById('kb-fetched-at').value;
-        
+        const localFetched = document.getElementById('kb-fetched-at')?.value || '';
+
         if (serverUpdate && localFetched && serverUpdate !== localFetched) {
             if (!confirm("Mezitím někdo jiný zápis změnil. Opravdu chceš své změny uložit a přepsat ty jeho?")) {
                 return;
@@ -1453,7 +1470,7 @@ export async function saveKBContent(itemId) {
         const { error } = await supabase.from('matura_kb').upsert({
             item_id: itemId,
             content: content,
-            sections_count: content.split('\n').filter(l => l.trim().startsWith('#')).length || 0,
+            sections_count: content.split('\n').filter(l => l.trim().match(/^#{1,3}\s+.+$/)).length || 0,
             updated_at: new Date().toISOString()
         });
 
@@ -1487,30 +1504,33 @@ export async function handleImageUpload(input, itemId) {
         return;
     }
 
+    const label = input.parentElement;
+    const originalIcon = label.innerHTML;
+
+    // UI Feedback
+    label.innerHTML = '<i class="fas fa-spinner fa-spin text-xs"></i>';
+    label.style.pointerEvents = 'none';
     showNotification('Nahrávám obrázek...', 'info');
-    
+
     try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${itemId}_${Date.now()}.${fileExt}`;
-        const filePath = `kb_images/${fileName}`;
+        // Use central storage helper with 'timeline-photos' bucket (confirmed in SQL) and 'matura' subfolder
+        const publicUrl = await uploadFile('timeline-photos', file, 'matura');
 
-        // Ensure bucket exists in Supabase Storage manually
-        const { data, error } = await supabase.storage
-            .from('matura_images')
-            .upload(filePath, file);
-
-        if (error) throw error;
-
-        const { data: { publicUrl } } = supabase.storage
-            .from('matura_images')
-            .getPublicUrl(filePath);
-
-        window.insertAtCursor('textarea-kb', `\n![Obrázek](${publicUrl})\n`, '');
-        showNotification('Obrázek vložen! 🖼️', 'success');
-        triggerHaptic('success');
-    } catch (e) {
-        console.error("Upload error:", e);
-        showNotification('Chyba při nahrávání obrázku. Máš vytvořený Bucket "matura_images"?', 'error');
+        if (publicUrl) {
+            window.insertAtCursor('textarea-kb', `\n![obrázek](${publicUrl})\n`, '');
+            showNotification('Obrázek vložen! 🖼️', 'success');
+            triggerHaptic('success');
+        } else {
+            throw new Error("Upload failed to return URL");
+        }
+    } catch (error) {
+        console.error('Image upload error:', error);
+        showNotification('Chyba při nahrávání obrázku. Zkontroluj připojení nebo Supabase bucket "timeline-photos".', 'error');
+        triggerHaptic('heavy');
+    } finally {
+        label.innerHTML = originalIcon;
+        label.style.pointerEvents = 'auto';
+        input.value = ''; // Reset input
     }
 }
 
@@ -1541,34 +1561,50 @@ export async function addNewTopic(categoryId) {
 
 function formatMarkdown(text) {
     if (!text) return '';
-    
-    // 1. Smart Table Fix: If user entered a table header without the separator line, try to inject it
+
+    // 1. Smart Table Fix & Cleanup
     let processedText = text;
     if (processedText.includes('|')) {
         const lines = processedText.split('\n');
-        for (let i = 0; i < lines.length - 1; i++) {
-            const line = lines[i].trim();
-            const nextLine = lines[i+1].trim();
-            
-            // If line contains pipes and next line is NOT a separator line
-            if (line.includes('|') && line.length > 3 && 
-                !nextLine.startsWith('|--') && !nextLine.startsWith('|-') && !nextLine.startsWith('+-') &&
-                !line.startsWith('#') && !line.startsWith('!') && !line.startsWith('>')) {
-                
-                // Count pipes in this line
-                const pipes = (line.match(/\|/g) || []).length;
-                if (pipes >= 1) {
-                    // Create a separator line with same number of columns
-                    const cols = line.split('|').length;
-                    const sep = Array(cols).fill('---').join('|');
-                    lines.splice(i + 1, 0, (line.startsWith('|') ? '|' : '') + sep + (line.endsWith('|') ? '|' : ''));
-                    i++; // Skip the newly added separator
+
+        let inTable = false;
+        let headerFound = false;
+
+        const cleanedLines = lines.filter((l) => {
+            const trimmed = l.trim();
+            const isPipeLine = trimmed.includes('|');
+            // A separator must contain at least one dash and only pipes/spaces/dashes
+            const isSeparator = isPipeLine && trimmed.includes('-') && trimmed.replace(/[|\s-]/g, '').length === 0 && trimmed.length > 2;
+            const isEmptyPipeLine = isPipeLine && !isSeparator && trimmed.replace(/[|\s]/g, '').length === 0;
+
+            if (isPipeLine) {
+                if (!inTable) {
+                    inTable = true;
+                    headerFound = false;
+                    return true;
                 }
+
+                // Discard empty pipe lines that would break table structure (e.g. between header and separator)
+                if (isEmptyPipeLine && !headerFound) return false;
+
+                if (isSeparator) {
+                    if (!headerFound) {
+                        headerFound = true;
+                        return true; // Keep first separator
+                    }
+                    return false; // Remove redundant separators
+                }
+                return true;
+            } else {
+                inTable = false;
+                headerFound = false;
+                return true;
             }
-        }
-        processedText = lines.join('\n');
+        });
+
+        processedText = cleanedLines.join('\n');
     }
-    
+
     // 2. Math preprocessing (protect math from marked using non-conflicting delimiters)
     const mathBlocks = [];
 
@@ -1599,7 +1635,7 @@ function formatMarkdown(text) {
     // 3. Marked.js configuration & parsing
     if (window.marked && typeof marked.parse === 'function') {
         marked.setOptions({
-            highlight: function(code, lang) {
+            highlight: function (code, lang) {
                 if (window.hljs && lang && hljs.getLanguage(lang)) {
                     return hljs.highlight(code, { language: lang }).value;
                 }
@@ -1608,7 +1644,7 @@ function formatMarkdown(text) {
             breaks: true,
             gfm: true
         });
-        
+
         processedText = marked.parse(processedText);
     } else {
         // Fallback for H1-H3 if marked fails to load (with nested bold/italic support)
@@ -1635,7 +1671,7 @@ function formatMarkdown(text) {
  */
 export async function generateAITest(itemId) {
     if (window.showNotification) showNotification('✨ AI analyzuje tvé zápisky...', 'info');
-    
+
     try {
         const { data: kbData } = await supabase.from('matura_kb').select('content').eq('item_id', itemId).maybeSingle();
         const content = kbData?.content || '';
@@ -1664,10 +1700,10 @@ export async function generateAITest(itemId) {
             }).eq('id', itemId);
 
             if (error) throw error;
-            
+
             // Re-sync local topics
             await refreshMaturaTopics();
-            
+
             if (window.showNotification) showNotification(`✨ Test vygenerován! (${flashcards.length} otázek)`, 'success');
             if (window.triggerConfetti) window.triggerConfetti();
             triggerHaptic('success');
@@ -1689,7 +1725,7 @@ export function openNotes(itemId) {
     const user = state.currentUser?.name === 'Jožka' ? 'jose' : 'klarka';
     const userProg = prog[user] || { notes: '' };
     const notes = userProg.notes || '';
-    
+
     const modalHtml = `
         <div class="space-y-4">
             <label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest">Moje soukromé poznámky a taháky</label>
@@ -1721,12 +1757,12 @@ export function openNotes(itemId) {
 
 export async function saveNotes(itemId) {
     const val = document.getElementById('notes-textarea').value;
-    const prog = state.maturaProgress[itemId] || { 
-        jose: { status: 'none', notes: '' }, 
-        klarka: { status: 'none', notes: '' } 
+    const prog = state.maturaProgress[itemId] || {
+        jose: { status: 'none', notes: '' },
+        klarka: { status: 'none', notes: '' }
     };
     const userKey = state.currentUser?.name === 'Jožka' ? 'jose' : 'klarka';
-    
+
     // Update local state
     if (!prog[userKey]) prog[userKey] = { status: 'none', notes: '' };
     prog[userKey].notes = val;
@@ -1746,6 +1782,32 @@ export async function saveNotes(itemId) {
         console.warn("[Matura] Supabase error, using local state.");
         showNotification('Uloženo lokálně! 📝', 'warning');
     }
-    
+
     document.getElementById("notes-modal")?.remove();
 }
+
+/**
+ * Silently updates the sections_count in the DB if it is missing.
+ * Used during card rendering to ensure progress totals are eventually correct.
+ */
+export async function silentBackfillCount(itemId) {
+    if (!itemId) return;
+
+    try {
+        const { data, error } = await supabase
+            .from('matura_kb')
+            .select('content, sections_count')
+            .eq('item_id', itemId)
+            .single();
+
+        if (error || !data || !data.content) return;
+        if (data.sections_count > 0) return; // Already has it
+
+        const count = data.content.split('\n').filter(l => l.trim().match(/^#{1,3}\s+.+$/)).length;
+        if (count > 0) {
+            await supabase.from('matura_kb').update({ sections_count: count }).eq('item_id', itemId);
+            updateTopicCardUI(itemId);
+        }
+    } catch (e) { }
+}
+
