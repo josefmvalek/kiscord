@@ -4,6 +4,7 @@ import { showNotification } from '../core/theme.js';
 import { supabase } from '../core/supabase.js';
 import { renderModal } from '../core/ui.js';
 import { broadcastMaturaSOS, broadcastPomodoroUpdate } from '../core/sync.js';
+import { safeInsert, safeUpsert, safeUpdate, enqueueOperation } from '../core/offline.js';
 import { uploadFile } from '../core/storage.js';
 
 let pomodoroInterval = null;
@@ -329,7 +330,7 @@ function renderList(container, subject) {
         const kStatusIcon = klarkaProg.status === 'done' ? '✅' : (klarkaProg.status === 'started' ? '✍️' : '⚪');
         const kStatusClass = klarkaProg.status === 'done' ? 'text-[#eb459e]' : (klarkaProg.status === 'started' ? 'text-purple-400' : 'text-gray-600');
 
-                html += `
+        html += `
             <div id="topic-card-${item.id}" data-topic-id="${item.id}" class="bg-[var(--bg-secondary)] rounded-2xl border border-white/5 p-5 hover:border-[#5865F2]/40 transition-all flex flex-col group overflow-hidden relative shadow-md">
                 ${item.file ? `
                     <div class="absolute -right-4 -top-4 w-16 h-16 bg-[#3ba55c]/10 rounded-full blur-xl group-hover:bg-[#3ba55c]/20 transition-all"></div>
@@ -1142,7 +1143,10 @@ export async function openKnowledgeBase(itemId) {
     triggerHaptic('medium');
 
     // INITIALIZE SPECIAL FEATURES
-    // 0. Theme Toggle Injection
+    // 0. Table Responsiveness (Data Labels for Mobile)
+    initTableResponsiveness(itemId);
+
+    // 1. Theme Toggle Injection
     const headerExtra = document.getElementById(`${modalId}-header-extra`);
     if (headerExtra) {
         headerExtra.innerHTML = `
@@ -1332,12 +1336,12 @@ export async function openEditor(itemId, existingContent = null) {
             <div id="editor-col" class="flex-1 flex flex-col border-r border-white/5">
                 <!-- Toolbar -->
                 <div class="sticky top-0 z-50 bg-[#2f3136] border-b border-white/10 flex items-center gap-1 p-2 overflow-x-auto scrollbar-none shadow-lg">
-                    <button onclick="window.insertAtCursor('textarea-kb', '# ', '')" class="w-10 h-10 flex items-center justify-center text-gray-300 hover:bg-white/5 rounded-lg transition" title="Nadpis"><i class="fas fa-heading"></i></button>
-                    <button onclick="window.insertAtCursor('textarea-kb', '**', '**')" class="w-10 h-10 flex items-center justify-center text-gray-300 hover:bg-white/5 rounded-lg transition font-bold">B</button>
-                    <button onclick="window.insertAtCursor('textarea-kb', '*', '*')" class="w-10 h-10 flex items-center justify-center text-gray-300 hover:bg-white/5 rounded-lg transition italic">I</button>
-                    <button onclick="window.insertAtCursor('textarea-kb', '- ', '')" class="w-10 h-10 flex items-center justify-center text-gray-300 hover:bg-white/5 rounded-lg transition"><i class="fas fa-list-ul"></i></button>
-                    <button onclick="window.insertAtCursor('textarea-kb', '\u0060\u0060\u0060\n', '\n\u0060\u0060\u0060')" class="w-10 h-10 flex items-center justify-center text-gray-300 hover:bg-white/5 rounded-lg transition"><i class="fas fa-code"></i></button>
-                    <button onclick="window.insertAtCursor('textarea-kb', '[', '](URL)')" class="w-10 h-10 flex items-center justify-center text-gray-300 hover:bg-white/5 rounded-lg transition"><i class="fas fa-link"></i></button>
+                    <button type="button" onmousedown="event.preventDefault(); window.insertAtCursor('textarea-kb', '# ', '')" class="w-10 h-10 flex items-center justify-center text-gray-300 hover:bg-white/5 rounded-lg transition" title="Nadpis"><i class="fas fa-heading"></i></button>
+                    <button type="button" onmousedown="event.preventDefault(); window.insertAtCursor('textarea-kb', '**', '**')" class="w-10 h-10 flex items-center justify-center text-gray-300 hover:bg-white/5 rounded-lg transition font-bold">B</button>
+                    <button type="button" onmousedown="event.preventDefault(); window.insertAtCursor('textarea-kb', '*', '*')" class="w-10 h-10 flex items-center justify-center text-gray-300 hover:bg-white/5 rounded-lg transition italic">I</button>
+                    <button type="button" onmousedown="event.preventDefault(); window.insertAtCursor('textarea-kb', '- ', '')" class="w-10 h-10 flex items-center justify-center text-gray-300 hover:bg-white/5 rounded-lg transition"><i class="fas fa-list-ul"></i></button>
+                    <button type="button" onmousedown="event.preventDefault(); window.insertAtCursor('textarea-kb', '\u0060\u0060\u0060\n', '\n\u0060\u0060\u0060')" class="w-10 h-10 flex items-center justify-center text-gray-300 hover:bg-white/5 rounded-lg transition"><i class="fas fa-code"></i></button>
+                    <button type="button" onmousedown="event.preventDefault(); window.insertAtCursor('textarea-kb', '[', '](URL)')" class="w-10 h-10 flex items-center justify-center text-gray-300 hover:bg-white/5 rounded-lg transition"><i class="fas fa-link"></i></button>
                     <div class="w-px h-6 bg-white/10 mx-1"></div>
                     <label class="w-10 h-10 flex items-center justify-center text-[#5865F2] hover:bg-white/5 rounded-lg transition cursor-pointer">
                         <i class="fas fa-image text-sm"></i>
@@ -1396,7 +1400,44 @@ export async function openEditor(itemId, existingContent = null) {
 
     // Safely set initial content
     const textareaEl = document.getElementById('textarea-kb');
-    if (textareaEl) textareaEl.value = initialContent;
+    if (textareaEl) {
+        textareaEl.value = initialContent;
+
+        // Add Keyboard Shortcuts
+        textareaEl.addEventListener('keydown', (e) => {
+            const isMod = e.ctrlKey || e.metaKey;
+            const isAlt = e.altKey;
+
+            // Bold: Ctrl+B
+            if (isMod && e.key.toLowerCase() === 'b') {
+                e.preventDefault();
+                window.insertAtCursor('textarea-kb', '**', '**');
+            }
+            // Italic: Ctrl+I
+            else if (isMod && e.key.toLowerCase() === 'i') {
+                e.preventDefault();
+                window.insertAtCursor('textarea-kb', '*', '*');
+            }
+            // Save: Ctrl+S or Ctrl+Enter
+            else if (isMod && (e.key.toLowerCase() === 's' || e.key === 'Enter')) {
+                e.preventDefault();
+                import('/js/modules/matura.js').then(m => m.saveKBContent(itemId));
+            }
+            // Headings: Alt+1, Alt+2, Alt+3
+            else if (isAlt && e.key === '1') {
+                e.preventDefault();
+                window.insertAtCursor('textarea-kb', '# ', '');
+            }
+            else if (isAlt && e.key === '2') {
+                e.preventDefault();
+                window.insertAtCursor('textarea-kb', '## ', '');
+            }
+            else if (isAlt && e.key === '3') {
+                e.preventDefault();
+                window.insertAtCursor('textarea-kb', '### ', '');
+            }
+        });
+    }
 
     // Inject Preview & Helper logic
     window.updateKBPreview = () => {
@@ -1420,13 +1461,38 @@ export async function openEditor(itemId, existingContent = null) {
     window.insertAtCursor = (id, start, end) => {
         const txt = document.getElementById(id);
         if (!txt) return;
+
         const s = txt.selectionStart;
         const e = txt.selectionEnd;
         const val = txt.value;
-        txt.value = val.substring(0, s) + start + val.substring(s, e) + end + val.substring(e);
+        const selectedText = val.substring(s, e);
+        const textToInsert = start + selectedText + end;
+
+        // Try to use execCommand for better undo history and scroll preservation
         txt.focus();
-        txt.selectionStart = s + start.length;
-        txt.selectionEnd = e + start.length;
+        let success = false;
+        try {
+            success = document.execCommand('insertText', false, textToInsert);
+        } catch (err) {
+            success = false;
+        }
+
+        if (!success) {
+            // Fallback for browsers that don't support insertText on textarea
+            const scrollTop = txt.scrollTop;
+            txt.value = val.substring(0, s) + textToInsert + val.substring(e);
+            txt.focus();
+            txt.scrollTop = scrollTop;
+        }
+
+        // Adjust selection if we wrapped something to keep the selection intact
+        if (selectedText.length > 0) {
+            txt.selectionStart = s + start.length;
+            txt.selectionEnd = s + start.length + selectedText.length;
+        } else {
+            txt.selectionStart = txt.selectionEnd = s + start.length;
+        }
+
         window.updateKBPreview();
         window.saveKBDraft(itemId);
     };
@@ -1468,7 +1534,7 @@ export async function saveKBContent(itemId) {
             }
         }
 
-        const { error } = await supabase.from('matura_kb').upsert({
+        const { data: result, error, offline } = await safeUpsert('matura_kb', {
             item_id: itemId,
             content: content,
             sections_count: content.split('\n').filter(l => l.trim().match(/^#{1,3}\s+.+$/)).length || 0,
@@ -1478,10 +1544,18 @@ export async function saveKBContent(itemId) {
         if (error) throw error;
 
         // Update topic flag & Cache
-        await supabase.from('matura_topics').update({ has_content: true }).eq('id', itemId);
-        state.maturaKBContent[itemId] = { content: content, updated_at: new Date().toISOString() };
+        if (offline) {
+            // If offline, we still update local state immediately so UI feels fast
+            state.maturaKBContent[itemId] = { content: content, updated_at: new Date().toISOString() };
+            enqueueOperation('matura_topics', 'update', { id: itemId, has_content: true });
 
-        showNotification('Zápis úspěšně uložen! 📚', 'success');
+            showNotification('Uloženo lokálně (offline) 💾', 'info');
+        } else {
+            await supabase.from('matura_topics').update({ has_content: true }).eq('id', itemId);
+            state.maturaKBContent[itemId] = { content: content, updated_at: new Date().toISOString() };
+            showNotification('Zápis úspěšně uložen! 📚', 'success');
+        }
+
         triggerHaptic('success');
         localStorage.removeItem(`matura_draft_${itemId}`);
         document.getElementById('edit-modal')?.remove();
@@ -1635,7 +1709,15 @@ function formatMarkdown(text) {
 
     // 3. Marked.js configuration & parsing
     if (window.marked && typeof marked.parse === 'function') {
+        const renderer = new marked.Renderer();
+        const linkRenderer = renderer.link;
+        renderer.link = (href, title, text) => {
+            const html = linkRenderer.call(renderer, href, title, text);
+            return html.replace(/^<a /, '<a target="_blank" rel="noopener noreferrer" ');
+        };
+
         marked.setOptions({
+            renderer: renderer,
             highlight: function (code, lang) {
                 if (window.hljs && lang && hljs.getLanguage(lang)) {
                     return hljs.highlight(code, { language: lang }).value;
@@ -1653,6 +1735,7 @@ function formatMarkdown(text) {
             .replace(/^# (.*$)/gim, '<h1 class="text-3xl font-black text-white mb-6 mt-8 italic uppercase tracking-tighter shadow-sm">$1</h1>')
             .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-black text-white mb-4 mt-6 italic uppercase tracking-tighter border-b border-white/10 pb-2">$1</h2>')
             .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold text-white mb-2 mt-4">$1</h3>')
+            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline">$1</a>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
             .replace(/\n/gim, '<br>');
@@ -1665,6 +1748,41 @@ function formatMarkdown(text) {
     });
 
     return processedText;
+}
+
+/**
+ * Responsive Tables Support
+ */
+function initTableResponsiveness(itemId) {
+    const container = document.getElementById(`kb-content-${itemId}`);
+    if (!container) return;
+
+    container.querySelectorAll('table').forEach(table => {
+        // Find headers
+        let headers = [];
+        const ths = table.querySelectorAll('thead th');
+        if (ths.length > 0) {
+            headers = Array.from(ths).map(th => th.textContent.trim());
+        } else {
+            // Fallback for tables without thead (marked usually generates it, though)
+            const firstRow = table.querySelector('tr');
+            if (firstRow) {
+                headers = Array.from(firstRow.querySelectorAll('td, th')).map(el => el.textContent.trim());
+            }
+        }
+
+        // Apply data-labels to each cell
+        table.querySelectorAll('tbody tr, tr').forEach(tr => {
+            // If this is the header row, skip it
+            if (tr.querySelector('th')) return;
+
+            Array.from(tr.querySelectorAll('td')).forEach((td, i) => {
+                if (headers[i]) {
+                    td.setAttribute('data-label', headers[i]);
+                }
+            });
+        });
+    });
 }
 
 /**

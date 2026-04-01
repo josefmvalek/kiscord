@@ -70,11 +70,68 @@
         font-size: 1.25rem;
     }
 
-    /* Make tables horizontally scrollable on mobile */
+    /* Responsive Tables: Stacked View for Mobile */
     .markdown-body table {
         display: block;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+        width: 100% !important;
+        border: none !important;
+        background: transparent !important;
+        overflow: visible !important;
+    }
+
+    .markdown-body thead {
+        display: none;
+    }
+
+    .markdown-body tbody,
+    .markdown-body tr,
+    .markdown-body td {
+        display: block;
+        width: 100% !important;
+    }
+
+    .markdown-body tr {
+        margin-bottom: 2rem;
+        background: rgba(43, 45, 49, 0.6) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        padding: 0.5rem 0;
+    }
+
+    .markdown-body td {
+        padding: 0.75rem 1.25rem !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+        border-right: none !important;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+        min-height: 4rem;
+        justify-content: center;
+    }
+
+    .markdown-body td:last-child {
+        border-bottom: none !important;
+    }
+
+    .markdown-body td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.65rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        color: #5865F2;
+        letter-spacing: 0.05em;
+        opacity: 0.8;
+    }
+
+    .markdown-body td strong,
+    .markdown-body td {
+        font-size: 0.85rem !important;
+        line-height: 1.5;
+        color: #e2e2e2;
     }
 }
 
@@ -454,4 +511,4 @@
 .matura-trust-flow li:nth-child(5) { background: #f04747; color: white; } /* Bulvár */
 .matura-trust-flow li:nth-child(6) { background: #ba2f2f; color: white; } /* Soc. sítě */
 .matura-trust-flow li:nth-child(7) { background: #7c2222; color: white; } /* Dezinformace */
-
+

@@ -11,10 +11,10 @@ const QUEUE_KEY = 'kiscord_sync_queue';
  */
 export function enqueueOperation(table, action, data) {
     const queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
-    
+
     // Check if we already have a pending upsert for this specific record (optional optimization)
     // For now, simplicity is better: just add to queue.
-    
+
     queue.push({
         id: crypto.randomUUID(),
         timestamp: new Date().toISOString(),
@@ -22,7 +22,7 @@ export function enqueueOperation(table, action, data) {
         action,
         data
     });
-    
+
     localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
     console.log(`[OFFLINE] Operation queued for ${table}:`, data);
 }
@@ -32,7 +32,7 @@ export function enqueueOperation(table, action, data) {
  */
 export async function processSyncQueue() {
     if (!navigator.onLine) return;
-    
+
     const queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
     if (queue.length === 0) return;
 
@@ -66,7 +66,7 @@ export async function processSyncQueue() {
     }
 
     localStorage.setItem(QUEUE_KEY, JSON.stringify(remainingQueue));
-    
+
     if (successCount > 0) {
         showNotification(`Synchronizace dokončena (${successCount} změn).`, 'success');
         // Trigger a global event to refresh state if needed
@@ -77,12 +77,35 @@ export async function processSyncQueue() {
 // Global listener for online status
 window.addEventListener('online', () => {
     console.log('[NETWORK] Connection restored. Flushing queue...');
+    const statusEl = document.getElementById('user-status');
+    if (statusEl) {
+        statusEl.textContent = 'Online';
+        statusEl.classList.remove('text-[#ed4245]', 'animate-pulse');
+        statusEl.parentElement.classList.remove('text-[#ed4245]');
+    }
     processSyncQueue();
+});
+
+window.addEventListener('offline', () => {
+    console.log('[NETWORK] Connection lost.');
+    const statusEl = document.getElementById('user-status');
+    if (statusEl) {
+        statusEl.textContent = 'Offline (Změny se ukládají lokálně)';
+        statusEl.classList.add('text-[#ed4245]', 'animate-pulse');
+        statusEl.parentElement.classList.add('text-[#ed4245]');
+    }
 });
 
 // Initial check on load
 if (navigator.onLine) {
     processSyncQueue();
+} else {
+    // Manually trigger offline UI if we start offline
+    const statusEl = document.getElementById('user-status');
+    if (statusEl) {
+        statusEl.textContent = 'Offline (Změny se ukládají lokálně)';
+        statusEl.classList.add('text-[#ed4245]', 'animate-pulse');
+    }
 }
 
 /**

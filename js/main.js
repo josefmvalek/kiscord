@@ -351,6 +351,7 @@ function renderReadme() {
                 .replace(/^# (.*$)/gim, '<h1 class="text-3xl font-bold text-white mb-4 border-b border-gray-700 pb-2">$1</h1>')
                 .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold text-white mt-8 mb-4">$1</h2>')
                 .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold text-white mt-6 mb-3">$1</h3>')
+                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline">$1</a>')
                 .replace(/\*\*(.*)\*\*/gim, '<strong class="text-gray-200">$1</strong>')
                 .replace(/`([^`]+)`/gim, '<code class="bg-[#2f3136] px-1 rounded text-sm font-mono text-gray-300">$1</code>')
                 .replace(/\n/gim, '<br>');
