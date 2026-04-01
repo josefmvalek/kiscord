@@ -1,4 +1,5 @@
-# **Maturitní otázka 01: Data a informace**
+
+const content = `# **Maturitní otázka 01: Data a informace**
 
 ## **1. Teoretický základ: Data, informace a komunikace**
 
@@ -245,4 +246,19 @@ Způsob, jakým s AI komunikujeme, se nazývá **prompting**.
 ### Rizika a kritický přístup k AI
 
 - **AI halucinace:** Jazykové modely mohou generovat informace, které znějí velmi přesvědčivě a gramaticky správně, ale jsou fakticky zcela vymyšlené.
-- **Nutnost prověřování:** Veškeré odpovědi z jazykových modelů je nutné prověřovat pomocí jiných nezávislých zdrojů.
+- **Nutnost prověřování:** Veškeré odpovědi z jazykových modelů je nutné prověřovat pomocí jiných nezávislých zdrojů.`;
+
+const sections_count = content.split('\n').filter(l => l.trim().match(/^#{1,3}\s+.+$/)).length;
+
+fetch('https://nnrorazsiyiedwomgidf.supabase.co/rest/v1/matura_kb?item_id=eq.it1', {
+    method: 'PATCH',
+    headers: {
+        'apikey': 'sb_publishable_U8n4dSDsXEjH7B_u53vNTw_LNd4gASS',
+        'Authorization': 'Bearer sb_publishable_U8n4dSDsXEjH7B_u53vNTw_LNd4gASS',
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ content, sections_count })
+})
+.then(r => console.log('Sync status:', r.status))
+.catch(e => console.error('Sync failed:', e));

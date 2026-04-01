@@ -329,7 +329,7 @@ function renderList(container, subject) {
         const kStatusIcon = klarkaProg.status === 'done' ? '✅' : (klarkaProg.status === 'started' ? '✍️' : '⚪');
         const kStatusClass = klarkaProg.status === 'done' ? 'text-[#eb459e]' : (klarkaProg.status === 'started' ? 'text-purple-400' : 'text-gray-600');
 
-        html += `
+                html += `
             <div id="topic-card-${item.id}" data-topic-id="${item.id}" class="bg-[var(--bg-secondary)] rounded-2xl border border-white/5 p-5 hover:border-[#5865F2]/40 transition-all flex flex-col group overflow-hidden relative shadow-md">
                 ${item.file ? `
                     <div class="absolute -right-4 -top-4 w-16 h-16 bg-[#3ba55c]/10 rounded-full blur-xl group-hover:bg-[#3ba55c]/20 transition-all"></div>
@@ -344,7 +344,33 @@ function renderList(container, subject) {
                     </div>
                 </div>
 
-                ${item.description ? `<p class="text-[10px] text-[var(--text-muted)] mb-2 line-clamp-2 leading-relaxed italic border-l-2 border-[#eb459e]/30 pl-2">"${item.description}"</p>` : ''}
+                ${item.description ? `<p class="matura-topic-description">"${item.description}"</p>` : ''}
+
+                <!-- Status Context (Me & Partner) -->
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <!-- Controls for CURRENT USER only -->
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[8px] font-black uppercase text-[var(--text-muted)] tracking-tighter px-1">Tvůj Stav</label>
+                        <button onclick="import('/js/modules/matura.js').then(m => m.cycleStatus('${item.id}'))" 
+                                class="bg-black/10 hover:bg-black/20 border border-white/5 p-2 rounded-xl flex items-center justify-center gap-2 transition active:scale-90 overflow-hidden matura-my-status-btn">
+                            <span class="text-xs transition-transform duration-500 status-icon">${state.currentUser?.name === 'Jožka' ? jStatusIcon : kStatusIcon}</span>
+                            <span class="text-[9px] font-bold uppercase ${state.currentUser?.name === 'Jožka' ? jStatusClass : kStatusClass} truncate status-text">
+                                ${state.currentUser?.name === 'Jožka' ? (joseProg.status === 'done' ? 'Umím' : (joseProg.status === 'started' ? 'Dělám' : 'Nic')) : (klarkaProg.status === 'done' ? 'Umím' : (klarkaProg.status === 'started' ? 'Dělám' : 'Nic'))}
+                            </span>
+                        </button>
+                    </div>
+
+                    <!-- Info about PARTNER -->
+                    <div class="flex flex-col gap-1">
+                        <label class="text-[8px] font-black uppercase text-[var(--text-muted)] tracking-tighter px-1">${state.currentUser?.name === 'Jožka' ? 'Klárka' : 'Jožka'}</label>
+                        <div class="bg-black/5 border border-dashed border-white/5 p-2 rounded-xl flex items-center justify-center gap-2 opacity-60 matura-partner-status-pill">
+                            <span class="text-xs status-icon">${state.currentUser?.name === 'Jožka' ? kStatusIcon : jStatusIcon}</span>
+                            <span class="text-[9px] font-bold uppercase ${state.currentUser?.name === 'Jožka' ? kStatusClass : jStatusClass} truncate status-text">
+                                ${state.currentUser?.name === 'Jožka' ? (klarkaProg.status === 'done' ? 'Umím' : (klarkaProg.status === 'started' ? 'Dělám' : 'Nic')) : (joseProg.status === 'done' ? 'Umím' : (joseProg.status === 'started' ? 'Dělám' : 'Nic'))}
+                            </span>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Stats Container -->
                 <div class="mb-4 space-y-3">
@@ -352,7 +378,7 @@ function renderList(container, subject) {
                     <div class="space-y-1">
                         <div class="flex justify-between items-center text-[8px] font-black uppercase tracking-widest text-[var(--text-muted)]">
                             <span>Biflování (Mastery)</span>
-                            <span id="mastery-text-${item.id}" class="text-[#eb459e]">Načítám...</span>
+                            <span id="mastery-text-${item.id}" class="text-[#eb459e] font-bold">0%</span>
                         </div>
                         <div class="w-full h-1 bg-black/10 rounded-full overflow-hidden">
                             <div id="mastery-bar-${item.id}" class="h-full bg-[#eb459e] transition-all duration-1000 w-0"></div>
@@ -363,7 +389,7 @@ function renderList(container, subject) {
                     <div class="space-y-1">
                         <div class="flex justify-between items-center text-[8px] font-black uppercase tracking-widest text-[var(--text-muted)]">
                             <span>Přečteno (Kapitoly)</span>
-                            <span id="read-text-${item.id}" class="text-[#3ba55c]">...</span>
+                            <span id="read-text-${item.id}" class="text-[#3ba55c] font-bold">Zatím nečteno</span>
                         </div>
                         <div class="w-full h-1 bg-black/10 rounded-full overflow-hidden">
                             <div id="read-bar-${item.id}" class="h-full bg-[#3ba55c] transition-all duration-1000 w-0"></div>
@@ -371,73 +397,48 @@ function renderList(container, subject) {
                     </div>
                 </div>
 
-                <div class="mt-auto space-y-3">
-                    <div class="grid grid-cols-2 gap-2">
-                        <!-- Controls for CURRENT USER only -->
-                        <div class="flex flex-col gap-1">
-                            <label class="text-[8px] font-black uppercase text-[var(--text-muted)] tracking-tighter">Tvůj Stav</label>
-                            <button onclick="import('/js/modules/matura.js').then(m => m.cycleStatus('${item.id}'))" 
-                                    class="bg-black/10 hover:bg-black/20 border border-white/5 p-2 rounded-xl flex items-center justify-center gap-2 transition active:scale-90 overflow-hidden">
-                                <span class="text-xs transition-transform duration-500">${state.currentUser?.name === 'Jožka' ? jStatusIcon : kStatusIcon}</span>
-                                <span class="text-[9px] font-bold uppercase ${state.currentUser?.name === 'Jožka' ? jStatusClass : kStatusClass} truncate">
-                                    ${state.currentUser?.name === 'Jožka' ? (joseProg.status === 'done' ? 'Umím' : (joseProg.status === 'started' ? 'Dělám' : 'Nic')) : (klarkaProg.status === 'done' ? 'Umím' : (klarkaProg.status === 'started' ? 'Dělám' : 'Nic'))}
-                                </span>
-                            </button>
-                        </div>
-
-                        <!-- Info about PARTNER -->
-                        <div class="flex flex-col gap-1">
-                            <label class="text-[8px] font-black uppercase text-[var(--text-muted)] tracking-tighter">${state.currentUser?.name === 'Jožka' ? 'Klárka' : 'Jožka'}</label>
-                            <div class="bg-black/5 border border-dashed border-white/5 p-2 rounded-xl flex items-center justify-center gap-2 opacity-60">
-                                <span class="text-xs">${state.currentUser?.name === 'Jožka' ? kStatusIcon : jStatusIcon}</span>
-                                <span class="text-[9px] font-bold uppercase ${state.currentUser?.name === 'Jožka' ? kStatusClass : jStatusClass} truncate">
-                                    ${state.currentUser?.name === 'Jožka' ? (klarkaProg.status === 'done' ? 'Umím' : (klarkaProg.status === 'started' ? 'Dělám' : 'Nic')) : (joseProg.status === 'done' ? 'Umím' : (joseProg.status === 'started' ? 'Dělám' : 'Nic'))}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-2 h-10">
-                        ${item.has_content ? `
-                            <button onclick="import('/js/modules/matura.js').then(m => m.openKnowledgeBase('${item.id}'))"
-                               class="flex-1 bg-[#5865F2]/20 hover:bg-[#5865F2]/30 text-[#5865F2] rounded-xl flex items-center justify-center gap-2 transition-all border border-[#5865F2]/30 group/btn shadow-lg">
-                                <i class="fas fa-book-open text-sm group-hover/btn:scale-110 transition"></i>
-                                <span class="text-[10px] font-black uppercase tracking-widest">Zobrazit</span>
-                            </button>
-                        ` : `
-                             <button onclick="import('/js/modules/matura.js').then(m => m.openEditor('${item.id}'))"
-                               class="flex-1 bg-white/5 hover:bg-white/10 text-gray-400 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10 group/btn shadow-lg">
-                                <i class="fas fa-pencil-alt text-sm group-hover/btn:scale-110 transition"></i>
-                                <span class="text-[10px] font-black uppercase tracking-widest font-black">Napsat</span>
-                            </button>
-                        `}
-                        ${item.file ? `
-                            <button onclick="import('/js/modules/matura.js').then(m => m.openPDFViewer('${item.file}', '${item.title}'))"
-                               class="bg-[#3ba55c]/20 hover:bg-[#3ba55c]/30 text-[#3ba55c] rounded-xl flex items-center justify-center w-12 transition-all border border-[#3ba55c]/30 group/btn shadow-lg">
-                                <i class="fas fa-eye text-sm group-hover/btn:scale-125 transition"></i>
-                            </button>
-                        ` : ''}
-
-                        ${item.flashcards ? `
-                            <button onclick="import('./js/modules/flashcards.js').then(m => m.openFlashcards('${item.id}'))"
-                               class="bg-[#eb459e]/20 hover:bg-[#eb459e]/30 text-[#eb459e] rounded-xl flex items-center justify-center w-12 transition-all border border-[#eb459e]/30 group/flash shadow-lg tooltip" data-tip="Flashcards 🎴">
-                                <i class="fas fa-brain text-sm group-hover/flash:scale-125 transition"></i>
-                            </button>
-                        ` : ''}
-                        
-                        <button onclick="import('/js/modules/matura.js').then(m => m.openNotes('${item.id}'))" 
-                                class="bg-white/5 hover:bg-white/10 text-gray-400 rounded-xl flex items-center justify-center w-10 transition-all border border-white/5 tooltip" data-tip="Tahák / Poznámky">
-                            <i class="fas fa-sticky-note text-xs"></i>
+                <div class="mt-auto flex gap-2 h-10">
+                    ${item.has_content ? `
+                        <button onclick="import('/js/modules/matura.js').then(m => m.openKnowledgeBase('${item.id}'))"
+                           class="flex-1 bg-[#5865F2]/20 hover:bg-[#5865F2]/30 text-[#5865F2] rounded-xl flex items-center justify-center gap-2 transition-all border border-[#5865F2]/30 group/btn shadow-lg">
+                            <i class="fas fa-book-open text-xs group-hover/btn:scale-110 transition"></i>
+                            <span class="text-[10px] font-black uppercase tracking-widest">Zobrazit</span>
                         </button>
-                        
-                        <button onclick="import('/js/modules/matura.js').then(m => m.showScheduleMenu('${item.id}', this))" 
-                                class="bg-white/5 hover:bg-white/10 text-gray-400 rounded-xl flex items-center justify-center w-10 transition-all border border-white/5 tooltip" data-tip="Naplánovat studium">
-                            <i class="fas fa-calendar-alt text-xs"></i>
+                    ` : `
+                         <button onclick="import('/js/modules/matura.js').then(m => m.openEditor('${item.id}'))"
+                           class="flex-1 bg-white/5 hover:bg-white/10 text-gray-400 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10 group/btn shadow-lg">
+                            <i class="fas fa-pencil-alt text-xs group-hover/btn:scale-110 transition"></i>
+                            <span class="text-[10px] font-black uppercase tracking-widest font-black">Napsat</span>
                         </button>
-                    </div>
+                    `}
+                    ${item.file ? `
+                        <button onclick="import('/js/modules/matura.js').then(m => m.openPDFViewer('${item.file}', '${item.title}'))"
+                           class="bg-[#3ba55c]/20 hover:bg-[#3ba55c]/30 text-[#3ba55c] rounded-xl flex items-center justify-center w-12 transition-all border border-[#3ba55c]/30 group/btn shadow-lg">
+                            <i class="fas fa-eye text-xs group-hover/btn:scale-125 transition"></i>
+                        </button>
+                    ` : ''}
+
+                    ${item.flashcards ? `
+                        <button onclick="import('./js/modules/flashcards.js').then(m => m.openFlashcards('${item.id}'))"
+                           class="bg-[#eb459e]/20 hover:bg-[#eb459e]/30 text-[#eb459e] rounded-xl flex items-center justify-center w-12 transition-all border border-[#eb459e]/30 group/flash shadow-lg tooltip" data-tip="Flashcards 🎴">
+                            <i class="fas fa-brain text-xs group-hover/flash:scale-125 transition"></i>
+                        </button>
+                    ` : ''}
+                    
+                    <button onclick="import('/js/modules/matura.js').then(m => m.openNotes('${item.id}'))" 
+                            class="bg-white/5 hover:bg-white/10 text-gray-400 rounded-xl flex items-center justify-center w-10 transition-all border border-white/5 tooltip" data-tip="Poznámky">
+                        <i class="fas fa-sticky-note text-xs"></i>
+                    </button>
+                    
+                    <button onclick="import('/js/modules/matura.js').then(m => m.showScheduleMenu('${item.id}', this))" 
+                            class="bg-white/5 hover:bg-white/10 text-gray-400 rounded-xl flex items-center justify-center w-10 transition-all border border-white/5 tooltip" data-tip="Naplánovat">
+                        <i class="fas fa-calendar-alt text-xs"></i>
+                    </button>
                 </div>
             </div>
         `;
+
+
     });
 
     html += `</div></div>`;
@@ -470,7 +471,7 @@ function renderList(container, subject) {
             if (rTextEl && rBarEl) {
                 const { done, total } = stats;
                 if (total > 0) {
-                    rTextEl.textContent = `${done} / ${total} kap. hotovo`;
+                    rTextEl.textContent = `${done} / ${total} kapitol hotovo`;
                     const progressWidth = Math.round((done / total) * 100);
                     rBarEl.style.width = `${progressWidth}%`;
                 } else {
@@ -478,7 +479,7 @@ function renderList(container, subject) {
                     if (item.has_content) {
                         import('./matura.js').then(m => m.silentBackfillCount(item.id));
                     }
-                    rTextEl.textContent = done > 0 ? `${done} kap. hotovo` : 'Zatím nečteno';
+                    rTextEl.textContent = done > 0 ? `${done} kapitol hotovo` : 'Zatím nečteno';
                     const progressWidth = Math.min(100, done * 20);
                     rBarEl.style.width = `${progressWidth}%`;
                 }
@@ -555,26 +556,26 @@ export async function updateTopicCardUI(itemId) {
     const kStatusClass = klarkaProg.status === 'done' ? 'text-[#eb459e]' : (klarkaProg.status === 'started' ? 'text-purple-400' : 'text-gray-600');
 
     // Update Status Buttons
-    const myStatusBtn = card.querySelector('button[onclick*="cycleStatus"]');
+    const myStatusBtn = card.querySelector('.matura-my-status-btn');
     if (myStatusBtn) {
-        const iconEl = myStatusBtn.querySelector('.transition-transform');
-        const textEl = myStatusBtn.querySelector('.truncate');
+        const iconEl = myStatusBtn.querySelector('.status-icon');
+        const textEl = myStatusBtn.querySelector('.status-text');
         if (iconEl) iconEl.textContent = state.currentUser?.name === 'Jožka' ? jStatusIcon : kStatusIcon;
         if (textEl) {
             textEl.textContent = state.currentUser?.name === 'Jožka' ? (joseProg.status === 'done' ? 'Umím' : (joseProg.status === 'started' ? 'Dělám' : 'Nic')) : (klarkaProg.status === 'done' ? 'Umím' : (klarkaProg.status === 'started' ? 'Dělám' : 'Nic'));
-            textEl.className = `text-[9px] font-bold uppercase ${state.currentUser?.name === 'Jožka' ? jStatusClass : kStatusClass} truncate`;
+            textEl.className = `text-[9px] font-bold uppercase ${state.currentUser?.name === 'Jožka' ? jStatusClass : kStatusClass} truncate status-text`;
         }
     }
 
     // Update Partner Status
-    const partnerStatusDiv = card.querySelector('.bg-black\\/10');
+    const partnerStatusDiv = card.querySelector('.matura-partner-status-pill');
     if (partnerStatusDiv) {
-        const iconEl = partnerStatusDiv.querySelector('.text-xs');
-        const textEl = partnerStatusDiv.querySelector('.truncate');
+        const iconEl = partnerStatusDiv.querySelector('.status-icon');
+        const textEl = partnerStatusDiv.querySelector('.status-text');
         if (iconEl) iconEl.textContent = state.currentUser?.name === 'Jožka' ? kStatusIcon : jStatusIcon;
         if (textEl) {
             textEl.textContent = state.currentUser?.name === 'Jožka' ? (klarkaProg.status === 'done' ? 'Umím' : (klarkaProg.status === 'started' ? 'Dělám' : 'Nic')) : (joseProg.status === 'done' ? 'Umím' : (joseProg.status === 'started' ? 'Dělám' : 'Nic'));
-            textEl.className = `text-[9px] font-bold uppercase ${state.currentUser?.name === 'Jožka' ? kStatusClass : jStatusClass} truncate`;
+            textEl.className = `text-[9px] font-bold uppercase ${state.currentUser?.name === 'Jožka' ? kStatusClass : jStatusClass} truncate status-text`;
         }
     }
 
@@ -593,7 +594,7 @@ export async function updateTopicCardUI(itemId) {
     const rBarEl = document.getElementById(`read-bar-${itemId}`);
     if (rTextEl && rBarEl) {
         const { done, total } = stats;
-        rTextEl.textContent = total > 0 ? `${done} / ${total} kap. hotovo` : (done > 0 ? `${done} kap. hotovo` : 'Zatím nečteno');
+        rTextEl.textContent = total > 0 ? `${done} / ${total} kapitol hotovo` : (done > 0 ? `${done} kapitol hotovo` : 'Zatím nečteno');
         rBarEl.style.width = `${total > 0 ? Math.round((done / total) * 100) : Math.min(100, done * 20)}%`;
     }
 
@@ -603,7 +604,7 @@ export async function updateTopicCardUI(itemId) {
         if (actionBtn) {
             actionBtn.setAttribute('onclick', `import('/js/modules/matura.js').then(m => m.openKnowledgeBase('${itemId}'))`);
             actionBtn.className = "flex-1 bg-[#5865F2]/20 hover:bg-[#5865F2]/30 text-[#5865F2] rounded-xl flex items-center justify-center gap-2 transition-all border border-[#5865F2]/30 group/btn shadow-lg";
-            actionBtn.innerHTML = `<i class="fas fa-book-open text-sm group-hover/btn:scale-110 transition"></i><span class="text-[10px] font-black uppercase tracking-widest">Zobrazit</span>`;
+            actionBtn.innerHTML = `<i class="fas fa-book-open text-xs group-hover/btn:scale-110 transition"></i><span class="text-[10px] font-black uppercase tracking-widest">Zobrazit</span>`;
         }
     }
 }
