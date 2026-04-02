@@ -19,26 +19,26 @@ import * as StaticPages from './modules/static.js';
 
 // Lazy-loaded modules mapping (for better maintenance)
 const moduleMap = {
-    'calendar': () => import('./modules/calendar.js?v=21'),
-    'timeline': () => import('./modules/timeline.js?v=21'),
-    'library': () => import('./modules/library.js?v=21'),
-    'topics': () => import('./modules/topics.js?v=21'),
-    'games': () => import('./modules/games.js?v=21'),
-    'confession': () => import('./modules/confession.js?v=21'),
-    'health': () => import('./modules/health.js?v=21'),
-    'bucketlist': () => import('./modules/bucketlist.js?v=21'),
-    'achievements': () => import('./modules/achievements.js?v=21'),
-    'daily-questions': () => import('./modules/dailyQuestions.js?v=21'),
-    'game-who': () => import('./modules/gameWho.js?v=21'),
-    'game-draw': () => import('./modules/gameDraw.js?v=21'),
-    'funfacts': () => import('./modules/funfacts.js?v=21'),
-    'map': () => import('./modules/map.js?v=21'),
-    'search': () => import('./modules/search.js?v=21'),
-    'profile': () => import('./modules/profile.js?v=21'),
-    'tierlist': () => import('./modules/tierlist.js?v=21'),
-    'stats': () => import('./modules/stats.js?v=21'),
-    'matura': () => import('./modules/matura.js?v=21'),
-    'restore-data': () => import('./modules/restore.js?v=21')
+    'calendar': () => import('./modules/calendar.js?v=22'),
+    'timeline': () => import('./modules/timeline.js?v=22'),
+    'library': () => import('./modules/library.js?v=22'),
+    'topics': () => import('./modules/topics.js?v=22'),
+    'games': () => import('./modules/games.js?v=22'),
+    'confession': () => import('./modules/confession.js?v=22'),
+    'health': () => import('./modules/health.js?v=22'),
+    'bucketlist': () => import('./modules/bucketlist.js?v=22'),
+    'achievements': () => import('./modules/achievements.js?v=22'),
+    'daily-questions': () => import('./modules/dailyQuestions.js?v=22'),
+    'game-who': () => import('./modules/gameWho.js?v=22'),
+    'game-draw': () => import('./modules/gameDraw.js?v=22'),
+    'funfacts': () => import('./modules/funfacts.js?v=22'),
+    'map': () => import('./modules/map.js?v=22'),
+    'search': () => import('./modules/search.js?v=22'),
+    'profile': () => import('./modules/profile.js?v=22'),
+    'tierlist': () => import('./modules/tierlist.js?v=22'),
+    'stats': () => import('./modules/stats.js?v=22'),
+    'matura': () => import('./modules/matura.js?v=22'),
+    'restore-data': () => import('./modules/restore.js?v=22')
 };
 
 
@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function handleMigrations() {
     // 1. Initial migration from LocalStorage (v1-v4)
     if (!localStorage.getItem('klarka_migration_done')) {
-        const { migrateLocalDataToSupabase } = await import('./migration.js?v=21');
+        const { migrateLocalDataToSupabase } = await import('./migration.js?v=22');
         const migratedCount = await migrateLocalDataToSupabase();
         if (migratedCount > 0) {
             localStorage.setItem('klarka_migration_done', 'true');
@@ -181,7 +181,7 @@ async function handleMigrations() {
     // 2. Static content seeding (Non-destructive check)
     // Runs once to ensure Supabase has the default content if tables are empty
     if (!localStorage.getItem('klarka_static_migration_v5_done')) {
-        const { migrateStaticContentToSupabase } = await import('./migration.js?v=21');
+        const { migrateStaticContentToSupabase } = await import('./migration.js?v=22');
         await migrateStaticContentToSupabase();
         localStorage.setItem('klarka_static_migration_v5_done', 'true');
         // No reload needed here yet
@@ -190,7 +190,7 @@ async function handleMigrations() {
     // 3. Timeline Cleanup (Repair for the duplication bug)
     // Only runs once to remove redundant records while keeping user edits
     if (!localStorage.getItem('klarka_timeline_repair_v1_done')) {
-        const { cleanupTimelineDuplicates } = await import('./migration.js?v=21');
+        const { cleanupTimelineDuplicates } = await import('./migration.js?v=22');
         const count = await cleanupTimelineDuplicates();
         localStorage.setItem('klarka_timeline_repair_v1_done', 'true');
         if (count > 0) {
@@ -669,27 +669,27 @@ export function switchChannel(channelId, push = true) {
             renderDashboard();
             break;
         case 'dateplanner':
-            import('./core/state.js?v=21').then(s => s.ensureMapData()).then(() => moduleMap.map()).then(m => m.renderMap());
+            import('./core/state.js?v=22').then(s => s.ensureMapData()).then(() => moduleMap.map()).then(m => m.renderMap());
             break;
         case 'bucketlist':
-            import('./core/state.js?v=21').then(s => s.ensureBucketListData()).then(() => moduleMap.bucketlist()).then(m => m.renderBucketList());
+            import('./core/state.js?v=22').then(s => s.ensureBucketListData()).then(() => moduleMap.bucketlist()).then(m => m.renderBucketList());
             break;
         case 'calendar':
-            import('./core/state.js?v=21').then(s => s.ensureCalendarData()).then(() => moduleMap.calendar().then(m => m.renderCalendar()));
+            import('./core/state.js?v=22').then(s => s.ensureCalendarData()).then(() => moduleMap.calendar().then(m => m.renderCalendar()));
             break;
         case 'timeline':
-            import('./core/state.js?v=21').then(s => s.ensureTimelineData()).then(() => moduleMap.timeline().then(m => m.renderTimeline()));
+            import('./core/state.js?v=22').then(s => s.ensureTimelineData()).then(() => moduleMap.timeline().then(m => m.renderTimeline()));
             break;
         case 'movies':
         case 'series':
         case 'games':
-            import('./core/state.js?v=21').then(s => s.ensureLibraryData()).then(() => moduleMap.library().then(m => m.renderLibrary(channelId)));
+            import('./core/state.js?v=22').then(s => s.ensureLibraryData()).then(() => moduleMap.library().then(m => m.renderLibrary(channelId)));
             break;
         case 'watchlist':
-            import('./core/state.js?v=21').then(s => s.ensureLibraryData()).then(() => import('./modules/watchlist.js')).then(m => m.renderWatchlist());
+            import('./core/state.js?v=22').then(s => s.ensureLibraryData()).then(() => import('./modules/watchlist.js')).then(m => m.renderWatchlist());
             break;
         case 'topics':
-            import('./core/state.js?v=21').then(s => s.ensureTopicsData()).then(() => moduleMap.topics()).then(m => m.renderTopics());
+            import('./core/state.js?v=22').then(s => s.ensureTopicsData()).then(() => moduleMap.topics()).then(m => m.renderTopics());
             break;
         case 'tetris':
             moduleMap.games().then(m => m.renderTetrisTracker());
@@ -701,28 +701,28 @@ export function switchChannel(channelId, push = true) {
             import('./modules/coupleQuiz.js').then(m => m.renderCoupleQuiz());
             break;
         case 'games-hub':
-            import('./core/state.js?v=21').then(s => s.ensureGamesData()).then(() => import('./modules/gamesHub.js')).then(m => m.renderGamesHub());
+            import('./core/state.js?v=22').then(s => s.ensureGamesData()).then(() => import('./modules/gamesHub.js')).then(m => m.renderGamesHub());
             break;
         case 'game-who':
-            import('./core/state.js?v=21').then(s => s.ensureGamesData()).then(() => import('./modules/gameWho.js')).then(m => m.renderGameWho());
+            import('./core/state.js?v=22').then(s => s.ensureGamesData()).then(() => import('./modules/gameWho.js')).then(m => m.renderGameWho());
             break;
         case 'game-draw':
-            import('./core/state.js?v=21').then(s => Promise.all([s.ensureGamesData(), s.ensureDrawStrokesData()])).then(() => import('./modules/gameDraw.js')).then(m => m.renderGameDraw());
+            import('./core/state.js?v=22').then(s => Promise.all([s.ensureGamesData(), s.ensureDrawStrokesData()])).then(() => import('./modules/gameDraw.js')).then(m => m.renderGameDraw());
             break;
         case 'daily-questions':
-            import('./core/state.js?v=21').then(s => s.ensureDailyQuizData()).then(() => moduleMap['daily-questions']()).then(m => m.renderDailyQuestions());
+            import('./core/state.js?v=22').then(s => s.ensureDailyQuizData()).then(() => moduleMap['daily-questions']()).then(m => m.renderDailyQuestions());
             break;
         case 'achievements':
-            import('./core/state.js?v=21').then(s => s.ensureAchievementsData()).then(() => moduleMap.achievements()).then(m => m.renderAchievements());
+            import('./core/state.js?v=22').then(s => s.ensureAchievementsData()).then(() => moduleMap.achievements()).then(m => m.renderAchievements());
             break;
         case 'quests':
             import('./modules/quests.js').then(m => m.renderQuests());
             break;
         case 'funfacts':
-            import('./core/state.js?v=21').then(s => s.ensureFactsData()).then(() => moduleMap.funfacts().then(m => m.renderFunFacts()));
+            import('./core/state.js?v=22').then(s => s.ensureFactsData()).then(() => moduleMap.funfacts().then(m => m.renderFunFacts()));
             break;
         case 'stats':
-            import('./core/state.js?v=21').then(s => Promise.all([s.ensureCalendarData(), s.ensureLibraryData()])).then(() => moduleMap.stats().then(m => m.renderStats()));
+            import('./core/state.js?v=22').then(s => Promise.all([s.ensureCalendarData(), s.ensureLibraryData()])).then(() => moduleMap.stats().then(m => m.renderStats()));
             break;
         case 'tierlist':
             moduleMap.tierlist().then(m => m.renderTierList());
@@ -742,7 +742,7 @@ export function switchChannel(channelId, push = true) {
         case 'matura-dashboard':
         case 'matura-czech':
         case 'matura-it':
-            import('./core/state.js?v=21').then(s => s.ensureMaturaData()).then(() => moduleMap.matura().then(m => m.renderMatura(channelId)));
+            import('./core/state.js?v=22').then(s => s.ensureMaturaData()).then(() => moduleMap.matura().then(m => m.renderMatura(channelId)));
             break;
         case 'upgrade':
             renderUpgrade();
@@ -895,7 +895,7 @@ function exposeGlobals() {
     window.deleteEvent = timelineFn('deleteEvent');
     window.jumpToTimeline = timelineFn('jumpToTimeline');
     window.searchTimeline = timelineFn('searchTimeline');
-    window.renderGlobalSearch = (...args) => import('./modules/search.js?v=21').then(m => m.renderGlobalSearch(...args));
+    window.renderGlobalSearch = (...args) => import('./modules/search.js?v=22').then(m => m.renderGlobalSearch(...args));
 
     // Map Lazy Functions
     window.selectLocation = (...args) => {
