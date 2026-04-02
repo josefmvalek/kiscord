@@ -77,7 +77,7 @@ const state = {
 // Lightweight reactive notifications for state changes.
 // Usage: stateEvents.on('bucketlist', () => re-render); stateEvents.emit('bucketlist');
 const _listeners = {};
-export const stateEvents = {
+const stateEvents = {
     on(event, callback) {
         if (!_listeners[event]) _listeners[event] = [];
         _listeners[event].push(callback);
@@ -247,7 +247,7 @@ function markLoaded(key) {
     state._loaded[key] = true;
 }
 
-export async function ensureCalendarData(force = false) {
+async function ensureCalendarData(force = false) {
     if (state._loaded.calendar && !force && !isStale('calendar')) return;
     try {
         const [health, dates, school] = await Promise.all([
@@ -271,7 +271,7 @@ export async function ensureCalendarData(force = false) {
     } catch (e) { console.error("Calendar Load Error:", e); }
 }
 
-export async function ensureLibraryData(force = false) {
+async function ensureLibraryData(force = false) {
     if (state._loaded.library && !force && !isStale('library')) return;
     try {
         const [libData, watchData, ratingData] = await Promise.all([
@@ -305,7 +305,7 @@ export async function ensureLibraryData(force = false) {
     } catch (err) { console.error("Library Load Error:", err); }
 }
 
-export async function ensureTimelineData(force = false) {
+async function ensureTimelineData(force = false) {
     if (state._loaded.timeline && !force && !isStale('timeline')) return;
     try {
         const [{data: events}, {data: highlights}] = await Promise.all([
@@ -319,7 +319,7 @@ export async function ensureTimelineData(force = false) {
     } catch (e) { console.error("Timeline Load Error:", e); }
 }
 
-export async function ensureMaturaData(force = false) {
+async function ensureMaturaData(force = false) {
     if (state._loaded.topics && !force && !isStale('topics')) return;
     try {
         const [{data: topics}, {data: progress}, {data: streaks}, {data: schedule}] = await Promise.all([
@@ -377,7 +377,7 @@ export async function ensureMaturaData(force = false) {
     } catch (e) { console.error("Matura Load Error:", e); }
 }
 
-export async function ensureBucketListData(force = false) {
+async function ensureBucketListData(force = false) {
     if (state._loaded.bucketlist && !force && !isStale('bucketlist')) return;
     try {
         const { data } = await supabase.from('bucket_list').select('*').order('created_at', { ascending: false });
@@ -387,7 +387,7 @@ export async function ensureBucketListData(force = false) {
     } catch (e) { console.error("BucketList Load Error:", e); }
 }
 
-export async function ensureMapData(force = false) {
+async function ensureMapData(force = false) {
     if (state._loaded.map && !force && !isStale('map')) return;
     try {
         const [{ data: ratingData }, { data: locData }] = await Promise.all([ supabase.from('date_ratings').select('*'), supabase.from('date_locations').select('*') ]);
@@ -398,7 +398,7 @@ export async function ensureMapData(force = false) {
     } catch (e) { console.error("Map Load Error:", e); }
 }
 
-export async function ensureAchievementsData(force = false) {
+async function ensureAchievementsData(force = false) {
     if (state._loaded.achievements && !force && !isStale('achievements')) return;
     try {
         const [{ data: ach }, { data: cat }, { data: def }] = await Promise.all([ supabase.from('achievements').select('*'), supabase.from('achievement_categories').select('*').order('sort_order', { ascending: true }), supabase.from('achievement_definitions').select('*') ]);
@@ -410,7 +410,7 @@ export async function ensureAchievementsData(force = false) {
     } catch (e) { console.error("Achievements Load Error:", e); }
 }
 
-export async function ensureFactsData(force = false) {
+async function ensureFactsData(force = false) {
     if (state._loaded.facts && !force && !isStale('facts')) return;
     try {
         const [facts, favs] = await Promise.all([ supabase.from('app_facts').select('*'), supabase.from('app_fact_favorites').select('fact_id') ]);
@@ -424,7 +424,7 @@ export async function ensureFactsData(force = false) {
     } catch (e) { console.error("Facts Load Error:", e); }
 }
 
-export async function ensureTopicsData(force = false) {
+async function ensureTopicsData(force = false) {
     if (state._loaded.conv_topics && !force && !isStale('topics')) return;
     try {
         const { data } = await supabase.from('conversation_topics').select('*');
@@ -434,7 +434,7 @@ export async function ensureTopicsData(force = false) {
     } catch(e) { console.error("Topics Load Error:", e); }
 }
 
-export async function ensureGamesData() {
+async function ensureGamesData() {
     if (state._loaded.games) return;
     try {
         const [{ data: q }, { data: v }, { data: p }] = await Promise.all([ supabase.from('game_questions').select('*'), supabase.from('game_votes').select('*'), supabase.from('game_prompts').select('*') ]);
@@ -445,7 +445,7 @@ export async function ensureGamesData() {
     } catch(e) { console.error("Games Load Error:", e); }
 }
 
-export async function ensureDrawStrokesData() {
+async function ensureDrawStrokesData() {
     if (state._loaded.draw) return;
     try {
         const { data } = await supabase.from('draw_strokes').select('*').is('drawing_id', null).order('created_at', { ascending: true });
@@ -454,7 +454,7 @@ export async function ensureDrawStrokesData() {
     } catch(e) { console.error("Draw Load Error:", e); }
 }
 
-export async function ensureDailyQuizData() {
+async function ensureDailyQuizData() {
     if (state._loaded.daily) return;
     try {
         const [{ data: qData }, { data: aData }] = await Promise.all([ supabase.from('daily_questions').select('*'), supabase.from('daily_answers').select('*') ]);
@@ -468,7 +468,7 @@ export async function ensureDailyQuizData() {
     } catch(e) { console.error("DailyQuiz Load Error:", e); }
 }
 
-export function resetLazyLoaders() {
+function resetLazyLoaders() {
     state._loaded = { calendar: false, timeline: false, library: false, topics: false, achievements: false, games: false, facts: false, daily: false, draw: false, map: false, bucketlist: false, conv_topics: false };
     Object.keys(_loadedAt).forEach(k => delete _loadedAt[k]);
     console.log('[State] All lazy loaders reset.');
@@ -476,6 +476,20 @@ export function resetLazyLoaders() {
 
 export {
     state,
+    stateEvents,
     saveStateToCache,
-    initializeState
+    initializeState,
+    ensureCalendarData,
+    ensureLibraryData,
+    ensureTimelineData,
+    ensureMaturaData,
+    ensureBucketListData,
+    ensureMapData,
+    ensureAchievementsData,
+    ensureFactsData,
+    ensureTopicsData,
+    ensureGamesData,
+    ensureDrawStrokesData,
+    ensureDailyQuizData,
+    resetLazyLoaders
 };
