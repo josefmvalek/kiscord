@@ -1,5 +1,9 @@
 import { triggerHaptic, triggerConfetti } from '../core/utils.js';
 import { state } from '../core/state.js';
+import { showNotification } from '../core/theme.js';
+import { supabase } from '../core/supabase.js';
+import { renderModal as uiModal } from '../core/ui.js';
+import { loadMarked, loadKaTeX } from '../core/loader.js';
 
 let cards = [];
 let currentIndex = 0;
@@ -8,25 +12,53 @@ let quizScores = { jose: 0, klarka: 0 };
 let currentBuzzerUser = null;
 let countdownInterval = null;
 
-export function openFlashcards() {
-    const redNodes = document.querySelectorAll('.kb-hl-red:not(.hl-other)');
-    if (!redNodes.length) {
-        alert("Zatím tu nemáš žádné červené podtržení k nabiflování. Podtrhni si nejprve nějaká jména nebo cizí slova!");
+export async function openFlashcards(itemId) {
+    // 0. Load heavy libs
+    await Promise.all([loadMarked(), loadKaTeX()]);
+
+    let manualCards = [];
+    try {
+        // Fetch fresh topic data to get latest flashcards
+        const { data, error } = await supabase
+            .from('matura_topics')
+            .select('flashcards, title')
+            .eq('id', itemId)
+            .single();
+
+        if (error) throw error;
+        manualCards = (data && data.flashcards) ? data.flashcards : [];
+        
+        // Update local state if it exists
+        for (const cat in state.maturaTopics) {
+            const found = state.maturaTopics[cat].find(i => i.id === itemId);
+            if (found) {
+                found.flashcards = manualCards;
+                break;
+            }
+        }
+    } catch (e) {
+        console.error("[Flashcards] DB fetch error:", e);
+        // Fallback to local state
+        for (const cat in state.maturaTopics) {
+            const found = state.maturaTopics[cat].find(i => i.id === itemId);
+            if (found) {
+                manualCards = found.flashcards || [];
+                break;
+            }
+        }
+    }
+
+    if (!manualCards || manualCards.length === 0) {
+        showNotification("Pro toto téma zatím nejsou vytvořeny žádné kartičky. Klikni na 'Spravovat kartičky' v detailu tématu! ✍️", "info");
         return;
     }
 
-    cards = Array.from(redNodes).map(node => {
-        const parent = node.closest('p, li');
-        let fullText = parent ? parent.textContent : '';
-        const answer = node.textContent;
-
-        const blankSpan = '<span class="text-[#eb459e] border-b-2 border-dashed border-[#eb459e] pb-1 font-black cursor-help">' + '?'.repeat(Math.max(3, answer.length)) + '</span>';
-        const front = fullText.replace(answer, blankSpan);
-
+    // Convert to Card format (q -> front, a -> back)
+    cards = manualCards.map((item, index) => {
         return { 
-            id: node.dataset.id, // ID z matura_highlights
-            front, 
-            back: answer 
+            id: `manual-${itemId}-${index}`, 
+            front: item.q, 
+            back: item.a 
         };
     });
 
@@ -40,51 +72,69 @@ export function openFlashcards() {
 function renderModal() {
     if (document.getElementById('flashcard-modal')) document.getElementById('flashcard-modal').remove();
 
-    const html = `
-            <div class="px-8 pb-4 flex justify-between items-center w-full max-w-2xl mx-auto border-b border-white/10">
-                <div>
-                    <h2 class="text-2xl font-black italic tracking-tighter uppercase text-[#ed4245]">Zkoušení <span id="mode-badge" class="ml-2 text-[10px] bg-white/10 px-2 py-1 rounded-full text-gray-400">Sólo</span></h2>
-                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest" id="fc-progress">Kartička 1 / N</p>
-                </div>
-                <div class="flex items-center gap-4">
-                    <button id="duel-btn" onclick="import('./js/modules/flashcards.js').then(m => m.startDuel())" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition border border-amber-500/20 flex items-center gap-2">
-                        <i class="fas fa-swords"></i> Duel ⚔️
-                    </button>
-                    <button onclick="document.getElementById('flashcard-modal').remove()" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-            </div>
+    const quizBadge = isCompetitive ? '<span id="mode-badge" class="ml-2 text-[10px] bg-amber-500/20 px-2 py-1 rounded-full text-amber-500 font-black">⚔️ DUEL</span>' : '<span id="mode-badge" class="ml-2 text-[10px] bg-white/10 px-2 py-1 rounded-full text-gray-400 font-bold uppercase tracking-wider">Sólo</span>';
 
-            <div id="quiz-leaderboard" class="hidden py-4 w-full max-w-2xl mx-auto flex justify-center gap-12 border-b border-white/5 bg-white/2">
+    const modalHtml = `
+            <!-- DUEL LEADERBOARD -->
+            <div id="quiz-leaderboard" class="${isCompetitive ? '' : 'hidden'} py-4 w-full flex justify-center gap-12 border-b border-white/5 bg-white/2 rounded-t-xl mb-4">
                 <div class="text-center">
                     <div class="text-[9px] font-black uppercase text-blue-400 tracking-widest">Jožka</div>
-                    <div class="text-2xl font-black text-white" id="score-jose">0</div>
+                    <div class="text-2xl font-black text-white" id="score-jose">${quizScores.jose}</div>
                 </div>
                 <div class="text-center pt-2">
                     <div class="text-lg font-black text-gray-600">VS</div>
                 </div>
                 <div class="text-center">
                     <div class="text-[9px] font-black uppercase text-pink-400 tracking-widest">Klárka</div>
-                    <div class="text-2xl font-black text-white" id="score-klarka">0</div>
+                    <div class="text-2xl font-black text-white" id="score-klarka">${quizScores.klarka}</div>
                 </div>
             </div>
 
-            <div class="flex-1 flex flex-col items-center justify-center p-8 relative w-full max-w-2xl mx-auto" id="fc-stage">
+            <!-- STAGE -->
+            <div class="flex-1 min-h-[40vh] flex flex-col items-center justify-center relative w-full max-w-2xl mx-auto" id="fc-stage">
+                <!-- Card content injected here -->
             </div>
             
+            <!-- COUNTDOWN -->
             <div id="countdown-timer" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] pointer-events-none">
                 <div class="w-32 h-32 rounded-full border-8 border-[#ed4245] flex items-center justify-center bg-black/80 backdrop-blur-xl scale-150 animate-pulse">
                     <span id="countdown-number" class="text-6xl font-black text-white italic">5</span>
                 </div>
             </div>
 
-            <div class="p-8 w-full max-w-2xl mx-auto grid grid-cols-2 gap-4 pb-20 justify-center items-center" id="fc-controls">
+            <!-- CONTROLS -->
+            <div class="mt-8 w-full max-w-2xl mx-auto grid grid-cols-2 gap-4 justify-center items-center" id="fc-controls">
+                <!-- Controls injected here -->
+            </div>
+    `;
+
+    const actions = `
+        <div class="flex w-full items-center justify-between">
+            <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest" id="fc-progress">Kartička 1 / ${cards.length}</span>
+            <div class="flex gap-2">
+                ${!isCompetitive ? `
+                    <button id="duel-btn" onclick="import('./js/modules/flashcards.js').then(m => m.startDuel())" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition border border-amber-500/20 flex items-center gap-2">
+                        <i class="fas fa-swords"></i> Duel ⚔️
+                    </button>
+                ` : ''}
+                <button onclick="document.getElementById('flashcard-modal').remove()" class="bg-white/5 hover:bg-white/10 text-gray-400 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition">Ukončit</button>
             </div>
         </div>
     `;
 
-    document.body.insertAdjacentHTML('beforeend', html);
+    document.body.insertAdjacentHTML('beforeend', uiModal({
+        id: 'flashcard-modal',
+        title: 'Zkoušení kartiček',
+        subtitle: `Maturitní okruh • ${quizBadge}`,
+        content: modalHtml,
+        actions: actions,
+        size: 'lg',
+        onClose: "document.getElementById('flashcard-modal').remove()"
+    }));
+
+    const modal = document.getElementById('flashcard-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
 }
 
 function renderCard() {
@@ -107,25 +157,78 @@ function renderCard() {
     const cardData = cards[currentIndex];
     const stage = document.getElementById('fc-stage');
     
+    // Helper for rendering Markdown + KaTeX inside cards
+    const renderContent = (text) => {
+        if (!text) return '';
+        let html = marked.parse(text);
+        
+        // KaTeX Support (Inline $...$)
+        html = html.replace(/\$([^$]+)\$/g, (match, formula) => {
+            try { return katex.renderToString(formula, { throwOnError: false }); } 
+            catch (e) { return match; }
+        });
+        
+        return html;
+    };
+
+    // --- ADAPTIVE FONT SIZE LOGIC ---
+    const getFrontFontSize = (text = '') => {
+        const len = text.length;
+        if (len > 300) return 'prose-xs text-[11px] md:text-xs';
+        if (len > 200) return 'prose-sm text-sm';
+        return 'prose-sm md:prose-base';
+    };
+
+    const getBackFontSize = (text = '') => {
+        const len = text.length;
+        if (len > 300) return 'text-xs md:text-sm leading-relaxed';
+        if (len > 180) return 'text-sm md:text-base leading-relaxed';
+        if (len > 100) return 'text-base md:text-xl leading-snug';
+        if (len > 50) return 'text-xl md:text-2xl leading-tight';
+        if (len > 25) return 'text-2xl md:text-4xl leading-none';
+        return 'text-3xl md:text-5xl leading-none';
+    };
+
+    const frontFontSize = getFrontFontSize(cardData.front);
+    const backFontSize = getBackFontSize(cardData.back);
+
     stage.innerHTML = `
-        <div class="fc-card w-full aspect-square md:aspect-video bg-[#1b1d20] border border-white/5 rounded-3xl shadow-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-transform duration-500 perspective-1000 transform hover:scale-[1.02]" onclick="window.flipCard()">
-            <div class="fc-inner w-full h-full relative transition-transform duration-500 transform-style-3d">
-                <div class="fc-front absolute inset-0 backface-hidden flex flex-col items-center justify-center">
-                    <p class="text-xl md:text-2xl leading-relaxed text-gray-200">${cardData.front}</p>
-                    <div class="absolute bottom-0 text-[10px] uppercase tracking-widest font-black text-gray-600 bg-white/5 px-3 py-1 rounded-full"><i class="fas fa-sync-alt mr-2"></i> Klikni pro otočení</div>
+        <div class="fc-card w-full min-h-[320px] max-h-[60vh] bg-gradient-to-br from-[#1b1d20] to-[#121417] border border-white/10 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] flex flex-col cursor-pointer transition-all duration-500 perspective-1000 transform hover:scale-[1.01] hover:shadow-[0_25px_60px_rgba(235,69,158,0.15)] group" onclick="window.flipCard()">
+            <div class="fc-inner w-full h-full relative transition-transform duration-700 transform-style-3d flex-1 flex flex-col">
+                <!-- FRONT -->
+                <div class="fc-front absolute inset-0 backface-hidden flex flex-col items-center justify-center p-8 md:p-12">
+                   <div class="w-full flex-1 flex flex-col items-center justify-center overflow-y-auto custom-scrollbar-thin pr-2">
+                        <div class="prose prose-invert ${frontFontSize} max-w-none text-gray-200 leading-relaxed text-center font-medium">
+                            ${renderContent(cardData.front)}
+                        </div>
+                   </div>
+                   <div class="mt-6 text-[9px] uppercase tracking-[0.2em] font-black text-gray-500 bg-white/5 px-4 py-1.5 rounded-full border border-white/5 opacity-50 group-hover:opacity-100 transition-opacity"><i class="fas fa-sync-alt mr-2"></i> Klikni pro otočení</div>
                 </div>
-                <div class="fc-back absolute inset-0 backface-hidden flex flex-col items-center justify-center bg-[#ed4245]/10 rounded-2xl rotate-y-180 border border-[#ed4245]/20">
-                    <div class="text-[10px] uppercase tracking-widest font-black text-[#ed4245] mb-4">Skrytý pojem</div>
-                    <span class="text-4xl md:text-5xl font-black italic text-white tracking-tighter drop-shadow-md">${cardData.back}</span>
+
+                <!-- BACK -->
+                <div class="fc-back absolute inset-0 backface-hidden flex flex-col items-center justify-center bg-[#ed4245]/5 rounded-3xl rotate-y-180 border-2 border-[#ed4245]/20 p-8">
+                    <div class="text-[10px] uppercase tracking-[0.3em] font-black text-[#ed4245] mb-6 opacity-80">Skrytý pojem</div>
+                    <div class="flex-1 flex flex-col items-center justify-center w-full overflow-y-auto custom-scrollbar-thin pr-2">
+                        <span class="${backFontSize} font-black italic text-white tracking-tighter drop-shadow-[0_0_20px_rgba(237,66,69,0.3)] text-center">
+                            ${renderContent(cardData.back)}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
         <style>
             .perspective-1000 { perspective: 1000px; }
-            .transform-style-3d { transform-style: preserve-3d; }
-            .backface-hidden { backface-visibility: hidden; }
+            .transform-style-3d { transform-style: preserve-3d; transform: translateZ(0); }
+            .backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
             .rotate-y-180 { transform: rotateY(180deg); }
             .is-flipped .fc-inner { transform: rotateY(180deg); }
+            
+            /* Enhanced flip speed and smoothness */
+            .fc-inner { transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1); }
+            
+            .custom-scrollbar-thin::-webkit-scrollbar { width: 3px; }
+            .custom-scrollbar-thin::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+            .custom-scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
         </style>
     `;
 

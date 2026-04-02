@@ -15,6 +15,7 @@ import {
 import { setupQuestsRealtime, cleanupQuestsRealtime } from './modules/quests.js';
 import { initLevels, renderLevelUI } from './modules/levels.js';
 import { setupRealtimeSync } from './core/sync.js';
+import * as StaticPages from './modules/static.js';
 
 // Lazy-loaded modules mapping (for better maintenance)
 const moduleMap = {
@@ -626,7 +627,7 @@ export function switchChannel(channelId, push = true) {
     state.currentChannel = channelId;
     localStorage.setItem('klarka_last_channel', channelId);
 
-    // Update Sidebar UI (ensure sync if switched programmatically)
+    // Update Sidebar UI
     document.querySelectorAll('.channel-link').forEach(l => {
         l.classList.remove('active', 'bg-[#36393f]', 'text-white');
         l.classList.add('text-[#b9bbbe]');
@@ -636,39 +637,33 @@ export function switchChannel(channelId, push = true) {
         }
     });
 
-    // Sync Level UI
+    // Icons/Header
     if (typeof renderLevelUI === 'function') renderLevelUI();
-
-    // Clear Search Input when switching
     const searchInput = document.getElementById("search-input");
     if (searchInput) searchInput.value = "";
-
-    // Update Header
     updateChannelHeader(channelId);
 
     // Render Content
     const container = document.getElementById("messages-container");
-    if (container) container.innerHTML = ""; // Clear current
+    if (container) container.innerHTML = "";
 
-    // Cleanup Realtime Subscriptions from previous channels
-    if (typeof achCleanup === 'function') achCleanup();
-    if (typeof dailyCleanup === 'function') dailyCleanup();
-    if (typeof bucketCleanup === 'function') bucketCleanup();
-    if (typeof cleanupQuestsRealtime === 'function') cleanupQuestsRealtime();
-    if (typeof whoCleanup === 'function') whoCleanup();
-    if (typeof drawCleanup === 'function') drawCleanup();
-
-    // Tier List Cleanup
-    import('./modules/tierlist.js').then(m => m.cleanupRealtime());
+    // Centralized Realtime Cleanup
+    const cleanups = [
+        'achCleanup', 'dailyCleanup', 'bucketCleanup', 'whoCleanup', 'drawCleanup',
+        'cleanupQuestsRealtime', 'calendarCleanup', 'timelineCleanup'
+    ];
+    cleanups.forEach(fn => { if (typeof window[fn] === 'function') window[fn](); });
+    
+    // Tier List special cleanup
+    import('./modules/tierlist.js').then(m => m.cleanupRealtime?.());
 
     // Route
-
     switch (channelId) {
         case 'welcome':
             import('./modules/dashboard.js').then(m => m.renderWelcome());
             break;
         case 'music':
-            renderMusicBot();
+            StaticPages.renderMusicBot();
             break;
         case 'dashboard':
             renderDashboard();
@@ -677,21 +672,21 @@ export function switchChannel(channelId, push = true) {
             import('./core/state.js').then(s => s.ensureMapData()).then(() => moduleMap.map()).then(m => m.renderMap());
             break;
         case 'bucketlist':
-            ensureBucketListData().then(() => moduleMap.bucketlist()).then(m => m.renderBucketList());
+            import('./core/state.js').then(s => s.ensureBucketListData()).then(() => moduleMap.bucketlist()).then(m => m.renderBucketList());
             break;
         case 'calendar':
-            import('./core/state.js').then(s => s.ensureTimelineData()).then(() => moduleMap.calendar()).then(m => m.renderCalendar());
+            import('./core/state.js').then(s => s.ensureCalendarData()).then(() => moduleMap.calendar().then(m => m.renderCalendar()));
             break;
         case 'timeline':
-            import('./core/state.js').then(s => s.ensureTimelineData()).then(() => moduleMap.timeline()).then(m => m.renderTimeline());
+            import('./core/state.js').then(s => s.ensureTimelineData()).then(() => moduleMap.timeline().then(m => m.renderTimeline()));
             break;
         case 'movies':
         case 'series':
         case 'games':
-            ensureLibraryData().then(() => moduleMap.library()).then(m => m.renderLibrary(channelId));
+            import('./core/state.js').then(s => s.ensureLibraryData()).then(() => moduleMap.library().then(m => m.renderLibrary(channelId)));
             break;
         case 'watchlist':
-            ensureLibraryData().then(() => import('./modules/watchlist.js')).then(m => m.renderWatchlist());
+            import('./core/state.js').then(s => s.ensureLibraryData()).then(() => import('./modules/watchlist.js')).then(m => m.renderWatchlist());
             break;
         case 'topics':
             import('./core/state.js').then(s => s.ensureTopicsData()).then(() => moduleMap.topics()).then(m => m.renderTopics());
@@ -724,31 +719,30 @@ export function switchChannel(channelId, push = true) {
             import('./modules/quests.js').then(m => m.renderQuests());
             break;
         case 'funfacts':
-            moduleMap.funfacts().then(m => m.renderFunFacts());
+            import('./core/state.js').then(s => s.ensureFactsData()).then(() => moduleMap.funfacts().then(m => m.renderFunFacts()));
+            break;
+        case 'stats':
+            import('./core/state.js').then(s => Promise.all([s.ensureCalendarData(), s.ensureLibraryData()])).then(() => moduleMap.stats().then(m => m.renderStats()));
             break;
         case 'tierlist':
             moduleMap.tierlist().then(m => m.renderTierList());
-            break;
-        case 'stats':
-            moduleMap.stats().then(m => m.renderStats());
             break;
         case 'restore-data':
             moduleMap['restore-data']().then(m => m.renderRestoreData());
             break;
         case 'letters':
-
             import('./modules/letters.js').then(m => m.renderLetters());
             break;
         case 'manual':
-            renderManual();
+            StaticPages.renderManual();
             break;
         case 'readme':
-            renderReadme();
+            StaticPages.renderReadme();
             break;
         case 'matura-dashboard':
         case 'matura-czech':
         case 'matura-it':
-            moduleMap.matura().then(m => m.renderMatura(channelId));
+            import('./core/state.js').then(s => s.ensureMaturaData()).then(() => moduleMap.matura().then(m => m.renderMatura(channelId)));
             break;
         case 'upgrade':
             renderUpgrade();
@@ -757,7 +751,7 @@ export function switchChannel(channelId, push = true) {
             import('./modules/dashboard.js').then(m => m.renderWelcome());
     }
 
-    // Mobile Sidebar Close (if applicable)
+    // Mobile Sidebar Close
     const sidebar = document.getElementById('sidebar-wrapper');
     const overlay = document.getElementById('mobile-overlay');
     if (window.innerWidth < 768 && sidebar && !sidebar.classList.contains('-translate-x-full')) {
@@ -765,6 +759,8 @@ export function switchChannel(channelId, push = true) {
         if (overlay) overlay.classList.add('hidden');
     }
 }
+
+// --- SEARCH ---
 
 // --- SEARCH ---
 

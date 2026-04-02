@@ -349,9 +349,13 @@ export async function refreshRender() {
                     list.innerHTML = '';
                     // Find all DOM elements for our highlights
                     const domHighlights = modal.querySelectorAll('.kb-hl-yellow:not(.hl-other), .kb-hl-red:not(.hl-other)');
+                    const seenIds = new Set();
                     
                     domHighlights.forEach(span => {
                         const id = span.dataset.id;
+                        if (seenIds.has(id)) return;
+                        seenIds.add(id);
+
                         const color = span.classList.contains('kb-hl-yellow') ? '#faa61a' : '#ed4245';
                         const parentText = span.closest('p, li')?.textContent || span.textContent;
 

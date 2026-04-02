@@ -47,3 +47,25 @@ export async function loadLeaflet() {
         console.error('❌ Leaflet load failed:', err);
     }
 }
+
+export async function loadMarked() {
+    return loadExternalScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js');
+}
+
+export async function loadApexCharts() {
+    return loadExternalScript('https://cdn.jsdelivr.net/npm/apexcharts');
+}
+
+export async function loadKaTeX() {
+    await Promise.all([
+        loadExternalStyle('https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css'),
+        loadExternalScript('https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js')
+    ]);
+}
+
+export async function loadHighlightJS() {
+    await Promise.all([
+        loadExternalStyle('https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css'),
+        loadExternalScript('https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js')
+    ]);
+}

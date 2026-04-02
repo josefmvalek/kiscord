@@ -59,7 +59,18 @@ const state = {
     maturaSchedule: [],
     maturaAchievements: [],
     maturaTopics: {}, // { category_id: [topics] }
-    maturaKBContent: {} // { item_id: { content, updated_at } }
+    maturaKBContent: {}, // { item_id: { content, updated_at } }
+    
+    // Lazy Load Flags
+    _loaded: {
+        calendar: false,
+        timeline: false,
+        library: false,
+        topics: false,
+        achievements: false,
+        games: false,
+        facts: false
+    }
 };
 
 // --- PUB/SUB EVENT BUS ---
@@ -119,7 +130,6 @@ function loadStateFromCache() {
 }
 
 async function initializeState() {
-    // Try to load from cache first for immediate UI
     const hasCached = loadStateFromCache();
 
     if (!navigator.onLine && hasCached) {
@@ -127,102 +137,39 @@ async function initializeState() {
         return;
     }
 
-    // Reset before fresh load (only if online or no cache)
-    state.healthData = {};
-    state.plannedDates = {};
-    state.schoolEvents = {};
-    state.topicProgress = {};
-    state.watchlist = [];
-    state.ratings = {};
-    state.watchHistory = {};
-    state.movieHistory = {};
-    state.dateRatings = {};
-    state.quizAnswers = { score: 0, completed: false };
-    state.factsLibrary = { octopus: [], owl: [], raccoon: [], fun: [], penis: [] };
-    state.factFavorites = [];
-    state.library = { movies: [], series: [], games: [] };
-    state.timelineEvents = [];
-    state.dateLocations = [];
-    state.conversationTopics = [];
-    state.achievementCategories = [];
-    state.achievementDefinitions = [];
-    state.achievements = [];
-    state.funFactProgress = {};
-    state.dailyQuestion = null;
-    state.dailyAnswers = [];
-    state.gamePrompts = [];
-    state.coopQuests = [];
-    state.user_ids = { jose: null, klarka: null };
-    state.bucketList = [];
-    state.tetris = { jose: 0, klarka: 0 }; // Reset Tetris scores before fresh load
-    state.maturaTopics = {};
-    state.loadError = false; // Reset error state on each init
+    const today = new Date().toISOString().split('T')[0];
 
     try {
-
-
+        // Essential Dashboard Data (minimal fetch)
         const [
-            { data: healthData },
-            { data: plannedData },
-            { data: schoolData },
+            { data: todayHealth },
+            { data: todayDates },
             { data: tetrisData },
-            { data: factsData },
-            { data: funFactProgressData },
             { data: questData },
-            { data: favData },
-            { data: maturaProgData },
             pinnedData
         ] = await Promise.all([
-            // Stáhnout všechna data pro kalendář a statistiky
-            supabase.from('health_data').select('*'),
-            supabase.from('planned_dates').select('*'),
-            supabase.from('school_events').select('*'),
+            supabase.from('health_data').select('*').eq('date_key', today).maybeSingle(),
+            supabase.from('planned_dates').select('*').eq('date_key', today),
             supabase.from('tetris_scores').select('*'),
-            supabase.from('app_facts').select('*'),
-            supabase.from('fun_fact_progress').select('*'),
             supabase.from('coop_quests').select('*').eq('is_active', true),
-            supabase.from('app_fact_favorites').select('fact_id'),
-            supabase.from('matura_topic_progress').select('*'),
             supabase.from('pinned_drawings').select('*, drawings(*)').maybeSingle()
         ]);
 
         if (pinnedData?.data) state.pinnedDrawing = pinnedData.data.drawings;
 
-        // OPRAVA #1: Health Data – odstraněn zbytečný JS user_id filtr
-        // RLS politika (auth.uid() = user_id) filtrování zajišťuje sama.
-        // Původní filtr selhal, protože state.currentUser.id není ještě nastaveno.
-        if (healthData) {
-            healthData.forEach(row => {
-                state.healthData[row.date_key] = {
-                    water: row.water,
-                    sleep: row.sleep,
-                    mood: row.mood,
-                    movement: row.movement,
-                    bedtime: row.bedtime
-                };
-            });
+        if (todayHealth) {
+            state.healthData[todayHealth.date_key] = {
+                water: todayHealth.water, sleep: todayHealth.sleep, mood: todayHealth.mood,
+                movement: todayHealth.movement, bedtime: todayHealth.bedtime
+            };
         }
 
-        if (plannedData) {
-            plannedData.forEach(row => {
+        if (todayDates) {
+            todayDates.forEach(row => {
                 state.plannedDates[row.date_key] = {
-                    id: row.id,
-                    name: row.name,
-                    cat: row.cat,
-                    time: row.time,
-                    note: row.note,
-                    status: row.status || 'idea',
-                    backup_plan: row.backup_plan || '',
+                    id: row.id, name: row.name, cat: row.cat, time: row.time, note: row.note,
+                    status: row.status || 'idea', backup_plan: row.backup_plan || '',
                     checklist: typeof row.checklist === 'string' ? JSON.parse(row.checklist) : (row.checklist || [])
-                };
-            });
-        }
-
-        if (schoolData) {
-            schoolData.forEach(row => {
-                state.schoolEvents[row.date_key] = {
-                    title: row.title,
-                    type: row.type
                 };
             });
         }
@@ -230,250 +177,66 @@ async function initializeState() {
         const isMeJose = isJosef(state.currentUser);
         const isMeKlarka = isKlarka(state.currentUser);
 
-        // Always ensure at least the current user's ID is in the correct slot
         if (state.currentUser?.id) {
-            if (isMeJose) {
-                state.tetris.jose_id = state.currentUser.id;
-                state.user_ids.jose = state.currentUser.id;
-            } else if (isMeKlarka) {
-                state.tetris.klarka_id = state.currentUser.id;
-                state.user_ids.klarka = state.currentUser.id;
+            if (isMeJose) { 
+                state.tetris.jose_id = state.currentUser.id; 
+                state.user_ids.jose = state.currentUser.id; 
+            } else if (isMeKlarka) { 
+                state.tetris.klarka_id = state.currentUser.id; 
+                state.user_ids.klarka = state.currentUser.id; 
             }
+        }
+
+        // 2. Fetch all profiles to map IDs to Jožka/Klárka (jose user_id, klarka user_id)
+        if (!state.user_ids.jose || !state.user_ids.klarka) {
+             const { data: pData } = await supabase.from('profiles').select('id, username, email');
+             if (pData) {
+                 pData.forEach(p => {
+                     const lowerName = (p.username || "").toLowerCase();
+                     const lowerEmail = (p.email || "").toLowerCase();
+                     
+                     if (lowerName.includes('josef') || lowerName.includes('jozk') || lowerEmail === 'jozkavalek@email.cz' || lowerEmail.includes('josef')) {
+                        state.user_ids.jose = p.id;
+                     }
+                     if (lowerName.includes('klara') || lowerName.includes('vyslouzil') || lowerEmail === 'vyslouzilova.klara07@gmail.com' || lowerEmail.includes('klara')) {
+                        state.user_ids.klarka = p.id;
+                     }
+                 });
+             }
         }
 
         if (tetrisData) {
-            console.log(`[TETRIS] Found ${tetrisData.length} records. Current IDs: Jose=${state.tetris.jose_id}, Klarka=${state.tetris.klarka_id}`);
-            
             tetrisData.forEach(row => {
                 const isMe = row.user_id === state.currentUser?.id;
-                
                 if (isMe) {
-                    if (isMeJose) {
-                        state.tetris.jose = row.score || 0;
-                        state.tetris.jose_id = row.user_id;
-                        state.user_ids.jose = row.user_id;
-                    } else if (isMeKlarka) {
-                        state.tetris.klarka = row.score || 0;
-                        state.tetris.klarka_id = row.user_id;
-                        state.user_ids.klarka = row.user_id;
-                    }
+                    if (isMeJose) { state.tetris.jose = row.score || 0; state.tetris.jose_id = row.user_id; state.user_ids.jose = row.user_id; }
+                    else if (isMeKlarka) { state.tetris.klarka = row.score || 0; state.tetris.klarka_id = row.user_id; state.user_ids.klarka = row.user_id; }
                 } else {
-                    // Someone else's row. Assign to partner if known, or discover.
-                    if (isMeJose) {
-                        state.tetris.klarka = row.score || 0;
-                        state.tetris.klarka_id = row.user_id;
-                        state.user_ids.klarka = row.user_id;
-                    } else if (isMeKlarka) {
-                        state.tetris.jose = row.score || 0;
-                        state.tetris.jose_id = row.user_id;
-                        state.user_ids.jose = row.user_id;
-                    } else {
-                        // Admin/Host view: assign heuristically if not set
-                        if (row.score > 0) { // Simple filter for non-empty records
-                            if (!state.tetris.jose || state.tetris.jose === 0) {
-                                state.tetris.jose = row.score;
-                                state.tetris.jose_id = row.user_id;
-                                state.user_ids.jose = row.user_id;
-                            } else {
-                                state.tetris.klarka = row.score;
-                                state.tetris.klarka_id = row.user_id;
-                                state.user_ids.klarka = row.user_id;
-                            }
-                        }
-                    }
+                    if (isMeJose) { state.tetris.klarka = row.score || 0; state.tetris.klarka_id = row.user_id; state.user_ids.klarka = row.user_id; }
+                    else if (isMeKlarka) { state.tetris.jose = row.score || 0; state.tetris.jose_id = row.user_id; state.user_ids.jose = row.user_id; }
                 }
             });
-            console.log(`[TETRIS] Final scores assigned: Jose=${state.tetris.jose}, Klarka=${state.tetris.klarka}`);
         }
 
+        if (questData) state.coopQuests = questData;
 
-
-        if (favData) {
-            state.factFavorites = favData.map(f => f.fact_id);
-        }
-
-        if (factsData) {
-            factsData.forEach(f => {
-                const cat = f.category;
-                if (!state.factsLibrary[cat]) {
-                    state.factsLibrary[cat] = [];
-                }
-                state.factsLibrary[cat].push({ 
-                    id: f.id,
-                    icon: f.icon, 
-                    text: f.text,
-                    subcategory: f.subcategory || '',
-                    subcategory_level2: f.subcategory_level2 || ''
-                });
+        // Background load non-critical data
+        if (typeof window.requestIdleCallback === 'function') {
+            window.requestIdleCallback(() => {
+                ensureFactsData();
+                ensureAchievementsData();
             });
         }
 
-
-        if (funFactProgressData) {
-            funFactProgressData.forEach(row => {
-                const sub1 = row.subcategory_id || '';
-                const sub2 = row.subcategory_level2_id || '';
-                
-                let key = row.category_id;
-                if (sub1) key += `:${sub1}`;
-                if (sub2) key += `:${sub2}`;
-
-                state.funFactProgress[key] = {
-                    index: row.current_index,
-                    completed: row.completed
-                };
-            });
-        }
-
-
-        if (questData) {
-            state.coopQuests = questData;
-        }
-
-        if (maturaProgData) {
-            maturaProgData.forEach(row => {
-                if (!state.maturaProgress[row.item_id]) {
-                    state.maturaProgress[row.item_id] = { 
-                        jose: { status: 'none', notes: '' }, 
-                        klarka: { status: 'none', notes: '' } 
-                    };
-                }
-                const key = (row.user_id === state.user_ids.jose) ? 'jose' : 'klarka';
-                state.maturaProgress[row.item_id][key] = {
-                    status: row.status,
-                    notes: row.notes || ''
-                };
-            });
-        }
-
-        // 5. Matura Gamification & Schedule (Async parallel)
-        const [streaks, schedule, badges] = await Promise.all([
-            supabase.from('matura_streaks').select('*'),
-            supabase.from('matura_schedule').select('*').gte('scheduled_date', new Date().toISOString().split('T')[0]),
-            supabase.from('matura_achievements').select('*')
-        ]);
-
-        if (streaks.data) {
-            streaks.data.forEach(s => {
-                const key = (s.user_id === state.user_ids.jose) ? 'jose' : 'klarka';
-                state.maturaStreaks[key] = s.current_streak;
-            });
-        }
-        if (schedule.data) state.maturaSchedule = schedule.data;
-        if (badges.data) state.maturaAchievements = badges.data;
-
-        // quiz_answers závisí na user_id...
-        if (state.currentUser?.id) {
-            const { data: quizData } = await supabase
-                .from('quiz_answers')
-                .select('*')
-                .eq('user_id', state.currentUser.id)
-                .maybeSingle();
-            if (quizData) {
-                state.quizAnswers = {
-                    score: quizData.score || 0,
-                    completed: quizData.completed || false
-                };
-            }
-        }
-
-    } catch (err) {
-        console.error("Supabase load error:", err);
-        state.loadError = !hasCached; // Only error if we have no cache
+        state.loadError = false;
+    } catch (e) {
+        console.error("Critical Init Error:", e);
+        state.loadError = true;
     }
-
-    // Auto-save to cache after successful (or attempted) load
     saveStateToCache();
 }
+// --- LAZY LOADING HELPERS ---
 
-let libraryLoaded = false;
-async function ensureLibraryData(force = false) {
-    if (libraryLoaded && !force && !isStale('library')) return;
-    try {
-        const [libData, watchData, ratingData] = await Promise.all([
-            supabase.from('library_content').select('*'),
-            supabase.from('library_watchlist').select('*').eq('added_by', state.currentUser?.id),
-            supabase.from('library_ratings').select('*')
-        ]);
-
-        if (libData.data) {
-            state.library = { movies: [], series: [], games: [] };
-            libData.data.forEach(item => {
-                const typeKey = item.type === 'movie' ? 'movies' : (item.type === 'series' ? 'series' : 'games');
-                state.library[typeKey].push({
-                    id: item.id,
-                    title: item.title,
-                    icon: item.icon,
-                    cat: item.category,
-                    magnet: item.magnet,
-                    gdrive: item.gdrive,
-                    mood_tags: item.mood_tags || [],
-                    trailer: item.trailer || ""
-                });
-            });
-        }
-
-        if (watchData.data) {
-            state.watchlist = watchData.data.map(row => ({
-                id: parseInt(row.media_id),
-                type: row.type,
-                user_id: row.added_by
-            }));
-        }
-
-        if (ratingData.data) {
-            state.ratings = {};
-            state.watchHistory = {};
-            state.movieHistory = {};
-            ratingData.data.forEach(row => {
-                const mid = parseInt(row.media_id);
-                const status = row.status === 'watched' ? 'seen' : row.status;
-                state.ratings[mid] = row.rating || 0;
-                state.watchHistory[mid] = {
-                    rating: row.rating || 0,
-                    status: status,
-                    date: row.seen_date || "",
-                    reaction: row.reaction || ""
-                };
-                if (row.seen_date && status === 'seen') {
-                    if (!state.movieHistory[row.seen_date]) state.movieHistory[row.seen_date] = [];
-                    state.movieHistory[row.seen_date].push({
-                        media_id: mid,
-                        rating: row.rating || 0,
-                        status: status,
-                        reaction: row.reaction || ""
-                    });
-                }
-            });
-        }
-        libraryLoaded = true;
-        markLoaded('library');
-        stateEvents.emit('library');
-    } catch (err) {
-        console.error("Refresh Library State Error:", err);
-    }
-}
-
-let bucketListLoaded = false;
-async function ensureBucketListData(force = false) {
-    if (bucketListLoaded && !force && !isStale('bucketlist')) return;
-    try {
-        const { data, error } = await supabase
-            .from('bucket_list')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        state.bucketList = data || [];
-        bucketListLoaded = true;
-        markLoaded('bucketlist');
-        stateEvents.emit('bucketlist');
-    } catch (e) {
-        console.error("Error loading bucket list data:", e);
-    }
-}
-
-// --- LAZY LOADING TIMESTAMPS (for stale detection) ---
 const _loadedAt = {};
 function isStale(key) {
     if (!_loadedAt[key]) return true;
@@ -481,157 +244,232 @@ function isStale(key) {
 }
 function markLoaded(key) {
     _loadedAt[key] = Date.now();
+    state._loaded[key] = true;
 }
 
-let timelineLoaded = false;
-async function ensureTimelineData(force = false) {
-    if (timelineLoaded && !force && !isStale('timeline')) return;
+export async function ensureCalendarData(force = false) {
+    if (state._loaded.calendar && !force && !isStale('calendar')) return;
     try {
-        const { data } = await supabase.from('timeline_events').select('*').order('event_date', { ascending: false, nullsFirst: false });
-        if (data) {
-            state.timelineEvents = data.map(e => ({
-                id: e.id,
-                title: e.title,
-                event_date: e.event_date,
-                icon: e.icon || "📸",
-                color: e.color,
-                description: e.description || "",
-                images: e.images || [],
-                location_id: e.location_id || null,
-                user_highlights: e.user_highlights || "",
-                is_milestone: e.is_milestone || false
-            }));
+        const [health, dates, school] = await Promise.all([
+            supabase.from('health_data').select('*'),
+            supabase.from('planned_dates').select('*'),
+            supabase.from('school_events').select('*')
+        ]);
+        if (health.data) health.data.forEach(row => {
+            state.healthData[row.date_key] = { water: row.water, sleep: row.sleep, mood: row.mood, movement: row.movement, bedtime: row.bedtime };
+        });
+        if (dates.data) dates.data.forEach(row => {
+            state.plannedDates[row.date_key] = {
+                id: row.id, name: row.name, cat: row.cat, time: row.time, note: row.note,
+                status: row.status || 'idea', backup_plan: row.backup_plan || '',
+                checklist: typeof row.checklist === 'string' ? JSON.parse(row.checklist) : (row.checklist || [])
+            };
+        });
+        if (school.data) school.data.forEach(row => { state.schoolEvents[row.date_key] = { title: row.title, type: row.type }; });
+        markLoaded('calendar');
+        stateEvents.emit('calendar');
+    } catch (e) { console.error("Calendar Load Error:", e); }
+}
+
+export async function ensureLibraryData(force = false) {
+    if (state._loaded.library && !force && !isStale('library')) return;
+    try {
+        const [libData, watchData, ratingData] = await Promise.all([
+            supabase.from('library_content').select('*'),
+            supabase.from('library_watchlist').select('*').eq('added_by', state.currentUser?.id),
+            supabase.from('library_ratings').select('*')
+        ]);
+        if (libData.data) {
+            state.library = { movies: [], series: [], games: [] };
+            libData.data.forEach(item => {
+                const typeKey = item.type === 'movie' ? 'movies' : (item.type === 'series' ? 'series' : 'games');
+                state.library[typeKey].push({ id: item.id, title: item.title, icon: item.icon, cat: item.category, magnet: item.magnet, gdrive: item.gdrive, mood_tags: item.mood_tags || [], trailer: item.trailer || "" });
+            });
         }
-        timelineLoaded = true;
+        if (watchData.data) state.watchlist = watchData.data.map(row => ({ id: parseInt(row.media_id), type: row.type, user_id: row.added_by }));
+        if (ratingData.data) {
+            state.ratings = {}; state.watchHistory = {}; state.movieHistory = {};
+            ratingData.data.forEach(row => {
+                const mid = parseInt(row.media_id);
+                const status = row.status === 'watched' ? 'seen' : row.status;
+                state.ratings[mid] = row.rating || 0;
+                state.watchHistory[mid] = { rating: row.rating || 0, status: status, date: row.seen_date || "", reaction: row.reaction || "" };
+                if (row.seen_date && status === 'seen') {
+                    if (!state.movieHistory[row.seen_date]) state.movieHistory[row.seen_date] = [];
+                    state.movieHistory[row.seen_date].push({ media_id: mid, rating: row.rating || 0, status: status, reaction: row.reaction || "" });
+                }
+            });
+        }
+        markLoaded('library');
+        stateEvents.emit('library');
+    } catch (err) { console.error("Library Load Error:", err); }
+}
+
+export async function ensureTimelineData(force = false) {
+    if (state._loaded.timeline && !force && !isStale('timeline')) return;
+    try {
+        const [{data: events}, {data: highlights}] = await Promise.all([
+            supabase.from('timeline_events').select('*').order('event_date', { ascending: false, nullsFirst: false }),
+            supabase.from('timeline_highlights').select('*')
+        ]);
+        if (events) state.timelineEvents = events.map(e => ({ id: e.id, title: e.title, event_date: e.event_date, icon: e.icon || "📸", color: e.color, description: e.description || "", images: e.images || [], location_id: e.location_id || null, user_highlights: e.user_highlights || "", is_milestone: e.is_milestone || false }));
+        if (highlights) highlights.forEach(h => { state.timelineHighlights[h.event_id] = h; });
         markLoaded('timeline');
         stateEvents.emit('timeline');
-    } catch (e) {
-        console.error("Error loading timeline data:", e);
-    }
+    } catch (e) { console.error("Timeline Load Error:", e); }
 }
 
-let mapDataLoaded = false;
-async function ensureMapData(force = false) {
-    if (mapDataLoaded && !force && !isStale('map')) return;
+export async function ensureMaturaData(force = false) {
+    if (state._loaded.topics && !force && !isStale('topics')) return;
     try {
-        const [{ data: ratingData }, { data: locData }] = await Promise.all([
-            supabase.from('date_ratings').select('*'),
-            supabase.from('date_locations').select('*')
+        const [{data: topics}, {data: progress}, {data: streaks}, {data: schedule}] = await Promise.all([
+            supabase.from('matura_topics').select('*').order('title'),
+            supabase.from('matura_topic_progress').select('*'),
+            supabase.from('matura_streaks').select('*'),
+            supabase.from('matura_schedule').select('*').gte('scheduled_date', new Date().toISOString().split('T')[0])
         ]);
-        if (ratingData) ratingData.forEach(row => { state.dateRatings[row.location_id] = row.rating; });
-        if (locData) {
-            state.dateLocations = locData.map(l => ({
-                id: l.id,
-                name: l.name,
-                cat: l.category,
-                icon: l.icon || "📍",
-                lat: l.lat,
-                lng: l.lng,
-                desc: l.description
-            }));
+        if (topics) {
+            state.maturaTopics = topics.reduce((acc, t) => {
+                if (!acc[t.category_id]) acc[t.category_id] = [];
+                acc[t.category_id].push(t);
+                return acc;
+            }, {});
         }
-        mapDataLoaded = true;
+        if (progress) {
+            progress.forEach(row => {
+                if (!state.maturaProgress[row.item_id]) {
+                    state.maturaProgress[row.item_id] = { 
+                        jose: { status: 'none', notes: '' }, 
+                        klarka: { status: 'none', notes: '' } 
+                    };
+                }
+                
+                // Map based on user_ids with double verification
+                const userKey = (state.user_ids.jose && row.user_id === state.user_ids.jose) ? 'jose' : 
+                                (state.user_ids.klarka && row.user_id === state.user_ids.klarka ? 'klarka' : null);
+                
+                if (userKey) {
+                    state.maturaProgress[row.item_id][userKey] = { 
+                        status: row.status, 
+                        notes: row.notes || '' 
+                    };
+                } else {
+                    // Fallback: If it's CURRENT USER but ID mapping failed for some reason, we can still identify it
+                    if (state.currentUser?.id && row.user_id === state.currentUser.id) {
+                        const meKey = isJosef(state.currentUser) ? 'jose' : (isKlarka(state.currentUser) ? 'klarka' : null);
+                        if (meKey) {
+                           state.maturaProgress[row.item_id][meKey] = { status: row.status, notes: row.notes || '' };
+                        }
+                    }
+                }
+            });
+        }
+        if (streaks) {
+            streaks.forEach(s => { 
+                const key = (s.user_id === state.user_ids.jose) ? 'jose' : 
+                            (s.user_id === state.user_ids.klarka ? 'klarka' : null);
+                if (key) state.maturaStreaks[key] = s.current_streak; 
+            });
+        }
+        if (schedule) state.maturaSchedule = schedule;
+        markLoaded('topics');
+        stateEvents.emit('matura');
+    } catch (e) { console.error("Matura Load Error:", e); }
+}
+
+export async function ensureBucketListData(force = false) {
+    if (state._loaded.bucketlist && !force && !isStale('bucketlist')) return;
+    try {
+        const { data } = await supabase.from('bucket_list').select('*').order('created_at', { ascending: false });
+        if (data) state.bucketList = data;
+        markLoaded('bucketlist');
+        stateEvents.emit('bucketlist');
+    } catch (e) { console.error("BucketList Load Error:", e); }
+}
+
+export async function ensureMapData(force = false) {
+    if (state._loaded.map && !force && !isStale('map')) return;
+    try {
+        const [{ data: ratingData }, { data: locData }] = await Promise.all([ supabase.from('date_ratings').select('*'), supabase.from('date_locations').select('*') ]);
+        if (ratingData) ratingData.forEach(row => { state.dateRatings[row.location_id] = row.rating; });
+        if (locData) state.dateLocations = locData.map(l => ({ id: l.id, name: l.name, cat: l.category, icon: l.icon || "📍", lat: l.lat, lng: l.lng, desc: l.description }));
         markLoaded('map');
         stateEvents.emit('map');
-    } catch (e) {
-        console.error("Error loading map data", e);
-    }
+    } catch (e) { console.error("Map Load Error:", e); }
 }
 
-let achievementsLoaded = false;
-async function ensureAchievementsData(force = false) {
-    if (achievementsLoaded && !force && !isStale('achievements')) return;
+export async function ensureAchievementsData(force = false) {
+    if (state._loaded.achievements && !force && !isStale('achievements')) return;
     try {
-        const [{ data: ach }, { data: cat }, { data: def }] = await Promise.all([
-            supabase.from('achievements').select('*'),
-            supabase.from('achievement_categories').select('*').order('sort_order', { ascending: true }),
-            supabase.from('achievement_definitions').select('*')
-        ]);
+        const [{ data: ach }, { data: cat }, { data: def }] = await Promise.all([ supabase.from('achievements').select('*'), supabase.from('achievement_categories').select('*').order('sort_order', { ascending: true }), supabase.from('achievement_definitions').select('*') ]);
         if (ach) state.achievements = ach;
         if (cat) state.achievementCategories = cat;
         if (def) state.achievementDefinitions = def;
-        achievementsLoaded = true;
         markLoaded('achievements');
         stateEvents.emit('achievements');
-    } catch (e) {
-        console.error("Error loading achievements data:", e);
-    }
+    } catch (e) { console.error("Achievements Load Error:", e); }
 }
 
-let topicsLoaded = false;
-async function ensureTopicsData(force = false) {
-    if (topicsLoaded && !force && !isStale('topics')) return;
+export async function ensureFactsData(force = false) {
+    if (state._loaded.facts && !force && !isStale('facts')) return;
+    try {
+        const [facts, favs] = await Promise.all([ supabase.from('app_facts').select('*'), supabase.from('app_fact_favorites').select('fact_id') ]);
+        if (facts.data) {
+            state.factsLibrary = { octopus: [], owl: [], raccoon: [], fun: [], penis: [] }; // Reset to avoid dupes
+            facts.data.forEach(f => { if (!state.factsLibrary[f.category]) state.factsLibrary[f.category] = []; state.factsLibrary[f.category].push(f); });
+        }
+        if (favs.data) state.factFavorites = favs.data.map(f => f.fact_id);
+        markLoaded('facts');
+        stateEvents.emit('facts');
+    } catch (e) { console.error("Facts Load Error:", e); }
+}
+
+export async function ensureTopicsData(force = false) {
+    if (state._loaded.conv_topics && !force && !isStale('topics')) return;
     try {
         const { data } = await supabase.from('conversation_topics').select('*');
-        if (data) Object.assign(state, {
-            conversationTopics: data.map(t => ({
-                id: t.id, title: t.title, icon: t.icon, color: t.color, desc: t.description, questions: t.questions
-            }))
-        });
-        topicsLoaded = true;
-        markLoaded('topics');
+        if (data) state.conversationTopics = data.map(t => ({ id: t.id, title: t.title, icon: t.icon, color: t.color, desc: t.description, questions: t.questions }));
+        markLoaded('conv_topics');
         stateEvents.emit('topics');
-    } catch(e) { console.error("Error topics:", e); }
+    } catch(e) { console.error("Topics Load Error:", e); }
 }
 
-let gamesLoaded = false;
-async function ensureGamesData() {
-    if (gamesLoaded) return;
+export async function ensureGamesData() {
+    if (state._loaded.games) return;
     try {
-        const [{ data: q }, { data: v }, { data: p }] = await Promise.all([
-            supabase.from('game_questions').select('*'),
-            supabase.from('game_votes').select('*'),
-            supabase.from('game_prompts').select('*')
-        ]);
+        const [{ data: q }, { data: v }, { data: p }] = await Promise.all([ supabase.from('game_questions').select('*'), supabase.from('game_votes').select('*'), supabase.from('game_prompts').select('*') ]);
         if (q) state.gameQuestions = q;
         if (v) state.gameVotes = v;
         if (p) state.gamePrompts = p;
-        gamesLoaded = true;
-    } catch(e) { console.error("Error games:", e); }
+        state._loaded.games = true;
+    } catch(e) { console.error("Games Load Error:", e); }
 }
 
-let drawLoaded = false;
-async function ensureDrawStrokesData() {
-    if (drawLoaded) return;
+export async function ensureDrawStrokesData() {
+    if (state._loaded.draw) return;
     try {
         const { data } = await supabase.from('draw_strokes').select('*').is('drawing_id', null).order('created_at', { ascending: true });
         if (data) state.drawStrokes = data;
-        drawLoaded = true;
-    } catch(e) { console.error("Error draw:", e); }
+        state._loaded.draw = true;
+    } catch(e) { console.error("Draw Load Error:", e); }
 }
 
-let dailyLoaded = false;
-async function ensureDailyQuizData() {
-    if (dailyLoaded) return;
+export async function ensureDailyQuizData() {
+    if (state._loaded.daily) return;
     try {
-        const [{ data: qData }, { data: aData }] = await Promise.all([
-            supabase.from('daily_questions').select('*'),
-            supabase.from('daily_answers').select('*')
-        ]);
+        const [{ data: qData }, { data: aData }] = await Promise.all([ supabase.from('daily_questions').select('*'), supabase.from('daily_answers').select('*') ]);
         if (qData && qData.length > 0) {
             const today = new Date();
             const dateSeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-            const index = dateSeed % qData.length;
-            state.dailyQuestion = qData[index];
+            state.dailyQuestion = qData[dateSeed % qData.length];
         }
-        if (aData) {
-            state.dailyAnswers = aData.filter(a => a.question_id === state.dailyQuestion?.id);
-        }
-        dailyLoaded = true;
-    } catch(e) { console.error("Error daily quiz:", e); }
+        if (aData) state.dailyAnswers = aData.filter(a => a.question_id === state.dailyQuestion?.id);
+        state._loaded.daily = true;
+    } catch(e) { console.error("DailyQuiz Load Error:", e); }
 }
 
-// --- UTILITY: Reset all lazy loaders (e.g. on logout or forced re-init) ---
 export function resetLazyLoaders() {
-    timelineLoaded = false;
-    mapDataLoaded = false;
-    achievementsLoaded = false;
-    topicsLoaded = false;
-    gamesLoaded = false;
-    drawLoaded = false;
-    dailyLoaded = false;
-    libraryLoaded = false;
-    bucketListLoaded = false;
+    state._loaded = { calendar: false, timeline: false, library: false, topics: false, achievements: false, games: false, facts: false, daily: false, draw: false, map: false, bucketlist: false, conv_topics: false };
     Object.keys(_loadedAt).forEach(k => delete _loadedAt[k]);
     console.log('[State] All lazy loaders reset.');
 }
@@ -639,14 +477,5 @@ export function resetLazyLoaders() {
 export {
     state,
     saveStateToCache,
-    initializeState,
-    ensureLibraryData,
-    ensureBucketListData,
-    ensureTimelineData,
-    ensureMapData,
-    ensureAchievementsData,
-    ensureTopicsData,
-    ensureGamesData,
-    ensureDrawStrokesData,
-    ensureDailyQuizData
+    initializeState
 };

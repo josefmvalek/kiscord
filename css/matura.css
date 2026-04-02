@@ -70,69 +70,40 @@
         font-size: 1.25rem;
     }
 
-    /* Responsive Tables: Stacked View for Mobile */
+    /* Table Responsiveness: Sticky context with horizontal scroll */
     .markdown-body table {
-        display: block;
+        display: block !important;
         width: 100% !important;
-        border: none !important;
-        background: transparent !important;
-        overflow: visible !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch;
     }
 
-    .markdown-body thead {
-        display: none;
+    .markdown-body table thead,
+    .markdown-body table tbody {
+        display: table;
+        width: 100%;
+        min-width: 500px; /* Force minimum width to enable scrolling */
     }
 
-    .markdown-body tbody,
-    .markdown-body tr,
+    .markdown-body th:first-child, 
+    .markdown-body td:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 10;
+        background: var(--bg-primary) !important;
+        border-right: 2px solid var(--bg-modifier-active) !important;
+        box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .markdown-body th, 
     .markdown-body td {
-        display: block;
-        width: 100% !important;
-    }
-
-    .markdown-body tr {
-        margin-bottom: 2rem;
-        background: rgba(43, 45, 49, 0.6) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        padding: 0.5rem 0;
-    }
-
-    .markdown-body td {
-        padding: 0.75rem 1.25rem !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
-        border-right: none !important;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.25rem;
-        min-height: 4rem;
-        justify-content: center;
-    }
-
-    .markdown-body td:last-child {
-        border-bottom: none !important;
-    }
-
-    .markdown-body td::before {
-        content: attr(data-label);
-        display: block;
-        font-size: 0.65rem;
-        font-weight: 900;
-        text-transform: uppercase;
-        color: #5865F2;
-        letter-spacing: 0.05em;
-        opacity: 0.8;
-    }
-
-    .markdown-body td strong,
-    .markdown-body td {
+        white-space: normal !important;
+        min-width: 130px !important;
+        padding: 0.75rem !important;
         font-size: 0.85rem !important;
-        line-height: 1.5;
-        color: #e2e2e2;
     }
+
 }
 
 /* Floating Action Button for Mobile TOC */
@@ -383,7 +354,8 @@
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    margin-left: 1rem;
+    margin-left: 0.75rem;
+    flex-shrink: 0; /* Prohibit squeezing on mobile */
     vertical-align: middle;
     background: transparent;
     color: transparent;
@@ -511,4 +483,172 @@
 .matura-trust-flow li:nth-child(5) { background: #f04747; color: white; } /* Bulvár */
 .matura-trust-flow li:nth-child(6) { background: #ba2f2f; color: white; } /* Soc. sítě */
 .matura-trust-flow li:nth-child(7) { background: #7c2222; color: white; } /* Dezinformace */
+
+/* ==========================================================
+   WIKILINKS & IMPROVED DASHBOARD
+   ========================================================== */
+
+.matura-wikilink {
+    color: #5865F2;
+    border-bottom: 1px dotted #5865F2;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    padding: 0 2px;
+    border-radius: 4px;
+}
+
+.matura-wikilink:hover {
+    background: rgba(88, 101, 242, 0.1);
+    color: #7289da;
+    border-bottom-style: solid;
+}
+
+.readiness-gauge-container {
+    position: relative;
+    width: 200px;
+    height: 100px;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.readiness-gauge-bg {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border: 20px solid rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+    top: 0;
+}
+
+.readiness-gauge-fill {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border: 20px solid #eb459e;
+    border-radius: 50%;
+    top: 0;
+    clip-path: polygon(0 50%, 100% 50%, 100% 100%, 0 100%);
+    transform-origin: center;
+    transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 20px rgba(235, 69, 158, 0.3);
+}
+
+.critical-topic-btn {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 0.75rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    transition: all 0.3s;
+    text-align: left;
+    width: 100%;
+}
+
+.critical-topic-btn:hover {
+    background: rgba(237, 66, 69, 0.1);
+    border-color: rgba(237, 66, 69, 0.3);
+    transform: translateX(5px);
+}
+
+.leaderboard-pfp {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-secondary);
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    overflow: hidden;
+    background: var(--bg-tertiary);
+}
+
+.leaderboard-row {
+    background: rgba(0,0,0,0.1);
+    border-radius: 16px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid rgba(255,255,255,0.03);
+}
+
+/* ==========================================================
+   COLLAPSIBLE SECTIONS (Accordion)
+   ========================================================== */
+
+.matura-collapsible-header {
+    cursor: pointer;
+    position: relative;
+    padding-right: 2rem !important;
+    transition: all 0.2s;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.matura-collapsible-header:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+    padding-left: 8px;
+    margin-left: -8px;
+}
+
+.matura-collapsible-header::after {
+    content: '\f077'; /* fa-chevron-up = Rozbaleno */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    right: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-header);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.7;
+}
+
+.matura-collapsible-header.collapsed::after {
+    content: '\f078'; /* fa-chevron-down = Sbaleno */
+    opacity: 0.4;
+}
+
+.matura-collapsible-content {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+    opacity: 1;
+}
+
+.matura-collapsible-content.collapsed {
+    grid-template-rows: 0fr;
+    opacity: 0;
+}
+
+.matura-collapsible-inner {
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Specific button for Collapse All in Modal Header */
+.matura-collapse-all-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    font-size: 9px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+    font-family: var(--font-primary);
+}
+
+.matura-collapse-all-btn:hover {
+    background: rgba(88, 101, 242, 0.2);
+    border-color: rgba(88, 101, 242, 0.4);
+    color: var(--text-header);
+}
 

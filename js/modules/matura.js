@@ -1,4 +1,4 @@
-import { state } from '../core/state.js';
+import { state, ensureMaturaData } from '../core/state.js';
 import { triggerHaptic, triggerConfetti } from '../core/utils.js';
 import { showNotification } from '../core/theme.js';
 import { supabase } from '../core/supabase.js';
@@ -19,7 +19,7 @@ export async function renderMatura(channelId) {
 
     // Load topics from DB if not already loaded (or refresh)
     if (channelId.startsWith('matura-')) {
-        await refreshMaturaTopics();
+        await ensureMaturaData(true);
     }
 
     if (channelId === 'matura-dashboard') {
@@ -45,26 +45,27 @@ export function toggleLocalTheme(containerId) {
     if (isLight) {
         el.classList.remove('theme-light');
         el.classList.add('theme-dark');
-        showNotification("Místní režim: Tmavý 🌙", "info");
     } else {
         el.classList.remove('theme-dark');
         el.classList.add('theme-light');
-        showNotification("Místní režim: Světlý ☀️", "success");
+    }
+
+    // Update Toggle Icon (Moon for Light Mode, Sun for Dark Mode)
+    const icon = el.querySelector('.theme-toggle-icon');
+    if (icon) {
+        if (isLight) {
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+            showNotification("Místní režim: Tmavý 🌙", "info");
+        } else {
+            icon.classList.remove('fa-sun');
+            icon.classList.add('fa-moon');
+            showNotification("Místní režim: Světlý ☀️", "success");
+        }
     }
 }
 
-async function refreshMaturaTopics() {
-    const { data, error } = await supabase.from('matura_topics').select('*').order('title');
-    if (data) {
-        // Group by category_id to mimic old maturaData structure
-        const grouped = data.reduce((acc, topic) => {
-            if (!acc[topic.category_id]) acc[topic.category_id] = [];
-            acc[topic.category_id].push(topic);
-            return acc;
-        }, {});
-        state.maturaTopics = grouped;
-    }
-}
+
 
 /**
  * Triggers a re-render of the current Matura view and cleans up the Knowledge Base
@@ -79,11 +80,11 @@ export function closeKnowledgeBase(modalId) {
     renderMatura(state.currentChannel);
 }
 
-// --- DASHBOARD RENDERING ---
-
+// --- DASHBOARD ---
 function renderDashboard(container) {
     const user = state.currentUser?.name;
-    const maturityDate = user === 'Jožka'
+    const isJozka = user === 'Jožka';
+    const maturityDate = isJozka
         ? new Date('2026-05-19T08:00:00')
         : new Date('2026-05-25T08:00:00');
 
@@ -91,10 +92,15 @@ function renderDashboard(container) {
     const diff = maturityDate - now;
     const days = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 
-    // Calculate Progress
+    // Calculate Stats
     const subjects = ['czech_jozka', 'czech_klarka', 'it'];
     let totalItems = 0;
     let completedItems = 0;
+    let jDone = 0;
+    let kDone = 0;
+    let myStarted = 0;
+    
+    const priorityTopics = [];
 
     subjects.forEach(sub => {
         const items = state.maturaTopics?.[sub] || [];
@@ -102,10 +108,16 @@ function renderDashboard(container) {
 
         items.forEach(item => {
             const prog = state.maturaProgress[item.id] || {};
-            // We check progress for BOTH users if it's the partner view, 
-            // but for simplicity on dashboard we show combined mastery
-            if (prog.jose?.status === 'done') completedItems += 0.5;
-            if (prog.klarka?.status === 'done') completedItems += 0.5;
+            if (prog.jose?.status === 'done') { completedItems += 0.5; jDone++; }
+            if (prog.klarka?.status === 'done') { completedItems += 0.5; kDone++; }
+            
+            const myStatus = isJozka ? prog.jose?.status : prog.klarka?.status;
+            if (myStatus === 'started') myStarted++;
+
+            // Priority Logic: topics I haven't finished yet that have content
+            if (myStatus !== 'done' && item.has_content && priorityTopics.length < 3) {
+                priorityTopics.push(item);
+            }
         });
     });
 
@@ -120,8 +132,7 @@ function renderDashboard(container) {
                 <button onclick="import('/js/modules/matura.js').then(m => m.toggleLocalTheme('matura-dashboard-container'))" 
                         class="absolute right-0 top-0 p-3 rounded-full hover:bg-white/5 text-[var(--interactive-normal)] hover:text-[var(--text-header)] transition-all"
                         title="Přepnout téma okna">
-                    <i class="fas fa-sun block theme-dark:hidden"></i>
-                    <i class="fas fa-moon hidden theme-dark:block"></i>
+                    <i class="fas fa-sun theme-toggle-icon"></i>
                 </button>
                 <h1 class="text-3xl md:text-5xl font-black text-[var(--text-header)] tracking-tighter uppercase italic">
                     <span class="text-[#eb459e]">Cesta</span> ke svobodě
@@ -137,132 +148,168 @@ function renderDashboard(container) {
                         oninput="import('/js/modules/matura.js').then(m => m.handleMaturaSearch(this.value))"
                         placeholder="Hledat téma, autora nebo okruh..." 
                         class="w-full bg-[var(--bg-secondary)] border border-white/5 group-hover:border-white/10 focus:border-[#5865F2]/50 focus:ring-4 focus:ring-[#5865F2]/10 rounded-2xl py-4 pl-12 pr-6 text-sm text-[var(--text-header)] placeholder-gray-500 outline-none transition-all shadow-xl font-bold tracking-tight">
-                    <div class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/5 px-2 py-1 rounded text-[8px] font-black uppercase text-gray-500 tracking-widest border border-white/5 pointer-events-none group-focus-within:opacity-0 transition">Matura Search</div>
                 </div>
             </div>
 
-            <!-- Countdown -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-[var(--bg-secondary)] rounded-2xl p-8 border border-white/5 shadow-2xl flex flex-col items-center justify-center text-center group hover:border-[#eb459e]/30 transition-all duration-300">
-                    <div class="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">Dní do vysvobození</div>
-                    <div class="text-7xl font-black text-[var(--text-header)] group-hover:scale-110 transition-transform duration-500 drop-shadow-[0_0_15px_rgba(235,69,158,0.3)]">${days}</div>
-                    <div class="text-xs text-[#eb459e] font-bold mt-4 uppercase">Uteče to jako voda! 🌊</div>
+            <!-- Main Stats Row -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Countdown -->
+                <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5 shadow-2xl flex flex-col items-center justify-center text-center group hover:border-[#eb459e]/30 transition-all duration-300">
+                    <div class="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] mb-1">Dní do vysvobození</div>
+                    <div class="text-6xl font-black text-[var(--text-header)] group-hover:scale-110 transition-transform duration-500 drop-shadow-[0_0_15px_rgba(235,69,158,0.3)]">${days}</div>
+                    <div class="text-[10px] text-[#eb459e] font-bold mt-2 uppercase">Uteče to jako voda! 🌊</div>
                 </div>
 
-                    <div class="bg-[var(--bg-secondary)] rounded-2xl p-8 border border-white/5 shadow-2xl flex flex-col justify-center gap-4">
-                        <div class="flex justify-between items-end">
-                            <div class="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Přečteno (Pasivní)</div>
-                            <div class="text-2xl font-black text-[var(--text-header)] italic">${progressPercent}%</div>
-                        </div>
-                        <div class="w-full h-2 bg-black/30 rounded-full overflow-hidden p-0.5 border border-white/5">
-                            <div class="h-full bg-gradient-to-r from-gray-500 to-gray-400 rounded-full transition-all duration-1000 ease-out" style="width: ${progressPercent}%"></div>
-                        </div>
-                        
-                        <div class="flex justify-between items-end mt-2">
-                            <div class="text-[10px] font-black uppercase tracking-[0.2em] text-[#eb459e]">Ovládnuto (Aktivní)</div>
-                            <div class="text-2xl font-black text-white italic" id="total-mastery-text">...%</div>
-                        </div>
-                        <div class="w-full h-4 bg-black/30 rounded-full overflow-hidden p-0.5 border border-white/5">
-                            <div id="total-mastery-bar" class="h-full bg-gradient-to-r from-[#5865F2] to-[#eb459e] rounded-full shadow-[0_0_15px_rgba(88,101,242,0.4)] transition-all duration-1000 ease-out" style="width: 0%"></div>
+                <!-- Overall Readiness Gauge -->
+                <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5 shadow-2xl flex flex-col items-center justify-center relative group overflow-hidden">
+                    <div class="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] mb-4">Celková připravenost</div>
+                    <div class="readiness-gauge-container">
+                        <div class="readiness-gauge-bg"></div>
+                        <div id="readiness-gauge-fill" class="readiness-gauge-fill" style="transform: rotate(0deg)"></div>
+                        <div class="absolute inset-0 flex flex-col items-center justify-end pb-2">
+                            <span id="readiness-value" class="text-3xl font-black text-white italic">0%</span>
                         </div>
                     </div>
                 </div>
 
-            <!-- SOS & Quests -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button onclick="import('/js/modules/matura.js').then(m => m.triggerSOS())" 
-                        class="bg-[#ed4245]/20 hover:bg-[#ed4245]/30 border border-[#ed4245]/30 p-6 rounded-2xl transition-all group flex flex-col items-center gap-2">
-                    <div class="text-3xl group-hover:scale-110 transition">🆘</div>
-                    <div class="text-xs font-black text-[#ed4245] uppercase tracking-widest leading-none">Panic Button</div>
-                    <div class="text-[9px] text-red-500/60 uppercase font-bold">Potřebuji pauzu/čoko/objetí</div>
-                </button>
-
-                <div class="col-span-1 md:col-span-2 bg-[var(--bg-secondary)] border border-white/5 p-6 rounded-2xl flex items-center gap-6">
-                    <div class="text-4xl">🎓</div>
-                    <div>
-                        <h3 class="font-black text-[var(--text-header)] uppercase tracking-tight text-sm">Další Milestone</h3>
-                        <p class="text-xs text-[var(--text-muted)]">Pokud oba dokončíte <b>prvních 10 děl</b>, jdeme na pořádnou večeři! 🍔</p>
+                <!-- Jožka vs Klárka comparison -->
+                <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5 shadow-2xl flex flex-col justify-between gap-4">
+                    <div class="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Souboj Titánů</div>
+                    <div class="space-y-3">
+                        <div class="leaderboard-row ${isJozka ? 'border-[#5865F2]/30' : ''}">
+                            <div class="flex items-center gap-3">
+                                <div class="leaderboard-pfp flex items-center justify-center text-xs">🧔</div>
+                                <span class="text-xs font-bold text-gray-300">Jožka</span>
+                            </div>
+                            <span class="text-xs font-black text-[#5865F2] italic">${jDone} / ${totalItems}</span>
+                        </div>
+                        <div class="leaderboard-row ${!isJozka ? 'border-[#eb459e]/30' : ''}">
+                            <div class="flex items-center gap-3">
+                                <div class="leaderboard-pfp flex items-center justify-center text-xs">👩</div>
+                                <span class="text-xs font-bold text-gray-300">Klárka</span>
+                            </div>
+                            <span class="text-xs font-black text-[#eb459e] italic">${kDone} / ${totalItems}</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Focus Mode -->
+            <!-- Focus & Priorities Row -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Streak & Today's Mission -->
+                <!-- Personalized Priorities -->
                 <div class="lg:col-span-1 space-y-4">
+                    <div class="bg-[var(--bg-secondary)] border border-white/5 rounded-2xl p-6 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-2 opacity-5 scale-150 rotate-12 group-hover:scale-125 transition-transform"><i class="fas fa-bullseye text-4xl"></i></div>
+                        <h3 class="text-[10px] font-black uppercase tracking-widest text-[#ed4245] mb-4 flex items-center gap-2">
+                            <i class="fas fa-fire"></i> Tvoje priority
+                        </h3>
+                        <div class="space-y-2">
+                            ${priorityTopics.length > 0 ? priorityTopics.map(t => `
+                                <button onclick="import('/js/modules/matura.js').then(m => m.openKnowledgeBase('${t.id}'))" class="critical-topic-btn">
+                                    <span class="text-base">${t.icon || '📝'}</span>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-[10px] font-bold text-white truncate">${t.title}</div>
+                                        <div class="text-[8px] text-gray-500 uppercase font-black">${t.author || 'Okruh IT'}</div>
+                                    </div>
+                                    <i class="fas fa-chevron-right text-[10px] text-gray-600"></i>
+                                </button>
+                            `).join('') : '<div class="text-[10px] italic text-gray-500">Nemáš žádné prioritní resty! Skvěle! 🌟</div>'}
+                        </div>
+                    </div>
+                    
+                    <!-- Streak info -->
                     <div class="bg-[var(--bg-secondary)] border border-white/5 rounded-2xl p-6 flex items-center justify-between group hover:border-orange-500/30 transition-all">
                         <div>
                             <div class="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">Tvůj Streak</div>
                             <div class="text-3xl font-black text-[var(--text-header)] flex items-center gap-2">
                                 <span class="text-orange-500 animate-pulse">🔥</span> 
-                                ${state.maturaStreaks[state.currentUser?.name === 'Jožka' ? 'jose' : 'klarka'] || 0} dní
+                                ${state.maturaStreaks[isJozka ? 'jose' : 'klarka'] || 0} dní
                             </div>
                         </div>
                         <div class="text-right">
-                             <div class="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">${state.currentUser?.name === 'Jožka' ? 'Klárka' : 'Jožka'}</div>
+                             <div class="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">${isJozka ? 'Klárka' : 'Jožka'}</div>
                              <div class="text-xl font-bold text-[var(--text-muted)] flex items-center gap-1 justify-end">
-                                <span>🔥</span> ${state.maturaStreaks[state.currentUser?.name === 'Jožka' ? 'klarka' : 'jose'] || 0}
+                                <span>🔥</span> ${state.maturaStreaks[isJozka ? 'klarka' : 'jose'] || 0}
                              </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-[var(--bg-secondary)] border border-white/5 rounded-2xl p-6 relative overflow-hidden group">
-                        <div class="absolute top-0 right-0 p-2 opacity-5 scale-150 rotate-12 group-hover:scale-125 transition-transform"><i class="fas fa-bullseye text-4xl"></i></div>
-                        <h3 class="text-[10px] font-black uppercase tracking-widest text-[#5865F2] mb-4 flex items-center gap-2">
-                            <i class="fas fa-calendar-check"></i> Dnešní mise
-                        </h3>
-                        <div id="todays-mission-list" class="space-y-3">
-                            <!-- Populated via JS -->
-                            <div class="text-[var(--text-muted)] text-[10px] italic">Žádné plány na dnešek... Odpočívej! 💤</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Timer -->
-                <div class="lg:col-span-2 bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-secondary)] border border-white/5 rounded-3xl p-8 shadow-2xl flex flex-col justify-between">
+                <!-- Timer Hub -->
+                <div class="lg:col-span-2 bg-gradient-to-br from-[#1e1f22] to-[var(--bg-secondary)] border border-white/5 rounded-3xl p-8 shadow-2xl flex flex-col justify-between">
                      <div class="flex flex-col md:flex-row items-center justify-between gap-8">
                         <div class="text-center md:text-left">
-                            <h2 class="text-2xl font-black text-[var(--text-header)] uppercase italic leading-none mb-2">Společný Focus Hub</h2>
-                            <p class="text-xs text-[var(--text-muted)]">Zapni Pomodoro a studujte synchronizovaně.</p>
+                            <h2 class="text-2xl font-black text-[var(--text-header)] uppercase italic leading-none mb-2">Focus Hub</h2>
+                            <p class="text-xs text-[var(--text-muted)]">Zapni Pomodoro a studujte společně.</p>
                         </div>
                         <div class="flex items-center gap-6">
                             <div id="pomodoro-timer" class="text-4xl font-black text-[var(--text-header)] font-mono bg-black/20 px-6 py-4 rounded-2xl border border-white/5 tabular-nums">25:00</div>
                             <button id="pomodoro-btn" onclick="import('/js/modules/matura.js').then(m => m.togglePomodoro())" 
-                                    class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg transition active:scale-95 disabled:opacity-50">
+                                    class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg transition active:scale-95">
                                 Start 🧠
                             </button>
                         </div>
                      </div>
-                     <div id="pomodoro-status-list" class="mt-8 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-                         <!-- Populated via JS -->
-                     </div>
+                     <div id="pomodoro-status-list" class="mt-8 flex gap-2 overflow-x-auto pb-2 scrollbar-none"></div>
+                </div>
+            </div>
+
+            <!-- SOS & Quests -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <button onclick="import('/js/modules/matura.js').then(m => m.triggerSOS())" 
+                        class="bg-[#ed4245]/10 hover:bg-[#ed4245]/20 border border-[#ed4245]/20 p-6 rounded-2xl transition-all group flex flex-col items-center gap-2">
+                    <div class="text-2xl group-hover:scale-110 transition">🆘</div>
+                    <div class="text-[9px] font-black text-[#ed4245] uppercase tracking-widest leading-none">Panic Button</div>
+                </button>
+
+                <div class="md:col-span-3 bg-[var(--bg-secondary)] border border-white/5 p-6 rounded-2xl flex items-center gap-6 relative overflow-hidden group">
+                    <div class="absolute -right-4 -bottom-4 text-7xl opacity-5 transition-transform group-hover:scale-150 rotate-12">🎖️</div>
+                    <div class="text-3xl">🎓</div>
+                    <div>
+                        <h3 class="font-black text-[var(--text-header)] uppercase tracking-tight text-sm">Aktuální Milestone</h3>
+                        <p class="text-xs text-[var(--text-muted)]">Pokud oba dokončíte <b>všechny sítě</b>, objednáváme pizzu! 🍕</p>
+                    </div>
                 </div>
             </div>
         </div>
     `;
 
-
-
-    // Calculate Total Mastery Async
+    // Calculate Total Mastery & Gauge Animation Async
     import('./spaced_repetition.js').then(async sr => {
-        const subjects = ['czech', 'it'];
         let totalMasterySum = 0;
-        let totalSubjectsCount = 0;
+        let totalCount = 0;
 
         for (const sub of subjects) {
             const items = state.maturaTopics?.[sub] || [];
             for (const item of items) {
                 totalMasterySum += await sr.getTopicMastery(item.id);
-                totalSubjectsCount++;
+                totalCount++;
             }
         }
 
-        const finalMastery = totalSubjectsCount > 0 ? Math.round(totalMasterySum / totalSubjectsCount) : 0;
-        const textEl = document.getElementById('total-mastery-text');
-        const barEl = document.getElementById('total-mastery-bar');
-        if (textEl && barEl) {
-            textEl.textContent = `${finalMastery}%`;
-            barEl.style.width = `${finalMastery}%`;
+        const avgMastery = totalCount > 0 ? Math.round(totalMasterySum / totalCount) : 0;
+        // Overall Readiness is average of Mastery and Passive Completion
+        const finalReadiness = Math.round((avgMastery + progressPercent) / 2);
+        
+        const gaugeEl = document.getElementById('readiness-gauge-fill');
+        const valueEl = document.getElementById('readiness-value');
+        
+        if (gaugeEl && valueEl) {
+            // Gauge is semi-circle (180deg), so 0-100% maps to 0-180deg
+            const deg = (finalReadiness / 100) * 180;
+            gaugeEl.style.transform = `rotate(${deg}deg)`;
+            
+            // Text counter animation
+            let current = 0;
+            const interval = setInterval(() => {
+                if (current >= finalReadiness) {
+                    valueEl.textContent = `${finalReadiness}%`;
+                    clearInterval(interval);
+                } else {
+                    current++;
+                    valueEl.textContent = `${current}%`;
+                }
+            }, 15);
         }
     });
 
@@ -496,7 +543,8 @@ export async function cycleStatus(itemId) {
         jose: { status: 'none', notes: '' },
         klarka: { status: 'none', notes: '' }
     };
-    const userKey = state.currentUser?.name === 'Jožka' ? 'jose' : 'klarka';
+    const userVal = state.currentUser?.name;
+    const userKey = userVal === 'Jožka' ? 'jose' : 'klarka';
     const current = prog[userKey].status;
 
     let next = 'none';
@@ -511,16 +559,28 @@ export async function cycleStatus(itemId) {
     if (next === 'done') triggerConfetti();
 
     // Persist to Supabase
-    try {
-        await supabase.from('matura_topic_progress').upsert({
-            item_id: itemId,
-            user_id: state.currentUser?.id,
-            status: next,
-            notes: prog[userKey].notes,
-            updated_at: new Date().toISOString()
-        });
-    } catch (e) {
-        console.warn("[Matura] Supabase error (probably table missing), using local state.");
+    if (!state.currentUser?.id) {
+        console.error("[Matura] Cannot save status: No current user ID.");
+        showNotification("Nebyl jsi identifikován - stav se neuloží. Zkus stránku obnovit.", "error");
+    } else {
+        try {
+            const { error } = await supabase.from('matura_topic_progress').upsert({
+                item_id: itemId,
+                user_id: state.currentUser?.id,
+                status: next,
+                updated_at: new Date().toISOString()
+            });
+
+            if (error) {
+                console.error("[Matura] Supabase error:", error);
+                showNotification(`Chyba při ukládání stavu: ${error.message} (Kód: ${error.code})`, "error");
+            } else {
+                console.log(`[Matura] Success: topic ${itemId} updated to '${next}' in DB.`);
+            }
+        } catch (e) {
+            console.warn("[Matura] Unexpected network error:", e);
+            showNotification("Chyba sítě při ukládání stavu.", "error");
+        }
     }
 
     // TARGETED UPDATE instead of full re-render
@@ -995,6 +1055,10 @@ export function openPDFViewer(url, title) {
 }
 
 export async function openKnowledgeBase(itemId) {
+    // Close any existing KB modals first (ensures single modal experience for wikilinks)
+    const existingModals = document.querySelectorAll('[id^="kb-modal-"]');
+    existingModals.forEach(m => m.remove());
+
     let item = null;
     if (state.maturaTopics) {
         for (const cat in state.maturaTopics) {
@@ -1047,17 +1111,81 @@ export async function openKnowledgeBase(itemId) {
         console.error("Supabase Matura fetch error:", e);
     }
 
+    // --- DYNAMIC LOAD DEPENDENCIES ---
+    try {
+        const { loadMarked, loadHighlightJS, loadKaTeX } = await import('../core/loader.js');
+        await Promise.all([loadMarked(), loadHighlightJS(), loadKaTeX()]);
+    } catch (e) {
+        console.warn("[Matura] Failed to load some dependencies, using fallback parser.");
+    }
+
     const isMobile = window.innerWidth < 768;
     const modalId = `kb-modal-${itemId}`;
+    const quizExists = item.quizzes && item.quizzes.length > 0;
+    const cardsExists = item.flashcards && item.flashcards.length > 0;
     const actions = `
-        <button onclick="import('/js/modules/matura.js').then(m => m.generateAITest('${itemId}'))" 
-                class="bg-[#eb459e]/10 hover:bg-[#eb459e]/20 text-[#eb459e] border border-[#eb459e]/30 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition shadow-lg">
-            <span class="animate-pulse">AI</span> Generovat test
-        </button>
-        <button onclick="import('/js/modules/matura.js').then(m => m.openEditor('${itemId}'))" 
-                class="bg-white/5 hover:bg-white/10 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition">
-            <i class="fas fa-pencil-alt text-[8px]"></i> Upravit zápis
-        </button>
+        <div class="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 w-full">
+            <!-- Tests & Cards -->
+            <div class="flex flex-wrap items-center gap-1 flex-1 sm:flex-none">
+                <!-- QUIZ -->
+                <div class="flex items-center gap-1 flex-1 sm:flex-none">
+                    ${quizExists ? `
+                        <button onclick="import('/js/modules/quiz.js').then(m => m.openQuiz('${itemId}'))" 
+                                class="flex-1 sm:flex-none bg-[#48b4e0] hover:bg-[#3ba1cc] text-[#1b1d20] px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition shadow-[0_0_15px_rgba(72,180,224,0.3)]">
+                            <i class="fas fa-play text-[8px]"></i> <span>Cvičný test</span>
+                        </button>
+                        <button data-ai-action="quiz-${itemId}"
+                                onclick="import('/js/modules/matura.js').then(async m => { if(await window.showConfirmDialog('Chceš test vygenerovat znovu? Původní otázky budou smazány.', 'Ano', 'Zrušit')) m.generateAIQuiz('${itemId}'); })"
+                                class="bg-white/5 hover:bg-white/10 text-gray-500 p-2.5 rounded-xl text-xs transition min-w-[40px] flex items-center justify-center border border-white/5" title="Vygenerovat test znovu">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    ` : `
+                        <button data-ai-action="quiz-${itemId}"
+                                onclick="import('/js/modules/matura.js').then(m => m.generateAIQuiz('${itemId}'))" 
+                                class="flex-1 sm:flex-none bg-[#48b4e0]/10 hover:bg-[#48b4e0]/20 text-[#48b4e0] border border-[#48b4e0]/30 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition">
+                            <i class="fas fa-file-alt text-[8px]"></i> Generovat test
+                        </button>
+                    `}
+                </div>
+
+                <!-- CARDS -->
+                <div class="flex items-center gap-1 flex-1 sm:flex-none">
+                    ${cardsExists ? `
+                        <button onclick="import('/js/modules/flashcards.js').then(m => m.openFlashcards('${itemId}'))" 
+                                class="flex-1 sm:flex-none bg-[#eb459e] hover:bg-[#d83c8d] text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition shadow-[0_0_15px_rgba(235,69,158,0.3)]">
+                            <i class="fas fa-layer-group text-[8px]"></i> <span>Kartičky</span>
+                        </button>
+                        <button data-ai-action="cards-${itemId}"
+                                onclick="import('/js/modules/matura.js').then(async m => { if(await window.showConfirmDialog('Chceš kartičky vygenerovat znovu?', 'Ano', 'Zrušit')) m.generateAITest('${itemId}'); })"
+                                class="bg-white/5 hover:bg-white/10 text-gray-500 p-2.5 rounded-xl text-xs transition min-w-[40px] flex items-center justify-center border border-white/5" title="Vygenerovat kartičky znovu">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    ` : `
+                        <button data-ai-action="cards-${itemId}"
+                                onclick="import('/js/modules/matura.js').then(m => m.generateAITest('${itemId}'))" 
+                                class="flex-1 sm:flex-none bg-[#eb459e]/10 hover:bg-[#eb459e]/20 text-[#eb459e] border border-[#eb459e]/30 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition">
+                            <i class="fas fa-magic text-[8px]"></i> Generovat kartičky
+                        </button>
+                    `}
+                </div>
+            </div>
+
+            <!-- ADMIN ACTIONS -->
+            <div class="flex items-center gap-1 pt-2 sm:pt-0 sm:ml-auto border-t border-white/5 sm:border-0 grow sm:grow-0 overflow-x-auto no-scrollbar">
+                <button onclick="import('/js/modules/matura.js').then(m => m.openEditor('${itemId}'))" 
+                        class="bg-white/5 hover:bg-white/10 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition border border-white/5">
+                    <i class="fas fa-pencil-alt text-[8px]"></i> <span class="hidden sm:inline">Upravit</span>
+                </button>
+                <button onclick="import('/js/modules/matura.js').then(m => m.openNotes('${itemId}'))" 
+                        class="bg-white/5 hover:bg-white/10 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition border border-white/5">
+                    <i class="fas fa-sticky-note text-[8px]"></i> <span class="hidden sm:inline">Poznámky</span>
+                </button>
+                <button onclick="import('/js/modules/matura.js').then(m => m.openGeminiSettings())" 
+                        class="bg-white/5 hover:bg-white/10 text-gray-500 border border-white/10 px-3 py-2 rounded-xl text-[10px] transition shrink-0" title="Nastavení Gemini API">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
     `;
 
     const formattedContent = dbContent ? formatMarkdown(dbContent) : '<p class="text-gray-500 italic">Zatím zde není žádný zápis. Klikni na Upravit a začni tvořit! ✍️</p>';
@@ -1067,7 +1195,7 @@ export async function openKnowledgeBase(itemId) {
         <div class="flex flex-col md:flex-row h-full overflow-hidden bg-[var(--bg-tertiary)] relative">
             <!-- MAIN CONTENT AREA -->
             <div class="flex-1 overflow-y-auto custom-scrollbar p-5 md:p-12 matura-content-wrapper relative bg-[var(--bg-primary)]">
-                <div id="kb-content-${itemId}" class="matura-content markdown-body prose prose-invert max-w-none min-h-[60vh]">
+                <div id="kb-content-${itemId}" class="matura-content markdown-body max-w-none min-h-[60vh]">
                     ${formattedContent}
                 </div>
             </div>
@@ -1120,7 +1248,7 @@ export async function openKnowledgeBase(itemId) {
             <!-- Mobile FAB for TOC -->
             ${isMobile ? `
                 <button onclick="import('/js/modules/matura.js').then(m => m.toggleMobileTOC('${itemId}'))" 
-                        class="fixed bottom-24 right-6 w-14 h-14 bg-[#5865F2] hover:bg-[#4752c4] text-white rounded-full shadow-2xl flex items-center justify-center z-[1000] animate-bounce-slow border-4 border-[var(--bg-primary)] scale-100 active:scale-95 transition-transform">
+                        class="fixed bottom-32 right-6 w-14 h-14 bg-[#5865F2] hover:bg-[#4752c4] text-white rounded-full shadow-2xl flex items-center justify-center z-[1000] animate-bounce-slow border-4 border-[var(--bg-primary)] scale-100 active:scale-95 transition-transform">
                     <i class="fas fa-list-ul text-xl"></i>
                 </button>
             ` : ''}
@@ -1143,21 +1271,30 @@ export async function openKnowledgeBase(itemId) {
     triggerHaptic('medium');
 
     // INITIALIZE SPECIAL FEATURES
-    // 0. Table Responsiveness (Data Labels for Mobile)
-    initTableResponsiveness(itemId);
+    // 0. Chapters Checkboxes (Previously also had table responsiveness here)
 
-    // 1. Theme Toggle Injection
+    // 1. Theme Toggle & Collapse Injections
     const headerExtra = document.getElementById(`${modalId}-header-extra`);
     if (headerExtra) {
         headerExtra.innerHTML = `
-            <button onclick="import('/js/modules/matura.js').then(m => m.toggleLocalTheme('${modalId}'))" 
-                    class="p-2 rounded-full hover:bg-white/5 text-[var(--interactive-normal)] hover:text-[var(--text-header)] transition-all"
-                    title="Přepnout téma okna">
-                <i class="fas fa-sun block theme-dark:hidden"></i>
-                <i class="fas fa-moon hidden theme-dark:block"></i>
-            </button>
+            <div class="flex items-center gap-2">
+                <button onclick="import('/js/modules/matura.js').then(m => m.toggleAllSections('${itemId}'))" 
+                        class="matura-collapse-all-btn"
+                        id="btn-toggle-all-${itemId}"
+                        title="Sbalit/Rozbalit vše">
+                    Sbalit vše
+                </button>
+                <button onclick="import('/js/modules/matura.js').then(m => m.toggleLocalTheme('${modalId}'))" 
+                        class="p-2 rounded-full hover:bg-white/5 text-[var(--interactive-normal)] hover:text-[var(--text-header)] transition-all"
+                        title="Přepnout téma okna">
+                    <i class="fas fa-sun theme-toggle-icon"></i>
+                </button>
+            </div>
         `;
     }
+
+    // 1.5. Collapsible Sections Logic
+    applyCollapsibleSections(itemId);
 
     // 1. Chapters Checkboxes
     import('./progress.js').then(m => m.initProgress(modalId, itemId));
@@ -1171,6 +1308,9 @@ export async function openKnowledgeBase(itemId) {
 
             // Re-render core markdown first to clean any messy spans
             contentDiv.innerHTML = formattedContent;
+
+            // Re-apply collapsible logic
+            applyCollapsibleSections(itemId);
 
             // Re-apply chapter checkboxes
             import('./progress.js').then(pr => pr.mountCheckboxes(modalId));
@@ -1311,7 +1451,7 @@ export async function openEditor(itemId, existingContent = null) {
     const draft = localStorage.getItem('matura_draft_' + itemId);
     let initialContent = currentContent;
     if (draft && draft !== currentContent) {
-        if (confirm("Obnovit neulozeny koncept?")) {
+        if (await window.showConfirmDialog("Už máš rozdělanou práci! Obnovit neuložený koncept?", "Obnovit", "Zahasit")) {
             initialContent = draft;
         }
     }
@@ -1403,7 +1543,15 @@ export async function openEditor(itemId, existingContent = null) {
     if (textareaEl) {
         textareaEl.value = initialContent;
 
-        // Add Keyboard Shortcuts
+        // Attach paste listener via JS (more reliable than inline)
+        requestAnimationFrame(() => {
+            const textarea = document.getElementById('textarea-kb');
+            if (textarea) {
+                textarea.addEventListener('paste', (e) => handleKBEditorPaste(e, itemId));
+            }
+        });
+
+        // Handle Keyboard Shortcuts
         textareaEl.addEventListener('keydown', (e) => {
             const isMod = e.ctrlKey || e.metaKey;
             const isAlt = e.altKey;
@@ -1529,7 +1677,9 @@ export async function saveKBContent(itemId) {
         const localFetched = document.getElementById('kb-fetched-at')?.value || '';
 
         if (serverUpdate && localFetched && serverUpdate !== localFetched) {
-            if (!confirm("Mezitím někdo jiný zápis změnil. Opravdu chceš své změny uložit a přepsat ty jeho?")) {
+            if (await window.showConfirmDialog("⚠️ POZOR: Někdo jiný tento zápis změnil! Pokud ho teď uložíš, přemažeš jeho změny. Chceš to opravdu udělat?", "Ano, přemazat", "Zrušit")) {
+                // Continue
+            } else {
                 return;
             }
         }
@@ -1573,44 +1723,94 @@ export async function saveKBContent(itemId) {
 export async function handleImageUpload(input, itemId) {
     const file = input.files[0];
     if (!file) return;
+    
+    const label = input.parentElement;
+    await uploadAndInsertImage(file, itemId, label);
+    input.value = ''; // Reset input
+}
 
+/**
+ * Handles paste event in the KB Editor to support image pasting from clipboard
+ */
+export async function handleKBEditorPaste(event, itemId) {
+    const cb = (event.clipboardData || window.clipboardData);
+    if (!cb) return;
+
+    // If there is string data (text), we prefer the text paste (default behavior)
+    // Most apps that put both text and image (like Word/Chrome) do so for formatting,
+    // but users usually want the text in a markdown editor.
+    const hasText = cb.getData('text/plain').length > 0;
+    
+    // Check for images
+    const items = cb.items;
+    for (const item of items) {
+        if (item.type.indexOf("image") !== -1) {
+            const file = item.getAsFile();
+            if (file) {
+                // If we also have text, we ONLY upload if it's a "real" file (not just a clipboard buffer from an app)
+                // But generally, if there is text, we let the default paste happen.
+                if (hasText) {
+                    console.log("[Matura] Text and Image both present, preferring text.");
+                    return; 
+                }
+
+                // Prevent default paste if we only found an image
+                event.preventDefault();
+                console.log("[Matura] Image detected in clipboard (no text), uploading...", file.name);
+                await uploadAndInsertImage(file, itemId);
+            }
+        }
+    }
+}
+
+/**
+ * Common logic for uploading an image and inserting markdown link at cursor
+ * @param {File} file 
+ * @param {string} itemId 
+ * @param {HTMLElement} feedbackElement Optional element to show loading spinner on
+ */
+export async function uploadAndInsertImage(file, itemId, feedbackElement = null) {
     if (file.size > 5 * 1024 * 1024) {
         showNotification('Obrázek je příliš velký (max 5MB)', 'error');
         return;
     }
 
-    const label = input.parentElement;
-    const originalIcon = label.innerHTML;
+    let originalContent = '';
+    if (feedbackElement) {
+        originalContent = feedbackElement.innerHTML;
+        feedbackElement.innerHTML = '<i class="fas fa-spinner fa-spin text-xs"></i>';
+        feedbackElement.style.pointerEvents = 'none';
+    }
 
-    // UI Feedback
-    label.innerHTML = '<i class="fas fa-spinner fa-spin text-xs"></i>';
-    label.style.pointerEvents = 'none';
     showNotification('Nahrávám obrázek...', 'info');
 
     try {
-        // Use central storage helper with 'timeline-photos' bucket (confirmed in SQL) and 'matura' subfolder
         const publicUrl = await uploadFile('timeline-photos', file, 'matura');
 
         if (publicUrl) {
             window.insertAtCursor('textarea-kb', `\n![obrázek](${publicUrl})\n`, '');
             showNotification('Obrázek vložen! 🖼️', 'success');
             triggerHaptic('success');
+            
+            // Trigger preview update
+            if (window.updateKBPreview) window.updateKBPreview();
         } else {
             throw new Error("Upload failed to return URL");
         }
     } catch (error) {
         console.error('Image upload error:', error);
-        showNotification('Chyba při nahrávání obrázku. Zkontroluj připojení nebo Supabase bucket "timeline-photos".', 'error');
+        showNotification('Chyba při nahrávání obrázku. Zkontroluj připojení nebo bucket.', 'error');
         triggerHaptic('heavy');
     } finally {
-        label.innerHTML = originalIcon;
-        label.style.pointerEvents = 'auto';
-        input.value = ''; // Reset input
+        if (feedbackElement) {
+            feedbackElement.innerHTML = originalContent;
+            feedbackElement.style.pointerEvents = 'auto';
+        }
     }
 }
 
 export async function addNewTopic(categoryId) {
-    const title = prompt("Název nového tématu:");
+    const title = await window.showPromptDialog("Název nového tématu:");
     if (!title) return;
 
     const id = categoryId.substring(0, 2) + Date.now().toString().slice(-6);
@@ -1637,111 +1837,102 @@ export async function addNewTopic(categoryId) {
 function formatMarkdown(text) {
     if (!text) return '';
 
-    // 1. Smart Table Fix & Cleanup
-    let processedText = text;
-    if (processedText.includes('|')) {
-        const lines = processedText.split('\n');
+    // 0. Standardize newlines (normalize \r\n to \n)
+    let processedText = text.replace(/\r\n/g, '\n');
 
-        let inTable = false;
-        let headerFound = false;
+    // WIKILINKS Implementation: [[Topic Name]]
+    const topicMap = {};
+    Object.values(state.maturaTopics || {}).flat().forEach(t => {
+        topicMap[t.title.toLowerCase()] = t.id;
+    });
 
-        const cleanedLines = lines.filter((l) => {
-            const trimmed = l.trim();
-            const isPipeLine = trimmed.includes('|');
-            // A separator must contain at least one dash and only pipes/spaces/dashes
-            const isSeparator = isPipeLine && trimmed.includes('-') && trimmed.replace(/[|\s-]/g, '').length === 0 && trimmed.length > 2;
-            const isEmptyPipeLine = isPipeLine && !isSeparator && trimmed.replace(/[|\s]/g, '').length === 0;
+    processedText = processedText.replace(/\[\[(.*?)\]\]/g, (match, title) => {
+        const foundId = topicMap[title.toLowerCase()];
+        if (foundId) {
+            return `<span class="matura-wikilink" onclick="import('/js/modules/matura.js').then(m => m.openKnowledgeBase('${foundId}'))">${title}</span>`;
+        }
+        return `<span class="text-[var(--text-muted)] italic opacity-60" title="Téma nenalezeno">[[${title}]]</span>`;
+    });
 
-            if (isPipeLine) {
-                if (!inTable) {
-                    inTable = true;
-                    headerFound = false;
-                    return true;
-                }
-
-                // Discard empty pipe lines that would break table structure (e.g. between header and separator)
-                if (isEmptyPipeLine && !headerFound) return false;
-
-                if (isSeparator) {
-                    if (!headerFound) {
-                        headerFound = true;
-                        return true; // Keep first separator
-                    }
-                    return false; // Remove redundant separators
-                }
-                return true;
-            } else {
-                inTable = false;
-                headerFound = false;
-                return true;
-            }
-        });
-
-        processedText = cleanedLines.join('\n');
-    }
-
-    // 2. Math preprocessing (protect math from marked using non-conflicting delimiters)
+    // 1. Math preprocessing (Do this BEFORE any other processing to protect formulas)
     const mathBlocks = [];
-
     if (window.katex) {
         // Multi-line math
         processedText = processedText.replace(/\$\$(.*?)\$\$/gs, (match, p1) => {
             const id = `@@@MATH_BLOCK_${mathBlocks.length}@@@`;
             try {
-                mathBlocks.push({ id, html: `<div class="my-6 overflow-x-auto py-2 flex justify-center text-lg md:text-xl text-white shadow-inner bg-white/5 rounded-2xl border border-white/5 font-serif">${window.katex.renderToString(p1, { displayMode: true, throwOnError: false })}</div>` });
+                mathBlocks.push({ id, html: `<div class="my-6 overflow-x-auto py-4 flex justify-center text-lg md:text-xl text-white shadow-inner bg-white/5 rounded-2xl border border-white/5 font-serif">${window.katex.renderToString(p1.trim(), { displayMode: true, throwOnError: false })}</div>` });
             } catch (e) {
-                mathBlocks.push({ id, html: `<code class="text-red-400">${p1}</code>` });
+                mathBlocks.push({ id, html: `<code class="text-red-400">$${p1}$</code>` });
             }
             return id;
         });
 
         // Inline math
-        processedText = processedText.replace(/\$(.*?)\$/g, (match, p1) => {
+        processedText = processedText.replace(/\$([^\$]+?)\$/g, (match, p1) => {
             const id = `@@@MATH_INLINE_${mathBlocks.length}@@@`;
             try {
                 mathBlocks.push({ id, html: `<span class="bg-white/5 px-2 py-0.5 rounded-md border border-white/5 mx-0.5 font-serif">${window.katex.renderToString(p1, { displayMode: false, throwOnError: false })}</span>` });
             } catch (e) {
-                mathBlocks.push({ id, html: `<code class="text-xs text-red-400">${p1}</code>` });
+                mathBlocks.push({ id, html: `<code class="text-xs text-red-400">$${p1}$</code>` });
             }
             return id;
         });
     }
 
     // 3. Marked.js configuration & parsing
-    if (window.marked && typeof marked.parse === 'function') {
-        const renderer = new marked.Renderer();
-        const linkRenderer = renderer.link;
-        renderer.link = (href, title, text) => {
-            const html = linkRenderer.call(renderer, href, title, text);
-            return html.replace(/^<a /, '<a target="_blank" rel="noopener noreferrer" ');
-        };
+    let parser = null;
+    if (typeof marked !== 'undefined') {
+        parser = marked.parse || (typeof marked === 'function' ? marked : null);
+    }
+    
+    if (parser) {
+        const renderer = (marked.Renderer) ? new marked.Renderer() : null;
+        if (renderer) {
+            const linkRenderer = renderer.link;
+            renderer.link = (href, title, text) => {
+                const html = linkRenderer.call(renderer, href, title, text);
+                return html.replace(/^<a /, '<a target="_blank" rel="noopener noreferrer" ');
+            };
+        }
 
-        marked.setOptions({
-            renderer: renderer,
-            highlight: function (code, lang) {
-                if (window.hljs && lang && hljs.getLanguage(lang)) {
-                    return hljs.highlight(code, { language: lang }).value;
-                }
-                return code;
-            },
-            breaks: true,
-            gfm: true
-        });
-
-        processedText = marked.parse(processedText);
+        if (marked.setOptions) {
+            marked.setOptions({
+                renderer: renderer,
+                highlight: function (code, lang) {
+                    if (window.hljs && lang && hljs.getLanguage(lang)) {
+                        return hljs.highlight(code, { language: lang }).value;
+                    }
+                    return code;
+                },
+                breaks: false,
+                gfm: true
+            });
+        }
+        processedText = (typeof parser === 'function') ? parser(processedText) : marked.parse(processedText);
     } else {
-        // Fallback for H1-H3 if marked fails to load (with nested bold/italic support)
+        // BETTER FALLBACK: Handle headers, lists, and basic formatting without destructive <br> tags
         processedText = processedText
             .replace(/^# (.*$)/gim, '<h1 class="text-3xl font-black text-white mb-6 mt-8 italic uppercase tracking-tighter shadow-sm">$1</h1>')
             .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-black text-white mb-4 mt-6 italic uppercase tracking-tighter border-b border-white/10 pb-2">$1</h2>')
             .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold text-white mb-2 mt-4">$1</h3>')
+            .replace(/^\s*-\s+(.*$)/gim, '<li class="ml-4 mb-2">$1</li>')
             .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline">$1</a>')
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/\n/gim, '<br>');
+            .replace(/\b_(.*?)_\b/g, '<em>$1</em>') // Support _italic_
+            .replace(/\*(.*?)\*/g, '<em>$1</em>'); // Support *italic*
+            
+        // Simple paragraph wrapping
+        processedText = processedText.split('\n\n').map(block => {
+            const trimmed = block.trim();
+            if (!trimmed) return '';
+            // Don't wrap if it's already an HTML block or contains a protected math token
+            if (trimmed.startsWith('<h') || trimmed.startsWith('<li') || trimmed.startsWith('<div') || trimmed.includes('@@@MATH_')) return block;
+            return `<p class="mb-4">${block.replace(/\n/g, ' ')}</p>`;
+        }).join('\n');
     }
 
-    // 4. Math postprocessing (restore math blocks)
+    // 4. Math postprocessing
     mathBlocks.forEach(block => {
         // Use exact string replacement to avoid regex issues
         processedText = processedText.split(block.id).join(block.html);
@@ -1750,94 +1941,212 @@ function formatMarkdown(text) {
     return processedText;
 }
 
-/**
- * Responsive Tables Support
- */
-function initTableResponsiveness(itemId) {
-    const container = document.getElementById(`kb-content-${itemId}`);
-    if (!container) return;
 
-    container.querySelectorAll('table').forEach(table => {
-        // Find headers
-        let headers = [];
-        const ths = table.querySelectorAll('thead th');
-        if (ths.length > 0) {
-            headers = Array.from(ths).map(th => th.textContent.trim());
-        } else {
-            // Fallback for tables without thead (marked usually generates it, though)
-            const firstRow = table.querySelector('tr');
-            if (firstRow) {
-                headers = Array.from(firstRow.querySelectorAll('td, th')).map(el => el.textContent.trim());
-            }
+const checkApiKey = async (isRetry = false) => {
+    let key = localStorage.getItem('GEMINI_API_KEY');
+    const isValid = key && key.trim().length > 15 && key !== 'undefined' && key !== 'null';
+    
+    if (!isValid || isRetry) {
+        const msg = isRetry 
+            ? "Bohužel, zadaný API klíč je neplatný. Vlož prosím správný klíč (případně ho získej zdarma na aistudio.google.com):"
+            : "Pro generování AI testů potřebuješ Gemini API klíč. Zkopíruj ho sem (získáš ho zdarma na aistudio.google.com):";
+        
+        const newKey = await window.showPromptDialog(msg);
+        if (newKey && newKey.trim().length > 15) {
+            localStorage.setItem('GEMINI_API_KEY', newKey.trim());
+            return true;
         }
+        return false;
+    }
+    return true;
+};
 
-        // Apply data-labels to each cell
-        table.querySelectorAll('tbody tr, tr').forEach(tr => {
-            // If this is the header row, skip it
-            if (tr.querySelector('th')) return;
+export async function openGeminiSettings() {
+    let currentKey = localStorage.getItem('GEMINI_API_KEY') || '';
+    const maskedKey = currentKey && currentKey.length > 8 ? currentKey.substring(0, 4) + '...' + currentKey.substring(currentKey.length - 4) : 'Žádný klíč';
+    
+    const newKey = await window.showPromptDialog(`Aktuální Gemini API klíč: ${maskedKey}\n\nVlož nový klíč nebo nech prázdné pro smazání (klíč získáš na aistudio.google.com):`, currentKey);
+    
+    if (newKey !== null) {
+        if (newKey.trim() === '') {
+            localStorage.removeItem('GEMINI_API_KEY');
+            if (window.showNotification) showNotification('API klíč byl smazán.', 'info');
+        } else {
+            localStorage.setItem('GEMINI_API_KEY', newKey.trim());
+            if (window.showNotification) showNotification('API klíč byl úspěšně uložen! ✅', 'success');
+        }
+    }
+}
 
-            Array.from(tr.querySelectorAll('td')).forEach((td, i) => {
-                if (headers[i]) {
-                    td.setAttribute('data-label', headers[i]);
-                }
-            });
-        });
+/**
+ * Locks / unlocks all buttons sharing a data-ai-action attribute.
+ */
+function _lockAIButtons(action, locked) {
+    document.querySelectorAll(`[data-ai-action="${action}"]`).forEach(b => {
+        b.disabled = locked;
+        if (locked) {
+            b.classList.add('opacity-50', 'cursor-wait');
+        } else {
+            b.classList.remove('opacity-50', 'cursor-wait');
+        }
     });
 }
 
 /**
- * AI GENERATION
+ * AI GENERATION - STUDY CARDS
  */
 export async function generateAITest(itemId) {
-    if (window.showNotification) showNotification('✨ AI analyzuje tvé zápisky...', 'info');
+    if (!(await checkApiKey())) return;
+
+    _lockAIButtons(`cards-${itemId}`, true);
+
+    const prog = window.showProgress ? window.showProgress('AI připravuje studijní kartičky (15-20 ks)...') : null;
+    let progressVal = 10;
+    const interval = setInterval(() => {
+        if (progressVal < 95) {
+            progressVal += (95 - progressVal) * 0.1;
+            if (prog) prog.setProgress(progressVal);
+        }
+    }, 1000);
 
     try {
         const { data: kbData } = await supabase.from('matura_kb').select('content').eq('item_id', itemId).maybeSingle();
         const content = kbData?.content || '';
         if (!content || content.length < 50) {
-            if (window.showNotification) showNotification('Zápis je příliš krátký pro tvorbu testu.', 'warning');
+            clearInterval(interval);
+            if (prog) prog.close();
+            showNotification('Zápis je příliš krátký pro tvorbu kartiček.', 'warning');
             return;
         }
 
-        let topic = null;
+        let topicTitle = 'Téma';
         if (state.maturaTopics) {
             for (const cat in state.maturaTopics) {
                 const found = state.maturaTopics[cat].find(i => i.id === itemId);
-                if (found) {
-                    topic = found;
-                    break;
-                }
+                if (found) { topicTitle = found.title; break; }
             }
         }
 
         const { AI } = await import('../core/ai_helper.js');
-        const flashcards = await AI.generateFlashcards(topic?.title || 'Téma', content);
+        const flashcards = await AI.generateFlashcards(topicTitle, content);
+
+        clearInterval(interval);
+        if (prog) {
+            prog.setProgress(100);
+            prog.setMessage('Kartičky hotovy! 🃏 Ukládám...');
+        }
 
         if (flashcards && flashcards.length > 0) {
-            const { error } = await supabase.from('matura_topics').update({
-                flashcards: flashcards
-            }).eq('id', itemId);
-
+            const { error } = await supabase.from('matura_topics').update({ flashcards }).eq('id', itemId);
             if (error) throw error;
 
-            // Re-sync local topics
             await refreshMaturaTopics();
-
-            if (window.showNotification) showNotification(`✨ Test vygenerován! (${flashcards.length} otázek)`, 'success');
             if (window.triggerConfetti) window.triggerConfetti();
             triggerHaptic('success');
+            updateTopicCardUI(itemId);
+            showNotification(`Kartičky jsou připraveny! 🃏 (${flashcards.length} ks) Klikni na tlačítko níže.`, 'success');
+
+            setTimeout(() => { if (prog) prog.close(); }, 1000);
         }
     } catch (e) {
-        console.error("AI Gen Error:", e);
-        if (window.showNotification) {
-            if (e.message.includes('API')) {
-                showNotification('Pro AI testy musíš nastavit GEMINI_API_KEY v localStorage!', 'warning');
-            } else {
-                showNotification('Chyba při generování testu.', 'error');
-            }
-        }
+        clearInterval(interval);
+        if (prog) prog.close();
+        handleAIGenError(e);
+    } finally {
+        _lockAIButtons(`cards-${itemId}`, false);
     }
 }
+
+function handleAIGenError(e) {
+    console.error("AI Gen Error:", e);
+
+    if (e.message === 'API_KEY_MISSING') {
+        showNotification('Chybí Gemini API klíč! Klikni na ⚙️ a vlož ho.', 'error');
+        checkApiKey(false);
+    } else if (e.message === 'API_KEY_INVALID') {
+        showNotification('Gemini API klíč je neplatný. Vlož prosím správný klíč.', 'error');
+        checkApiKey(true);
+    } else if (e.message === 'API_LIMIT_REACHED') {
+        showNotification('⏳ AI limit vyčerpán — systém to zkusil 5× a nepodařilo se. Zkus to prosím za chvíli.', 'warning');
+    } else if (e.message === 'AI_PARSING_ERROR') {
+        showNotification('AI vrátila neúplnou odpověď. Zkus téma trochu zkrátit nebo zkus znovu.', 'error');
+    } else if (e.message === 'AI_EMPTY_RESPONSE') {
+        showNotification('AI nevrátila žádná data. Ověř obsah zápisku a zkus znovu.', 'error');
+    } else {
+        showNotification(`Nepodařilo se vygenerovat data. ${e.message || 'Zkontroluj připojení.'}`, 'error');
+    }
+}
+
+/**
+ * AI GENERATION - MCQ QUIZ
+ */
+export async function generateAIQuiz(itemId) {
+    if (!(await checkApiKey())) return;
+
+    _lockAIButtons(`quiz-${itemId}`, true);
+
+    const prog = window.showProgress ? window.showProgress('AI připravuje test (15-20 otázek)...') : null;
+    let progressVal = 5;
+    const interval = setInterval(() => {
+        if (progressVal < 92) {
+            progressVal += (92 - progressVal) * 0.12;
+            if (prog) prog.setProgress(progressVal);
+        }
+    }, 1000);
+
+    try {
+        const { data: kbData } = await supabase.from('matura_kb').select('content').eq('item_id', itemId).maybeSingle();
+        const content = kbData?.content || '';
+
+        if (!content || content.length < 50) {
+            clearInterval(interval);
+            if (prog) prog.close();
+            showNotification('Zápis je příliš krátký pro tvorbu testu.', 'warning');
+            return;
+        }
+
+        let topicTitle = 'Téma';
+        if (state.maturaTopics) {
+            for (const cat in state.maturaTopics) {
+                const found = state.maturaTopics[cat].find(i => i.id === itemId);
+                if (found) { topicTitle = found.title; break; }
+            }
+        }
+
+        const { AI } = await import('../core/ai_helper.js');
+        const quiz = await AI.generateQuiz(topicTitle, content);
+
+        clearInterval(interval);
+        if (prog) {
+            prog.setProgress(100);
+            prog.setMessage('Test připraven! 🎉 Ukládám...');
+        }
+
+        if (quiz && quiz.length > 0) {
+            const { error } = await supabase.from('matura_topics').update({ quizzes: quiz }).eq('id', itemId);
+            if (error) throw error;
+
+            await refreshMaturaTopics();
+            updateTopicCardUI(itemId);
+
+            if (window.triggerConfetti) window.triggerConfetti();
+            triggerHaptic('success');
+
+            // Show notification instead of auto-opening (avoids timing race condition)
+            showNotification(`Test je připraven! ✅ (${quiz.length} otázek) Klikni na "Cvičný test" pro spuštění.`, 'success');
+            setTimeout(() => { if (prog) prog.close(); }, 1500);
+        }
+    } catch (e) {
+        clearInterval(interval);
+        if (prog) prog.close();
+        console.error("AI Quiz Gen Error:", e);
+        handleAIGenError(e);
+    } finally {
+        _lockAIButtons(`quiz-${itemId}`, false);
+    }
+}
+
+
 
 export function openNotes(itemId) {
     const prog = state.maturaProgress[itemId] || {};
@@ -1928,5 +2237,97 @@ export async function silentBackfillCount(itemId) {
             updateTopicCardUI(itemId);
         }
     } catch (e) { }
+}
+
+/**
+ * Post-processes rendered Markdown to make H2 and H3 sections collapsible.
+ */
+export function applyCollapsibleSections(itemId) {
+    const container = document.getElementById(`kb-content-${itemId}`);
+    if (!container) return;
+
+    // Select all H2 and H3 headers
+    const headers = container.querySelectorAll('h2, h3');
+    
+    headers.forEach(header => {
+        // Prepare header
+        header.classList.add('matura-collapsible-header');
+        
+        // Create content wrapper (Grid container)
+        const wrapper = document.createElement('div');
+        wrapper.className = 'matura-collapsible-content';
+        
+        // Create inner content (Grid child)
+        const inner = document.createElement('div');
+        inner.className = 'matura-collapsible-inner';
+        
+        // Identify which elements belong to this header
+        // We move siblings into the inner wrapper until we hit another header of same level or higher
+        const level = parseInt(header.tagName.substring(1));
+        
+        let next = header.nextElementSibling;
+        while (next && !['H1', 'H2', 'H3'].includes(next.tagName)) {
+            if (level === 3 && next.tagName === 'H2') break;
+            
+            const current = next;
+            next = next.nextElementSibling;
+            inner.appendChild(current);
+        }
+        
+        // Assemble
+        wrapper.appendChild(inner);
+        header.parentNode.insertBefore(wrapper, next);
+        
+        // Click handler
+        header.onclick = (e) => {
+            // Don't toggle if we clicked a link inside the header (unlikely but safe)
+            if (e.target.tagName === 'A') return;
+            
+            header.classList.toggle('collapsed');
+            wrapper.classList.toggle('collapsed');
+            triggerHaptic('light');
+            
+            // Update "Collapse All" button text if needed
+            updateCollapseAllButtonText(itemId);
+        };
+    });
+}
+
+/**
+ * Toggles all collapsible sections within a knowledge base item.
+ */
+export function toggleAllSections(itemId) {
+    const container = document.getElementById(`kb-content-${itemId}`);
+    if (!container) return;
+
+    const headers = container.querySelectorAll('.matura-collapsible-header');
+    const contents = container.querySelectorAll('.matura-collapsible-content');
+    
+    // Determine target state (if any are expanded, we collapse all)
+    const anyExpanded = Array.from(contents).some(c => !c.classList.contains('collapsed'));
+    
+    headers.forEach(h => {
+        if (anyExpanded) h.classList.add('collapsed');
+        else h.classList.remove('collapsed');
+    });
+    
+    contents.forEach(c => {
+        if (anyExpanded) c.classList.add('collapsed');
+        else c.classList.remove('collapsed');
+    });
+
+    updateCollapseAllButtonText(itemId);
+    triggerHaptic('medium');
+}
+
+export function updateCollapseAllButtonText(itemId) {
+    const container = document.getElementById(`kb-content-${itemId}`);
+    const btn = document.getElementById(`btn-toggle-all-${itemId}`);
+    if (!container || !btn) return;
+
+    const anyExpanded = Array.from(container.querySelectorAll('.matura-collapsible-content'))
+                             .some(c => !c.classList.contains('collapsed'));
+    
+    btn.textContent = anyExpanded ? 'Sbalit vše' : 'Rozbalit vše';
 }
 

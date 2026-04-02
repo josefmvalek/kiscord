@@ -291,6 +291,6 @@ export async function saveNewQuestion() {
         
     } catch (err) {
         console.error("Save Question Error:", err);
-        alert("Chyba při ukládání: " + err.message);
+        if (window.showNotification) window.showNotification("Chyba při ukládání: " + err.message, "error");
     }
 }

@@ -1,4 +1,5 @@
 import { state } from '../../core/state.js';
+import { loadApexCharts } from '../../core/loader.js';
 
 /**
  * Transforms health data into sorted arrays for ApexCharts.
@@ -45,7 +46,8 @@ const MOOD_COLORS = {
     9: "#F2D5FF", 10: "#FFFFFF"
 };
 
-export function renderVitalityPanels(containers) {
+export async function renderVitalityPanels(containers) {
+    await loadApexCharts();
     const data = getChartData(14);
     const isMobile = window.innerWidth < 768;
     
