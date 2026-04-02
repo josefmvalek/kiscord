@@ -10,14 +10,16 @@ export function renderDailyQuestions() {
     if (!container) return;
 
     if (!state.dailyQuestion) {
-        container.innerHTML = `
-            <div class="flex flex-col items-center justify-center h-full p-8 text-center bg-[#36393f]">
-                <div class="text-6xl mb-6">🏜️</div>
-                <h2 class="text-2xl font-bold text-white mb-2">Zatím žádné otázky</h2>
-                <p class="text-gray-400 max-w-md">Vypadá to, že v databázi ještě nejsou žádné otázky. Přidej je v SQL editoru!</p>
-            </div>
-        `;
-        return;
+        // ... (existing empty state)
+    }
+
+    // Anniversary 100 Days Special Question Injection
+    const daysTogether = Math.floor((new Date() - new Date(state.startDate)) / (1000 * 60 * 60 * 24));
+    if (daysTogether === 100) {
+        state.dailyQuestion = { 
+            id: 'anniversary_100_q', 
+            text: "Dnes je náš 100. den. Jaká je tvoje nejoblíbenější vzpomínka nebo sidequest z téhle první stovky?" 
+        };
     }
 
     const myAnswer = state.dailyAnswers.find(a => a.user_id === state.currentUser.id);

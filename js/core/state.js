@@ -404,7 +404,20 @@ async function ensureAchievementsData(force = false) {
         const [{ data: ach }, { data: cat }, { data: def }] = await Promise.all([ supabase.from('achievements').select('*'), supabase.from('achievement_categories').select('*').order('sort_order', { ascending: true }), supabase.from('achievement_definitions').select('*') ]);
         if (ach) state.achievements = ach;
         if (cat) state.achievementCategories = cat;
-        if (def) state.achievementDefinitions = def;
+        if (def) {
+            state.achievementDefinitions = def;
+            // Inject Anniversary 100 Days Achievement
+            if (!state.achievementDefinitions.some(a => a.id === 'anniversary_100')) {
+                state.achievementDefinitions.push({
+                    id: 'anniversary_100',
+                    category: 'love',
+                    title: '💯 Slipstream Specialist',
+                    description: 'Aerodynamika po 100 dní testování prošla kontrolou a schválena. Díky, že se v tom mojem slipstreamu držíš 🌬️🍃',
+                    icon: '💯',
+                    color: 'from-blue-400 to-indigo-600'
+                });
+            }
+        }
         markLoaded('achievements');
         stateEvents.emit('achievements');
     } catch (e) { console.error("Achievements Load Error:", e); }

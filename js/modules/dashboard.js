@@ -55,6 +55,27 @@ function generateFactOfTheDay() {
 
     const seed = getDailyFactSeed();
     const fact = allFacts[seed % allFacts.length];
+    
+    // Anniversary 100 Days Special Fact
+    if (getDaysTogether() === 100) {
+        return `
+            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-xl border-2 border-[#faa61a] p-6 relative group overflow-hidden animate-glow-pulse">
+                <div class="absolute inset-0 bg-[#faa61a]/5 animate-pulse"></div>
+                <div class="flex justify-between items-start mb-4 relative z-10">
+                    <h3 class="text-[10px] font-bold text-[#faa61a] uppercase tracking-widest flex items-center gap-2 leading-none">
+                        <i class="fas fa-heart animate-bounce"></i> NÁŠ VELKÝ MILNÍK
+                    </h3>
+                </div>
+                <div class="flex items-start gap-4 relative z-10">
+                    <div class="text-4xl p-2 rounded-xl flex-shrink-0">💯</div>
+                    <p class="text-white text-base font-bold leading-relaxed flex-1">
+                        Věděla jsi, že za posledních 100 dní jsi mě udělala vážně, ale fakt hodně šťastným? Děkuju ti za to, moc 🤍.
+                    </p>
+                </div>
+            </div>
+        `;
+    }
+
     const isFav = state.factFavorites?.some(id => String(id) === String(fact.id));
     const heartClass = isFav ? 'text-[#eb459e]' : 'text-gray-500 hover:text-[#eb459e]';
     const heartIcon = isFav ? 'fas' : 'far';
@@ -295,6 +316,15 @@ export async function renderDashboard(forceRefresh = false) {
     const hour = new Date().getHours();
     let greeting = hour >= 18 ? "Krásný večer" : (hour >= 11 ? "Ahoj" : "Dobré ráno");
     const daysTogether = getDaysTogether();
+    
+    // Anniversary 100 Days Greeting
+    if (daysTogether === 100) {
+        greeting = "Krásných 100 dní";
+        
+        // Auto-unlock 100 Days Achievement and trigger confetti
+        import('./achievements.js').then(m => m.autoUnlock('anniversary_100'));
+        triggerConfetti();
+    }
 
     const todayStr = new Date().toISOString().split("T")[0];
     const upcomingDates = Object.entries(state.plannedDates || {})
@@ -327,7 +357,7 @@ export async function renderDashboard(forceRefresh = false) {
                   <div class="relative z-10 px-6 mb-0 flex justify-between items-end min-h-[140px]">
                       <div id="dashboard-welcome-text" class="pb-2">
                            <p class="text-[10px] font-bold uppercase tracking-wider opacity-80 text-white/90 mb-0.5">${niceDate}</p>
-                           <h1 class="text-2xl font-black text-white drop-shadow-md leading-tight">${greeting},<br>${getInflectedName(state.currentUser.name, 5)} 🌞</h1>
+                           <h1 class="text-2xl font-black text-white drop-shadow-md leading-tight">${greeting}${daysTogether === 100 ? ' 🥳' : `, <br>${getInflectedName(state.currentUser.name, 5)} 🌞`}</h1>
                           <div class="flex items-center gap-2 mt-3">
                               <div class="bg-white/20 backdrop-blur-md px-2 py-1 rounded text-center shadow-sm border border-white/10 inline-block min-w-[60px]">
                                   <span class="block text-[8px] uppercase font-bold tracking-widest opacity-90 text-white leading-none mb-0.5">Spolu</span>
