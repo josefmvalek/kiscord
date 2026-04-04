@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Kiscord</title>
 
-  <link rel="stylesheet" href="/style.css?v=19" />
+  <link rel="stylesheet" href="/style.css" />
   <link rel="icon" type="image/webp" href="/img/app/czippel2_kytka-modified.webp" />
   <link rel="manifest" href="/manifest.json" />
   <!-- Performance Optimization: Preconnect to critical domains -->
@@ -45,7 +45,8 @@
     #login-screen { position: fixed; inset: 0; z-index: 200; background-color: #202225; display: none; align-items: center; justify-content: center; padding: 1rem; }
     .login-gradient { position: absolute; inset: 0; background: linear-gradient(to bottom right, rgba(88, 101, 242, 0.2), rgba(235, 69, 158, 0.2)); z-index: 0; }
     .login-card { position: relative; z-index: 10; width: 100%; max-width: 448px; background-color: #36393f; border-radius: 0.75rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid #202225; padding: 2rem; }
-    #app-interface { opacity: 0; transition: opacity 1s; }
+    #app-interface { opacity: 0; transition: opacity 1s; pointer-events: none; }
+    #app-interface.show { opacity: 1 !important; pointer-events: auto !important; }
   </style>
   <meta name="theme-color" content="#202225" />
   <link rel="apple-touch-icon" href="img/app/jozka_profilovka.jpg" />

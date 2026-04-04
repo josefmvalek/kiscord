@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="cs" class="theme-dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>MaturitaHub 2026 | Společně k úspěchu</title>
+    
+    <!-- Design & Fonts -->
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <!-- Favicon & Manifest -->
+    <link rel="icon" type="image/x-icon" href="img/favicon.ico">
+    <meta name="theme-color" content="#1e1f22">
+
+    <!-- Tailwind for rapid components (optional but helpful for some layouts) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        blurple: '#5865F2',
+                        darkPrimary: '#1e1f22',
+                        darkSecondary: '#2b2d31',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-darkPrimary text-gray-200">
+
+    <div id="app-root">
+        <!-- Modern Navigation -->
+        <nav class="sticky top-0 bg-darkPrimary/80 backdrop-blur-xl border-b border-white/5 z-50">
+            <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-8">
+                    <a href="#dashboard" class="flex items-center gap-2 text-white font-black italic text-xl uppercase tracking-tighter">
+                        <span class="text-blurple text-2xl">🎓</span> Maturita<span class="text-blurple">Hub</span>
+                    </a>
+                    
+                    <div class="hidden md:flex items-center gap-6">
+                        <a href="#dashboard" class="nav-link active">Dashboard</a>
+                        <a href="#library" class="nav-link">Knihovna</a>
+                        <a href="#browse" class="nav-link">Objevovat</a>
+                        <a href="#study-room" class="nav-link">Studovna</a>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <a href="#profile" id="user-profile-btn" class="flex items-center gap-3 p-1.5 pr-4 rounded-full bg-white/5 border border-white/5 hover:border-blurple/50 transition group relative">
+                        <img id="my-avatar" src="https://ui-avatars.com/api/?name=User&background=5865F2&color=fff" class="w-8 h-8 rounded-full border-2 border-transparent group-hover:border-blurple transition" />
+                        <span id="my-name" class="text-sm font-bold truncate max-w-[100px]">Načítání...</span>
+                        <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-accent-success rounded-full border-2 border-darkPrimary"></span>
+                    </a>
+                    
+                    <button onclick="import('./js/core/auth.js').then(m => m.signOut())" class="text-gray-500 hover:text-red-400 p-2 transition" title="Odhlásit se">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Display Area -->
+        <main id="main-content" class="max-w-7xl mx-auto px-2 md:px-6 py-8">
+            <!-- Dynamic Content Injected Here -->
+            <div id="loading-spinner" class="flex flex-col items-center justify-center py-20 animate-pulse">
+                <div class="w-12 h-12 border-4 border-blurple border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p class="text-gray-500 font-bold uppercase tracking-widest text-xs">Připravujeme studijní materiály...</p>
+            </div>
+        </main>
+
+        <!-- Mobile Navigation Bar -->
+        <div class="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-darkSecondary border-t border-white/5 flex items-center justify-around z-50">
+            <a href="#dashboard" class="mobile-nav-btn active">
+                <i class="fas fa-th-large text-xl"></i>
+                <span class="text-[9px] font-black uppercase mt-1">Hub</span>
+            </a>
+            <a href="#library" class="mobile-nav-btn">
+                <i class="fas fa-book-open text-xl"></i>
+                <span class="text-[9px] font-black uppercase mt-1">Knihovna</span>
+            </a>
+            <a href="#study-room" class="mobile-nav-btn">
+                <i class="fas fa-users text-xl"></i>
+                <span class="text-[9px] font-black uppercase mt-1">Lidé</span>
+            </a>
+            <a href="#profile" class="mobile-nav-btn">
+                <i class="fas fa-user-circle text-xl"></i>
+                <span class="text-[9px] font-black uppercase mt-1">Já</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Login Modal/Overlay (Hidden by default) -->
+    <div id="login-overlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-darkSecondary w-full max-w-md p-8 rounded-3xl border border-white/5 shadow-2xl animate-fade-in">
+             <div class="text-center mb-8">
+                <div class="text-5xl mb-4">🎓</div>
+                <h2 id="auth-title" class="text-3xl font-black text-white italic tracking-tighter uppercase">Vítej zpět!</h2>
+                <p id="auth-desc" class="text-gray-500 text-sm">Přihlas se ke svému studijnímu profilu.</p>
+             </div>
+             
+             <form id="auth-form" class="space-y-6">
+                <div id="nickname-field" class="hidden space-y-2 animate-fade-in">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 px-2 flex items-center gap-2">
+                         <i class="fas fa-user-tag text-blurple"></i> Tvůj Nickname
+                    </label>
+                    <input type="text" name="nickname" placeholder="Jak ti máme říkat?" class="w-full bg-darkSecondary border border-white/5 rounded-2xl p-4 text-white font-bold outline-none focus:border-blurple/50 transition">
+                </div>
+                
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 px-2 flex items-center gap-2">
+                         <i class="fas fa-envelope text-blurple"></i> Emailová adresa
+                    </label>
+                    <input type="email" required name="email" placeholder="vas@email.cz" class="w-full bg-darkSecondary border border-white/5 rounded-2xl p-4 text-white font-bold outline-none focus:border-blurple/50 transition">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 px-2 flex items-center gap-2">
+                         <i class="fas fa-lock text-blurple"></i> Heslo
+                    </label>
+                    <input type="password" required name="password" placeholder="••••••••" class="w-full bg-darkSecondary border border-white/5 rounded-2xl p-4 text-white font-bold outline-none focus:border-blurple/50 transition">
+                </div>
+                
+                <div id="auth-error" class="hidden p-4 bg-accent-danger/10 border border-accent-danger/20 rounded-2xl text-accent-danger text-xs font-bold animate-shake">
+                    Chyba: Neplatné údaje.
+                </div>
+                
+                <button type="submit" id="auth-submit-btn" class="w-full bg-blurple hover:bg-blurple/90 text-white font-black py-4 rounded-2xl shadow-xl transition-all active:scale-95 uppercase tracking-widest text-sm flex items-center justify-center gap-3">
+                    Vstoupit 🚀
+                </button>
+             </form>
+             
+             <div class="text-center mt-6">
+                <button id="auth-toggle-btn" class="text-xs font-bold text-gray-400 hover:text-white transition">Nemáš účet? Registruj se &rarr;</button>
+             </div>
+             <p id="auth-error" class="hidden text-red-500 text-center text-xs mt-4"></p>
+        </div>
+    </div>
+
+    <!-- Global Premium Modal System -->
+    <div id="global-modal" class="fixed inset-0 bg-black/40 backdrop-blur-md z-[200] hidden items-center justify-center p-4">
+        <div id="modal-container" class="bg-darkSecondary w-full max-w-sm p-8 rounded-[2rem] border border-white/5 shadow-2xl animate-fade-in text-center relative overflow-hidden group">
+             <!-- Background Glow Decor -->
+             <div class="absolute -top-20 -right-20 w-40 h-40 bg-blurple/10 blur-[50px] rounded-full group-hover:bg-blurple/20 transition-all duration-700"></div>
+             
+             <div id="modal-icon" class="text-5xl mb-6 scale-110 drop-shadow-2xl">✨</div>
+             <h2 id="modal-title" class="text-xl font-black text-white italic uppercase tracking-tighter mb-3 leading-tight">Povedlo se!</h2>
+             <p id="modal-desc" class="text-gray-400 text-sm mb-10 px-4 leading-relaxed"></p>
+             
+             <div id="modal-actions" class="flex flex-col gap-3">
+                 <!-- Actions will be injected via JS -->
+             </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="js/main.js"></script>
+    
+    <style>
+        .nav-link {
+            @apply flex flex-col items-center justify-center h-full px-2 text-gray-400 hover:text-white transition-colors;
+        }
+        .nav-link.active {
+            @apply text-blurple;
+        }
+        .mobile-nav-btn {
+            @apply flex flex-col items-center justify-center text-gray-500 hover:text-white transition-all flex-1 h-full;
+        }
+        .mobile-nav-btn.active {
+            @apply text-blurple;
+        }
+    </style>
+</body>
+</html>

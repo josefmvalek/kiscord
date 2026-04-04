@@ -1,0 +1,12 @@
+{
+  "name": "maturita-hub-2026",
+  "version": "1.0.0",
+  "description": "Social Study Platform for Maturita 2026",
+  "main": "js/main.js",
+  "scripts": {
+    "start": "npx -y serve .",
+    "dev": "npx -y serve ."
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

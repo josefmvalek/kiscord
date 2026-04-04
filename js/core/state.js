@@ -189,19 +189,29 @@ async function initializeState() {
 
         // 2. Fetch all profiles to map IDs to Jožka/Klárka (jose user_id, klarka user_id)
         if (!state.user_ids.jose || !state.user_ids.klarka) {
-             const { data: pData } = await supabase.from('profiles').select('id, username, email');
-             if (pData) {
-                 pData.forEach(p => {
-                     const lowerName = (p.username || "").toLowerCase();
-                     const lowerEmail = (p.email || "").toLowerCase();
-                     
-                     if (lowerName.includes('josef') || lowerName.includes('jozk') || lowerEmail === 'jozkavalek@email.cz' || lowerEmail.includes('josef')) {
-                        state.user_ids.jose = p.id;
-                     }
-                     if (lowerName.includes('klara') || lowerName.includes('vyslouzil') || lowerEmail === 'vyslouzilova.klara07@gmail.com' || lowerEmail.includes('klara')) {
-                        state.user_ids.klarka = p.id;
-                     }
-                 });
+             console.log('[State] Fetching profiles...');
+             try {
+                 const { data: pData, error: pError } = await supabase.from('profiles').select('id, username, email').timeout(5000);
+                 if (pError) throw pError;
+                 if (pData) {
+                     pData.forEach(p => {
+                         const lowerName = (p.username || "").toLowerCase();
+                         const lowerEmail = (p.email || "").toLowerCase();
+                         
+                         if (lowerName.includes('josef') || lowerName.includes('jozk') || lowerEmail === 'jozkavalek@email.cz' || lowerEmail.includes('josef')) {
+                            state.user_ids.jose = p.id;
+                         }
+                         if (lowerName.includes('klara') || lowerName.includes('vyslouzil') || lowerEmail === 'vyslouzilova.klara07@gmail.com' || lowerEmail.includes('klara')) {
+                            state.user_ids.klarka = p.id;
+                         }
+                     });
+                     console.log('[State] Profiles mapped:', state.user_ids);
+                 }
+             } catch (err) {
+                 console.warn('[State] Profile fetch failed or timed out:', err);
+                 // Fallback to current user if possible
+                 if (isMeJose) state.user_ids.jose = state.currentUser.id;
+                 if (isMeKlarka) state.user_ids.klarka = state.currentUser.id;
              }
         }
 

@@ -19,30 +19,100 @@ import * as StaticPages from './modules/static.js';
 
 // Lazy-loaded modules mapping (for better maintenance)
 const moduleMap = {
-    'calendar': () => import('./modules/calendar.js?v=22'),
-    'timeline': () => import('./modules/timeline.js?v=22'),
-    'library': () => import('./modules/library.js?v=22'),
-    'topics': () => import('./modules/topics.js?v=22'),
-    'games': () => import('./modules/games.js?v=22'),
-    'confession': () => import('./modules/confession.js?v=22'),
-    'health': () => import('./modules/health.js?v=22'),
-    'bucketlist': () => import('./modules/bucketlist.js?v=22'),
-    'achievements': () => import('./modules/achievements.js?v=22'),
-    'daily-questions': () => import('./modules/dailyQuestions.js?v=22'),
-    'game-who': () => import('./modules/gameWho.js?v=22'),
-    'game-draw': () => import('./modules/gameDraw.js?v=22'),
-    'funfacts': () => import('./modules/funfacts.js?v=22'),
-    'map': () => import('./modules/map.js?v=22'),
-    'search': () => import('./modules/search.js?v=22'),
-    'profile': () => import('./modules/profile.js?v=22'),
-    'tierlist': () => import('./modules/tierlist.js?v=22'),
-    'stats': () => import('./modules/stats.js?v=22'),
-    'matura': () => import('./modules/matura.js?v=22'),
-    'restore-data': () => import('./modules/restore.js?v=22')
+    'calendar': () => import('./modules/calendar.js'),
+    'timeline': () => import('./modules/timeline.js'),
+    'library': () => import('./modules/library.js'),
+    'topics': () => import('./modules/topics.js'),
+    'games': () => import('./modules/games.js'),
+    'confession': () => import('./modules/confession.js'),
+    'health': () => import('./modules/health.js'),
+    'bucketlist': () => import('./modules/bucketlist.js'),
+    'achievements': () => import('./modules/achievements.js'),
+    'daily-questions': () => import('./modules/dailyQuestions.js'),
+    'game-who': () => import('./modules/gameWho.js'),
+    'game-draw': () => import('./modules/gameDraw.js'),
+    'funfacts': () => import('./modules/funfacts.js'),
+    'map': () => import('./modules/map.js'),
+    'search': () => import('./modules/search.js'),
+    'profile': () => import('./modules/profile.js'),
+    'tierlist': () => import('./modules/tierlist.js'),
+    'stats': () => import('./modules/stats.js'),
+    'matura': () => import('./modules/matura.js'),
+    'restore-data': () => import('./modules/restore.js')
 };
 
 
 let lastUserId = null;
+
+// --- AUTHENTICATION ---
+
+async function handleAuthState(event, session) {
+    const user = session?.user;
+    const loginEl = document.getElementById('login-screen');
+    const appEl = document.getElementById('app-interface');
+
+    console.log(`[Auth] State Change: ${event}`, { hasUser: !!user });
+
+    if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        if (user) {
+            if (user.id === lastUserId) return;
+            lastUserId = user.id;
+
+            // Priority: Show the UI IMMEDIATELY
+            if (loginEl) loginEl.style.display = 'none';
+            if (appEl) {
+                appEl.classList.add('show');
+                appEl.classList.remove('opacity-0');
+                appEl.classList.add('opacity-100');
+            }
+            updateUserProfileUI(user);
+
+            try {
+                // Critical background tasks
+                await handleMigrations().catch(e => console.error("Migration Error:", e));
+                await initializeState().catch(e => console.error("InitializeState Error:", e));
+            } catch (err) {
+                console.error("[Auth] Background Task Error:", err);
+            }
+
+            // Route to content
+            const savedChannel = localStorage.getItem('klarka_last_channel');
+            const defaultChannel = (savedChannel && savedChannel !== 'welcome') ? savedChannel : 'dashboard';
+            
+            console.log(`[Auth] Routing to ${defaultChannel}`);
+            history.replaceState({ channel: defaultChannel }, "", "");
+            switchChannel(defaultChannel, false);
+        } else {
+            // INITIAL_SESSION with no user means they are not logged in.
+            // We must force the login screen to appear, in case a fake auth token hid it pre-emptively.
+            if (loginEl) loginEl.style.display = 'flex';
+            if (appEl) {
+                appEl.classList.remove('show');
+                appEl.classList.add('opacity-0');
+            }
+            lastUserId = null;
+        }
+    } else if (event === 'SIGNED_OUT') {
+        if (loginEl) loginEl.style.display = 'flex';
+        if (appEl) {
+            appEl.classList.remove('show');
+            appEl.classList.add('opacity-0');
+        }
+        lastUserId = null;
+        resetLazyLoaders();
+    }
+}
+
+// Register listener immediately at top level
+onAuthChange(handleAuthState);
+
+// Manual fallback for immediate session detection
+getCurrentUser().then(user => {
+    if (user && !lastUserId) {
+        console.log('[Auth] Manual session detection');
+        handleAuthState('INITIAL_SESSION', { user });
+    }
+});
 
 // --- CONNECTIVITY ---
 
@@ -101,44 +171,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 0. Listen for auth changes
-    onAuthChange(async (event, session) => {
-        const user = session?.user;
-        const loginEl = document.getElementById('login-screen');
-        const appEl = document.getElementById('app-interface');
-
-        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-            if (user) {
-                if (user.id === lastUserId) return;
-                lastUserId = user.id;
-
-                if (loginEl) loginEl.classList.add('hidden');
-                if (appEl) appEl.classList.add('show');
-                updateUserProfileUI(user);
-
-                // Run migrations if needed (only once per app Version)
-                await handleMigrations();
-
-                // Refresh data for new user
-                await initializeState();
-
-                // Re-render current or default channel
-                const savedChannel = localStorage.getItem('klarka_last_channel');
-                const defaultChannel = (savedChannel && savedChannel !== 'welcome') ? savedChannel : 'dashboard';
-
-                // Initialize history with the starting channel
-                history.replaceState({ channel: defaultChannel }, "", "");
-
-                switchChannel(defaultChannel, false);
-            }
-        } else if (event === 'SIGNED_OUT') {
-            if (loginEl) loginEl.classList.remove('hidden');
-            if (appEl) appEl.classList.remove('show');
-            lastUserId = null;
-            resetLazyLoaders(); // Clear all cached data so next login fetches fresh
-        }
-    });
-
     // 1. Initial State Setup (Static/Realtime)
     setupRealtimeSync();
     setupQuestsRealtime();
@@ -169,7 +201,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function handleMigrations() {
     // 1. Initial migration from LocalStorage (v1-v4)
     if (!localStorage.getItem('klarka_migration_done')) {
-        const { migrateLocalDataToSupabase } = await import('./migration.js?v=22');
+        const { migrateLocalDataToSupabase } = await import('./migration.js');
         const migratedCount = await migrateLocalDataToSupabase();
         if (migratedCount > 0) {
             localStorage.setItem('klarka_migration_done', 'true');
@@ -181,7 +213,7 @@ async function handleMigrations() {
     // 2. Static content seeding (Non-destructive check)
     // Runs once to ensure Supabase has the default content if tables are empty
     if (!localStorage.getItem('klarka_static_migration_v5_done')) {
-        const { migrateStaticContentToSupabase } = await import('./migration.js?v=22');
+        const { migrateStaticContentToSupabase } = await import('./migration.js');
         await migrateStaticContentToSupabase();
         localStorage.setItem('klarka_static_migration_v5_done', 'true');
         // No reload needed here yet
@@ -190,7 +222,7 @@ async function handleMigrations() {
     // 3. Timeline Cleanup (Repair for the duplication bug)
     // Only runs once to remove redundant records while keeping user edits
     if (!localStorage.getItem('klarka_timeline_repair_v1_done')) {
-        const { cleanupTimelineDuplicates } = await import('./migration.js?v=22');
+        const { cleanupTimelineDuplicates } = await import('./migration.js');
         const count = await cleanupTimelineDuplicates();
         localStorage.setItem('klarka_timeline_repair_v1_done', 'true');
         if (count > 0) {
@@ -669,60 +701,60 @@ export function switchChannel(channelId, push = true) {
             renderDashboard();
             break;
         case 'dateplanner':
-            import('./core/state.js?v=22').then(s => s.ensureMapData()).then(() => moduleMap.map()).then(m => m.renderMap());
+            import('./core/state.js').then(s => s.ensureMapData()).then(() => moduleMap.map()).then(m => m.renderMap());
             break;
         case 'bucketlist':
-            import('./core/state.js?v=22').then(s => s.ensureBucketListData()).then(() => moduleMap.bucketlist()).then(m => m.renderBucketList());
+            import('./core/state.js').then(s => s.ensureBucketListData()).then(() => moduleMap.bucketlist()).then(m => m.renderBucketList());
             break;
         case 'calendar':
-            import('./core/state.js?v=22').then(s => s.ensureCalendarData()).then(() => moduleMap.calendar().then(m => m.renderCalendar()));
+            import('./core/state.js').then(s => s.ensureCalendarData()).then(() => moduleMap.calendar().then(m => m.renderCalendar()));
             break;
         case 'timeline':
-            import('./core/state.js?v=22').then(s => s.ensureTimelineData()).then(() => moduleMap.timeline().then(m => m.renderTimeline()));
+            import('./core/state.js').then(s => s.ensureTimelineData()).then(() => moduleMap.timeline().then(m => m.renderTimeline()));
             break;
         case 'movies':
         case 'series':
         case 'games':
-            import('./core/state.js?v=22').then(s => s.ensureLibraryData()).then(() => moduleMap.library().then(m => m.renderLibrary(channelId)));
+            import('./core/state.js').then(s => s.ensureLibraryData()).then(() => moduleMap.library().then(m => m.renderLibrary(channelId)));
             break;
         case 'watchlist':
-            import('./core/state.js?v=22').then(s => s.ensureLibraryData()).then(() => import('./modules/watchlist.js')).then(m => m.renderWatchlist());
+            import('./core/state.js').then(s => s.ensureLibraryData()).then(() => import('./modules/watchlist.js')).then(m => m.renderWatchlist());
             break;
         case 'topics':
-            import('./core/state.js?v=22').then(s => s.ensureTopicsData()).then(() => moduleMap.topics()).then(m => m.renderTopics());
+            import('./core/state.js').then(s => s.ensureTopicsData()).then(() => moduleMap.topics()).then(m => m.renderTopics());
             break;
         case 'tetris':
             moduleMap.games().then(m => m.renderTetrisTracker());
             break;
         case 'puzzle':
-            moduleMap.games().then(m => m.renderPuzzleGame());
+            import('./core/state.js').then(s => s.ensureTimelineData()).then(() => moduleMap.games().then(m => m.renderPuzzleGame()));
             break;
         case 'quiz':
             import('./modules/coupleQuiz.js').then(m => m.renderCoupleQuiz());
             break;
         case 'games-hub':
-            import('./core/state.js?v=22').then(s => s.ensureGamesData()).then(() => import('./modules/gamesHub.js')).then(m => m.renderGamesHub());
+            import('./core/state.js').then(s => s.ensureGamesData()).then(() => import('./modules/gamesHub.js')).then(m => m.renderGamesHub());
             break;
         case 'game-who':
-            import('./core/state.js?v=22').then(s => s.ensureGamesData()).then(() => import('./modules/gameWho.js')).then(m => m.renderGameWho());
+            import('./core/state.js').then(s => s.ensureGamesData()).then(() => import('./modules/gameWho.js')).then(m => m.renderGameWho());
             break;
         case 'game-draw':
-            import('./core/state.js?v=22').then(s => Promise.all([s.ensureGamesData(), s.ensureDrawStrokesData()])).then(() => import('./modules/gameDraw.js')).then(m => m.renderGameDraw());
+            import('./core/state.js').then(s => Promise.all([s.ensureGamesData(), s.ensureDrawStrokesData()])).then(() => import('./modules/gameDraw.js')).then(m => m.renderGameDraw());
             break;
         case 'daily-questions':
-            import('./core/state.js?v=22').then(s => s.ensureDailyQuizData()).then(() => moduleMap['daily-questions']()).then(m => m.renderDailyQuestions());
+            import('./core/state.js').then(s => s.ensureDailyQuizData()).then(() => moduleMap['daily-questions']()).then(m => m.renderDailyQuestions());
             break;
         case 'achievements':
-            import('./core/state.js?v=22').then(s => s.ensureAchievementsData()).then(() => moduleMap.achievements()).then(m => m.renderAchievements());
+            import('./core/state.js').then(s => s.ensureAchievementsData()).then(() => moduleMap.achievements()).then(m => m.renderAchievements());
             break;
         case 'quests':
             import('./modules/quests.js').then(m => m.renderQuests());
             break;
         case 'funfacts':
-            import('./core/state.js?v=22').then(s => s.ensureFactsData()).then(() => moduleMap.funfacts().then(m => m.renderFunFacts()));
+            import('./core/state.js').then(s => s.ensureFactsData()).then(() => moduleMap.funfacts().then(m => m.renderFunFacts()));
             break;
         case 'stats':
-            import('./core/state.js?v=22').then(s => Promise.all([s.ensureCalendarData(), s.ensureLibraryData()])).then(() => moduleMap.stats().then(m => m.renderStats()));
+            import('./core/state.js').then(s => Promise.all([s.ensureCalendarData(), s.ensureLibraryData()])).then(() => moduleMap.stats().then(m => m.renderStats()));
             break;
         case 'tierlist':
             moduleMap.tierlist().then(m => m.renderTierList());
@@ -742,7 +774,7 @@ export function switchChannel(channelId, push = true) {
         case 'matura-dashboard':
         case 'matura-czech':
         case 'matura-it':
-            import('./core/state.js?v=22').then(s => s.ensureMaturaData()).then(() => moduleMap.matura().then(m => m.renderMatura(channelId)));
+            import('./core/state.js').then(s => s.ensureMaturaData()).then(() => moduleMap.matura().then(m => m.renderMatura(channelId)));
             break;
         case 'upgrade':
             renderUpgrade();
