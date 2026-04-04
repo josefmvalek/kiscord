@@ -17,7 +17,7 @@ const state = {
     topicSessionHistory: [],
     funFactProgress: {},
     pendingResetId: null,
-    startDate: "2025-12-24",
+    startDate: "2025-12-25",
     healthData: {},
     dateFilter: "all",
     mapInstance: null,
@@ -60,7 +60,7 @@ const state = {
     maturaAchievements: [],
     maturaTopics: {}, // { category_id: [topics] }
     maturaKBContent: {}, // { item_id: { content, updated_at } }
-    
+
     // Lazy Load Flags
     _loaded: {
         calendar: false,
@@ -178,41 +178,41 @@ async function initializeState() {
         const isMeKlarka = isKlarka(state.currentUser);
 
         if (state.currentUser?.id) {
-            if (isMeJose) { 
-                state.tetris.jose_id = state.currentUser.id; 
-                state.user_ids.jose = state.currentUser.id; 
-            } else if (isMeKlarka) { 
-                state.tetris.klarka_id = state.currentUser.id; 
-                state.user_ids.klarka = state.currentUser.id; 
+            if (isMeJose) {
+                state.tetris.jose_id = state.currentUser.id;
+                state.user_ids.jose = state.currentUser.id;
+            } else if (isMeKlarka) {
+                state.tetris.klarka_id = state.currentUser.id;
+                state.user_ids.klarka = state.currentUser.id;
             }
         }
 
         // 2. Fetch all profiles to map IDs to Jožka/Klárka (jose user_id, klarka user_id)
         if (!state.user_ids.jose || !state.user_ids.klarka) {
-             console.log('[State] Fetching profiles...');
-             try {
-                 const { data: pData, error: pError } = await supabase.from('profiles').select('id, username, email').timeout(5000);
-                 if (pError) throw pError;
-                 if (pData) {
-                     pData.forEach(p => {
-                         const lowerName = (p.username || "").toLowerCase();
-                         const lowerEmail = (p.email || "").toLowerCase();
-                         
-                         if (lowerName.includes('josef') || lowerName.includes('jozk') || lowerEmail === 'jozkavalek@email.cz' || lowerEmail.includes('josef')) {
+            console.log('[State] Fetching profiles...');
+            try {
+                const { data: pData, error: pError } = await supabase.from('profiles').select('id, username, email').timeout(5000);
+                if (pError) throw pError;
+                if (pData) {
+                    pData.forEach(p => {
+                        const lowerName = (p.username || "").toLowerCase();
+                        const lowerEmail = (p.email || "").toLowerCase();
+
+                        if (lowerName.includes('josef') || lowerName.includes('jozk') || lowerEmail === 'jozkavalek@email.cz' || lowerEmail.includes('josef')) {
                             state.user_ids.jose = p.id;
-                         }
-                         if (lowerName.includes('klara') || lowerName.includes('vyslouzil') || lowerEmail === 'vyslouzilova.klara07@gmail.com' || lowerEmail.includes('klara')) {
+                        }
+                        if (lowerName.includes('klara') || lowerName.includes('vyslouzil') || lowerEmail === 'vyslouzilova.klara07@gmail.com' || lowerEmail.includes('klara')) {
                             state.user_ids.klarka = p.id;
-                         }
-                     });
-                     console.log('[State] Profiles mapped:', state.user_ids);
-                 }
-             } catch (err) {
-                 console.warn('[State] Profile fetch failed or timed out:', err);
-                 // Fallback to current user if possible
-                 if (isMeJose) state.user_ids.jose = state.currentUser.id;
-                 if (isMeKlarka) state.user_ids.klarka = state.currentUser.id;
-             }
+                        }
+                    });
+                    console.log('[State] Profiles mapped:', state.user_ids);
+                }
+            } catch (err) {
+                console.warn('[State] Profile fetch failed or timed out:', err);
+                // Fallback to current user if possible
+                if (isMeJose) state.user_ids.jose = state.currentUser.id;
+                if (isMeKlarka) state.user_ids.klarka = state.currentUser.id;
+            }
         }
 
         if (tetrisData) {
@@ -318,7 +318,7 @@ async function ensureLibraryData(force = false) {
 async function ensureTimelineData(force = false) {
     if (state._loaded.timeline && !force && !isStale('timeline')) return;
     try {
-        const [{data: events}, {data: highlights}] = await Promise.all([
+        const [{ data: events }, { data: highlights }] = await Promise.all([
             supabase.from('timeline_events').select('*').order('event_date', { ascending: false, nullsFirst: false }),
             supabase.from('timeline_highlights').select('*')
         ]);
@@ -332,7 +332,7 @@ async function ensureTimelineData(force = false) {
 async function ensureMaturaData(force = false) {
     if (state._loaded.topics && !force && !isStale('topics')) return;
     try {
-        const [{data: topics}, {data: progress}, {data: streaks}, {data: schedule}] = await Promise.all([
+        const [{ data: topics }, { data: progress }, { data: streaks }, { data: schedule }] = await Promise.all([
             supabase.from('matura_topics').select('*').order('title'),
             supabase.from('matura_topic_progress').select('*'),
             supabase.from('matura_streaks').select('*'),
@@ -348,37 +348,37 @@ async function ensureMaturaData(force = false) {
         if (progress) {
             progress.forEach(row => {
                 if (!state.maturaProgress[row.item_id]) {
-                    state.maturaProgress[row.item_id] = { 
-                        jose: { status: 'none', notes: '' }, 
-                        klarka: { status: 'none', notes: '' } 
+                    state.maturaProgress[row.item_id] = {
+                        jose: { status: 'none', notes: '' },
+                        klarka: { status: 'none', notes: '' }
                     };
                 }
-                
+
                 // Map based on user_ids with double verification
-                const userKey = (state.user_ids.jose && row.user_id === state.user_ids.jose) ? 'jose' : 
-                                (state.user_ids.klarka && row.user_id === state.user_ids.klarka ? 'klarka' : null);
-                
+                const userKey = (state.user_ids.jose && row.user_id === state.user_ids.jose) ? 'jose' :
+                    (state.user_ids.klarka && row.user_id === state.user_ids.klarka ? 'klarka' : null);
+
                 if (userKey) {
-                    state.maturaProgress[row.item_id][userKey] = { 
-                        status: row.status, 
-                        notes: row.notes || '' 
+                    state.maturaProgress[row.item_id][userKey] = {
+                        status: row.status,
+                        notes: row.notes || ''
                     };
                 } else {
                     // Fallback: If it's CURRENT USER but ID mapping failed for some reason, we can still identify it
                     if (state.currentUser?.id && row.user_id === state.currentUser.id) {
                         const meKey = isJosef(state.currentUser) ? 'jose' : (isKlarka(state.currentUser) ? 'klarka' : null);
                         if (meKey) {
-                           state.maturaProgress[row.item_id][meKey] = { status: row.status, notes: row.notes || '' };
+                            state.maturaProgress[row.item_id][meKey] = { status: row.status, notes: row.notes || '' };
                         }
                     }
                 }
             });
         }
         if (streaks) {
-            streaks.forEach(s => { 
-                const key = (s.user_id === state.user_ids.jose) ? 'jose' : 
-                            (s.user_id === state.user_ids.klarka ? 'klarka' : null);
-                if (key) state.maturaStreaks[key] = s.current_streak; 
+            streaks.forEach(s => {
+                const key = (s.user_id === state.user_ids.jose) ? 'jose' :
+                    (s.user_id === state.user_ids.klarka ? 'klarka' : null);
+                if (key) state.maturaStreaks[key] = s.current_streak;
             });
         }
         if (schedule) state.maturaSchedule = schedule;
@@ -400,7 +400,7 @@ async function ensureBucketListData(force = false) {
 async function ensureMapData(force = false) {
     if (state._loaded.map && !force && !isStale('map')) return;
     try {
-        const [{ data: ratingData }, { data: locData }] = await Promise.all([ supabase.from('date_ratings').select('*'), supabase.from('date_locations').select('*') ]);
+        const [{ data: ratingData }, { data: locData }] = await Promise.all([supabase.from('date_ratings').select('*'), supabase.from('date_locations').select('*')]);
         if (ratingData) ratingData.forEach(row => { state.dateRatings[row.location_id] = row.rating; });
         if (locData) state.dateLocations = locData.map(l => ({ id: l.id, name: l.name, cat: l.category, icon: l.icon || "📍", lat: l.lat, lng: l.lng, desc: l.description }));
         markLoaded('map');
@@ -411,7 +411,7 @@ async function ensureMapData(force = false) {
 async function ensureAchievementsData(force = false) {
     if (state._loaded.achievements && !force && !isStale('achievements')) return;
     try {
-        const [{ data: ach }, { data: cat }, { data: def }] = await Promise.all([ supabase.from('achievements').select('*'), supabase.from('achievement_categories').select('*').order('sort_order', { ascending: true }), supabase.from('achievement_definitions').select('*') ]);
+        const [{ data: ach }, { data: cat }, { data: def }] = await Promise.all([supabase.from('achievements').select('*'), supabase.from('achievement_categories').select('*').order('sort_order', { ascending: true }), supabase.from('achievement_definitions').select('*')]);
         if (ach) state.achievements = ach;
         if (cat) state.achievementCategories = cat;
         if (def) {
@@ -436,7 +436,7 @@ async function ensureAchievementsData(force = false) {
 async function ensureFactsData(force = false) {
     if (state._loaded.facts && !force && !isStale('facts')) return;
     try {
-        const [facts, favs] = await Promise.all([ supabase.from('app_facts').select('*'), supabase.from('app_fact_favorites').select('fact_id') ]);
+        const [facts, favs] = await Promise.all([supabase.from('app_facts').select('*'), supabase.from('app_fact_favorites').select('fact_id')]);
         if (facts.data) {
             state.factsLibrary = { octopus: [], owl: [], raccoon: [], fun: [], penis: [] }; // Reset to avoid dupes
             facts.data.forEach(f => { if (!state.factsLibrary[f.category]) state.factsLibrary[f.category] = []; state.factsLibrary[f.category].push(f); });
@@ -454,18 +454,18 @@ async function ensureTopicsData(force = false) {
         if (data) state.conversationTopics = data.map(t => ({ id: t.id, title: t.title, icon: t.icon, color: t.color, desc: t.description, questions: t.questions }));
         markLoaded('conv_topics');
         stateEvents.emit('topics');
-    } catch(e) { console.error("Topics Load Error:", e); }
+    } catch (e) { console.error("Topics Load Error:", e); }
 }
 
 async function ensureGamesData() {
     if (state._loaded.games) return;
     try {
-        const [{ data: q }, { data: v }, { data: p }] = await Promise.all([ supabase.from('game_questions').select('*'), supabase.from('game_votes').select('*'), supabase.from('game_prompts').select('*') ]);
+        const [{ data: q }, { data: v }, { data: p }] = await Promise.all([supabase.from('game_questions').select('*'), supabase.from('game_votes').select('*'), supabase.from('game_prompts').select('*')]);
         if (q) state.gameQuestions = q;
         if (v) state.gameVotes = v;
         if (p) state.gamePrompts = p;
         state._loaded.games = true;
-    } catch(e) { console.error("Games Load Error:", e); }
+    } catch (e) { console.error("Games Load Error:", e); }
 }
 
 async function ensureDrawStrokesData() {
@@ -474,13 +474,13 @@ async function ensureDrawStrokesData() {
         const { data } = await supabase.from('draw_strokes').select('*').is('drawing_id', null).order('created_at', { ascending: true });
         if (data) state.drawStrokes = data;
         state._loaded.draw = true;
-    } catch(e) { console.error("Draw Load Error:", e); }
+    } catch (e) { console.error("Draw Load Error:", e); }
 }
 
 async function ensureDailyQuizData() {
     if (state._loaded.daily) return;
     try {
-        const [{ data: qData }, { data: aData }] = await Promise.all([ supabase.from('daily_questions').select('*'), supabase.from('daily_answers').select('*') ]);
+        const [{ data: qData }, { data: aData }] = await Promise.all([supabase.from('daily_questions').select('*'), supabase.from('daily_answers').select('*')]);
         if (qData && qData.length > 0) {
             const today = new Date();
             const dateSeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
@@ -488,7 +488,7 @@ async function ensureDailyQuizData() {
         }
         if (aData) state.dailyAnswers = aData.filter(a => a.question_id === state.dailyQuestion?.id);
         state._loaded.daily = true;
-    } catch(e) { console.error("DailyQuiz Load Error:", e); }
+    } catch (e) { console.error("DailyQuiz Load Error:", e); }
 }
 
 function resetLazyLoaders() {

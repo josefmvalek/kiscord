@@ -399,3 +399,60 @@ input[type="range"]::-moz-range-track { width: 100%; height: 8px; cursor: pointe
 .sortable-ghost { opacity: 0.3 !important; background: var(--blurple) !important; border: 2px dashed #fff !important; }
 .sortable-chosen { transform: scale(1.05); z-index: 1000; }
 .sortable-drag { opacity: 1 !important; box-shadow: 0 15px 30px rgba(0,0,0,0.5); }
+
+/* --- EASTER EGG SURPRISE --- */
+#easter-egg-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.97);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 3rem 1rem;
+    color: #fff;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    text-align: center;
+    cursor: pointer;
+    overflow-y: auto;
+    transition: opacity 0.5s ease;
+}
+
+#easter-egg-overlay.show {
+    display: flex;
+    animation: fadeIn 0.5s forwards;
+}
+
+#easter-egg-ascii {
+    white-space: pre;
+    font-size: 8px; /* Slightly smaller for the huge art */
+    line-height: 1.05;
+    letter-spacing: 0;
+    margin: 0 auto 2rem;
+    text-align: left;
+    width: fit-content;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+    animation: pulse-white 5s infinite ease-in-out;
+}
+
+#easter-egg-message {
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-size: 1.2rem;
+    margin-top: 1rem;
+    padding-bottom: 3rem;
+    color: #fff;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+@keyframes pulse-white {
+    0%, 100% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.02); opacity: 1; }
+}
+
+@media (min-width: 768px) {
+    #easter-egg-ascii { font-size: 14px; }
+}
+

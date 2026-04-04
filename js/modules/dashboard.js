@@ -27,6 +27,8 @@ import { handleWelcomeChat, refreshDashboardFact } from '/js/modules/dashboard/c
 let dashboardListenersSet = false;
 let dashboardTimer = null; // Ticker pro odpočet
 let bedtimeReminderInterval = null;
+let easterEggClicks = 0;
+let lastEasterEggClick = 0;
 
 // --- FACT OF THE DAY ---
 function getDailyFactSeed() {
@@ -41,6 +43,29 @@ function getDailyFactSeed() {
 }
 
 function generateFactOfTheDay() {
+    const daysTogether = getDaysTogether();
+
+    // Anniversary 100 Days Special Fact - Priority 1 (Hardcoded, no DB dependency)
+    if (daysTogether === 100) {
+        return `
+            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-xl border-2 border-[#faa61a] p-6 relative group overflow-hidden animate-glow-pulse">
+                <div class="absolute inset-0 bg-[#faa61a]/5 animate-pulse"></div>
+                <div class="flex justify-between items-start mb-4 relative z-10">
+                    <h3 class="text-[10px] font-bold text-[#faa61a] uppercase tracking-widest flex items-center gap-2 leading-none">
+                        <i class="fas fa-heart animate-bounce"></i> NÁŠ VELKÝ MILNÍK
+                    </h3>
+                </div>
+                <div class="flex items-start gap-4 relative z-10">
+                    <div class="text-4xl p-2 rounded-xl flex-shrink-0">💯</div>
+                    <p class="text-white text-base font-bold leading-relaxed flex-1">
+                        Věděla jsi, že za posledních 100 dní jsi mě udělala vážně, ale fakt hodně šťastným? Děkuju ti za to, moc 🤍.<br><br>
+                        <span class="text-[10px] italic opacity-70 text-orange-200 block mt-2">Psst... zkus 5x rychle poklepat na naše společné dny v záhlaví...</span>
+                    </p>
+                </div>
+            </div>
+        `;
+    }
+
     // Collect all facts from all categories
     const allFacts = [];
     const catMap = {
@@ -55,26 +80,6 @@ function generateFactOfTheDay() {
 
     const seed = getDailyFactSeed();
     const fact = allFacts[seed % allFacts.length];
-    
-    // Anniversary 100 Days Special Fact
-    if (getDaysTogether() === 100) {
-        return `
-            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-xl border-2 border-[#faa61a] p-6 relative group overflow-hidden animate-glow-pulse">
-                <div class="absolute inset-0 bg-[#faa61a]/5 animate-pulse"></div>
-                <div class="flex justify-between items-start mb-4 relative z-10">
-                    <h3 class="text-[10px] font-bold text-[#faa61a] uppercase tracking-widest flex items-center gap-2 leading-none">
-                        <i class="fas fa-heart animate-bounce"></i> NÁŠ VELKÝ MILNÍK
-                    </h3>
-                </div>
-                <div class="flex items-start gap-4 relative z-10">
-                    <div class="text-4xl p-2 rounded-xl flex-shrink-0">💯</div>
-                    <p class="text-white text-base font-bold leading-relaxed flex-1">
-                        Věděla jsi, že za posledních 100 dní jsi mě udělala vážně, ale fakt hodně šťastným? Děkuju ti za to, moc 🤍.
-                    </p>
-                </div>
-            </div>
-        `;
-    }
 
     const isFav = state.factFavorites?.some(id => String(id) === String(fact.id));
     const heartClass = isFav ? 'text-[#eb459e]' : 'text-gray-500 hover:text-[#eb459e]';
@@ -112,9 +117,8 @@ export function refreshFactOfTheDayHeart(factId) {
     const btn = document.getElementById('fotd-heart-btn');
     if (!btn) return;
     const isFav = state.factFavorites?.some(id => String(id) === String(factId));
-    btn.querySelector('i').className = `${isFav ? 'fas' : 'far'} fa-heart ${
-        isFav ? 'text-[#eb459e]' : 'text-gray-500 hover:text-[#eb459e]'
-    } transition-colors`;
+    btn.querySelector('i').className = `${isFav ? 'fas' : 'far'} fa-heart ${isFav ? 'text-[#eb459e]' : 'text-gray-500 hover:text-[#eb459e]'
+        } transition-colors`;
 }
 
 // --- BEDTIME REMINDER ---
@@ -179,6 +183,67 @@ function showBedtimeReminderWidget() {
 }
 
 // Helpers
+export function handleEasterEggClick() {
+    const now = Date.now();
+    if (now - lastEasterEggClick > 1000) {
+        easterEggClicks = 1;
+    } else {
+        easterEggClicks++;
+    }
+    lastEasterEggClick = now;
+
+    if (easterEggClicks >= 5) {
+        triggerEasterEgg();
+        easterEggClicks = 0;
+    }
+}
+
+function triggerEasterEgg() {
+    triggerHaptic('heavy');
+
+    let overlay = document.getElementById('easter-egg-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'easter-egg-overlay';
+        overlay.onclick = () => overlay.classList.remove('show');
+        document.body.appendChild(overlay);
+    }
+
+    // The final centerpiece ASCII art - Perfectly balanced for browser rendering
+    const ascii = [
+        "                                 .----. .----.",
+        "                                /      V      \\",
+        "                               |              |",
+        "                                \\ mám tě rád /",
+        "                                 \\          /",
+        "                                  `.      ,'",
+        "                                    `.,/'",
+        "        .o.                                                           .o.",
+        "        o.*.                                                         .*.o",
+        "       .0000                       _         _                       0000.",
+        "        0..00.         __   ___.--'_`.     .'_`--.___   __          .00..0",
+        "       o.**.o.        ( _`.'. -   'o` )   ( 'o`   - .`.'_ )         .o.**.o",
+        "    .o.(o **).o      _\\.'_'      _.-'     `-._      `_`./_       .o.(** o).o",
+        "      *.o||o.*       ( \\`. )    //\\`        '/\\\\    ( .'/ )       *.o||o.*",
+        "       vv||vv         \\_`-'`---'\\\\__,      ,__//`---'`-'_/         vv||vv",
+        "   [\\   ||  /]        \\`        `-\\         /-'        '/       [\\   ||  /]",
+        "    \\\\  || //          `                               '         \\\\  || //",
+        "    ( \\ || //                                                    ( \\ || //",
+        "     \\\\ ||//                                                      \\\\ ||//",
+        "      \\_|_|/                                                       \\_|_|/",
+        "       \\\\|/                                                         \\\\|/",
+        "        \\/                                                           \\/"
+    ].join('\n');
+
+    overlay.innerHTML = `
+        <div id="easter-egg-ascii">${ascii}</div>
+        <div id="easter-egg-message">Krásných 100 dní, Sluníčko moje! 💖</div>
+        <div class="text-[10px] text-gray-500 mt-10 animate-pulse uppercase tracking-widest font-black">(Klikni pro návrat)</div>
+    `;
+
+    overlay.classList.add('show');
+}
+
 function getDaysTogether() {
     const start = new Date(state.startDate);
     const now = new Date();
@@ -239,7 +304,7 @@ export async function renderDashboard(forceRefresh = false) {
         try {
             const today = getTodayKey();
             const queries = [];
-            
+
             // Partner health query (only if logged in)
             if (state.currentUser?.id) {
                 queries.push(
@@ -271,10 +336,10 @@ export async function renderDashboard(forceRefresh = false) {
 
             if (data) {
                 state.healthData[todayKey] = data.health || state.healthData[todayKey];
-                
+
                 // Tetris scores are now handled globally in state.js via initializeState/Supabase
                 // Do not overwrite them with potentially outdated/zeroed RPC data here
-                
+
                 if (partnerHealth) state.partnerHealthData = partnerHealth;
 
                 // Auto-save to cache after fetch
@@ -298,14 +363,14 @@ export async function renderDashboard(forceRefresh = false) {
             }
         }
     }
-    
+
     // Anniversary Check: 3 months (exactly today 2026-03-24)
     const start = new Date(state.startDate);
     const now = new Date();
     const target = new Date(start);
     target.setMonth(target.getMonth() + 3);
-    if (now.getFullYear() === target.getFullYear() && 
-        now.getMonth() === target.getMonth() && 
+    if (now.getFullYear() === target.getFullYear() &&
+        now.getMonth() === target.getMonth() &&
         now.getDate() === target.getDate()) {
         import('./achievements.js').then(m => m.autoUnlock('quarter_year_anniversary'));
     }
@@ -316,11 +381,11 @@ export async function renderDashboard(forceRefresh = false) {
     const hour = new Date().getHours();
     let greeting = hour >= 18 ? "Krásný večer" : (hour >= 11 ? "Ahoj" : "Dobré ráno");
     const daysTogether = getDaysTogether();
-    
+
     // Anniversary 100 Days Greeting
     if (daysTogether === 100) {
-        greeting = "Krásných 100 dní";
-        
+        greeting = "Nádherných 100 dní už jsme spolu";
+
         // Auto-unlock 100 Days Achievement and trigger confetti
         import('./achievements.js').then(m => m.autoUnlock('anniversary_100'));
         triggerConfetti();
@@ -359,7 +424,9 @@ export async function renderDashboard(forceRefresh = false) {
                            <p class="text-[10px] font-bold uppercase tracking-wider opacity-80 text-white/90 mb-0.5">${niceDate}</p>
                            <h1 class="text-2xl font-black text-white drop-shadow-md leading-tight">${greeting}${daysTogether === 100 ? ' 🥳' : `, <br>${getInflectedName(state.currentUser.name, 5)} 🌞`}</h1>
                           <div class="flex items-center gap-2 mt-3">
-                              <div class="bg-white/20 backdrop-blur-md px-2 py-1 rounded text-center shadow-sm border border-white/10 inline-block min-w-[60px]">
+                              <div class="bg-white/20 backdrop-blur-md px-2 py-1 rounded text-center shadow-sm border border-white/10 inline-block min-w-[60px] cursor-help transition-all active:scale-95 select-none" 
+                                   style="user-select: none; -webkit-user-select: none;"
+                                   onclick="import('./js/modules/dashboard.js').then(m => m.handleEasterEggClick())">
                                   <span class="block text-[8px] uppercase font-bold tracking-widest opacity-90 text-white leading-none mb-0.5">Spolu</span>
                                   <span class="block text-sm font-black text-white leading-none">${daysTogether} dní</span>
                               </div>
@@ -563,7 +630,7 @@ export async function sendSunlight() {
         btn.classList.add('animate-ping');
         setTimeout(() => btn.classList.remove('animate-ping'), 1000);
     }
-    
+
     // Log to DB for Quests
     try {
         await supabase.from('sunlight_history').insert([{ from_user_id: state.currentUser.id }]);
