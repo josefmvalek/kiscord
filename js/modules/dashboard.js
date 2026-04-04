@@ -46,7 +46,7 @@ function generateFactOfTheDay() {
     const daysTogether = getDaysTogether();
 
     // Anniversary 100 Days Special Fact - Priority 1 (Hardcoded, no DB dependency)
-    if (daysTogether === 100) {
+    if (daysTogether >= 100) {
         return `
             <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-xl border-2 border-[#faa61a] p-6 relative group overflow-hidden animate-glow-pulse">
                 <div class="absolute inset-0 bg-[#faa61a]/5 animate-pulse"></div>
@@ -383,7 +383,7 @@ export async function renderDashboard(forceRefresh = false) {
     const daysTogether = getDaysTogether();
 
     // Anniversary 100 Days Greeting
-    if (daysTogether === 100) {
+    if (daysTogether >= 100) {
         greeting = "Nádherných 100 dní už jsme spolu";
 
         // Auto-unlock 100 Days Achievement and trigger confetti
@@ -422,7 +422,7 @@ export async function renderDashboard(forceRefresh = false) {
                   <div class="relative z-10 px-6 mb-0 flex justify-between items-end min-h-[140px]">
                       <div id="dashboard-welcome-text" class="pb-2">
                            <p class="text-[10px] font-bold uppercase tracking-wider opacity-80 text-white/90 mb-0.5">${niceDate}</p>
-                           <h1 class="text-2xl font-black text-white drop-shadow-md leading-tight">${greeting}${daysTogether === 100 ? ' 🥳' : `, <br>${getInflectedName(state.currentUser.name, 5)} 🌞`}</h1>
+                           <h1 class="text-2xl font-black text-white drop-shadow-md leading-tight">${greeting}${daysTogether >= 100 ? ' 🥳' : `, <br>${getInflectedName(state.currentUser.name, 5)} 🌞`}</h1>
                           <div class="flex items-center gap-2 mt-3">
                               <div class="bg-white/20 backdrop-blur-md px-2 py-1 rounded text-center shadow-sm border border-white/10 inline-block min-w-[60px] cursor-help transition-all active:scale-95 select-none" 
                                    style="user-select: none; -webkit-user-select: none;"
