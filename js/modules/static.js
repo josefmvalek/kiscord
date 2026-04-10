@@ -135,7 +135,7 @@ export async function renderReadme() {
                                  <span class="text-[10px] text-[#b9bbbe] font-medium">Pinned</span>
                              </div>
                              
-                             <div onclick="import('./confession.js').then(m => m.startConfession())" 
+                             <div onclick="import('./js/modules/confession.js').then(m => m.startConfession())" 
                                   class="bg-[#2f3136] border border-[#202225] rounded-md p-3 flex items-center gap-3 md:gap-4 w-full max-w-[432px] cursor-pointer hover:bg-[#32353b] transition-colors duration-150">
                                  <div class="w-10 h-11 md:h-12 bg-[#5865F2] rounded-sm flex items-center justify-center text-white text-xl md:text-2xl flex-shrink-0">
                                      <i class="fas fa-file-code"></i>

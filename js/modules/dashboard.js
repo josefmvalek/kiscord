@@ -1,16 +1,16 @@
 import { supabase } from '../core/supabase.js';
-import { state } from '../core/state.js';
+import { state, saveStateToCache } from '../core/state.js';
 import { triggerHaptic, getInflectedName, getTodayKey, triggerConfetti } from '../core/utils.js';
 import { showNotification } from '../core/theme.js';
 import { broadcastSunlight } from '../core/sync.js';
-import { getTodayData, getPillsStreak } from '/js/modules/health.js';
+import { getTodayData, getPillsStreak } from './health.js';
 
 // Re-export modularized components to maintain compatibility with global onclick handlers
-export * from '/js/modules/dashboard/sunflowers.js';
-export * from '/js/modules/dashboard/health_ui.js';
-export * from '/js/modules/dashboard/chat.js';
+export * from './dashboard/sunflowers.js';
+export * from './dashboard/health_ui.js';
+export * from './dashboard/chat.js';
 
-import { updateSunflowersDOM, generateSunflowerSVG } from '/js/modules/dashboard/sunflowers.js';
+import { updateSunflowersDOM, generateSunflowerSVG } from './dashboard/sunflowers.js';
 import {
     generateMoodSlider,
     generateSleepSlider,
@@ -227,14 +227,18 @@ export async function submitDailyAnswerFromDashboard() {
     }
 
     try {
-        const { safeInsert } = await import('/js/core/offline.js');
-        const { error } = await safeInsert('daily_answers', [{
+        const { safeUpsert } = await import('../core/offline.js');
+        const result = await safeUpsert('daily_answers', [{
             question_id: state.dailyQuestion.id,
             user_id: state.currentUser.id,
             answer_text: answer
-        }]);
+        }], 'question_id,user_id');
 
-        if (error) throw error;
+        if (result.error) throw result.error;
+        if (result.offline) {
+             showNotification("Odpověď uložena lokálně (jsi offline) 💾", "info");
+             return;
+        }
 
         triggerHaptic('success');
         
@@ -249,7 +253,8 @@ export async function submitDailyAnswerFromDashboard() {
 
     } catch (err) {
         console.error("[Dashboard] Answer Submit Error:", err);
-        if (window.showNotification) window.showNotification("Nepodařilo se odeslat odpověď.", "error");
+        const errorMsg = err.message || "Chyba při odesílání.";
+        if (window.showNotification) window.showNotification(`Nepodařilo se odeslat: ${errorMsg}`, "error");
         if (btn) {
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-paper-plane text-[10px]"></i> <span class="text-xs uppercase font-black">Zkusit znovu</span>';

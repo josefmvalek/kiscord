@@ -111,12 +111,13 @@ if (navigator.onLine) {
 /**
  * Perform a Supabase upsert if online, or queue it if offline.
  */
-export async function safeUpsert(table, data) {
+export async function safeUpsert(table, data, onConflict = null) {
     if (!navigator.onLine) {
         enqueueOperation(table, 'upsert', data);
         return { data: null, error: null, offline: true };
     }
-    return supabase.from(table).upsert(data).select();
+    const options = onConflict ? { onConflict } : {};
+    return supabase.from(table).upsert(data, options).select();
 }
 
 /**
