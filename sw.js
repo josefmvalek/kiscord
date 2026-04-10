@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kiscord-v24';
+const CACHE_NAME = 'kiscord-v26';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -20,7 +20,7 @@ self.addEventListener('install', (event) => {
     self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            console.log('[SW] Caching system assets (v24)');
+            console.log('[SW] Caching system assets (v26)');
             return cache.addAll(ASSETS_TO_CACHE);
         })
     );

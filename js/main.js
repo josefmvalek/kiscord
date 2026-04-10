@@ -1,6 +1,6 @@
 // Core imports (kept for initialization)
 import { state, initializeState, resetLazyLoaders, ensureBucketListData, ensureLibraryData } from './core/state.js';
-const APP_VERSION = '2.1.0'; // Incremented from legacy versions
+const APP_VERSION = '2.1.1'; // Fix for ensureAllHealthData cache issue
 
 import { renderErrorState } from './core/ui.js';
 window.renderErrorState = renderErrorState; // Global for easy access in modules

@@ -436,10 +436,14 @@ export async function renderDashboard(forceRefresh = false) {
     }
 
     // Load non-critical dashboard data in background
-    import('/js/core/state.js').then(m => {
-        m.ensureDailyQuizData();
-        m.ensureFactsData();
-        m.ensureAllHealthData(); // For accurate streaks
+    import('../core/state.js').then(m => {
+        if (typeof m.ensureDailyQuizData === 'function') m.ensureDailyQuizData();
+        if (typeof m.ensureFactsData === 'function') m.ensureFactsData();
+        if (typeof m.ensureAllHealthData === 'function') {
+            m.ensureAllHealthData();
+        } else {
+            console.warn("[Dashboard] Outdated state.js detected (missing ensureAllHealthData). Refresh might be needed.");
+        }
     });
 
     // --- DATA FETCHING & ERROR HANDLING ---
@@ -492,7 +496,7 @@ export async function renderDashboard(forceRefresh = false) {
                 if (partnerHealth) state.partnerHealthData = partnerHealth;
 
                 // Auto-save to cache after fetch
-                import('/js/core/state.js').then(m => {
+                import('../core/state.js').then(m => {
                     if (typeof m.saveStateToCache === 'function') m.saveStateToCache();
                 });
 
