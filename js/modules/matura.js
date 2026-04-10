@@ -1,4 +1,4 @@
-import { state, ensureMaturaData } from '../core/state.js';
+import { state, ensureMaturaData, refreshMaturaTopics } from '../core/state.js';
 import { triggerHaptic, triggerConfetti } from '../core/utils.js';
 import { showNotification } from '../core/theme.js';
 import { supabase } from '../core/supabase.js';
@@ -453,14 +453,14 @@ function renderList(container, subject) {
                             <span class="text-[10px] font-black uppercase tracking-widest">Zobrazit</span>
                         </button>
                     ` : `
-                         <button onclick="import('/js/modules/matura.js').then(m => m.openEditor('${item.id}'))"
+                         <button onclick="import('/js/modules/matura.js').then(m => m.openEditor('${item.id}')).catch(e => console.error('Failed to load matura editor', e))"
                            class="flex-1 bg-white/5 hover:bg-white/10 text-gray-400 rounded-xl flex items-center justify-center gap-2 transition-all border border-white/10 group/btn shadow-lg">
                             <i class="fas fa-pencil-alt text-xs group-hover/btn:scale-110 transition"></i>
                             <span class="text-[10px] font-black uppercase tracking-widest font-black">Napsat</span>
                         </button>
                     `}
                     ${item.file ? `
-                        <button onclick="import('/js/modules/matura.js').then(m => m.openPDFViewer('${item.file}', '${item.title}'))"
+                        <button onclick="import('/js/modules/matura.js').then(m => m.openPDFViewer('${item.file}', '${item.title}')).catch(e => console.error('Failed to load PDF viewer', e))"
                            class="bg-[#3ba55c]/20 hover:bg-[#3ba55c]/30 text-[#3ba55c] rounded-xl flex items-center justify-center w-12 transition-all border border-[#3ba55c]/30 group/btn shadow-lg">
                             <i class="fas fa-eye text-xs group-hover/btn:scale-125 transition"></i>
                         </button>
@@ -574,8 +574,6 @@ export async function cycleStatus(itemId) {
             if (error) {
                 console.error("[Matura] Supabase error:", error);
                 showNotification(`Chyba při ukládání stavu: ${error.message} (Kód: ${error.code})`, "error");
-            } else {
-                console.log(`[Matura] Success: topic ${itemId} updated to '${next}' in DB.`);
             }
         } catch (e) {
             console.warn("[Matura] Unexpected network error:", e);

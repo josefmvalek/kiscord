@@ -409,3 +409,6 @@ export async function cleanupTimelineDuplicates() {
         throw err;
     }
 }
+
+// Alias for main.js compatibility
+export const runMigration = migrateLocalDataToSupabase;

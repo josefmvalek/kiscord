@@ -17,7 +17,7 @@ const state = {
     topicSessionHistory: [],
     funFactProgress: {},
     pendingResetId: null,
-    startDate: "2025-12-25",
+    startDate: "2025-12-24",
     healthData: {},
     dateFilter: "all",
     mapInstance: null,
@@ -66,10 +66,11 @@ const state = {
         calendar: false,
         timeline: false,
         library: false,
-        topics: false,
+        matura: false, // Renamed from topics for clarity
         achievements: false,
         games: false,
-        facts: false
+        facts: false,
+        conv_topics: false
     }
 };
 
@@ -142,13 +143,17 @@ async function initializeState() {
     try {
         // Essential Dashboard Data (minimal fetch)
         const [
-            { data: todayHealth },
+            { data: healthHistory },
             { data: todayDates },
             { data: tetrisData },
             { data: questData },
             pinnedData
         ] = await Promise.all([
-            supabase.from('health_data').select('*').eq('date_key', today).maybeSingle(),
+            supabase.from('health_data')
+                .select('*')
+                .eq('user_id', state.currentUser?.id)
+                .order('date_key', { ascending: false })
+                .limit(30),
             supabase.from('planned_dates').select('*').eq('date_key', today),
             supabase.from('tetris_scores').select('*'),
             supabase.from('coop_quests').select('*').eq('is_active', true),
@@ -157,11 +162,13 @@ async function initializeState() {
 
         if (pinnedData?.data) state.pinnedDrawing = pinnedData.data.drawings;
 
-        if (todayHealth) {
-            state.healthData[todayHealth.date_key] = {
-                water: todayHealth.water, sleep: todayHealth.sleep, mood: todayHealth.mood,
-                movement: todayHealth.movement, bedtime: todayHealth.bedtime
-            };
+        if (healthHistory && Array.isArray(healthHistory)) {
+            healthHistory.forEach(row => {
+                state.healthData[row.date_key] = {
+                    water: row.water, sleep: row.sleep, mood: row.mood,
+                    movement: row.movement, bedtime: row.bedtime, pills: row.pills || false
+                };
+            });
         }
 
         if (todayDates) {
@@ -261,12 +268,12 @@ async function ensureCalendarData(force = false) {
     if (state._loaded.calendar && !force && !isStale('calendar')) return;
     try {
         const [health, dates, school] = await Promise.all([
-            supabase.from('health_data').select('*'),
+            supabase.from('health_data').select('*').eq('user_id', state.currentUser?.id),
             supabase.from('planned_dates').select('*'),
             supabase.from('school_events').select('*')
         ]);
         if (health.data) health.data.forEach(row => {
-            state.healthData[row.date_key] = { water: row.water, sleep: row.sleep, mood: row.mood, movement: row.movement, bedtime: row.bedtime };
+            state.healthData[row.date_key] = { water: row.water, sleep: row.sleep, mood: row.mood, movement: row.movement, bedtime: row.bedtime, pills: row.pills || false };
         });
         if (dates.data) dates.data.forEach(row => {
             state.plannedDates[row.date_key] = {
@@ -330,7 +337,7 @@ async function ensureTimelineData(force = false) {
 }
 
 async function ensureMaturaData(force = false) {
-    if (state._loaded.topics && !force && !isStale('topics')) return;
+    if (state._loaded.matura && !force && !isStale('matura')) return;
     try {
         const [{ data: topics }, { data: progress }, { data: streaks }, { data: schedule }] = await Promise.all([
             supabase.from('matura_topics').select('*').order('title'),
@@ -382,9 +389,13 @@ async function ensureMaturaData(force = false) {
             });
         }
         if (schedule) state.maturaSchedule = schedule;
-        markLoaded('topics');
+        markLoaded('matura');
         stateEvents.emit('matura');
     } catch (e) { console.error("Matura Load Error:", e); }
+}
+
+async function refreshMaturaTopics() {
+    return await ensureMaturaData(true);
 }
 
 async function ensureBucketListData(force = false) {
@@ -480,22 +491,88 @@ async function ensureDrawStrokesData() {
 async function ensureDailyQuizData() {
     if (state._loaded.daily) return;
     try {
-        const [{ data: qData }, { data: aData }] = await Promise.all([supabase.from('daily_questions').select('*'), supabase.from('daily_answers').select('*')]);
+        // 1. Ensure Topics are loaded as they are our source of truth now
+        await ensureTopicsData();
+
+        // 2. Fetch current daily questions and answers
+        let [{ data: qData }, { data: aData }] = await Promise.all([
+            supabase.from('daily_questions').select('*'),
+            supabase.from('daily_answers').select('*')
+        ]);
+
+        // 3. Sync Topics to Daily Questions if pool is missing items
+        // We flatten all questions from all categories
+        const allTopicQuestions = state.conversationTopics.flatMap(t =>
+            (t.questions || []).map(q => ({ text: q, category: t.id }))
+        );
+
+        const existingTexts = new Set((qData || []).map(q => q.text));
+        const missingQuestions = allTopicQuestions.filter(q => !existingTexts.has(q.text));
+
+        if (missingQuestions.length > 0) {
+            console.log(`[State] Syncing ${missingQuestions.length} new questions from Topics to Daily Questions pool...`);
+            // Insert missing in batches if needed, but here simple insert works
+            const { error: syncErr } = await supabase.from('daily_questions').insert(missingQuestions);
+            if (!syncErr) {
+                const { data: refreshedQ } = await supabase.from('daily_questions').select('*');
+                if (refreshedQ) qData = refreshedQ;
+            } else {
+                console.error("[State] Sync Error:", syncErr);
+            }
+        }
+
+        // 4. Perform selection based on date seed
         if (qData && qData.length > 0) {
             const today = new Date();
             const dateSeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+
+            // Critical: Sort to ensure the same index on both devices (Jožka/Klárka)
+            qData.sort((a, b) => a.text.localeCompare(b.text));
+
             state.dailyQuestion = qData[dateSeed % qData.length];
         }
-        if (aData) state.dailyAnswers = aData.filter(a => a.question_id === state.dailyQuestion?.id);
+
+        if (aData && state.dailyQuestion) {
+            state.dailyAnswers = aData.filter(a => a.question_id === state.dailyQuestion.id);
+        }
+
         state._loaded.daily = true;
-    } catch (e) { console.error("DailyQuiz Load Error:", e); }
+    } catch (e) {
+        console.error("DailyQuiz Load Error:", e);
+    }
 }
 
 function resetLazyLoaders() {
-    state._loaded = { calendar: false, timeline: false, library: false, topics: false, achievements: false, games: false, facts: false, daily: false, draw: false, map: false, bucketlist: false, conv_topics: false };
+    state._loaded = { calendar: false, timeline: false, library: false, matura: false, achievements: false, games: false, facts: false, daily: false, draw: false, map: false, bucketlist: false, conv_topics: false };
     Object.keys(_loadedAt).forEach(k => delete _loadedAt[k]);
     console.log('[State] All lazy loaders reset.');
 }
+
+/**
+ * Specifically loads whole health history for streak calculations if needed.
+ */
+async function ensureAllHealthData() {
+    try {
+        const { data, error } = await supabase.from('health_data')
+            .select('*')
+            .eq('user_id', state.currentUser?.id)
+            .order('date_key', { ascending: false });
+        
+        if (error) throw error;
+        if (data) {
+            data.forEach(row => {
+                state.healthData[row.date_key] = {
+                    water: row.water, sleep: row.sleep, mood: row.mood,
+                    movement: row.movement, bedtime: row.bedtime, pills: row.pills || false
+                };
+            });
+            console.log(`[State] Full health history loaded: ${data.length} records.`);
+        }
+    } catch (e) {
+        console.error("Health History Load Error:", e);
+    }
+}
+
 
 export {
     state,
@@ -514,5 +591,7 @@ export {
     ensureGamesData,
     ensureDrawStrokesData,
     ensureDailyQuizData,
+    ensureAllHealthData,
+    refreshMaturaTopics,
     resetLazyLoaders
 };

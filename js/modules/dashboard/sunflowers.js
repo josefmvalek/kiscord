@@ -2,6 +2,34 @@ import { state } from '../../core/state.js';
 import { getTodayKey } from '/js/core/utils.js';
 
 /**
+ * Helper to interpolate between two hex colors.
+ */
+function interpolateColor(color1, color2, factor) {
+    const r1 = parseInt(color1.substring(1, 3), 16);
+    const g1 = parseInt(color1.substring(3, 5), 16);
+    const b1 = parseInt(color1.substring(5, 7), 16);
+    const r2 = parseInt(color2.substring(1, 3), 16);
+    const g2 = parseInt(color2.substring(3, 5), 16);
+    const b2 = parseInt(color2.substring(5, 7), 16);
+    const r = Math.round(r1 + factor * (r2 - r1));
+    const g = Math.round(g1 + factor * (g2 - g1));
+    const b = Math.round(b1 + factor * (b2 - b1));
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
+/**
+ * Returns outer and inner center colors based on sleep hours (0-10).
+ */
+function getSleepCenterColors(hours) {
+    const h = Math.min(10, Math.max(0, hours || 0));
+    const factor = h / 10;
+    // From very dark brown to a lighter, warmer brown
+    const outer = interpolateColor('#1a1005', '#6b4226', factor);
+    const inner = interpolateColor('#0d0601', '#3d2311', factor);
+    return { outer, inner };
+}
+
+/**
  * Updates both sunflowers (me and partner) in the DOM.
  */
 export function updateSunflowersDOM() {
@@ -77,8 +105,15 @@ export function syncSunflowerSVG(containerId, data, isPartnerId = false) {
     // Update Sleep Center
     const centers = svg.querySelectorAll('.sf-center');
     if (centers.length >= 2) {
-        centers[0].setAttribute('fill', data.sleep >= 6 ? '#2b1a0d' : '#1a1005');
-        centers[1].setAttribute('fill', data.sleep >= 6 ? '#1f1005' : '#0d0601');
+        const sleepColors = getSleepCenterColors(data.sleep);
+        centers[0].setAttribute('fill', sleepColors.outer);
+        centers[1].setAttribute('fill', sleepColors.inner);
+        
+        // Update Face Opacity
+        const faceOpacity = 0.4 + (Math.min(10, data.sleep || 0) / 10) * 0.6;
+        svg.querySelectorAll('.sf-face').forEach(el => {
+            el.setAttribute('opacity', faceOpacity);
+        });
     }
 }
 
@@ -101,6 +136,9 @@ export function generateSunflowerSVG(data, isPartner = false) {
     const numPetals = 27;
     const visiblePetals = Math.min(numPetals, Math.max(0, (mood - 1) * 3)); 
     const defsPrefix = isPartner ? 'p' : 'm';
+    
+    // Calculate sleep colors for SVG generation
+    const sleepColors = getSleepCenterColors(data.sleep);
     
     let petalsHTML = "";
     for (let i = 0; i < numPetals; i++) {
@@ -157,10 +195,11 @@ export function generateSunflowerSVG(data, isPartner = false) {
                         <g class="sf-head">
                             <circle cx="0" cy="0" r="18" fill="#1e1005" />
                             ${petalsHTML}
-                            <circle cx="0" cy="0" r="18" fill="${data.sleep >= 6 ? '#2b1a0d' : '#1a1005'}" stroke="#1f1005" stroke-width="2" class="sf-center"/>
-                            <circle cx="0" cy="0" r="14" fill="${data.sleep >= 6 ? '#1f1005' : '#0d0601'}" class="sf-center"/>
-                            <circle cx="-5" cy="-2" r="1.5" fill="#facc15" opacity="0.8"/><circle cx="5" cy="-2" r="1.5" fill="#facc15" opacity="0.8"/>
-                            <path d="M -3,3 Q 0,7 3,3" fill="none" stroke="#facc15" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/>
+                            <circle cx="0" cy="0" r="18" fill="${sleepColors.outer}" stroke="#1f1005" stroke-width="2" class="sf-center" style="transition: fill 0.5s ease;"/>
+                            <circle cx="0" cy="0" r="14" fill="${sleepColors.inner}" class="sf-center" style="transition: fill 0.5s ease;"/>
+                            <circle cx="-5" cy="-2" r="1.5" fill="#facc15" opacity="${0.4 + (Math.min(10, data.sleep || 0) / 10) * 0.6}" class="sf-face" style="transition: opacity 0.5s ease;"/>
+                            <circle cx="5" cy="-2" r="1.5" fill="#facc15" opacity="${0.4 + (Math.min(10, data.sleep || 0) / 10) * 0.6}" class="sf-face" style="transition: opacity 0.5s ease;"/>
+                            <path d="M -3,3 Q 0,7 3,3" fill="none" stroke="#facc15" stroke-width="1.5" stroke-linecap="round" opacity="${0.4 + (Math.min(10, data.sleep || 0) / 10) * 0.6}" class="sf-face" style="transition: opacity 0.5s ease;"/>
                         </g>
                     </g>
                 </g>

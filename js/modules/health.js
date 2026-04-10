@@ -31,11 +31,46 @@ export function getTodayData() {
             water: 0,
             mood: 5,
             sleep: 0,
-            movement: []
+            movement: [],
+            pills: false
         };
         saveStateToCache();
     }
     return state.healthData[todayKey];
+}
+
+export function getPillsStreak() {
+    if (!state.healthData) return 0;
+    
+    let streak = 0;
+    const todayStr = getTodayKey();
+    
+    // Check today
+    const todayData = state.healthData[todayStr];
+    if (todayData && todayData.pills) {
+        streak++;
+    }
+
+    // Now loop backwards over previous days
+    let currentDate = new Date();
+    currentDate.setDate(currentDate.getDate() - 1);
+
+    while (true) {
+        const y = currentDate.getFullYear();
+        const m = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const d = String(currentDate.getDate()).padStart(2, '0');
+        const dateKey = `${y}-${m}-${d}`;
+        
+        const dayData = state.healthData[dateKey];
+        if (dayData && dayData.pills) {
+            streak++;
+        } else {
+            break;
+        }
+        currentDate.setDate(currentDate.getDate() - 1);
+    }
+    
+    return streak;
 }
 
 export async function updateHealth(type, value) {
@@ -71,6 +106,10 @@ export async function updateHealth(type, value) {
             triggerHaptic('success');
         }
     }
+    else if (type === 'pills') {
+        data.pills = value;
+        triggerHaptic(value ? 'success' : 'light');
+    }
 
     // --- SAVE ---
     state.healthData[todayKey] = data;
@@ -83,7 +122,8 @@ export async function updateHealth(type, value) {
         sleep: data.sleep || 0,
         mood: data.mood,
         movement: data.movement,
-        bedtime: data.bedtime // Added: persist bedtime
+        bedtime: data.bedtime, // Added: persist bedtime
+        pills: data.pills
     });
     if (error) console.error("Error saving health to Supabase:", error);
     else {
@@ -94,7 +134,8 @@ export async function updateHealth(type, value) {
             water: data.water,
             sleep: data.sleep,
             mood: data.mood,
-            movement: data.movement
+            movement: data.movement,
+            pills: data.pills
         });
     }
 
@@ -129,7 +170,8 @@ export function updateBedtime(time) {
         sleep: data.sleep || 0,
         mood: data.mood || 5,
         movement: data.movement || [],
-        bedtime: time
+        bedtime: time,
+        pills: data.pills || false
     }).then(({ error }) => {
         if (error) console.error("Error saving bedtime to Supabase:", error);
     });
@@ -142,7 +184,8 @@ export function updateBedtime(time) {
         sleep: data.sleep || 0,
         mood: data.mood || 5,
         movement: data.movement || [],
-        bedtime: time
+        bedtime: time,
+        pills: data.pills || false
     });
 }
 
@@ -298,7 +341,8 @@ export async function wakeUp() {
                         water: data.water,
                         sleep: data.sleep,
                         mood: data.mood,
-                        movement: data.movement
+                        movement: data.movement,
+                        pills: data.pills || false
                     });
                     if (error) console.error("Error saving sleep to Supabase:", error);
 
@@ -309,7 +353,8 @@ export async function wakeUp() {
                         water: data.water,
                         sleep: data.sleep,
                         mood: data.mood,
-                        movement: data.movement
+                        movement: data.movement,
+                        pills: data.pills || false
                     });
 
                     // Achievement Hook

@@ -3,7 +3,7 @@ import { state } from '../core/state.js';
 import { triggerHaptic, getInflectedName, getTodayKey, triggerConfetti } from '../core/utils.js';
 import { showNotification } from '../core/theme.js';
 import { broadcastSunlight } from '../core/sync.js';
-import { getTodayData } from '/js/modules/health.js';
+import { getTodayData, getPillsStreak } from '/js/modules/health.js';
 
 // Re-export modularized components to maintain compatibility with global onclick handlers
 export * from '/js/modules/dashboard/sunflowers.js';
@@ -16,9 +16,11 @@ import {
     generateSleepSlider,
     generateWaterIcons,
     generateMovementChips,
+    generatePillsChip,
     generateTetrisMiniTracker,
     updateWaterVisuals,
     updateMovementVisuals,
+    updatePillsVisuals,
     updateMoodVisuals,
     updateSleep
 } from '/js/modules/dashboard/health_ui.js';
@@ -43,29 +45,6 @@ function getDailyFactSeed() {
 }
 
 function generateFactOfTheDay() {
-    const daysTogether = getDaysTogether();
-
-    // Anniversary 100 Days Special Fact - Priority 1 (Hardcoded, no DB dependency)
-    if (daysTogether >= 100) {
-        return `
-            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-xl border-2 border-[#faa61a] p-6 relative group overflow-hidden animate-glow-pulse">
-                <div class="absolute inset-0 bg-[#faa61a]/5 animate-pulse"></div>
-                <div class="flex justify-between items-start mb-4 relative z-10">
-                    <h3 class="text-[10px] font-bold text-[#faa61a] uppercase tracking-widest flex items-center gap-2 leading-none">
-                        <i class="fas fa-heart animate-bounce"></i> NÁŠ VELKÝ MILNÍK
-                    </h3>
-                </div>
-                <div class="flex items-start gap-4 relative z-10">
-                    <div class="text-4xl p-2 rounded-xl flex-shrink-0">💯</div>
-                    <p class="text-white text-base font-bold leading-relaxed flex-1">
-                        Věděla jsi, že za posledních 100 dní jsi mě udělala vážně, ale fakt hodně šťastným? Děkuju ti za to, moc 🤍.<br><br>
-                        <span class="text-[10px] italic opacity-70 text-orange-200 block mt-2">Psst... zkus 5x rychle poklepat na naše společné dny v záhlaví...</span>
-                    </p>
-                </div>
-            </div>
-        `;
-    }
-
     // Collect all facts from all categories
     const allFacts = [];
     const catMap = {
@@ -119,6 +98,163 @@ export function refreshFactOfTheDayHeart(factId) {
     const isFav = state.factFavorites?.some(id => String(id) === String(factId));
     btn.querySelector('i').className = `${isFav ? 'fas' : 'far'} fa-heart ${isFav ? 'text-[#eb459e]' : 'text-gray-500 hover:text-[#eb459e]'
         } transition-colors`;
+}
+
+
+// --- DAILY QUESTION COMPACT ---
+// --- DAILY QUESTION COMPACT ---
+function generateDailyQuestionCard() {
+    if (!state.dailyQuestion) return '';
+
+    const myAnswer = state.dailyAnswers.find(a => a.user_id === state.currentUser.id);
+    const partnerAnswer = state.dailyAnswers.find(a => a.user_id !== state.currentUser.id);
+    const isRevealed = !!(myAnswer && partnerAnswer);
+
+    // Header & Container
+    let content = `
+        <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-xl border border-white/5 p-6 relative group overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-[#faa61a]/5 rounded-full -translate-y-16 translate-x-16 blur-2xl"></div>
+            
+            <div class="flex justify-between items-start mb-5 relative z-10">
+                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 leading-none">
+                    <i class="fas fa-comment-dots text-[#faa61a]"></i> Dnešní otázka
+                </h3>
+                <button onclick="window.switchChannel('daily-questions')" 
+                        class="text-[10px] text-gray-500 hover:text-[#faa61a] transition font-bold uppercase tracking-widest flex items-center gap-1">
+                    archiv <i class="fas fa-chevron-right text-[8px]"></i>
+                </button>
+            </div>
+
+            <div class="mb-6 relative z-10">
+                <h2 class="text-lg font-bold text-white leading-tight mb-2">"${state.dailyQuestion.text}"</h2>
+            </div>
+    `;
+
+    if (!myAnswer) {
+        // --- INPUT STATE ---
+        content += `
+            <div class="space-y-4 relative z-10">
+                <div class="bg-black/20 rounded-xl p-4 border border-white/5 focus-within:border-[#faa61a]/50 transition-all group/input shadow-inner">
+                    <textarea id="dashboard-daily-answer-input" 
+                              placeholder="Tvoje upřímná odpověď..." 
+                              class="w-full bg-transparent text-gray-200 text-sm outline-none resize-none min-h-[80px] placeholder-gray-600 font-medium leading-relaxed custom-scrollbar"></textarea>
+                </div>
+                <button id="dashboard-btn-submit-answer"
+                        onclick="import('/js/modules/dashboard.js').then(m => m.submitDailyAnswerFromDashboard())" 
+                        class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-3 rounded-xl font-bold transition shadow-lg active:scale-95 flex items-center justify-center gap-2 group/btn relative overflow-hidden">
+                    <div class="absolute inset-0 bg-white/10 opacity-0 group-hover/btn:opacity-100 transition"></div>
+                    <i class="fas fa-paper-plane text-[10px]"></i> <span class="text-xs uppercase font-black">Odeslat moji odpověď</span>
+                </button>
+            </div>
+        `;
+    } else if (!isRevealed) {
+        // --- WAITING STATE ---
+        content += `
+            <div class="grid grid-cols-2 gap-4 relative z-10">
+                <div class="space-y-2">
+                    <span class="text-[9px] uppercase font-black tracking-tighter text-gray-500 ml-1">Moje odpověď</span>
+                    <div class="bg-black/20 p-4 rounded-xl border border-[#3ba55c]/20 min-h-[100px] flex flex-col justify-between">
+                        <p class="text-[11px] text-gray-300 italic leading-snug italic line-clamp-3">${myAnswer.answer_text}</p>
+                        <span class="text-[8px] text-[#3ba55c] font-black uppercase mt-2 self-end">Odesláno ✅</span>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <span class="text-[9px] uppercase font-black tracking-tighter text-gray-500 ml-1">${state.currentUser.name === 'Jožka' ? 'Klárka' : 'Jožka'}</span>
+                    <div class="bg-[#2f3136]/50 p-4 rounded-xl border border-dashed border-gray-700 min-h-[100px] flex flex-col items-center justify-center text-center backdrop-blur-sm">
+                        ${partnerAnswer ? `
+                            <div class="animate-pulse flex flex-col items-center">
+                                <i class="fas fa-lock text-[#faa61a] text-xl mb-2"></i>
+                                <p class="text-[10px] text-white font-bold leading-none mb-1">Dostupná!</p>
+                                <p class="text-[8px] text-gray-500 uppercase font-black">Čeká na odemčení</p>
+                            </div>
+                        ` : `
+                            <i class="fas fa-clock text-gray-700 text-xl mb-2 opacity-50"></i>
+                            <p class="text-[10px] text-gray-600 font-bold uppercase tracking-tight">Zatím nic...</p>
+                        `}
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        // --- REVEALED STATE (Vertical List) ---
+        const answers = [
+            { name: 'Moje odpověď', text: myAnswer.answer_text, color: 'border-[#5865F2]/30', label: 'Já', icon: 'fa-user' },
+            { name: partnerAnswer.user_id === state.currentUser.id ? 'Partnerova odpověď' : (state.currentUser.name === 'Jožka' ? 'Klářina odpověď' : 'Jožkova odpověď'), 
+              text: partnerAnswer.answer_text, color: 'border-[#eb459e]/30', label: state.currentUser.name === 'Jožka' ? 'Klárka' : 'Jožka', icon: 'fa-heart' }
+        ];
+        
+        // Ensure Jožka/Klárka mapping is correct for second answer
+        const partnerName = state.currentUser.name === 'Jožka' ? 'Klárka' : 'Jožka';
+        
+        content += `
+            <div class="space-y-3 relative z-10">
+                <div class="bg-black/20 p-4 rounded-xl border-l-[3px] border-[#5865F2] relative group/answer animate-fade-in-right">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[9px] font-black uppercase text-[#5865F2] tracking-widest">Já</span>
+                    </div>
+                    <p class="text-[11px] text-gray-200 leading-relaxed font-medium">${myAnswer.answer_text}</p>
+                </div>
+                
+                <div class="bg-black/20 p-4 rounded-xl border-l-[3px] border-[#eb459e] relative group/answer animate-fade-in-right delay-100">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[9px] font-black uppercase text-[#eb459e] tracking-widest">${partnerName}</span>
+                    </div>
+                    <p class="text-[11px] text-gray-200 leading-relaxed font-medium">${partnerAnswer.answer_text}</p>
+                </div>
+                
+                <div class="pt-3 flex justify-center">
+                    <div class="text-[8px] bg-[#faa61a]/10 text-[#faa61a] px-3 py-1 rounded-full font-black uppercase tracking-widest">
+                        <i class="fas fa-unlock-alt mr-1"></i> Společný kód odemčen
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    content += `</div>`;
+    return content;
+}
+
+export async function submitDailyAnswerFromDashboard() {
+    const input = document.getElementById('dashboard-daily-answer-input');
+    const answer = input?.value.trim();
+    if (!answer || !state.dailyQuestion) return;
+
+    const btn = document.getElementById('dashboard-btn-submit-answer');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Odesílám...';
+    }
+
+    try {
+        const { safeInsert } = await import('/js/core/offline.js');
+        const { error } = await safeInsert('daily_answers', [{
+            question_id: state.dailyQuestion.id,
+            user_id: state.currentUser.id,
+            answer_text: answer
+        }]);
+
+        if (error) throw error;
+
+        triggerHaptic('success');
+        
+        // Refresh local answers directly for speed
+        const { data } = await supabase.from('daily_answers').select('*').eq('question_id', state.dailyQuestion.id);
+        if (data) state.dailyAnswers = data;
+        
+        saveStateToCache();
+        
+        // Emit event to update dashboard and questions channel
+        window.dispatchEvent(new CustomEvent('daily-questions-updated'));
+
+    } catch (err) {
+        console.error("[Dashboard] Answer Submit Error:", err);
+        if (window.showNotification) window.showNotification("Nepodařilo se odeslat odpověď.", "error");
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane text-[10px]"></i> <span class="text-xs uppercase font-black">Zkusit znovu</span>';
+        }
+    }
 }
 
 // --- BEDTIME REMINDER ---
@@ -296,8 +432,15 @@ export async function renderDashboard(forceRefresh = false) {
     const todayKey = getTodayKey();
     if (!state.healthData) state.healthData = {};
     if (!state.healthData[todayKey]) {
-        state.healthData[todayKey] = { water: 0, sleep: 0, mood: 5, movement: [], bedtime: null };
+        state.healthData[todayKey] = { water: 0, sleep: 0, mood: 5, movement: [], pills: false, bedtime: null };
     }
+
+    // Load non-critical dashboard data in background
+    import('/js/core/state.js').then(m => {
+        m.ensureDailyQuizData();
+        m.ensureFactsData();
+        m.ensureAllHealthData(); // For accurate streaks
+    });
 
     // --- DATA FETCHING & ERROR HANDLING ---
     if (navigator.onLine && (!state.dashboardFetched || forceRefresh)) {
@@ -335,7 +478,13 @@ export async function renderDashboard(forceRefresh = false) {
             const partnerHealth = partnerRes.data;
 
             if (data) {
-                state.healthData[todayKey] = data.health || state.healthData[todayKey];
+                if (data && data.health) {
+                    state.healthData[todayKey] = {
+                        ...state.healthData[todayKey],
+                        ...data.health,
+                        pills: data.health.pills !== undefined ? data.health.pills : (state.healthData[todayKey]?.pills || false)
+                    };
+                }
 
                 // Tetris scores are now handled globally in state.js via initializeState/Supabase
                 // Do not overwrite them with potentially outdated/zeroed RPC data here
@@ -382,11 +531,10 @@ export async function renderDashboard(forceRefresh = false) {
     let greeting = hour >= 18 ? "Krásný večer" : (hour >= 11 ? "Ahoj" : "Dobré ráno");
     const daysTogether = getDaysTogether();
 
-    // Anniversary 100 Days Greeting
-    if (daysTogether >= 100) {
+    // Anniversary 100 Days Greeting (Special only on the actual day)
+    const isAnniversaryDay = daysTogether === 100;
+    if (isAnniversaryDay) {
         greeting = "Nádherných 100 dní už jsme spolu";
-
-        // Auto-unlock 100 Days Achievement and trigger confetti
         import('./achievements.js').then(m => m.autoUnlock('anniversary_100'));
         triggerConfetti();
     }
@@ -422,7 +570,7 @@ export async function renderDashboard(forceRefresh = false) {
                   <div class="relative z-10 px-6 mb-0 flex justify-between items-end min-h-[140px]">
                       <div id="dashboard-welcome-text" class="pb-2">
                            <p class="text-[10px] font-bold uppercase tracking-wider opacity-80 text-white/90 mb-0.5">${niceDate}</p>
-                           <h1 class="text-2xl font-black text-white drop-shadow-md leading-tight">${greeting}${daysTogether >= 100 ? ' 🥳' : `, <br>${getInflectedName(state.currentUser.name, 5)} 🌞`}</h1>
+                           <h1 class="text-2xl font-black text-white drop-shadow-md leading-tight">${greeting}${isAnniversaryDay ? ' 🥳' : `, <br>${getInflectedName(state.currentUser.name, 5)} 🌞`}</h1>
                           <div class="flex items-center gap-2 mt-3">
                               <div class="bg-white/20 backdrop-blur-md px-2 py-1 rounded text-center shadow-sm border border-white/10 inline-block min-w-[60px] cursor-help transition-all active:scale-95 select-none" 
                                    style="user-select: none; -webkit-user-select: none;"
@@ -501,13 +649,23 @@ export async function renderDashboard(forceRefresh = false) {
                       <div id="mood-container">${generateMoodSlider(data.mood)}</div>
                   </div>
 
-                  <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-xl border border-white/5 p-6">
-                      <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2 leading-none">
-                        <i class="fas fa-running text-[#3ba55c]"></i> Dnešní pohyb
-                      </h3>
-                      <div class="flex flex-wrap gap-3" id="movement-container">${generateMovementChips(data.movement)}</div>
+                  <div class="grid grid-cols-2 gap-3">
+                      <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-xl border border-white/5 p-6">
+                          <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2 leading-none">
+                            <i class="fas fa-running text-[#3ba55c]"></i> Dnešní pohyb
+                          </h3>
+                          <div class="flex flex-wrap gap-3" id="movement-container">${generateMovementChips(data.movement)}</div>
+                      </div>
+
+                      <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-xl border border-white/5 p-6">
+                          <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2 leading-none">
+                            <i class="fas fa-pills text-[#e74c3c]"></i> Léky
+                          </h3>
+                          <div class="flex flex-wrap gap-3" id="pills-container">${generatePillsChip(data.pills, getPillsStreak())}</div>
+                      </div>
                   </div>
 
+                  ${generateDailyQuestionCard()}
                   ${generateFactOfTheDay()}
                   <div id="tetris-tracker-container">${generateTetrisMiniTracker()}</div>
               </div>
@@ -528,6 +686,7 @@ export function setupDashboardEvents() {
             updateSunflowersDOM();
             updateWaterVisuals();
             updateMovementVisuals();
+            updatePillsVisuals();
             updateMoodVisuals(data.mood);
             updateSleep(data.sleep);
         }
@@ -547,6 +706,13 @@ export function setupDashboardEvents() {
     window.addEventListener('planned-dates-updated', () => {
         if (state.currentChannel === 'dashboard') {
             console.log("[Dashboard] Planned dates updated, refreshing...");
+            renderDashboard();
+        }
+    });
+
+    window.addEventListener('daily-questions-updated', () => {
+        if (state.currentChannel === 'dashboard') {
+            console.log("[Dashboard] Daily questions updated, refreshing...");
             renderDashboard();
         }
     });

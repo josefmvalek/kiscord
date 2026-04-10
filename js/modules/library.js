@@ -784,7 +784,7 @@ export function showAddMediaModal(category) {
 
     const modalActions = renderButton({
         text: 'ULOŽIT DO KNIHOVNY 🚀',
-        onclick: 'Library.saveNewMedia("${category}")',
+        onclick: `Library.saveNewMedia('${category}')`,
         className: 'w-full py-4 text-lg'
     });
 

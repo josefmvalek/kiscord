@@ -14,7 +14,8 @@ BEGIN
         'sleep', sleep,
         'mood', mood,
         'movement', movement,
-        'bedtime', bedtime
+        'bedtime', bedtime,
+        'pills', pills
     ) INTO v_health
     FROM health_data
     WHERE user_id = p_user_id AND date_key = to_char(p_date, 'YYYY-MM-DD')
@@ -53,7 +54,7 @@ BEGIN
 
     -- Combine into one JSON
     v_result := json_build_object(
-        'health', COALESCE(v_health, '{"water":0,"mood":5,"sleep":0,"movement":[],"bedtime":null}'::json),
+        'health', COALESCE(v_health, '{"water":0,"mood":5,"sleep":0,"movement":[],"bedtime":null,"pills":false}'::json),
         'pinned_drawing', v_drawing,
         'tetris', COALESCE(v_tetris, '{"jose":0,"klarka":0}'::json),
         'next_event', v_next_event

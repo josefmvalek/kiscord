@@ -54,12 +54,20 @@ export function ensureModals() {
                             <span class="block text-[8px] text-gray-500 uppercase font-black mb-1 tracking-widest">Pohyb</span>
                             <div id="modal-health-movement" class="flex flex-wrap gap-1"></div>
                         </div>
+                        <div class="bg-black/10 p-3 rounded-xl border border-white/5">
+                            <span class="block text-[8px] text-gray-500 uppercase font-black mb-1 tracking-widest">Léky</span>
+                            <span id="modal-health-pills" class="text-white font-bold text-sm">-</span>
+                        </div>
                     </div>
 
                     <div id="health-edit-form" class="hidden space-y-4 bg-black/10 p-4 rounded-xl border border-white/10 animate-fade-in shadow-inner">
                         <div class="grid grid-cols-2 gap-3">
                             ${renderInputGroup({ label: 'Voda (ks)', id: 'edit-health-water', type: 'number' })}
                             ${renderInputGroup({ label: 'Spánek (h)', id: 'edit-health-sleep', type: 'number', attr: 'step="0.5"' })}
+                        </div>
+                        <div class="flex items-center gap-2 mb-2 mt-2 px-1">
+                             <input type="checkbox" id="edit-health-pills" class="w-4 h-4 rounded text-[#e74c3c] bg-[#202225] border-white/10 accent-[#e74c3c] cursor-pointer" />
+                             <label for="edit-health-pills" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer">Vzala léky</label>
                         </div>
                         ${renderInputGroup({ label: 'Nálada (1-10)', id: 'edit-health-mood', type: 'number', attr: 'min="1" max="10"' })}
                         ${renderInputGroup({ label: 'Pohyb (gym, walk...)', id: 'edit-health-movement' })}
@@ -264,6 +272,8 @@ export function showDayDetail(dateKey) {
         document.getElementById("modal-health-water").innerText = "0/8";
         document.getElementById("modal-health-sleep").innerText = "-";
         document.getElementById("modal-health-mood").innerText = "-";
+        const pillsSpan = document.getElementById("modal-health-pills");
+        if (pillsSpan) pillsSpan.innerText = "-";
         const moveContainer = document.getElementById("modal-health-movement");
         if (moveContainer) moveContainer.innerHTML = '<span class="text-gray-500 italic text-[10px]">Žádný pohyb</span>';
         
@@ -305,6 +315,9 @@ export function showDayDetail(dateKey) {
                 if (moves.length > 0) {
                     moveContainer.innerHTML = moves.map((m) => `<span class="bg-[#202225] px-2 py-1 rounded text-[10px] border border-gray-700">${moveIconMap[m] || m}</span>`).join("");
                 }
+            }
+            if (pillsSpan) {
+                pillsSpan.innerText = health.pills ? "Ano 💊" : "Ne";
             }
         }
     }
@@ -463,6 +476,7 @@ export function toggleHealthEdit() {
         const sleepEl = document.getElementById("edit-health-sleep");
         const moodEl = document.getElementById("edit-health-mood");
         const moveEl = document.getElementById("edit-health-movement");
+        const pillsEl = document.getElementById("edit-health-pills");
 
         if (waterEl) waterEl.value = health.water || 0;
         
@@ -485,6 +499,7 @@ export function toggleHealthEdit() {
 
         const moves = health.movement || [];
         if (moveEl) moveEl.value = moves.join(", ");
+        if (pillsEl) pillsEl.checked = !!health.pills;
 
         displayGrid.classList.add("hidden");
         editForm.classList.remove("hidden");
@@ -506,13 +521,17 @@ export function saveHealthRecord() {
     
     const movementStr = document.getElementById("edit-health-movement").value;
     const movement = movementStr ? movementStr.split(",").map(s => s.trim().toLowerCase()).filter(Boolean) : [];
+    
+    const pillsEl = document.getElementById("edit-health-pills");
+    const pills = pillsEl ? pillsEl.checked : false;
 
     const existing = (state.healthData || {})[currentModalDateKey] || {};
 
     let newHealth = {
         ...existing,
         water,
-        movement
+        movement,
+        pills
     };
     
     if (sleep !== undefined) newHealth.sleep = sleep;
@@ -528,7 +547,8 @@ export function saveHealthRecord() {
             water: newHealth.water,
             sleep: newHealth.sleep,
             mood: newHealth.mood,
-            movement: newHealth.movement
+            movement: newHealth.movement,
+            pills: newHealth.pills
         });
     });
 

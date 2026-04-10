@@ -1,5 +1,7 @@
 // Core imports (kept for initialization)
 import { state, initializeState, resetLazyLoaders, ensureBucketListData, ensureLibraryData } from './core/state.js';
+const APP_VERSION = '2.1.0'; // Incremented from legacy versions
+
 import { renderErrorState } from './core/ui.js';
 window.renderErrorState = renderErrorState; // Global for easy access in modules
 import { initTheme, toggleTheme, showNotification, toggleValentineMode } from './core/theme.js';
@@ -177,6 +179,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     initLevels();
     initTheme();
     renderChannels();
+    checkAppUpdate();
+
 
     // 2. Global Event Listeners (Navigation & System)
     setupNavigation();
@@ -232,6 +236,20 @@ async function handleMigrations() {
         }
     }
 }
+
+function checkAppUpdate() {
+    const lastVersion = localStorage.getItem('kiscord_app_version');
+    if (lastVersion && lastVersion !== APP_VERSION) {
+        console.log(`[System] App updated: ${lastVersion} -> ${APP_VERSION}`);
+        
+        // Notify user about update
+        setTimeout(() => {
+            showNotification(`🚀 Systém aktualizován na v${APP_VERSION}!`, 'success');
+        }, 2000);
+    }
+    localStorage.setItem('kiscord_app_version', APP_VERSION);
+}
+
 
 
 // --- NAVIGATION ---
@@ -690,6 +708,7 @@ export function switchChannel(channelId, push = true) {
     import('./modules/tierlist.js').then(m => m.cleanupRealtime?.());
 
     // Route
+    try {
     switch (channelId) {
         case 'welcome':
             import('./modules/dashboard.js').then(m => m.renderWelcome());
@@ -776,11 +795,22 @@ export function switchChannel(channelId, push = true) {
         case 'matura-it':
             import('./core/state.js').then(s => s.ensureMaturaData()).then(() => moduleMap.matura().then(m => m.renderMatura(channelId)));
             break;
-        case 'upgrade':
-            renderUpgrade();
-            break;
-        default:
-            import('./modules/dashboard.js').then(m => m.renderWelcome());
+            case 'upgrade':
+                renderUpgrade();
+                break;
+            default:
+                import('./modules/dashboard.js').then(m => m.renderWelcome());
+        }
+    } catch (err) {
+        console.error(`[NAV] Navigating to ${channelId} failed:`, err);
+        if (window.renderErrorState) {
+            container.innerHTML = window.renderErrorState({
+                message: `Nepodařilo se přepnout na kanál ${channelId}... 🦝`,
+                onRetry: `switchChannel('${channelId}')`
+            });
+        } else {
+            container.innerHTML = `<div class="p-8 text-center text-red-400">Chyba navigace: ${err.message}</div>`;
+        }
     }
 
     // Mobile Sidebar Close

@@ -176,7 +176,13 @@ export async function submitAnswer() {
         }
 
         saveStateToCache();
-        renderDailyQuestions();
+        
+        // Notify other components (like Dashboard)
+        window.dispatchEvent(new CustomEvent('daily-questions-updated'));
+
+        if (state.currentChannel === 'daily-questions') {
+            renderDailyQuestions();
+        }
 
     } catch (err) {
         console.error("Chyba při odesílání odpovědi:", err);
@@ -206,11 +212,13 @@ function setupRealtime() {
                     // Pokud jsme oba odpověděli, ukážeme konfety
                     const myAnswer = state.dailyAnswers.find(a => a.user_id === state.currentUser.id);
                     const partnerAnswer = state.dailyAnswers.find(a => a.user_id !== state.currentUser.id);
-                    if (myAnswer && partnerAnswer && typeof window.triggerConfetti === 'function') {
-                        window.triggerConfetti();
-                    }
                     
-                    renderDailyQuestions();
+                    // Notify other components
+                    window.dispatchEvent(new CustomEvent('daily-questions-updated'));
+
+                    if (state.currentChannel === 'daily-questions') {
+                        renderDailyQuestions();
+                    }
                 }
             }
         )

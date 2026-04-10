@@ -205,6 +205,9 @@ export function generateCalendarGrid(year, month) {
                 const moveIconMap = { gym: "💪", walk: "🌲", run: "🏃‍♀️", yoga: "🧘‍♀️", sex: "🔥", clean: "🧹" };
                 cellContent += `<div class="absolute bottom-1 right-1 text-[10px]">${moveIconMap[dayData.movement[0]] || "👟"}</div>`;
             }
+            if (dayData.pills) {
+                cellContent += `<div class="absolute bottom-1 left-1 text-[10px]">💊</div>`;
+            }
         }
 
         html += `

@@ -14,33 +14,70 @@ function ensureModals() {
     if (!document.getElementById("topic-modal")) {
         const topicModal = document.createElement("div");
         topicModal.id = "topic-modal";
-        topicModal.className = "fixed inset-0 z-[130] hidden bg-[var(--bg-primary)]/95 backdrop-blur-md flex flex-col items-center justify-center animate-fade-in";
+        topicModal.className = "fixed inset-0 z-[130] hidden bg-[#18191c]/95 backdrop-blur-xl flex flex-col items-center justify-center animate-fade-in transition-all duration-500 p-4 md:p-8";
         topicModal.innerHTML = `
-            <div class="absolute top-6 right-6 flex gap-3">
+            <!-- Top Controls -->
+            <div class="absolute top-6 left-6 right-6 flex justify-between items-center z-20">
                 <button id="bookmark-filter-btn" onclick="Topics.toggleViewBookmarks()"
-                    class="text-gray-400 hover:text-[#faa61a] w-12 h-12 flex items-center justify-center rounded-full hover:bg-white/10 transition-all active:scale-90" title="Zobrazit záložky">
-                    <i class="fas fa-bookmark text-2xl"></i>
+                    class="text-gray-400 hover:text-[#faa61a] w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-90 shadow-xl" title="Zobrazit záložky">
+                    <i class="fas fa-bookmark text-xl"></i>
                 </button>
                 <button onclick="Topics.closeTopicModal()"
-                    class="text-gray-400 hover:text-white w-12 h-12 flex items-center justify-center rounded-full hover:bg-white/10 transition-all active:scale-90">
-                    <i class="fas fa-times text-2xl"></i>
+                    class="text-gray-400 hover:text-white w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-90 shadow-xl">
+                    <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
-            <div class="max-w-2xl w-full px-6 text-center animate-scale-in">
-                <div id="topic-badge" class="inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4 bg-[#5865F2]/20 text-[#5865F2]">Kategorie</div>
-                <h2 id="topic-title-display" class="text-3xl md:text-5xl font-extrabold text-white mb-6 leading-tight">Téma otázky</h2>
-                <div class="relative min-h-[150px] flex items-center justify-center mb-8">
-                    <p id="topic-question-display" class="text-lg md:text-2xl text-gray-200 leading-relaxed italic">"Načítám otázku..."</p>
+
+            <!-- Main Content Container -->
+            <div class="max-w-2xl w-full flex flex-col items-center gap-8 md:gap-10 animate-scale-in scale-95 md:scale-100">
+                
+                <!-- Category Label -->
+                <div class="flex flex-col items-center text-center">
+                    <div id="topic-badge" class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] bg-[#5865F2]/20 text-[#5865F2] border border-[#5865F2]/30 mb-2">Kategorie</div>
+                    <h3 id="topic-title-display" class="text-white/40 font-bold text-sm tracking-widest uppercase">Téma otázky</h3>
                 </div>
-                <div class="flex flex-col items-center gap-6">
-                    <div class="flex items-center gap-4">
-                        <button onclick="Topics.prevQuestion()" class="w-12 h-12 rounded-full bg-[#2f3136] hover:bg-[#4f545c] text-white flex items-center justify-center transition-all shadow-lg active:scale-90"><i class="fas fa-chevron-left"></i></button>
-                        <button id="done-btn" onclick="Topics.markQuestionDone()" class="px-8 py-4 rounded-full bg-[#3ba55c] hover:bg-[#2d7d44] text-white font-bold text-lg shadow-xl transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3"><i class="fas fa-check-circle"></i> Hotovo!</button>
-                        <button onclick="Topics.nextQuestion()" class="w-12 h-12 rounded-full bg-[#2f3136] hover:bg-[#4f545c] text-white flex items-center justify-center transition-all shadow-lg active:scale-90"><i class="fas fa-chevron-right"></i></button>
+
+                <!-- Premium Card -->
+                <div id="question-card" class="w-full premium-fact-card rounded-[2.5rem] p-8 md:p-14 shadow-2xl border border-white/10 flex flex-col items-center justify-center text-center relative group overflow-hidden transition-all duration-500 min-h-[350px] md:min-h-[400px]">
+                    <div id="topic-card-bar" class="absolute top-0 left-0 w-full h-1.5 opacity-80"></div>
+                    
+                    <i class="fas fa-quote-left absolute top-8 left-8 text-5xl md:text-7xl opacity-5 text-white group-hover:scale-110 group-hover:opacity-10 transition-all duration-700"></i>
+                    <i class="fas fa-quote-right absolute bottom-8 right-8 text-5xl md:text-7xl opacity-5 text-white group-hover:scale-110 group-hover:opacity-10 transition-all duration-700"></i>
+
+                    <!-- Floating Icon -->
+                    <div id="topic-modal-icon-container" class="mb-8 w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-white/5 flex items-center justify-center text-5xl md:text-7xl shadow-2xl border border-white/10 animate-float shadow-[0_15px_35px_rgba(0,0,0,0.3)]">
+                        <span id="topic-modal-icon">✨</span>
                     </div>
-                    <div class="flex items-center gap-6">
-                        <button id="topic-bookmark-btn" onclick="Topics.toggleQuestionBookmark()" class="text-gray-500 hover:text-[#faa61a] transition-colors flex items-center gap-2 text-sm font-bold"><i class="far fa-bookmark"></i> Uložit si na potom</button>
-                        <div id="topic-progress-text" class="text-gray-500 text-xs font-mono tracking-widest uppercase">Otázka 0 z 0</div>
+
+                    <!-- Question Text -->
+                    <div class="relative z-10 w-full">
+                        <p id="topic-question-display" class="text-xl md:text-3xl lg:text-4xl font-black text-white leading-tight md:leading-tight tracking-tight px-2 drop-shadow-lg">
+                            "Načítám otázku..."
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Interaction Bar -->
+                <div id="topic-controls" class="flex flex-col items-center gap-8 w-full max-w-md">
+                    <div class="flex items-center justify-between w-full">
+                        <button id="btn-prev-question" onclick="Topics.prevQuestion()" class="w-14 h-14 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-white flex items-center justify-center transition-all shadow-xl active:scale-90 group">
+                            <i class="fas fa-chevron-left group-hover:-translate-x-1 transition-transform"></i>
+                        </button>
+
+                        <button id="done-btn" onclick="Topics.markQuestionDone()" class="px-10 h-14 rounded-2xl bg-[#3ba55c] hover:bg-[#2d7d44] text-white font-black text-sm tracking-widest shadow-[0_10px_30px_rgba(59,165,92,0.3)] transition-all transform hover:scale-105 active:scale-95 flex items-center gap-3 border border-white/10">
+                            <i class="fas fa-check-circle text-lg"></i> HOTOVO!
+                        </button>
+
+                        <button id="btn-next-question" onclick="Topics.nextQuestion()" class="w-14 h-14 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-white flex items-center justify-center transition-all shadow-xl active:scale-90 group">
+                            <i class="fas fa-chevron-right group-hover:translate-x-1 transition-transform"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between w-full px-4 border-t border-white/5 pt-6">
+                        <button id="topic-bookmark-btn" onclick="Topics.toggleQuestionBookmark()" class="text-gray-500 hover:text-[#faa61a] transition-all flex items-center gap-2.5 text-[10px] font-black uppercase tracking-widest group">
+                            <i class="far fa-bookmark transition-transform group-hover:scale-125"></i> Uložit si na potom
+                        </button>
+                        <div id="topic-progress-text" class="text-gray-500 text-[10px] font-black tracking-[0.2em] uppercase opacity-70">Otázka 0 z 0</div>
                     </div>
                 </div>
             </div>
@@ -74,6 +111,7 @@ export function renderTopics() {
         confirmResetTopic, closeTopicModal, openRandomTopic, nextQuestion, 
         markQuestionDone, prevQuestion, toggleQuestionBookmark, 
         toggleViewBookmarks, showAddTopicQuestionModal, saveNewTopicQuestion,
+        exportTopicsToTxt, clearOldTopicQuestions,
         setTopicId: (id) => { selectedTopicId = id; }
     };
 
@@ -97,6 +135,16 @@ export function renderTopics() {
                       <p class="text-gray-400 text-sm">Hluboké otázky, abychom se poznali ještě líp.</p>
                   </div>
                   <div class="flex gap-2">
+                      <!-- 
+                      <button onclick="Topics.clearOldTopicQuestions()" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-2 rounded-lg font-bold transition border border-red-500/30 flex items-center gap-2 group" title="Vymazat otázky v původních kategoriích">
+                          <i class="fas fa-eraser group-hover:rotate-12 transition-transform"></i>
+                          <span class="hidden lg:inline text-[10px] uppercase tracking-tighter">Vymazat dotazy</span>
+                      </button>
+                      -->
+                      <button onclick="Topics.exportTopicsToTxt()" class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-4 py-2 rounded-lg font-bold transition shadow-lg flex items-center gap-2">
+                          <i class="fas fa-file-export"></i>
+                          <span class="hidden sm:inline">Exportovat</span>
+                      </button>
                       <button onclick="Topics.showAddTopicQuestionModal()" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-4 py-2 rounded-lg font-bold transition shadow-lg flex items-center gap-2">
                           <i class="fas fa-plus"></i>
                           <span class="hidden sm:inline">Nová otázka</span>
@@ -241,17 +289,30 @@ export function openTopic(id) {
     }
 
     // Nastavení vzhledu Modálu
-    const title = document.getElementById("topic-modal-title");
-    if (title) title.style.color = activeTopicObject.color;
+    const badge = document.getElementById("topic-badge");
+    if (badge) {
+        badge.style.backgroundColor = `${activeTopicObject.color}20`;
+        badge.style.color = activeTopicObject.color;
+        badge.style.borderColor = `${activeTopicObject.color}40`;
+    }
 
-    const name = document.getElementById("topic-modal-name");
-    if (name) name.innerText = activeTopicObject.title;
+    const titleDisplay = document.getElementById("topic-title-display");
+    if (titleDisplay) {
+        titleDisplay.innerText = activeTopicObject.title;
+    }
 
     const icon = document.getElementById("topic-modal-icon");
     if (icon) icon.innerText = activeTopicObject.icon;
 
     const bar = document.getElementById("topic-card-bar");
     if (bar) bar.style.background = `linear-gradient(to right, ${activeTopicObject.color}, #5865F2)`;
+
+    const card = document.getElementById("question-card");
+    if (card) {
+        card.style.borderColor = `${activeTopicObject.color}20`;
+        // Optional: add a subtle glow matching the topic
+        card.style.boxShadow = `0 20px 50px rgba(0,0,0,0.5), 0 0 20px ${activeTopicObject.color}10`;
+    }
 
     const modal = document.getElementById("topic-modal");
     if (modal) {
@@ -328,21 +389,20 @@ export function nextQuestion(firstLoad = false) {
 
     if (state.currentTopicId === "bookmarks") {
         availableIndices = topic.questions.map((_, index) => index);
-        const el = document.getElementById("topic-remaining");
+        const el = document.getElementById("topic-progress-text");
         if (el) el.innerText = `${availableIndices.length} celkem`;
     } else {
         const prog = state.topicProgress[state.currentTopicId] || { doneIndices: [], bookmarks: [] };
         const doneIndices = prog.doneIndices || [];
         const bookmarkedIndices = prog.bookmarks || [];
 
+        const el = document.getElementById("topic-progress-text");
         if (state.isViewingBookmarks) {
             availableIndices = bookmarkedIndices;
-            const el = document.getElementById("topic-remaining");
             if (el) el.innerText = `${availableIndices.length} (uloženo)`;
         } else {
             availableIndices = topic.questions.map((_, index) => index).filter((index) => !doneIndices.includes(index));
-            const el = document.getElementById("topic-remaining");
-            if (el) el.innerText = availableIndices.length;
+            if (el) el.innerText = `Zbývá ${availableIndices.length}`;
         }
     }
 
@@ -351,22 +411,21 @@ export function nextQuestion(firstLoad = false) {
     const controls = document.getElementById("topic-controls");
     const bookmarkBtn = document.getElementById("topic-bookmark-btn");
 
-    if (!textEl) return; // Guard: modal may not be mounted
-
+    if (bookmarkBtn) bookmarkBtn.style.visibility = "hidden";
+    if (controls) controls.style.visibility = "hidden";
+    
     if (availableIndices.length === 0) {
         if (state.currentTopicId === "bookmarks") {
-            textEl.innerHTML = `<span class="text-gray-400">Nemáš žádné uložené otázky. <br>Přidej si je srdíčkem v kategoriích!</span>`;
+            textEl.innerHTML = `<span class="text-white/40 font-bold">Nemáš žádné uložené otázky. <br>Přidej si je srdíčkem v kategoriích!</span>`;
         } else {
             textEl.innerHTML = state.isViewingBookmarks
-                ? `<span class="text-gray-400">Zatím sis v této kategorii nic neuložila.</span>`
-                : `<span class="text-[#3ba55c]">🎉 Všechny otázky z této kategorie jsou probrány!</span>`;
+                ? `<span class="text-white/40 font-bold">Zatím sis v této kategorii nic neuložila.</span>`
+                : `<span class="text-[#3ba55c] font-black uppercase tracking-widest">🎉 Všechny otázky z této kategorie jsou probrány!</span>`;
         }
-        if (bookmarkBtn) bookmarkBtn.style.display = "none";
-        if (controls) controls.style.visibility = "hidden";
         return;
     }
 
-    if (bookmarkBtn) bookmarkBtn.style.display = "block";
+    if (bookmarkBtn) bookmarkBtn.style.visibility = "visible";
     if (controls) controls.style.visibility = "visible";
 
     const nextIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
@@ -602,5 +661,93 @@ export async function saveNewTopicQuestion() {
     } catch (err) {
         console.error("Save Topic Question Error:", err);
         alert("Chyba při ukládání: " + err.message);
+    }
+}
+export async function exportTopicsToTxt() {
+    triggerHaptic('light');
+    const topics = state.conversationTopics;
+    
+    if (!topics || topics.length === 0) {
+        if (window.showNotification) window.showNotification("Žádná témata k exportu nebyla nalezena.", "error");
+        return;
+    }
+
+    let text = "KISCORD - EXPORT KONVERZAČNÍCH TÉMAT\n";
+    text += "======================================\n\n";
+
+    topics.forEach(t => {
+        text += `${t.icon} ${t.title.toUpperCase()}\n`;
+        text += "-".repeat(t.title.length + 4) + "\n";
+        if (t.questions && Array.isArray(t.questions)) {
+            t.questions.forEach((q, i) => {
+                text += `${i + 1}. ${q}\n`;
+            });
+        }
+        text += "\n";
+    });
+
+    try {
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `kiscord_temata_${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        if (window.showNotification) window.showNotification("Seznam otázek byl úspěšně vyexportován. 📄", "success");
+    } catch (err) {
+        console.error("Export Topics Error:", err);
+        if (window.showNotification) window.showNotification("Chyba při exportu souboru.", "error");
+    }
+}
+
+export async function clearOldTopicQuestions() {
+    if (!confirm("Opravdu chceš vymazat VŠECHNY OTÁZKY v původních kategoriích? (Kategorie samotné zůstanou prázdné a připravené na tvoje nové otázky).")) return;
+    
+    triggerHaptic('medium');
+    const oldTitles = [
+        'Vztah & Emoce',
+        'Sny & Budoucnost', 
+        'Zábava & Hypotézy',
+        'Hluboké & Osobní',
+        'Dětství & Nostalgie'
+    ];
+
+    try {
+        // 1. Zjistíme ID těchto témat (budeme je potřebovat pro smazání progressu)
+        const { data: topics, error: fetchErr } = await supabase
+            .from('conversation_topics')
+            .select('id')
+            .in('title', oldTitles);
+
+        if (fetchErr) throw fetchErr;
+
+        // 2. Vymažeme otázky v těchto tématech (nastavíme pole na prázdné [])
+        const { error: updateErr } = await supabase
+            .from('conversation_topics')
+            .update({ questions: [] })
+            .in('title', oldTitles);
+
+        if (updateErr) throw updateErr;
+
+        // 3. Resetujeme progress pro tato témata
+        if (topics && topics.length > 0) {
+            const topicIds = topics.map(t => t.id);
+            await supabase
+                .from('topic_progress')
+                .delete()
+                .in('topic_id', topicIds);
+        }
+
+        if (window.showNotification) window.showNotification("Otázky v původních kategoriích vymazány! 🧹", "success");
+        
+        // Refresh UI
+        setTimeout(() => location.reload(), 1000);
+    } catch (err) {
+        console.error("Clear Questions Error:", err);
+        alert("Chyba při mazání: " + err.message);
     }
 }

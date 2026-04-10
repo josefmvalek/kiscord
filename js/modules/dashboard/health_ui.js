@@ -1,6 +1,7 @@
 import { state } from '../../core/state.js';
 import { triggerHaptic, getTodayKey } from '/js/core/utils.js';
 import { updateSunflowersDOM } from '/js/modules/dashboard/sunflowers.js';
+import { getPillsStreak } from '/js/modules/health.js';
 
 // --- VISUAL GENERATORS (Mood/Water/Movement/Sleep) ---
 
@@ -177,6 +178,44 @@ export function generateMovementChips(movement = []) {
           </button>
       `;
     }).join('');
+}
+
+export function updatePillsVisuals() {
+    const todayKey = getTodayKey();
+    const data = state.healthData && state.healthData[todayKey] ? state.healthData[todayKey] : { pills: false };
+    const container = document.getElementById('pills-container');
+    if (container) container.innerHTML = generatePillsChip(data.pills, getPillsStreak());
+    
+    updateSunflowersDOM();
+}
+
+export function generatePillsChip(isTaken = false, streak = 0) {
+    const activeClass = isTaken
+        ? "bg-red-500/10 text-red-400 border-red-500/50 shadow-[0_0_10px_rgba(237,66,69,0.3)]"
+        : "bg-[#36393f] text-gray-500 border-gray-700 hover:border-gray-500";
+
+    const streakColor = isTaken ? 'text-orange-400' : 'text-gray-600 opacity-40';
+    const streakHtml = `
+        <div class="flex flex-col items-center justify-center mt-2 transition-all duration-500 ${streakColor}">
+            <div class="flex items-center gap-1">
+                <span class="text-2xl font-black tracking-tighter transition-all duration-500 ${isTaken ? 'scale-110 drop-shadow-[0_0_8px_rgba(251,146,60,0.4)]' : ''}">${streak}</span>
+                <span class="text-base ${streak > 0 && isTaken ? 'animate-fire-pulse' : ''}">🔥</span>
+            </div>
+            <div class="text-[8px] font-black uppercase tracking-[0.2em] leading-none mt-1 opacity-70">Dní v řadě</div>
+        </div>
+    `;
+
+    return `
+      <div class="flex flex-col w-full items-center">
+          <button onclick="import('/js/modules/health.js').then(m => m.updateHealth('pills', ${!isTaken}))" 
+                  class="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 transform active:scale-95 w-full justify-center ${activeClass}">
+              <span class="text-lg">💊</span>
+              <span class="text-xs font-bold uppercase">Vzala</span>
+              ${isTaken ? '<i class="fas fa-check text-[10px] ml-1"></i>' : ''}
+          </button>
+          ${streakHtml}
+      </div>
+    `;
 }
 
 export function getSleepColor(hours) {
