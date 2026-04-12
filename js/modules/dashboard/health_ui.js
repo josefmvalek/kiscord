@@ -171,10 +171,45 @@ export function generateMovementChips(movement = []) {
 
         return `
           <button onclick="import('/js/modules/health.js').then(m => m.updateHealth('movement', '${act.id}'))" 
-                  class="flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 transform active:scale-95 ${activeClass}">
+                  class="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 transform active:scale-95 w-full ${activeClass}">
               <span class="text-lg">${act.icon}</span>
               <span class="text-xs font-bold uppercase">${act.label}</span>
               ${isActive ? '<i class="fas fa-check text-[10px] ml-1"></i>' : ''}
+          </button>
+      `;
+    }).join('');
+}
+
+export function updateSupplementsVisuals() {
+    const todayKey = getTodayKey();
+    const data = state.healthData && state.healthData[todayKey] ? state.healthData[todayKey] : { supplements: { iron: false, zinc: false, magnesium: false } };
+    const container = document.getElementById('supplements-container');
+    if (container) container.innerHTML = generateSupplementsChips(data.supplements);
+    
+    updateSunflowersDOM();
+}
+
+export function generateSupplementsChips(supplements = { iron: false, zinc: false, magnesium: false }) {
+    if (!supplements) supplements = { iron: false, zinc: false, magnesium: false };
+    
+    const activities = [
+        { id: 'iron', icon: '🩸', label: 'Železo', activeClass: 'text-red-400 bg-red-500/10 border-red-500/50 shadow-[0_0_10px_rgba(237,66,69,0.3)]' },
+        { id: 'zinc', icon: '✨', label: 'Zinek', activeClass: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/50 shadow-[0_0_10px_rgba(250,166,26,0.3)]' },
+        { id: 'magnesium', icon: '🌙', label: 'Hořčík', activeClass: 'text-purple-400 bg-purple-500/10 border-purple-500/50 shadow-[0_0_10px_rgba(155,89,182,0.3)]' }
+    ];
+
+    return activities.map(act => {
+        const isActive = supplements[act.id];
+        const currentClass = isActive
+            ? act.activeClass
+            : "bg-[#36393f] text-gray-500 border-gray-700 hover:border-gray-500";
+
+        return `
+          <button onclick="import('/js/modules/health.js').then(m => m.updateHealth('supplements', '${act.id}'))" 
+                  class="flex-1 flex flex-col items-center gap-1.5 px-2 py-3 rounded-xl border transition-all duration-300 transform active:scale-95 ${currentClass}">
+              <span class="text-xl leading-none filter drop-shadow-md pb-1">${act.icon}</span>
+              <span class="text-[10px] font-black uppercase tracking-widest">${act.label}</span>
+              <span class="text-[9px] uppercase font-bold ${isActive ? 'opacity-100' : 'opacity-0'} transition-opacity">Vzato <i class="fas fa-check text-[8px] ml-0.5"></i></span>
           </button>
       `;
     }).join('');

@@ -32,7 +32,8 @@ export function getTodayData() {
             mood: 5,
             sleep: 0,
             movement: [],
-            pills: false
+            pills: false,
+            supplements: { iron: false, zinc: false, magnesium: false }
         };
         saveStateToCache();
     }
@@ -110,6 +111,11 @@ export async function updateHealth(type, value) {
         data.pills = value;
         triggerHaptic(value ? 'success' : 'light');
     }
+    else if (type === 'supplements') {
+        if (!data.supplements) data.supplements = { iron: false, zinc: false, magnesium: false };
+        data.supplements[value] = !data.supplements[value];
+        triggerHaptic(data.supplements[value] ? 'success' : 'light');
+    }
 
     // --- SAVE ---
     state.healthData[todayKey] = data;
@@ -123,7 +129,8 @@ export async function updateHealth(type, value) {
         mood: data.mood,
         movement: data.movement,
         bedtime: data.bedtime, // Added: persist bedtime
-        pills: data.pills
+        pills: data.pills,
+        supplements: data.supplements
     });
     if (error) console.error("Error saving health to Supabase:", error);
     else {
@@ -135,7 +142,8 @@ export async function updateHealth(type, value) {
             sleep: data.sleep,
             mood: data.mood,
             movement: data.movement,
-            pills: data.pills
+            pills: data.pills,
+            supplements: data.supplements
         });
     }
 
@@ -147,6 +155,9 @@ export async function updateHealth(type, value) {
     // Local Fallback Save - User Specific
     const storageKey = `vault_health_${state.currentUser.name.toLowerCase()}`;
     localStorage.setItem(storageKey, JSON.stringify(state.healthData));
+    
+    // Update main state cache
+    saveStateToCache();
 
     // --- RE-RENDER ---
     // Essential to update UI state (active classes, colors)
@@ -160,6 +171,7 @@ export function updateBedtime(time) {
     data.bedtime = time;
     const storageKey = `vault_health_${state.currentUser.name.toLowerCase()}`;
     localStorage.setItem(storageKey, JSON.stringify(state.healthData));
+    saveStateToCache();
     triggerHaptic('light');
 
     // Cloud Save (Supabase)
@@ -197,6 +209,7 @@ export function saveDailyNote() {
 
     const storageKey = `vault_health_${state.currentUser.name.toLowerCase()}`;
     localStorage.setItem(storageKey, JSON.stringify(state.healthData));
+    saveStateToCache();
 
     // Visual feedback
     const btn = document.querySelector('#daily-note + button');
@@ -364,6 +377,7 @@ export async function wakeUp() {
 
                     const storageKey = `vault_health_${state.currentUser.name.toLowerCase()}`;
                     localStorage.setItem(storageKey, JSON.stringify(state.healthData));
+                    saveStateToCache();
                 } catch (e) {
                     console.error("[Sleep] Error during wakeUp sequence:", e);
                 }

@@ -17,10 +17,12 @@ import {
     generateWaterIcons,
     generateMovementChips,
     generatePillsChip,
+    generateSupplementsChips,
     generateTetrisMiniTracker,
     updateWaterVisuals,
     updateMovementVisuals,
     updatePillsVisuals,
+    updateSupplementsVisuals,
     updateMoodVisuals,
     updateSleep
 } from '/js/modules/dashboard/health_ui.js';
@@ -420,7 +422,7 @@ export async function renderDashboard(forceRefresh = false) {
     const todayKey = getTodayKey();
     if (!state.healthData) state.healthData = {};
     if (!state.healthData[todayKey]) {
-        state.healthData[todayKey] = { water: 0, sleep: 0, mood: 5, movement: [], pills: false, bedtime: null };
+        state.healthData[todayKey] = { water: 0, sleep: 0, mood: 5, movement: [], pills: false, bedtime: null, supplements: { iron: false, zinc: false, magnesium: false } };
     }
 
     import('../core/state.js').then(m => {
@@ -431,41 +433,12 @@ export async function renderDashboard(forceRefresh = false) {
         }
     });
 
+    // 2. TRIGGER SYNC (Async, Non-blocking)
     if (navigator.onLine && (!state.dashboardFetched || forceRefresh)) {
-        try {
-            const queries = [];
-            if (state.currentUser?.id) {
-                queries.push(supabase.from('health_data').select('*').eq('date_key', todayKey).neq('user_id', state.currentUser.id).maybeSingle());
-            } else {
-                queries.push(Promise.resolve({ data: null, error: null }));
-            }
-
-            queries.push(supabase.rpc('get_dashboard_data', { p_user_id: state.currentUser?.id, p_date: todayKey }));
-
-            const [partnerRes, dashRes] = await Promise.all(queries);
-            if (dashRes.error) throw dashRes.error;
-
-            state.dashboardFetched = true;
-            const data = dashRes.data || {};
-            const partnerHealth = partnerRes.data;
-
-            if (data && data.health) {
-                state.healthData[todayKey] = { ...state.healthData[todayKey], ...data.health };
-            }
-            if (partnerHealth) state.partnerHealthData = partnerHealth;
-
-            saveStateToCache();
-
-            if (state.currentChannel === 'dashboard') return renderDashboard();
-        } catch (err) {
-            console.error("[Dashboard] Load Error:", err);
-            if (!state.healthData[todayKey]) {
-                container.innerHTML = `<div class="p-6 text-center text-gray-400">Nepodařilo se načíst data. Zkus to znovu.</div>`;
-                return;
-            }
-        }
+        syncDashboardData(forceRefresh);
     }
 
+    // 3. RENDER UI IMMEDIATELY (Optimistic)
     const data = getTodayData();
     const niceDate = new Date().toLocaleDateString("cs-CZ", { weekday: "long", day: "numeric", month: "long" });
     const hour = new Date().getHours();
@@ -487,7 +460,12 @@ export async function renderDashboard(forceRefresh = false) {
                   <div class="relative z-10 px-6 mb-0 flex justify-between items-end min-h-[140px]">
                       <div class="pb-2">
                            <p class="text-[10px] font-bold uppercase tracking-wider text-white/90 mb-0.5">${niceDate}</p>
-                           <h1 class="text-2xl font-black text-white leading-tight">${greeting}, <br>${getInflectedName(state.currentUser.name, 5)} 🌞</h1>
+                           <h1 class="text-2xl font-black text-white leading-tight flex items-center gap-3">
+                               <span>${greeting}, <br>${getInflectedName(state.currentUser.name, 5)} 🌞</span>
+                               <div id="dashboard-sync-indicator" class="hidden opacity-40 pb-1">
+                                   <i class="fas fa-sync-alt fa-spin text-[10px]"></i>
+                               </div>
+                           </h1>
                           <div class="flex items-center gap-2 mt-3">
                               <div class="bg-white/20 backdrop-blur-md px-2 py-1 rounded text-center border border-white/10" onclick="import('./js/modules/dashboard.js').then(m => m.handleEasterEggClick())">
                                   <span class="block text-[8px] uppercase font-bold text-white leading-none mb-0.5">Spolu</span>
@@ -537,15 +515,26 @@ export async function renderDashboard(forceRefresh = false) {
                       <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Voda</h3>
                       <div class="flex justify-between gap-1" id="water-container">${generateWaterIcons(data.water || 0)}</div>
                   </div>
+                  <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5">
+                      <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Jak se dnes cítíš?</h3>
+                      <div id="mood-container">${generateMoodSlider(data.mood)}</div>
+                  </div>
                   <div class="grid grid-cols-2 gap-3">
                       <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5">
                           <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Pohyb</h3>
-                          <div class="flex flex-wrap gap-2" id="movement-container">${generateMovementChips(data.movement)}</div>
+                          <div class="flex flex-col gap-2" id="movement-container">${generateMovementChips(data.movement)}</div>
                       </div>
                       <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5">
                           <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Léky</h3>
                           <div id="pills-container">${generatePillsChip(data.pills, getPillsStreak())}</div>
                       </div>
+                  </div>
+                  ` : ''}
+
+                  ${state.settings.dashboardWidgets.supplements ? `
+                  <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5">
+                      <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Regenerace & Suplementy</h3>
+                      <div class="flex flex-wrap justify-between gap-2" id="supplements-container">${generateSupplementsChips(data.supplements)}</div>
                   </div>
                   ` : ''}
 
@@ -570,6 +559,7 @@ export function setupDashboardEvents() {
             updateWaterVisuals();
             updateMovementVisuals();
             updatePillsVisuals();
+            updateSupplementsVisuals();
             updateMoodVisuals(getTodayData().mood);
             updateSleep(getTodayData().sleep);
         }
@@ -630,4 +620,50 @@ export async function handleNextDateClick(dateKey) {
     triggerHaptic('light'); window.switchChannel('calendar');
     const { showDayDetail } = await import('./calendar.js');
     setTimeout(() => { showDayDetail(dateKey); }, 50);
+}
+export async function syncDashboardData(forceRefresh = false) {
+    const todayKey = getTodayKey();
+    const indicator = document.getElementById("dashboard-sync-indicator");
+    if (indicator) indicator.classList.remove("hidden");
+
+    try {
+        const queries = [];
+        if (state.currentUser?.id) {
+            queries.push(supabase.from('health_data').select('*').eq('date_key', todayKey).neq('user_id', state.currentUser.id).maybeSingle());
+        } else {
+            queries.push(Promise.resolve({ data: null, error: null }));
+        }
+
+        queries.push(supabase.rpc('get_dashboard_data', { p_user_id: state.currentUser?.id, p_date: todayKey }));
+
+        const [partnerRes, dashRes] = await Promise.all(queries);
+        if (dashRes.error) throw dashRes.error;
+
+        state.dashboardFetched = true;
+        const data = dashRes.data || {};
+        const partnerHealth = partnerRes.data;
+
+        if (data && data.health) {
+            state.healthData[todayKey] = { ...state.healthData[todayKey], ...data.health };
+        }
+        if (partnerHealth) state.partnerHealthData = partnerHealth;
+
+        const { saveStateToCache } = await import('../core/state.js');
+        saveStateToCache();
+
+        // Update visuals if still on dashboard
+        if (state.currentChannel === 'dashboard') {
+            updateSunflowersDOM();
+            updateWaterVisuals();
+            updateMovementVisuals();
+            updatePillsVisuals();
+            updateSupplementsVisuals();
+            updateMoodVisuals(getTodayData().mood);
+            updateSleep(getTodayData().sleep);
+        }
+    } catch (err) {
+        console.error("[Dashboard] Background Sync Error:", err);
+    } finally {
+        if (indicator) indicator.classList.add("hidden");
+    }
 }

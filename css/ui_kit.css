@@ -258,6 +258,45 @@ input[type=range].water-slider::-webkit-slider-thumb:hover {
     pointer-events: none;
 }
 
+/* 7. Iron / Hematite Deep (v3.2) */
+.notif-theme-iron {
+    background: linear-gradient(135deg, #4d0b0b 0%, #7d1515 100%) !important;
+    border-color: rgba(248, 113, 113, 0.2) !important;
+}
+.notif-theme-iron::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.1) 100%, transparent 0%),
+                      radial-gradient(1.5px 1.5px at 70% 60%, rgba(255,255,255,0.05) 100%, transparent 0%);
+    background-size: 60px 60px;
+    opacity: 0.6;
+}
+
+/* 8. Zinc / Golden Ember (v3.2) */
+.notif-theme-zinc {
+    background: linear-gradient(135deg, #4d3d00 0%, #b38f00 100%) !important;
+    border-color: rgba(250, 204, 21, 0.2) !important;
+}
+.notif-theme-zinc::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 80% 20%, rgba(250, 204, 21, 0.1) 0%, transparent 60%);
+}
+
+/* 9. Magnesium / Amethyst Aura (v3.2) */
+.notif-theme-magnesium {
+    background: linear-gradient(135deg, #1d0f36 0%, #4c2c8f 100%) !important;
+    border-color: rgba(192, 132, 252, 0.2) !important;
+}
+.notif-theme-magnesium::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 120%, rgba(133, 62, 230, 0.15) 0%, transparent 70%);
+}
+
 /* Unified Glasmorphism for internal elements */
 .notif-card .notif-controls {
     border-top: 1px solid rgba(255, 255, 255, 0.1) !important;

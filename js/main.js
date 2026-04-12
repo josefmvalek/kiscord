@@ -42,7 +42,8 @@ const moduleMap = {
     'stats': () => import('./modules/stats.js'),
     'matura': () => import('./modules/matura.js'),
     'restore-data': () => import('./modules/restore.js'),
-    'settings': () => import('./modules/settings.js')
+    'settings': () => import('./modules/settings.js'),
+    'regenerace': () => import('./modules/regenerace.js')
 };
 
 
@@ -419,6 +420,7 @@ const channelCategories = [
     {
         name: "SYSTÉM",
         items: [
+            { id: 'regenerace', name: 'regenerace', icon: '<i class="fas fa-leaf"></i>', type: 'text', color: '#3ba55c', desc: 'Proč a jak brát suplementy. 🌿' },
             { id: 'stats', name: 'statistiky', icon: '<i class="fas fa-chart-bar"></i>', type: 'text', color: '#faa61a', desc: 'Čísla našeho vztahu.' },
             { id: 'settings', name: 'nastavení', icon: '<i class="fas fa-cog"></i>', type: 'text', color: '#99aab5', desc: 'Přizpůsob si Kiscord podle sebe.' },
             { id: 'welcome', name: 'uvítání', icon: '<i class="fas fa-door-open"></i>', type: 'text', desc: 'Vítejte na našem soukromém serveru! ❤️' },
@@ -605,6 +607,9 @@ export function switchChannel(channelId, push = true) {
             break;
             case 'settings':
                 moduleMap.settings().then(m => m.renderSettings());
+                break;
+            case 'regenerace':
+                moduleMap.regenerace().then(m => m.renderRegenerace());
                 break;
             case 'upgrade':
                 renderUpgrade();

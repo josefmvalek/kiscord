@@ -14,12 +14,34 @@ const lastNotified = {
  */
 export function initNotifications() {
     console.log("[Notifications] Engine initialized.");
+
+    // PREVENT CATCH-UP NOTIFICATIONS ON REFRESH
+    // 1. Water: Start interval from now
+    lastNotified.water = Date.now();
+
+    // 2. Bedtime: If already past bedtime today, don't notify again
+    const todayKey = getTodayKey();
+    const now = new Date();
+    const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const bedtimeConfig = state.settings.notifications.reminders.bedtime;
+    if (bedtimeConfig.enabled && currentTimeStr >= bedtimeConfig.time) {
+        lastNotified.bedtime = todayKey;
+    }
+
+    // 3. Pills: Mark all past scheduled pills today as already notified
+    const pillConfig = state.settings.notifications.reminders.pills;
+    if (pillConfig.enabled && pillConfig.reminders) {
+        lastNotified.pills[todayKey] = pillConfig.reminders
+            .filter(r => currentTimeStr >= r.time)
+            .map(r => r.time);
+    }
     
     // Background ticker (every 5 minutes)
     setInterval(checkReminders, 5 * 60 * 1000);
     
-    // Immediate check
-    checkReminders();
+    // Initial silent check (skip triggering, just for state if needed in future)
+    // For now, we just let the ticker handle the first real one after 5 mins
+    // or if the user performs some action.
 
     // --- PARTNER ACTION LISTENERS ---
     

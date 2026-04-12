@@ -201,12 +201,19 @@ export function generateCalendarGrid(year, month) {
                     cellContent += `<div class="w-full h-full flex items-center justify-center text-2xl pt-2">${moodIcons[dayData.mood] || ""}</div>`;
                 }
             }
+            // Sdružení spodních ikon (pohyb, léky, suplementy) pro lepší vycentrování
+            let bottomIcons = [];
             if (dayData.movement && dayData.movement.length > 0) {
                 const moveIconMap = { gym: "💪", walk: "🌲", run: "🏃‍♀️", yoga: "🧘‍♀️", sex: "🔥", clean: "🧹" };
-                cellContent += `<div class="absolute bottom-1 right-1 text-[10px]">${moveIconMap[dayData.movement[0]] || "👟"}</div>`;
+                bottomIcons.push(moveIconMap[dayData.movement[0]] || "👟");
             }
-            if (dayData.pills) {
-                cellContent += `<div class="absolute bottom-1 left-1 text-[10px]">💊</div>`;
+            if (dayData.pills) bottomIcons.push('💊');
+            if (dayData.supplements && Object.values(dayData.supplements).some(v => v)) bottomIcons.push('🌿');
+
+            if (bottomIcons.length > 0) {
+                cellContent += `<div class="absolute bottom-0.5 left-0 right-0 flex justify-center gap-0.5 pointer-events-none">
+                    ${bottomIcons.map(icon => `<span class="text-[10px] drop-shadow-sm">${icon}</span>`).join('')}
+                </div>`;
             }
         }
 

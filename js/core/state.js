@@ -60,6 +60,7 @@ const state = {
     maturaAchievements: [],
     maturaTopics: {}, // { category_id: [topics] }
     maturaKBContent: {}, // { item_id: { content, updated_at } },
+    regeneraceContent: null, // { key: content_object }
     settings: {
         theme: 'default',
         glassmorphism: true,
@@ -67,6 +68,7 @@ const state = {
         haptics: true,
         dashboardWidgets: {
             health: true,
+            supplements: true,
             tetris: true,
             quests: true,
             funfacts: true
@@ -99,7 +101,8 @@ const state = {
         achievements: false,
         games: false,
         facts: false,
-        conv_topics: false
+        conv_topics: false,
+        regenerace: false
     }
 };
 
@@ -238,7 +241,7 @@ async function initializeState() {
             healthHistory.forEach(row => {
                 state.healthData[row.date_key] = {
                     water: row.water, sleep: row.sleep, mood: row.mood,
-                    movement: row.movement, bedtime: row.bedtime, pills: row.pills || false
+                    movement: row.movement, bedtime: row.bedtime, pills: row.pills || false, supplements: row.supplements || { iron: false, zinc: false, magnesium: false }
                 };
             });
         }
@@ -345,7 +348,7 @@ async function ensureCalendarData(force = false) {
             supabase.from('school_events').select('*')
         ]);
         if (health.data) health.data.forEach(row => {
-            state.healthData[row.date_key] = { water: row.water, sleep: row.sleep, mood: row.mood, movement: row.movement, bedtime: row.bedtime, pills: row.pills || false };
+            state.healthData[row.date_key] = { water: row.water, sleep: row.sleep, mood: row.mood, movement: row.movement, bedtime: row.bedtime, pills: row.pills || false, supplements: row.supplements || { iron: false, zinc: false, magnesium: false } };
         });
         if (dates.data) dates.data.forEach(row => {
             state.plannedDates[row.date_key] = {
@@ -540,6 +543,22 @@ async function ensureTopicsData(force = false) {
     } catch (e) { console.error("Topics Load Error:", e); }
 }
 
+async function ensureRegeneraceData(force = false) {
+    if (state._loaded.regenerace && !force && !isStale('regenerace')) return;
+    try {
+        const { data, error } = await supabase.from('app_knowledge').select('*').eq('key', 'regenerace_manual').maybeSingle();
+        if (error) throw error;
+        if (data && data.content) {
+            state.regeneraceContent = data.content;
+        }
+        markLoaded('regenerace');
+        stateEvents.emit('regenerace');
+    } catch (e) {
+        console.error("Regenerace Load Error:", e);
+        // We don't mark as loaded if there was an error, allowing retry
+    }
+}
+
 async function ensureGamesData() {
     if (state._loaded.games) return;
     try {
@@ -615,7 +634,7 @@ async function ensureDailyQuizData() {
 }
 
 function resetLazyLoaders() {
-    state._loaded = { calendar: false, timeline: false, library: false, matura: false, achievements: false, games: false, facts: false, daily: false, draw: false, map: false, bucketlist: false, conv_topics: false };
+    state._loaded = { calendar: false, timeline: false, library: false, matura: false, achievements: false, games: false, facts: false, daily: false, draw: false, map: false, bucketlist: false, conv_topics: false, regenerace: false };
     Object.keys(_loadedAt).forEach(k => delete _loadedAt[k]);
     console.log('[State] All lazy loaders reset.');
 }
@@ -635,7 +654,7 @@ async function ensureAllHealthData() {
             data.forEach(row => {
                 state.healthData[row.date_key] = {
                     water: row.water, sleep: row.sleep, mood: row.mood,
-                    movement: row.movement, bedtime: row.bedtime, pills: row.pills || false
+                    movement: row.movement, bedtime: row.bedtime, pills: row.pills || false, supplements: row.supplements || { iron: false, zinc: false, magnesium: false }
                 };
             });
             console.log(`[State] Full health history loaded: ${data.length} records.`);
@@ -664,6 +683,7 @@ export {
     ensureDrawStrokesData,
     ensureDailyQuizData,
     ensureAllHealthData,
+    ensureRegeneraceData,
     refreshMaturaTopics,
     resetLazyLoaders
 };

@@ -18,20 +18,7 @@ export function ensureModals() {
             title: '<span id="modal-date-title">Datum</span>',
             subtitle: '<span id="modal-date-subtitle">Den v týdnu</span>',
             content: `
-                <div id="modal-section-date" class="space-y-3"></div>
-                <div id="modal-section-school" class="hidden space-y-4 pt-4 border-t border-white/5">
-                    <h4 class="text-xs font-bold text-[#faa61a] uppercase mb-2 flex items-center gap-2"><i class="fas fa-graduation-cap"></i> Škola</h4>
-                    <div id="school-event-display" class="hidden bg-[#faa61a]/10 border border-[#faa61a]/30 rounded-xl p-3 flex justify-between items-center">
-                        <span id="school-event-text" class="text-white text-sm font-medium"></span>
-                        <button class="text-red-400 hover:text-red-200 p-1"><i class="fas fa-trash-alt"></i></button>
-                    </div>
-                    <div id="school-add-form" class="flex gap-2">
-                       <input type="text" id="school-input" placeholder="Zkouška, test..." class="flex-1 bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#faa61a]/50 transition-all">
-                       <button onclick="Calendar.addSchoolEvent()" class="bg-[#faa61a] hover:bg-[#c88515] text-white px-4 rounded-xl transition shadow-lg active:scale-95"><i class="fas fa-plus"></i></button>
-                    </div>
-                </div>
-                
-                <div id="modal-section-health" class="space-y-4 pt-4 border-t border-white/5">
+                <div id="modal-section-health" class="space-y-4">
                     <div class="flex items-center justify-between">
                         <h4 class="text-xs font-bold text-[#3ba55c] uppercase flex items-center gap-2"><i class="fas fa-heartbeat"></i> Zdraví & Restart</h4>
                         <button onclick="Calendar.toggleHealthEdit()" class="text-[10px] font-bold text-gray-400 hover:text-white uppercase tracking-widest transition">Upravit</button>
@@ -58,6 +45,10 @@ export function ensureModals() {
                             <span class="block text-[8px] text-gray-500 uppercase font-black mb-1 tracking-widest">Léky</span>
                             <span id="modal-health-pills" class="text-white font-bold text-sm">-</span>
                         </div>
+                        <div class="bg-black/10 p-3 rounded-xl border border-white/5 col-span-2">
+                            <span class="block text-[8px] text-gray-500 uppercase font-black mb-1 tracking-widest">Suplementy</span>
+                            <div id="modal-health-supplements" class="flex gap-3 mt-1"></div>
+                        </div>
                     </div>
 
                     <div id="health-edit-form" class="hidden space-y-4 bg-black/10 p-4 rounded-xl border border-white/10 animate-fade-in shadow-inner">
@@ -65,9 +56,23 @@ export function ensureModals() {
                             ${renderInputGroup({ label: 'Voda (ks)', id: 'edit-health-water', type: 'number' })}
                             ${renderInputGroup({ label: 'Spánek (h)', id: 'edit-health-sleep', type: 'number', attr: 'step="0.5"' })}
                         </div>
-                        <div class="flex items-center gap-2 mb-2 mt-2 px-1">
-                             <input type="checkbox" id="edit-health-pills" class="w-4 h-4 rounded text-[#e74c3c] bg-[#202225] border-white/10 accent-[#e74c3c] cursor-pointer" />
-                             <label for="edit-health-pills" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer">Vzala léky</label>
+                        <div class="flex flex-wrap gap-4 mb-2 mt-2 px-1">
+                              <div class="flex items-center gap-2">
+                                 <input type="checkbox" id="edit-health-pills" class="w-4 h-4 rounded text-[#e74c3c] bg-[#202225] border-white/10 accent-[#e74c3c] cursor-pointer" />
+                                 <label for="edit-health-pills" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer">Léky</label>
+                              </div>
+                              <div class="flex items-center gap-2">
+                                 <input type="checkbox" id="edit-health-iron" class="w-4 h-4 rounded text-red-400 bg-[#202225] border-white/10 accent-red-400 cursor-pointer" />
+                                 <label for="edit-health-iron" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer">Železo</label>
+                              </div>
+                              <div class="flex items-center gap-2">
+                                 <input type="checkbox" id="edit-health-zinc" class="w-4 h-4 rounded text-yellow-400 bg-[#202225] border-white/10 accent-yellow-400 cursor-pointer" />
+                                 <label for="edit-health-zinc" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer">Zinek</label>
+                              </div>
+                              <div class="flex items-center gap-2">
+                                 <input type="checkbox" id="edit-health-magnesium" class="w-4 h-4 rounded text-purple-400 bg-[#202225] border-white/10 accent-purple-400 cursor-pointer" />
+                                 <label for="edit-health-magnesium" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer">Hořčík</label>
+                              </div>
                         </div>
                         ${renderInputGroup({ label: 'Nálada (1-10)', id: 'edit-health-mood', type: 'number', attr: 'min="1" max="10"' })}
                         ${renderInputGroup({ label: 'Pohyb (gym, walk...)', id: 'edit-health-movement' })}
@@ -76,6 +81,20 @@ export function ensureModals() {
                              ${renderButton({ text: 'Zrušit', variant: 'secondary', className: 'flex-1', onclick: "Calendar.toggleHealthEdit()" })}
                              ${renderButton({ text: 'Uložit', variant: 'success', className: 'flex-[2]', onclick: "Calendar.saveHealthRecord()" })}
                         </div>
+                    </div>
+                </div>
+
+                <div id="modal-section-date" class="hidden space-y-3 pt-4 border-t border-white/5"></div>
+                
+                <div id="modal-section-school" class="hidden space-y-4 pt-4 border-t border-white/5">
+                    <h4 class="text-xs font-bold text-[#faa61a] uppercase mb-2 flex items-center gap-2"><i class="fas fa-graduation-cap"></i> Škola</h4>
+                    <div id="school-event-display" class="hidden bg-[#faa61a]/10 border border-[#faa61a]/30 rounded-xl p-3 flex justify-between items-center">
+                        <span id="school-event-text" class="text-white text-sm font-medium"></span>
+                        <button class="text-red-400 hover:text-red-200 p-1"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                    <div id="school-add-form" class="flex gap-2">
+                       <input type="text" id="school-input" placeholder="Zkouška, test..." class="flex-1 bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#faa61a]/50 transition-all">
+                       <button onclick="Calendar.addSchoolEvent()" class="bg-[#faa61a] hover:bg-[#c88515] text-white px-4 rounded-xl transition shadow-lg active:scale-95"><i class="fas fa-plus"></i></button>
                     </div>
                 </div>
             `
@@ -274,6 +293,8 @@ export function showDayDetail(dateKey) {
         document.getElementById("modal-health-mood").innerText = "-";
         const pillsSpan = document.getElementById("modal-health-pills");
         if (pillsSpan) pillsSpan.innerText = "-";
+        const suppsContainer = document.getElementById("modal-health-supplements");
+        if (suppsContainer) suppsContainer.innerHTML = '<span class="text-gray-500 italic text-[10px]">Nic</span>';
         const moveContainer = document.getElementById("modal-health-movement");
         if (moveContainer) moveContainer.innerHTML = '<span class="text-gray-500 italic text-[10px]">Žádný pohyb</span>';
         
@@ -318,6 +339,20 @@ export function showDayDetail(dateKey) {
             }
             if (pillsSpan) {
                 pillsSpan.innerText = health.pills ? "Ano 💊" : "Ne";
+            }
+            if (suppsContainer) {
+                const s = health.supplements || { iron: false, zinc: false, magnesium: false };
+                const items = [
+                    { id: 'iron', icon: '🩸', label: 'Železo', color: 'text-red-400' },
+                    { id: 'zinc', icon: '✨', label: 'Zinek', color: 'text-yellow-400' },
+                    { id: 'magnesium', icon: '🌙', label: 'Hořčík', color: 'text-purple-400' }
+                ];
+                suppsContainer.innerHTML = items.map(it => `
+                    <div class="flex items-center gap-1.5 opacity-${s[it.id] ? '100' : '20'} transition-opacity">
+                        <span class="text-sm">${it.icon}</span>
+                        <span class="text-[9px] font-bold uppercase ${s[it.id] ? it.color : 'text-gray-500'}">${it.label}</span>
+                    </div>
+                `).join('');
             }
         }
     }
@@ -501,6 +536,14 @@ export function toggleHealthEdit() {
         if (moveEl) moveEl.value = moves.join(", ");
         if (pillsEl) pillsEl.checked = !!health.pills;
 
+        const supps = health.supplements || { iron: false, zinc: false, magnesium: false };
+        const ironEl = document.getElementById("edit-health-iron");
+        const zincEl = document.getElementById("edit-health-zinc");
+        const magnesiumEl = document.getElementById("edit-health-magnesium");
+        if (ironEl) ironEl.checked = !!supps.iron;
+        if (zincEl) zincEl.checked = !!supps.zinc;
+        if (magnesiumEl) magnesiumEl.checked = !!supps.magnesium;
+
         displayGrid.classList.add("hidden");
         editForm.classList.remove("hidden");
     } else {
@@ -525,13 +568,20 @@ export function saveHealthRecord() {
     const pillsEl = document.getElementById("edit-health-pills");
     const pills = pillsEl ? pillsEl.checked : false;
 
+    const supplements = {
+        iron: document.getElementById("edit-health-iron")?.checked || false,
+        zinc: document.getElementById("edit-health-zinc")?.checked || false,
+        magnesium: document.getElementById("edit-health-magnesium")?.checked || false
+    };
+
     const existing = (state.healthData || {})[currentModalDateKey] || {};
 
     let newHealth = {
         ...existing,
         water,
         movement,
-        pills
+        pills,
+        supplements
     };
     
     if (sleep !== undefined) newHealth.sleep = sleep;
@@ -548,7 +598,8 @@ export function saveHealthRecord() {
             sleep: newHealth.sleep,
             mood: newHealth.mood,
             movement: newHealth.movement,
-            pills: newHealth.pills
+            pills: newHealth.pills,
+            supplements: newHealth.supplements
         });
     });
 
