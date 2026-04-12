@@ -160,6 +160,16 @@ export function setupRealtimeSync() {
         }, (payload) => {
              window.dispatchEvent(new CustomEvent('pomodoro-updated', { detail: { source: 'database', payload: payload.new || payload.old } }));
         })
+        // I. Handle Database Changes (Love Letters)
+        .on('postgres_changes', {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'love_letters'
+        }, (payload) => {
+             if (payload.new && payload.new.sender_id !== state.currentUser?.id) {
+                 window.dispatchEvent(new CustomEvent('letter-received', { detail: payload.new }));
+             }
+        })
         .subscribe((status) => {
             console.log(`[Sync] Realtime status: ${status}`);
         });

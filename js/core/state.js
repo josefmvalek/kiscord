@@ -59,7 +59,36 @@ const state = {
     maturaSchedule: [],
     maturaAchievements: [],
     maturaTopics: {}, // { category_id: [topics] }
-    maturaKBContent: {}, // { item_id: { content, updated_at } }
+    maturaKBContent: {}, // { item_id: { content, updated_at } },
+    settings: {
+        theme: 'default',
+        glassmorphism: true,
+        blurIntensity: 10,
+        haptics: true,
+        dashboardWidgets: {
+            health: true,
+            tetris: true,
+            quests: true,
+            funfacts: true
+        },
+        notifications: {
+            nativeEnabled: false,
+            reminders: {
+                water: { enabled: true, interval: 120, haptic: true, sound: false },
+                pills: { enabled: true, reminders: [{ time: '08:00', label: 'Léky' }], haptic: true, sound: true },
+                bedtime: { enabled: true, time: '22:30', haptic: true, sound: false }
+            },
+            partner: {
+                sunlight: { enabled: true, haptic: true, sound: true },
+                dailyQuestions: { enabled: true, haptic: true, sound: true },
+                letters: { enabled: true, haptic: true, sound: true }
+            },
+            system: {
+                quests: { enabled: true, haptic: true, sound: false },
+                dates: { enabled: true, haptic: true, sound: true }
+            }
+        }
+    },
 
     // Lazy Load Flags
     _loaded: {
@@ -111,7 +140,8 @@ function saveStateToCache() {
         dailyQuestion: state.dailyQuestion,
         dailyAnswers: state.dailyAnswers,
         tetris: state.tetris,
-        user_ids: state.user_ids
+        user_ids: state.user_ids,
+        settings: state.settings
     };
     localStorage.setItem(STATE_CACHE_KEY, JSON.stringify(cacheData));
 }
@@ -121,6 +151,48 @@ function loadStateFromCache() {
         const cached = localStorage.getItem(STATE_CACHE_KEY);
         if (cached) {
             const data = JSON.parse(cached);
+            
+            // Deep merge safety for critical config objects
+            if (data.settings) {
+                data.settings = { ...state.settings, ...data.settings };
+                if (data.settings.notifications) {
+                    // Update: Remove obsolete keys (movement, confessions, mood)
+                    if (data.settings.notifications.reminders) delete data.settings.notifications.reminders.movement;
+                    if (data.settings.notifications.partner) {
+                        delete data.settings.notifications.partner.confessions;
+                        delete data.settings.notifications.partner.mood;
+                    }
+
+                    // Migration: pills.time (string) -> pills.times (array) -> pills.reminders (labeled objects)
+                    if (data.settings.notifications.reminders?.pills) {
+                        const p = data.settings.notifications.reminders.pills;
+                        
+                        // Stage 1: time (string) -> times (array)
+                        if (p.time && !p.times && !p.reminders) {
+                            p.times = [p.time];
+                            delete p.time;
+                        }
+                        
+                        // Stage 2: times (array) -> reminders (labeled objects)
+                        if (p.times && !p.reminders) {
+                            p.reminders = p.times.map(t => ({ time: t, label: 'Léky' }));
+                            delete p.times;
+                        }
+
+                        if (!p.reminders) p.reminders = [{ time: '08:00', label: 'Léky' }];
+                    }
+
+                    data.settings.notifications = {
+                        nativeEnabled: data.settings.notifications.nativeEnabled ?? state.settings.notifications.nativeEnabled,
+                        reminders: { ...state.settings.notifications.reminders, ...data.settings.notifications.reminders },
+                        partner: { ...state.settings.notifications.partner, ...data.settings.notifications.partner },
+                        system: { ...state.settings.notifications.system, ...data.settings.notifications.system }
+                    };
+                } else {
+                    data.settings.notifications = state.settings.notifications;
+                }
+            }
+
             Object.assign(state, data);
             return true;
         }

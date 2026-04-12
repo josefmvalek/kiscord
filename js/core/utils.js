@@ -176,21 +176,33 @@ export async function requestNotificationPermission() {
  * Sends a local notification (fallback or for testing)
  */
 export function sendLocalNotification(title, options = {}) {
-    if (Notification.permission === "granted") {
-        const defaultOptions = {
-            icon: '/icons/icon-192x192.png',
-            badge: '/icons/badge-72x72.png',
-            vibrate: [100, 50, 100],
-            ...options
-        };
-        
-        // Try to use service worker registration if available for better PWA support
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.ready.then(registration => {
+    if (Notification.permission !== "granted") return;
+
+    const defaultOptions = {
+        icon: '/img/app/czippel2_kytka.jpg',
+        badge: '/img/app/czippel2_kytka.jpg', // Manifest icon
+        vibrate: [100, 50, 100],
+        timestamp: Date.now(),
+        renotify: true, // Overwrite same tag notifications
+        tag: 'kiscord-notif', // Group same types
+        ...options
+    };
+
+    // Robust Service Worker approach (best for Android/PWA)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then(registration => {
+            if (registration) {
                 registration.showNotification(title, defaultOptions);
-            });
-        } else {
+            } else {
+                // Fallback to basic window Notification if no SW is registered
+                new Notification(title, defaultOptions);
+            }
+        }).catch(() => {
+            // Fallback to basic window Notification on error
             new Notification(title, defaultOptions);
-        }
+        });
+    } else {
+        // Fallback for browsers without SW support
+        new Notification(title, defaultOptions);
     }
 }

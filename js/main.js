@@ -17,6 +17,7 @@ import {
 import { setupQuestsRealtime, cleanupQuestsRealtime } from './modules/quests.js';
 import { initLevels, renderLevelUI } from './modules/levels.js';
 import { setupRealtimeSync } from './core/sync.js';
+import { initNotifications } from './core/notifications.js';
 import * as StaticPages from './modules/static.js';
 
 // Lazy-loaded modules mapping (for better maintenance)
@@ -40,7 +41,8 @@ const moduleMap = {
     'tierlist': () => import('./modules/tierlist.js'),
     'stats': () => import('./modules/stats.js'),
     'matura': () => import('./modules/matura.js'),
-    'restore-data': () => import('./modules/restore.js')
+    'restore-data': () => import('./modules/restore.js'),
+    'settings': () => import('./modules/settings.js')
 };
 
 
@@ -178,6 +180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupQuestsRealtime();
     initLevels();
     initTheme();
+    initNotifications();
     renderChannels();
     checkAppUpdate();
 
@@ -417,6 +420,7 @@ const channelCategories = [
         name: "SYSTÉM",
         items: [
             { id: 'stats', name: 'statistiky', icon: '<i class="fas fa-chart-bar"></i>', type: 'text', color: '#faa61a', desc: 'Čísla našeho vztahu.' },
+            { id: 'settings', name: 'nastavení', icon: '<i class="fas fa-cog"></i>', type: 'text', color: '#99aab5', desc: 'Přizpůsob si Kiscord podle sebe.' },
             { id: 'welcome', name: 'uvítání', icon: '<i class="fas fa-door-open"></i>', type: 'text', desc: 'Vítejte na našem soukromém serveru! ❤️' },
             { id: 'manual', name: 'návod', icon: '<i class="fas fa-book"></i>', type: 'text', color: '#99aab5', desc: 'Jak ovládat tuhle aplikaci.' },
             { id: 'readme', name: 'README.md', icon: '<i class="fas fa-file-alt"></i>', type: 'text', color: '#99aab5', desc: 'Krásného Valentýna té nejúžasnější holce pod sluncem! ❤️' }
@@ -599,6 +603,9 @@ export function switchChannel(channelId, push = true) {
         case 'matura-it':
             import('./core/state.js').then(s => s.ensureMaturaData()).then(() => moduleMap.matura().then(m => m.renderMatura(channelId)));
             break;
+            case 'settings':
+                moduleMap.settings().then(m => m.renderSettings());
+                break;
             case 'upgrade':
                 renderUpgrade();
                 break;

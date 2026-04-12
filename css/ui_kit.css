@@ -38,7 +38,7 @@
     left: -50%;
     width: 200%;
     height: 200%;
-    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
     transform: rotate(45deg);
     transition: 0.5s;
     pointer-events: none;
@@ -65,8 +65,13 @@
 }
 
 /* Micro-animations */
-.hover-glow-pink:hover { box-shadow: var(--premium-glow-pink); }
-.hover-glow-blue:hover { box-shadow: var(--premium-glow-blue); }
+.hover-glow-pink:hover {
+    box-shadow: var(--premium-glow-pink);
+}
+
+.hover-glow-blue:hover {
+    box-shadow: var(--premium-glow-blue);
+}
 
 /* Input Styling */
 .kiscord-input {
@@ -83,4 +88,210 @@
     border-color: rgba(88, 101, 242, 0.5);
     box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.1);
     outline: none;
+}
+
+/* Premium Slider styling */
+input[type=range].kiscord-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    outline: none;
+    transition: background 0.2s ease;
+}
+
+input[type=range].kiscord-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #853ee6;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 0 10px rgba(133, 62, 230, 0.4);
+    margin-top: 0px;
+    /* Visual centering adjustment */
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+input[type=range].kiscord-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 15px rgba(133, 62, 230, 0.6);
+}
+
+/* Water Theme Slider */
+input[type=range].water-slider::-webkit-slider-thumb {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(4px);
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 15px rgba(0, 210, 255, 0.6), inset 0 0 5px rgba(255, 255, 255, 0.5);
+    width: 16px;
+    height: 16px;
+    margin-top: 0px;
+    /* Visual centering adjustment for 16px bubble */
+}
+
+input[type=range].water-slider::-webkit-slider-thumb:hover {
+    box-shadow: 0 0 20px rgba(0, 210, 255, 0.8), inset 0 0 8px rgba(255, 255, 255, 0.7);
+    transform: scale(1.1);
+}
+
+/* --- ULTRAPRIEMIUM NOTIFICATION CARDS (v3.2) --- */
+
+.notif-card {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), var(--premium-shadow);
+    background: #2f3136;
+}
+
+/* Glossy highlight effect */
+.notif-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 5;
+}
+
+.notif-pulse {
+    animation: card-pulse 0.8s ease-out;
+}
+
+@keyframes card-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(133, 62, 230, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.1); }
+    70% { box-shadow: 0 0 0 20px rgba(133, 62, 230, 0), inset 0 1px 1px rgba(255, 255, 255, 0.1); }
+    100% { box-shadow: 0 0 0 0 rgba(133, 62, 230, 0), inset 0 1px 1px rgba(255, 255, 255, 0.1); }
+}
+
+/* THEMED BACKGROUNDS */
+
+/* 1. Bedtime / Nocturnal */
+.notif-theme-bedtime {
+    background: linear-gradient(135deg, #0f0c29 0%, #201d4a 50%, #171730 100%) !important;
+    border-color: rgba(133, 62, 230, 0.2) !important;
+}
+.notif-theme-bedtime::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+        radial-gradient(1px 1px at 20px 30px, #fff, rgba(0,0,0,0)),
+        radial-gradient(1px 1px at 40px 70px, #fff, rgba(0,0,0,0)),
+        radial-gradient(1.5px 1.5px at 130px 100px, rgba(255,255,255,0.8), rgba(0,0,0,0));
+    background-size: 200px 200px;
+    opacity: 0.3;
+}
+
+/* 2. Water / Liquid Ocean */
+.notif-theme-water {
+    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%) !important;
+    border-color: rgba(0, 210, 255, 0.2) !important;
+}
+.notif-theme-water::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 120%, rgba(0, 210, 255, 0.15) 0%, transparent 70%);
+}
+
+/* 3. Pills / Serum Emerald */
+.notif-theme-pills {
+    background: linear-gradient(135deg, #0d2a2a 0%, #134e5e 100%) !important;
+    border-color: rgba(56, 239, 125, 0.2) !important;
+}
+.notif-theme-pills::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle at 10% 10%, rgba(56, 239, 125, 0.05) 0%, transparent 50%);
+}
+
+/* 4. Sunlight / Lighter Ember (v3.2) */
+.notif-theme-sunlight {
+    background: linear-gradient(135deg, #513512 0%, #b27622 50%, #7d4f11 100%) !important;
+    border-color: rgba(242, 201, 76, 0.3) !important;
+}
+.notif-theme-sunlight::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(252, 196, 25, 0.1) 0%, transparent 70%);
+}
+
+/* 5. Questions / Orange Ignite (v3.2) */
+.notif-theme-dailyQuestions {
+    background: linear-gradient(135deg, #4d1d00 0%, #8c4200 50%, #b35900 100%) !important;
+    border-color: rgba(255, 144, 0, 0.3) !important;
+}
+.notif-theme-dailyQuestions::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(1.5px 1.5px at 15% 25%, rgba(255,255,255,0.3) 100%, transparent 0%),
+                      radial-gradient(1px 1px at 45% 65%, rgba(255,255,255,0.2) 100%, transparent 0%),
+                      radial-gradient(1px 1px at 85% 15%, rgba(255,255,255,0.15) 100%, transparent 0%);
+    background-size: 80px 80px;
+    opacity: 0.5;
+}
+
+/* 6. Letters / Deeper Crimson Rose (v3.2) */
+.notif-theme-letters {
+    background: linear-gradient(135deg, #5c0f0f 0%, #9c1c1c 100%) !important;
+    border-color: rgba(255, 60, 60, 0.2) !important;
+}
+.notif-theme-letters::before {
+    content: '❤';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    font-size: 150px;
+    color: rgba(255, 255, 255, 0.03);
+    transform: translate(-50%, -50%) rotate(-15deg);
+    pointer-events: none;
+}
+
+/* Unified Glasmorphism for internal elements */
+.notif-card .notif-controls {
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.notif-card .kiscord-btn-icon {
+    background: rgba(0, 0, 0, 0.2) !important;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.notif-card h3, .notif-card p {
+    color: white !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* --- SYSTEM BUTTONS --- */
+.test-notif-btn {
+    opacity: 0.7;
+    color: rgba(255,255,255,0.8) !important;
+    background: rgba(0, 0, 0, 0.2) !important;
+    backdrop-filter: blur(4px);
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.test-notif-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #fff !important;
+    transform: scale(1.05);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.test-notif-btn:active {
+    transform: scale(0.95);
 }
