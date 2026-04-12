@@ -1,5 +1,6 @@
 import { state } from '../core/state.js';
 import { loadMarked } from '../core/loader.js';
+import { getAssetUrl } from '../core/assets.js';
 
 /**
  * Static & Manual Pages Module
@@ -126,7 +127,7 @@ export async function renderReadme() {
                 <div class="h-full flex flex-col p-4 md:p-6 items-start animate-fade-in bg-[#36393f] font-sans">
                     <div class="flex gap-3 md:gap-4 items-start max-w-full md:max-w-2xl group overflow-hidden">
                          <div class="relative flex-shrink-0 mt-0.5">
-                             <img src="img/app/jozka_profilovka.jpg" alt="Jožka" class="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover shadow-sm bg-[#2f3136]" loading="lazy">
+                             <img id="readme-jozka-avatar" src="${getAssetUrl('jozka_profile')}" alt="Jožka" class="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover shadow-sm bg-[#2f3136]" loading="lazy">
                          </div>
                          
                          <div class="flex-1 min-w-0">
@@ -135,7 +136,7 @@ export async function renderReadme() {
                                  <span class="text-[10px] text-[#b9bbbe] font-medium">Pinned</span>
                              </div>
                              
-                             <div onclick="import('./js/modules/confession.js').then(m => m.startConfession())" 
+                             <div id="confession-trigger" 
                                   class="bg-[#2f3136] border border-[#202225] rounded-md p-3 flex items-center gap-3 md:gap-4 w-full max-w-[432px] cursor-pointer hover:bg-[#32353b] transition-colors duration-150">
                                  <div class="w-10 h-11 md:h-12 bg-[#5865F2] rounded-sm flex items-center justify-center text-white text-xl md:text-2xl flex-shrink-0">
                                      <i class="fas fa-file-code"></i>
@@ -152,6 +153,14 @@ export async function renderReadme() {
                     </div>
                 </div>
             `;
+
+            // Add secure listener for Vite-compatible dynamic import
+            const trigger = document.getElementById('confession-trigger');
+            if (trigger) {
+                trigger.addEventListener('click', () => {
+                    import('./confession.js').then(m => m.startConfession());
+                });
+            }
             return;
         }
 

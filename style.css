@@ -1,16 +1,3 @@
-/* ==========================================================
-   STYLE.CSS — CSS Entry Point
-   This file is the only stylesheet referenced in index.html.
-   It imports all modular CSS files in dependency order.
-
-   Load Order (important for cascading!):
-   1. tokens   — CSS variables & themes (used by everything)
-   2. base     — Reset, body, fonts, scrollbars
-   3. animations — @keyframes & animation utilities
-   4. components — Reusable UI elements (cards, modals, sliders...)
-   5. modules  — Feature/screen-specific overrides
-   ========================================================== */
-
 @import url('./css/tokens.css');
 @import url('./css/base.css');
 @import url('./css/animations.css');

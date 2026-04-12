@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@import "../style.css";
+
+/* Critical CSS for instant rendering */
+body { background-color: #36393f; margin: 0; padding: 0; overflow: hidden; font-family: 'Inter', sans-serif; }
+#login-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 200; background-color: #202225; display: none; align-items: center; justify-content: center; padding: 1rem; }
+.login-gradient { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to bottom right, rgba(88, 101, 242, 0.2), rgba(235, 69, 158, 0.2)); z-index: 0; }
+.login-card { position: relative; z-index: 10; width: 100%; max-width: 448px; background-color: #36393f; border-radius: 0.75rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid #202225; padding: 2rem; }
+#app-interface { opacity: 0; transition: opacity 1s; pointer-events: none; }
+#app-interface.show { opacity: 1 !important; pointer-events: auto !important; }

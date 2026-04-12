@@ -1,4 +1,5 @@
 import { state, ensureLibraryData } from '../core/state.js';
+import { getAssetUrl } from '../core/assets.js';
 // import { library } from '../data.js'; // Smazáno, nyní ze state
 import { triggerHaptic } from '../core/utils.js';
 import { showNotification } from '../core/theme.js';
@@ -701,7 +702,7 @@ export async function confirmLibraryPlan() {
 export function renderManual() {
     const container = document.getElementById("messages-container");
     container.innerHTML = `
-                      <div class="flex gap-4 items-start animate-fade-in"><img src="img/app/jozka_profilovka.jpg"
+                      <div class="flex gap-4 items-start animate-fade-in"><img src="${getAssetUrl('jozka_profile')}"
                        alt="Jožka"
                        class="w-10 h-10 rounded-full object-cover mt-1 shadow-md"><div class="flex-1"><div class="flex items-baseline gap-2"><span class="font-bold text-[var(--text-header)]">Jožka</span><span class="text-xs text-[var(--interactive-normal)]">Pinned</span></div><div class="bg-gradient-to-br from-[#2f3136] to-[#202225] border-l-4 border-[#faa61a] p-4 rounded-r-lg mt-3"><h3 class="font-bold text-white text-lg mb-3 flex items-center gap-2"><i class="fas fa-graduation-cap text-[#faa61a]"></i> Návod na stahování</h3><div class="space-y-4"><div class="flex gap-3"><div class="w-8 h-8 rounded-full bg-[#5865F2] flex items-center justify-center text-white flex-shrink-0">1</div><div><p class="font-bold text-white">Instalace qBittorrent</p><p class="text-[var(--text-normal)] text-sm">Stáhni si z <a href="https://www.qbittorrent.org/download.php" target="_blank" class="text-[#5865F2] hover:underline font-bold">qbittorrent.org/download</a>. Neboj, není to virus.</p></div></div><div class="flex gap-3"><div class="w-8 h-8 rounded-full bg-[#5865F2] flex items-center justify-center text-white flex-shrink-0">2</div><div><p class="font-bold text-white">Magnet Link 🧲</p><p class="text-[var(--text-normal)] text-sm">V knihovně klikni na ikonu stahování u položky. Otevře se ti to přímo v klientovi.</p></div></div><div class="flex gap-3"><div class="w-8 h-8 rounded-full bg-[#5865F2] flex items-center justify-center text-white flex-shrink-0">3</div><div><p class="font-bold text-white">HDMI kabel (ten 5m)</p><p class="text-[var(--text-normal)] text-sm">Připoj notebook k TV, zmáčkni <code class="bg-black px-1 rounded text-white">Win + P</code> a vyber "Duplicate" nebo "Extend".</p></div></div></div></div></div></div>`;
 }
@@ -714,7 +715,7 @@ export function renderUpgrade() {
                           <i class="fas fa-download text-gray-400 hover:text-white cursor-pointer p-1" data-tooltip="Rychlé stažení"></i>
                       </div>
                       <div class="flex gap-4 items-start">
-                          <img src="img/app/jozka_profilovka.jpg" alt="Jožka" class="w-10 h-10 rounded-full object-cover mt-1 shadow-md" loading="lazy">
+                          <img src="${getAssetUrl('jozka_profile')}" alt="Jožka" class="w-10 h-10 rounded-full object-cover mt-1 shadow-md" loading="lazy">
                           <div class="flex-1">
                               <div class="flex items-baseline gap-2">
                                   <span class="font-bold text-[var(--text-header)]">Jožka</span>

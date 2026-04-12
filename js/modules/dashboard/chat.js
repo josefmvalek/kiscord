@@ -1,5 +1,6 @@
 import { state } from '../../core/state.js';
 import { triggerHaptic, triggerConfetti } from '../../core/utils.js';
+import { getAssetUrl } from '../../core/assets.js';
 
 export function handleWelcomeChat(e) {
     if (e.key === "Enter") {
@@ -23,7 +24,14 @@ export function addMessageToChat(name, avatar, text, isBot = false) {
 
     const badge = isBot ? `<span class="text-[10px] bg-[#5865F2] text-white px-1 rounded uppercase font-bold flex-shrink-0 ml-1">BOT</span>` : "";
     const colorClass = isBot ? "text-[#5865F2]" : "text-white";
-    const avatarSrc = avatar.startsWith('img/') ? avatar : `img/app/${avatar}`;
+    
+    // Resolve avatar URL via Asset Manager if it looks like a simple filename or internal path
+    let avatarSrc = avatar;
+    if (!avatar.startsWith('http') && !avatar.startsWith('data:')) {
+        const assetKey = avatar.includes('jozka') ? 'jozka_profile' : 
+                         avatar.includes('klarka') ? 'klarka_profile' : 'app_kytka';
+        avatarSrc = getAssetUrl(assetKey);
+    }
 
     div.innerHTML = `
         <div class="flex gap-4 items-start">
@@ -63,7 +71,7 @@ export function processCommand(text) {
         setTimeout(() => {
             if (indicator) indicator.style.display = "none";
             triggerHaptic("medium");
-            addMessageToChat("System Bot", "jozka_profilovka.jpg", msg, true);
+            addMessageToChat("System Bot", "jozka_profile", msg, true);
         }, delay);
     };
 

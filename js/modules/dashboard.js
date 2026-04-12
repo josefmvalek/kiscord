@@ -1,6 +1,7 @@
 import { supabase } from '../core/supabase.js';
 import { state, saveStateToCache, stateEvents } from '../core/state.js';
 import { triggerHaptic, getInflectedName, getTodayKey, triggerConfetti } from '../core/utils.js';
+import { getAssetUrl } from '../core/assets.js';
 import { showNotification } from '../core/theme.js';
 import { broadcastSunlight } from '../core/sync.js';
 import { getTodayData, getPillsStreak } from './health.js';

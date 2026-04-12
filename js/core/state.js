@@ -61,6 +61,7 @@ const state = {
     maturaTopics: {}, // { category_id: [topics] }
     maturaKBContent: {}, // { item_id: { content, updated_at } },
     regeneraceContent: null, // { key: content_object }
+    assets: {}, // Dynamic mapping for Storage URLs
     settings: {
         theme: 'default',
         glassmorphism: true,
@@ -208,125 +209,132 @@ function loadStateFromCache() {
 async function initializeState() {
     const hasCached = loadStateFromCache();
 
-    if (!navigator.onLine && hasCached) {
-        console.log("[OFFLINE] Using cached state.");
-        return;
-    }
+    // SWR Strategy: If we have cache, resolve immediately to show UI.
+    // The actual fetch happens as a background "revalidate" process.
+    const revalidate = async () => {
+        if (!navigator.onLine && hasCached) return;
 
-    const today = new Date().toISOString().split('T')[0];
+        const today = new Date().toISOString().split('T')[0];
 
-    try {
-        // Essential Dashboard Data (minimal fetch)
-        const [
-            { data: healthHistory },
-            { data: todayDates },
-            { data: tetrisData },
-            { data: questData },
-            pinnedData
-        ] = await Promise.all([
-            supabase.from('health_data')
-                .select('*')
-                .eq('user_id', state.currentUser?.id)
-                .order('date_key', { ascending: false })
-                .limit(30),
-            supabase.from('planned_dates').select('*').eq('date_key', today),
-            supabase.from('tetris_scores').select('*'),
-            supabase.from('coop_quests').select('*').eq('is_active', true),
-            supabase.from('pinned_drawings').select('*, drawings(*)').maybeSingle()
-        ]);
+        try {
+            console.log("[State] Revalidating state from Supabase...");
+            // Essential Dashboard Data (minimal fetch)
+            const [
+                { data: healthHistory },
+                { data: todayDates },
+                { data: tetrisData },
+                { data: questData },
+                pinnedData
+            ] = await Promise.all([
+                supabase.from('health_data')
+                    .select('*')
+                    .eq('user_id', state.currentUser?.id)
+                    .order('date_key', { ascending: false })
+                    .limit(30),
+                supabase.from('planned_dates').select('*').eq('date_key', today),
+                supabase.from('tetris_scores').select('*'),
+                supabase.from('coop_quests').select('*').eq('is_active', true),
+                supabase.from('pinned_drawings').select('*, drawings(*)').maybeSingle()
+            ]);
 
-        if (pinnedData?.data) state.pinnedDrawing = pinnedData.data.drawings;
+            if (pinnedData?.data) state.pinnedDrawing = pinnedData.data.drawings;
 
-        if (healthHistory && Array.isArray(healthHistory)) {
-            healthHistory.forEach(row => {
-                state.healthData[row.date_key] = {
-                    water: row.water, sleep: row.sleep, mood: row.mood,
-                    movement: row.movement, bedtime: row.bedtime, pills: row.pills || false, supplements: row.supplements || { iron: false, zinc: false, magnesium: false }
-                };
-            });
-        }
-
-        if (todayDates) {
-            todayDates.forEach(row => {
-                state.plannedDates[row.date_key] = {
-                    id: row.id, name: row.name, cat: row.cat, time: row.time, note: row.note,
-                    status: row.status || 'idea', backup_plan: row.backup_plan || '',
-                    checklist: typeof row.checklist === 'string' ? JSON.parse(row.checklist) : (row.checklist || [])
-                };
-            });
-        }
-
-        const isMeJose = isJosef(state.currentUser);
-        const isMeKlarka = isKlarka(state.currentUser);
-
-        if (state.currentUser?.id) {
-            if (isMeJose) {
-                state.tetris.jose_id = state.currentUser.id;
-                state.user_ids.jose = state.currentUser.id;
-            } else if (isMeKlarka) {
-                state.tetris.klarka_id = state.currentUser.id;
-                state.user_ids.klarka = state.currentUser.id;
+            if (healthHistory && Array.isArray(healthHistory)) {
+                // Clear old keys to avoid ghosts if entries were deleted in DB
+                // state.healthData = {}; // Optional: might cause flicker
+                healthHistory.forEach(row => {
+                    state.healthData[row.date_key] = {
+                        water: row.water, sleep: row.sleep, mood: row.mood,
+                        movement: row.movement, bedtime: row.bedtime, pills: row.pills || false, supplements: row.supplements || { iron: false, zinc: false, magnesium: false }
+                    };
+                });
             }
-        }
 
-        // 2. Fetch all profiles to map IDs to Jožka/Klárka (jose user_id, klarka user_id)
-        if (!state.user_ids.jose || !state.user_ids.klarka) {
-            console.log('[State] Fetching profiles...');
-            try {
-                const { data: pData, error: pError } = await supabase.from('profiles').select('id, username, email').timeout(5000);
-                if (pError) throw pError;
-                if (pData) {
-                    pData.forEach(p => {
-                        const lowerName = (p.username || "").toLowerCase();
-                        const lowerEmail = (p.email || "").toLowerCase();
-
-                        if (lowerName.includes('josef') || lowerName.includes('jozk') || lowerEmail === 'jozkavalek@email.cz' || lowerEmail.includes('josef')) {
-                            state.user_ids.jose = p.id;
-                        }
-                        if (lowerName.includes('klara') || lowerName.includes('vyslouzil') || lowerEmail === 'vyslouzilova.klara07@gmail.com' || lowerEmail.includes('klara')) {
-                            state.user_ids.klarka = p.id;
-                        }
-                    });
-                    console.log('[State] Profiles mapped:', state.user_ids);
-                }
-            } catch (err) {
-                console.warn('[State] Profile fetch failed or timed out:', err);
-                // Fallback to current user if possible
-                if (isMeJose) state.user_ids.jose = state.currentUser.id;
-                if (isMeKlarka) state.user_ids.klarka = state.currentUser.id;
+            if (todayDates) {
+                todayDates.forEach(row => {
+                    state.plannedDates[row.date_key] = {
+                        id: row.id, name: row.name, cat: row.cat, time: row.time, note: row.note,
+                        status: row.status || 'idea', backup_plan: row.backup_plan || '',
+                        checklist: typeof row.checklist === 'string' ? JSON.parse(row.checklist) : (row.checklist || [])
+                    };
+                });
             }
-        }
 
-        if (tetrisData) {
-            tetrisData.forEach(row => {
-                const isMe = row.user_id === state.currentUser?.id;
-                if (isMe) {
-                    if (isMeJose) { state.tetris.jose = row.score || 0; state.tetris.jose_id = row.user_id; state.user_ids.jose = row.user_id; }
-                    else if (isMeKlarka) { state.tetris.klarka = row.score || 0; state.tetris.klarka_id = row.user_id; state.user_ids.klarka = row.user_id; }
-                } else {
-                    if (isMeJose) { state.tetris.klarka = row.score || 0; state.tetris.klarka_id = row.user_id; state.user_ids.klarka = row.user_id; }
-                    else if (isMeKlarka) { state.tetris.jose = row.score || 0; state.tetris.jose_id = row.user_id; state.user_ids.jose = row.user_id; }
+            const isMeJose = isJosef(state.currentUser);
+            const isMeKlarka = isKlarka(state.currentUser);
+
+            if (state.currentUser?.id) {
+                if (isMeJose) {
+                    state.tetris.jose_id = state.currentUser.id;
+                    state.user_ids.jose = state.currentUser.id;
+                } else if (isMeKlarka) {
+                    state.tetris.klarka_id = state.currentUser.id;
+                    state.user_ids.klarka = state.currentUser.id;
                 }
-            });
+            }
+
+            // 2. Fetch all profiles to map IDs
+            if (!state.user_ids.jose || !state.user_ids.klarka) {
+                try {
+                    const { data: pData, error: pError } = await supabase.from('profiles').select('id, username, email');
+                    if (!pError && pData) {
+                        pData.forEach(p => {
+                            const lowerName = (p.username || "").toLowerCase();
+                            const lowerEmail = (p.email || "").toLowerCase();
+                            if (lowerName.includes('josef') || lowerName.includes('jozk') || lowerEmail === 'jozkavalek@email.cz' || lowerEmail.includes('josef')) state.user_ids.jose = p.id;
+                            if (lowerName.includes('klara') || lowerName.includes('vyslouzil') || lowerEmail === 'vyslouzilova.klara07@gmail.com' || lowerEmail.includes('klara')) state.user_ids.klarka = p.id;
+                        });
+                    }
+                } catch (err) { console.warn('[State] Profile fetch failed:', err); }
+            }
+
+            if (tetrisData) {
+                tetrisData.forEach(row => {
+                    const isMe = row.user_id === state.currentUser?.id;
+                    if (isMe) {
+                        if (isMeJose) { state.tetris.jose = row.score || 0; state.user_ids.jose = row.user_id; }
+                        else if (isMeKlarka) { state.tetris.klarka = row.score || 0; state.user_ids.klarka = row.user_id; }
+                    } else {
+                        if (isMeJose) { state.tetris.klarka = row.score || 0; state.user_ids.klarka = row.user_id; }
+                        else if (isMeKlarka) { state.tetris.jose = row.score || 0; state.user_ids.jose = row.user_id; }
+                    }
+                });
+            }
+
+            if (questData) state.coopQuests = questData;
+
+            state.loadError = false;
+            saveStateToCache();
+
+            // Notify UI that data is fresh
+            stateEvents.emit('dashboard');
+            stateEvents.emit('health');
+            console.log("[State] Revalidation complete.");
+
+            // Background load non-critical data
+            if (typeof window.requestIdleCallback === 'function') {
+                window.requestIdleCallback(() => {
+                    ensureAssetsData(); // Load custom asset mapping
+                    ensureFactsData();
+                    ensureAchievementsData();
+                });
+            }
+        } catch (e) {
+            console.error("Critical Revalidation Error:", e);
+            state.loadError = true;
         }
+    };
 
-        if (questData) state.coopQuests = questData;
-
-        // Background load non-critical data
-        if (typeof window.requestIdleCallback === 'function') {
-            window.requestIdleCallback(() => {
-                ensureFactsData();
-                ensureAchievementsData();
-            });
-        }
-
-        state.loadError = false;
-    } catch (e) {
-        console.error("Critical Init Error:", e);
-        state.loadError = true;
+    if (hasCached) {
+        // Kick off revalidation in background, but return immediately
+        revalidate();
+        return Promise.resolve();
+    } else {
+        // Must wait for first fetch if nothing in cache
+        return revalidate();
     }
-    saveStateToCache();
 }
+
 // --- LAZY LOADING HELPERS ---
 
 const _loadedAt = {};
@@ -633,8 +641,24 @@ async function ensureDailyQuizData() {
     }
 }
 
+async function ensureAssetsData(force = false) {
+    if (state._loaded.assets && !force && !isStale('assets')) return;
+    try {
+        const { data, error } = await supabase.from('app_knowledge').select('*').eq('key', 'assets_manifest').maybeSingle();
+        if (!error && data && data.content) {
+            state.assets = data.content;
+            console.log("[Assets] Manifest loaded from DB.");
+        }
+    } catch (e) {
+        console.warn("[Assets] Load failed, using local fallbacks.", e);
+    } finally {
+        markLoaded('assets');
+        stateEvents.emit('assets');
+    }
+}
+
 function resetLazyLoaders() {
-    state._loaded = { calendar: false, timeline: false, library: false, matura: false, achievements: false, games: false, facts: false, daily: false, draw: false, map: false, bucketlist: false, conv_topics: false, regenerace: false };
+    state._loaded = { calendar: false, timeline: false, library: false, matura: false, achievements: false, games: false, facts: false, daily: false, draw: false, map: false, bucketlist: false, conv_topics: false, regenerace: false, assets: false };
     Object.keys(_loadedAt).forEach(k => delete _loadedAt[k]);
     console.log('[State] All lazy loaders reset.');
 }
@@ -684,6 +708,7 @@ export {
     ensureDailyQuizData,
     ensureAllHealthData,
     ensureRegeneraceData,
+    ensureAssetsData,
     refreshMaturaTopics,
     resetLazyLoaders
 };

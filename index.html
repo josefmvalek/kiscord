@@ -6,50 +6,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Kiscord</title>
 
-  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/css/app.css" />
   <link rel="icon" type="image/webp" href="/img/app/czippel2_kytka-modified.webp" />
   <link rel="manifest" href="/manifest.json" />
   <!-- Performance Optimization: Preconnect to critical domains -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://nnrorazsiyiedwomgidf.supabase.co">
-  <link rel="preconnect" href="https://cdn.tailwindcss.com">
 
-  <script>
-    window.tailwindConfig = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-          },
-        },
-      },
-    };
-  </script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = window.tailwindConfig;
-  </script>
   
   
   <!-- Math Support: KaTeX loaded dynamically in modules -->
 
-  <link rel="stylesheet" href="/style.css" />
   
   
   <!-- Markdown & Highlighting loaded dynamically in modules -->
   
   <!-- Critical CSS: Login screen styles for instant rendering -->
-  <style>
-    body { background-color: #36393f; margin: 0; padding: 0; overflow: hidden; font-family: 'Inter', sans-serif; }
-    #login-screen { position: fixed; inset: 0; z-index: 200; background-color: #202225; display: none; align-items: center; justify-content: center; padding: 1rem; }
-    .login-gradient { position: absolute; inset: 0; background: linear-gradient(to bottom right, rgba(88, 101, 242, 0.2), rgba(235, 69, 158, 0.2)); z-index: 0; }
-    .login-card { position: relative; z-index: 10; width: 100%; max-width: 448px; background-color: #36393f; border-radius: 0.75rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid #202225; padding: 2rem; }
-    #app-interface { opacity: 0; transition: opacity 1s; pointer-events: none; }
-    #app-interface.show { opacity: 1 !important; pointer-events: auto !important; }
-  </style>
+
   <meta name="theme-color" content="#202225" />
-  <link rel="apple-touch-icon" href="img/app/jozka_profilovka.jpg" />
+  <link rel="apple-touch-icon" href="/img/app/jozka_profilovka.jpg" />
   
   <!-- Fonts (Critical) -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -131,7 +107,7 @@
           class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl cursor-pointer flex items-center justify-center overflow-hidden">
           <div
             class="w-12 h-12 rounded-2xl cursor-pointer flex items-center justify-center overflow-hidden shadow-lg group transition-all duration-200">
-            <img src="img/app/czippel2_vanoce.webp" alt="K&T Server" class="w-full h-full object-cover" loading="lazy" />
+            <img id="server-icon" src="/img/app/czippel2_vanoce.webp" alt="K&T Server" class="w-full h-full object-cover" loading="lazy" />
           </div>
         </div>
       </div>
@@ -152,7 +128,7 @@
           class="h-[52px] bg-[var(--bg-tertiary)] flex items-center px-2 w-full cursor-pointer hover:bg-[#34373c] transition select-none"
           onclick="toggleUserPopout()">
           <div class="relative w-8 h-8 mr-2 group">
-            <img id="sidebar-user-avatar" src="img/app/klarka_profilovka.webp" alt="Avatar"
+            <img id="sidebar-user-avatar" src="/img/app/klarka_profilovka.webp" alt="Avatar"
               class="w-8 h-8 rounded-full object-cover" loading="lazy" />
             <div
               class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--green)] rounded-full border-2 border-[#292b2f]">
@@ -206,7 +182,7 @@
       </h3>
       <div class="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-[var(--bg-primary)] cursor-pointer group">
         <div class="relative">
-          <img src="img/app/jozka_profilovka.jpg" alt="Jožka" class="w-8 h-8 rounded-full object-cover"
+          <img id="online-avatar-jozka" src="/img/app/jozka_profilovka.jpg" alt="Jožka" class="w-8 h-8 rounded-full object-cover"
             loading="lazy" />
           <div
             class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--green)] rounded-full border-2 border-[#2f3136]">
@@ -221,7 +197,7 @@
       </div>
       <div class="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-[var(--bg-primary)] cursor-pointer group mt-1">
         <div class="relative">
-          <img src="img/app/klarka_profilovka.webp" alt="Klárka" class="w-8 h-8 rounded-full object-cover" />
+          <img id="online-avatar-klarka" src="/img/app/klarka_profilovka.webp" alt="Klárka" class="w-8 h-8 rounded-full object-cover" />
           <div
             class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--green)] rounded-full border-2 border-[#2f3136]">
           </div>
@@ -239,10 +215,10 @@
   <!-- Non-critical scripts/styles loaded at the end -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'" />
   
-  <script src="js/debug.js"></script>
-  <script src="data.js"></script>
+  <script type="module" src="/js/debug.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-  <script type="module" src="/js/main.js?v=20"></script>
+
+  <script type="module" src="/js/main.js"></script>
 
 </body>
 </html>

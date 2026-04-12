@@ -6,6 +6,7 @@ import { renderModal } from '../core/ui.js';
 import { broadcastMaturaSOS, broadcastPomodoroUpdate } from '../core/sync.js';
 import { safeInsert, safeUpsert, safeUpdate, enqueueOperation } from '../core/offline.js';
 import { uploadFile } from '../core/storage.js';
+import { getAssetUrl } from '../core/assets.js';
 
 let pomodoroInterval = null;
 let pomodoroState = { status: 'stopped', timeLeft: 0, partnerStudying: false };
@@ -813,7 +814,7 @@ function updatePomodoroUI() {
 
     if (statusListEl) {
         const partnerName = state.currentUser?.name === 'Jožka' ? 'Klárka' : 'Jožka';
-        const partnerImg = state.currentUser?.name === 'Jožka' ? 'img/app/klarka_profilovka.webp' : 'img/app/jozka_profilovka.webp';
+        const partnerImg = state.currentUser?.name === 'Jožka' ? getAssetUrl('klarka_profile') : getAssetUrl('jozka_profile');
         const isStudying = pomodoroState.status === 'running';
 
         statusListEl.innerHTML = `
@@ -822,7 +823,7 @@ function updatePomodoroUI() {
                 ${partnerName} ${isStudying ? 'právě poctivě studuje... 🔥' : 'se teď fláká...'}
             </div>
             <div class="flex-shrink-0 bg-white/5 px-4 py-2 rounded-full text-[10px] font-bold ${isStudying ? 'text-[#eb459e] border border-[#eb459e]/20' : 'text-gray-400'} uppercase tracking-widest flex items-center gap-2">
-                <img src="${state.currentUser?.name === 'Jožka' ? 'img/app/jozka_profilovka.webp' : 'img/app/klarka_profilovka.webp'}" class="w-4 h-4 rounded-full object-cover ${isStudying ? '' : 'grayscale opacity-50'}"> 
+                <img src="${state.currentUser?.name === 'Jožka' ? getAssetUrl('jozka_profile') : getAssetUrl('klarka_profile')}" class="w-4 h-4 rounded-full object-cover ${isStudying ? '' : 'grayscale opacity-50'}"> 
                 Já ${isStudying ? 'makám na své budoucnosti! 🚀' : 'mám v plánu studovat.'}
             </div>
         `;

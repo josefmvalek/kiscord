@@ -1,10 +1,13 @@
 {
   "name": "project-k",
   "version": "1.0.0",
+  "type": "module",
   "description": "",
   "main": "js/main.js",
   "scripts": {
     "start": "serve .",
+    "dev": "vite",
+    "build": "vite build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -19,7 +22,13 @@
   },
   "homepage": "https://github.com/josefmvalek/project-k#readme",
   "devDependencies": {
-    "serve": "^14.2.6"
+    "@tailwindcss/postcss": "^4.2.2",
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.9",
+    "serve": "^14.2.6",
+    "tailwindcss": "^4.2.2",
+    "terser": "^5.46.1",
+    "vite": "^6.4.2"
   },
   "dependencies": {
     "cwebp": "^3.2.0"

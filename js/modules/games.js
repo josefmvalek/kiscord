@@ -1,6 +1,6 @@
-
 import { state } from '../core/state.js';
 import { triggerHaptic } from '../core/utils.js';
+import { getAssetUrl } from '../core/assets.js';
 import { showNotification } from '../core/theme.js';
 import { supabase } from '../core/supabase.js';
 
@@ -160,11 +160,11 @@ export function renderPuzzleGame(selectedImage = null) {
     if (!container) return;
 
     let puzzleImages = [
-        { src: "img/puzzle/puzzle_myval_sova_foto.jpg", name: "Sova & Mýval (Originál)" },
-        { src: "img/puzzle/puzzle_myval_zaba_kreslene.jpg", name: "Žabák & Kamarádi (Kreslené)" },
-        { src: "img/puzzle/crazy_fight_sova_myval.jpg", name: "Crazy Fight" },
-        { src: "img/puzzle/myval_zaba_ai.jpg", name: "AI Art: Mýval & Žába" },
-        { src: "img/puzzle/myval_zaba_medvidek.jpg", name: "Trio: Mýval, Žába, Medvídek" }
+        { src: getAssetUrl('puzzle_original'), name: "Sova & Mýval (Originál)" },
+        { src: getAssetUrl('puzzle_drawing'), name: "Žabák & Kamarádi (Kreslené)" },
+        { src: getAssetUrl('puzzle_fight'), name: "Crazy Fight" },
+        { src: getAssetUrl('puzzle_ai'), name: "AI Art: Mýval & Žába" },
+        { src: getAssetUrl('puzzle_trio'), name: "Trio: Mýval, Žába, Medvídek" }
     ];
 
     // Add user photos from timeline
@@ -195,7 +195,7 @@ export function renderPuzzleGame(selectedImage = null) {
         });
     }
 
-    const currentImageSrc = selectedImage || (puzzleImages.length > 0 ? puzzleImages[0].src : "img/puzzle/puzzle_myval_sova_foto.jpg");
+    const currentImageSrc = selectedImage || (puzzleImages.length > 0 ? puzzleImages[0].src : getAssetUrl('puzzle_original'));
 
     const galleryHtml = puzzleImages.map(img =>
         `<div onclick="import('./js/modules/games.js').then(m => m.renderPuzzleGame('${img.src}'))" 
@@ -277,11 +277,11 @@ export function renderPuzzleGame(selectedImage = null) {
 
 export async function showPuzzleGallery() {
     let puzzleImages = [
-        { src: "img/puzzle/puzzle_myval_sova_foto.jpg", name: "Sova & Mýval (Originál)" },
-        { src: "img/puzzle/puzzle_myval_zaba_kreslene.jpg", name: "Žabák & Kamarádi (Kreslené)" },
-        { src: "img/puzzle/crazy_fight_sova_myval.jpg", name: "Crazy Fight" },
-        { src: "img/puzzle/myval_zaba_ai.jpg", name: "AI Art: Mýval & Žába" },
-        { src: "img/puzzle/myval_zaba_medvidek.jpg", name: "Trio: Mýval, Žába, Medvídek" }
+        { src: getAssetUrl('puzzle_original'), name: "Sova & Mýval (Originál)" },
+        { src: getAssetUrl('puzzle_drawing'), name: "Žabák & Kamarádi (Kreslené)" },
+        { src: getAssetUrl('puzzle_fight'), name: "Crazy Fight" },
+        { src: getAssetUrl('puzzle_ai'), name: "AI Art: Mýval & Žába" },
+        { src: getAssetUrl('puzzle_trio'), name: "Trio: Mýval, Žába, Medvídek" }
     ];
 
     if (state.timelineEvents) {

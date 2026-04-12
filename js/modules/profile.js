@@ -1,5 +1,5 @@
-
 import { state } from '../core/state.js';
+import { getAssetUrl } from '../core/assets.js';
 
 export function ensureProfileModal() {
     if (!document.getElementById("user-popout")) {
@@ -8,7 +8,7 @@ export function ensureProfileModal() {
         popout.className = "user-popout";
         popout.innerHTML = `
             <div class="popout-banner"></div>
-            <img id="popout-user-avatar" src="img/app/klarka_profilovka.webp" class="popout-avatar object-cover" />
+            <img id="popout-user-avatar" src="${getAssetUrl('klarka_profile')}" class="popout-avatar object-cover" />
             <div class="popout-badges text-xl">🏆 🦉</div>
             <div class="pt-12 pb-4 px-4">
                 <h3 id="popout-user-name" class="text-white font-bold text-lg">&nbsp;</h3>

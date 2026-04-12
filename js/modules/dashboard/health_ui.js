@@ -1,5 +1,6 @@
 import { state } from '../../core/state.js';
 import { triggerHaptic, getTodayKey } from '/js/core/utils.js';
+import { getAssetUrl } from '../../core/assets.js';
 import { updateSunflowersDOM } from '/js/modules/dashboard/sunflowers.js';
 import { getPillsStreak } from '/js/modules/health.js';
 
@@ -21,7 +22,7 @@ const moodColors = [
 
 export function generateMoodSlider(currentMood) {
     let value = typeof currentMood === 'number' ? currentMood : 5;
-    const bubbleImage = `img/mood/${value}.jpg`;
+    const bubbleImage = getAssetUrl('mood', value);
 
     return `
     <div class="mood-slider-container" id="mood-slider-wrapper" 
@@ -32,7 +33,7 @@ export function generateMoodSlider(currentMood) {
         onpointerup="this.classList.remove('dragging'); import('/js/modules/dashboard.js').then(m => m.hideMoodBubble())">
         <div class="mood-bubble-wrapper" id="mood-bubble">
             <div class="mood-bubble">
-                <img src="${bubbleImage}" id="mood-bubble-img" alt="Mood" onerror="this.src='img/app/czippel2_kytka.jpg'">
+                <img src="${bubbleImage}" id="mood-bubble-img" alt="Mood" onerror="this.src='${getAssetUrl('app_kytka')}'">
             </div>
             <div class="mood-rating-value" id="mood-bubble-value">${value}/10</div>
         </div>
@@ -64,7 +65,7 @@ export function updateMoodVisuals(val, activateBubble = false) {
     const bubbleImg = document.getElementById('mood-bubble-img');
     const bubbleVal = document.getElementById('mood-bubble-value');
 
-    if (bubbleImg) bubbleImg.src = `img/mood/${value}.jpg`;
+    if (bubbleImg) bubbleImg.src = getAssetUrl('mood', value);
     if (bubbleVal) bubbleVal.innerText = `${value}/10`;
 
     const percent = ((value - 1) / 9) * 100;
@@ -370,7 +371,7 @@ export function generateTetrisMiniTracker() {
             <!-- Jose (Raccoon) -->
             <div class="flex items-center gap-4 flex-1">
                 <div class="relative">
-                    <img src="img/app/jozka_profilovka.jpg" class="w-12 h-12 rounded-full border-2 ${joseLeading ? 'border-yellow-400 shadow-[0_0_15px_rgba(250,166,26,0.4)]' : 'border-white/10'} object-cover group-hover:scale-105 transition-transform duration-500">
+                    <img src="${getAssetUrl('jozka_profile')}" class="w-12 h-12 rounded-full border-2 ${joseLeading ? 'border-yellow-400 shadow-[0_0_15px_rgba(250,166,26,0.4)]' : 'border-white/10'} object-cover group-hover:scale-105 transition-transform duration-500">
                     ${joseLeading ? '<div class="absolute -top-3 -left-1 text-xl drop-shadow-md animate-crown">👑</div>' : ''}
                 </div>
                 <div>
@@ -388,7 +389,7 @@ export function generateTetrisMiniTracker() {
                     <div class="text-3xl font-black ${klarkaLeading ? 'text-white' : 'text-gray-500'} tracking-tighter transition-colors">${klarkaScore}</div>
                 </div>
                 <div class="relative">
-                    <img src="img/app/klarka_profilovka.webp" class="w-12 h-12 rounded-full border-2 ${klarkaLeading ? 'border-yellow-400 shadow-[0_0_15px_rgba(250,166,26,0.4)]' : 'border-white/10'} object-cover group-hover:scale-105 transition-transform duration-500">
+                    <img src="${getAssetUrl('klarka_profile')}" class="w-12 h-12 rounded-full border-2 ${klarkaLeading ? 'border-yellow-400 shadow-[0_0_15px_rgba(250,166,26,0.4)]' : 'border-white/10'} object-cover group-hover:scale-105 transition-transform duration-500">
                     ${klarkaLeading ? '<div class="absolute -top-3 -right-1 text-xl drop-shadow-md animate-crown">👑</div>' : ''}
                 </div>
             </div>

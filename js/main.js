@@ -1,11 +1,12 @@
 // Core imports (kept for initialization)
-import { state, initializeState, resetLazyLoaders, ensureBucketListData, ensureLibraryData } from './core/state.js';
+import { state, stateEvents, initializeState, resetLazyLoaders, ensureBucketListData, ensureLibraryData } from './core/state.js';
 const APP_VERSION = '2.1.2'; // Service worker update v27
 
 import { renderErrorState } from './core/ui.js';
 window.renderErrorState = renderErrorState; // Global for easy access in modules
 import { initTheme, toggleTheme, showNotification, toggleValentineMode } from './core/theme.js';
 import { triggerConfetti, triggerHaptic } from './core/utils.js';
+import { getAssetUrl } from './core/assets.js';
 import { getCurrentUser, signIn, onAuthChange, isJosef, isKlarka } from './core/auth.js';
 import {
     renderDashboard,
@@ -184,6 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initNotifications();
     renderChannels();
     checkAppUpdate();
+    updateGlobalAssetsUI(); // Initial try
 
 
     // 2. Global Event Listeners (Navigation & System)
@@ -202,7 +204,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // 4. Expose Global Functions
+    // 4. Expose Global Functions & Subscribe to assets
+    stateEvents.on('assets', () => {
+        updateGlobalAssetsUI();
+        if (state.currentUser) updateUserProfileUI(state.currentUser);
+    });
     exposeGlobals();
 });
 
@@ -322,15 +328,13 @@ export function updateUserProfileUI(user) {
     const bioParagraph = document.getElementById('popout-user-bio');
 
     const isMeJose = isJosef(user);
-    const isMeKlarka = isKlarka(user);
-
-    if (isMeJose) {
-        const avatarPath = 'img/app/jozka_profilovka.jpg';
-        state.currentUser = { name: 'Jožka', email: user.email, id: user.id, avatar: avatarPath };
+      if (isMeJose) {
+        const avatarUrl = getAssetUrl('jozka_profile');
+        state.currentUser = { name: 'Jožka', email: user.email, id: user.id, avatar: avatarUrl };
         if (sidebarName) sidebarName.textContent = 'Jožka';
         if (popoutName) popoutName.textContent = 'Jožka';
-        if (sidebarAvatar) sidebarAvatar.src = avatarPath;
-        if (popoutAvatar) popoutAvatar.src = avatarPath;
+        if (sidebarAvatar) sidebarAvatar.src = avatarUrl;
+        if (popoutAvatar) popoutAvatar.src = avatarUrl;
         if (bioParagraph) {
             bioParagraph.innerHTML = `
                 Systémový Administrátor & Full-Stack Boyfriend<br />
@@ -341,12 +345,12 @@ export function updateUserProfileUI(user) {
             `;
         }
     } else if (isMeKlarka) {
-        const avatarPath = 'img/app/klarka_profilovka.webp';
-        state.currentUser = { name: 'Klárka', email: user.email, id: user.id, avatar: avatarPath };
+        const avatarUrl = getAssetUrl('klarka_profile');
+        state.currentUser = { name: 'Klárka', email: user.email, id: user.id, avatar: avatarUrl };
         if (sidebarName) sidebarName.textContent = 'Klárka';
         if (popoutName) popoutName.textContent = 'Klárka';
-        if (sidebarAvatar) sidebarAvatar.src = avatarPath;
-        if (popoutAvatar) popoutAvatar.src = avatarPath;
+        if (sidebarAvatar) sidebarAvatar.src = avatarUrl;
+        if (popoutAvatar) popoutAvatar.src = avatarUrl;
         if (bioParagraph) {
             bioParagraph.innerHTML = `
                 Role: Vrchní Fact-Checker & QA Tester<br />
@@ -358,14 +362,26 @@ export function updateUserProfileUI(user) {
             `;
         }
     } else {
-        const avatarPath = 'img/app/czippel2_kytka.jpg';
-        state.currentUser = { name: 'Host', email: user.email, id: user.id, avatar: avatarPath };
+        const avatarUrl = getAssetUrl('app_kytka');
+        state.currentUser = { name: 'Host', email: user.email, id: user.id, avatar: avatarUrl };
         if (sidebarName) sidebarName.textContent = 'Host (Admin)';
         if (popoutName) popoutName.textContent = 'Host';
-        if (sidebarAvatar) sidebarAvatar.src = avatarPath;
-        if (popoutAvatar) popoutAvatar.src = avatarPath;
+        if (sidebarAvatar) sidebarAvatar.src = avatarUrl;
+        if (popoutAvatar) popoutAvatar.src = avatarUrl;
         if (bioParagraph) bioParagraph.innerHTML = "Přihlášen jako externí administrátor. Vítejte v systému!";
     }
+}
+
+export function updateGlobalAssetsUI() {
+    const serverIcon = document.getElementById('server-icon');
+    const onlineJozka = document.getElementById('online-avatar-jozka');
+    const onlineKlarka = document.getElementById('online-avatar-klarka');
+    const readmeAvatar = document.getElementById('readme-jozka-avatar');
+
+    if (serverIcon) serverIcon.src = getAssetUrl('server_icon');
+    if (onlineJozka) onlineJozka.src = getAssetUrl('jozka_profile');
+    if (onlineKlarka) onlineKlarka.src = getAssetUrl('klarka_profile');
+    if (readmeAvatar) readmeAvatar.src = getAssetUrl('jozka_profile');
 }
 
 const channelCategories = [
