@@ -170,9 +170,9 @@ function renderQuestCards() {
                         <span class="text-white font-bold text-sm">${progress} / ${q.goal} ${q.unit}</span>
                     </div>
                     
-                    <div class="w-full h-3 bg-[#202225] rounded-full overflow-hidden border border-gray-800">
-                        <div class="h-full bg-gradient-to-r ${q.color} transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(250,166,26,0.2)]"
-                             style="width: ${percentage}%">
+                    <div class="w-full h-2.5 bg-black/40 rounded-full overflow-hidden border border-gray-800/50">
+                        <div class="h-full bg-gradient-to-r ${q.color} transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+                             style="width: ${percentage}%; min-width: ${percentage > 0 ? '4px' : '0'}">
                         </div>
                     </div>
 
@@ -316,3 +316,22 @@ export async function saveNewQuest() {
         showNotification("Chyba při ukládání: " + err.message, "error");
     }
 }
+
+/**
+ * TAILWIND v4 SAFELIST (Scanning trick)
+ * Tyto třídy zde musí být vypsány staticky, aby je Tailwind scanner v4 zahrnul 
+ * do výsledného CSS balíčku, i když se v kódu používají dynamicky.
+ * 
+ * BARVY:
+ * from-orange-400 to-red-500
+ * from-blue-400 to-blue-600
+ * from-green-400 to-emerald-600
+ * from-yellow-400 to-orange-500
+ * from-purple-400 to-pink-500
+ * from-indigo-400 to-purple-600
+ * from-red-400 to-orange-600
+ * from-sky-400 to-blue-500
+ * from-emerald-400 to-teal-600
+ * from-pink-400 to-rose-500
+ * shadow-[0_0_15px_rgba(255,255,255,0.1)]
+ */

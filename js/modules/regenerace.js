@@ -2,6 +2,8 @@ import { state, stateEvents, ensureRegeneraceData } from '../core/state.js';
 import { triggerHaptic } from '../core/utils.js';
 import { supabase } from '../core/supabase.js';
 
+const REGENERACE_START_DATE = new Date('2026-04-15');
+
 // Fallback content in case DB is empty or offline
 const DEFAULT_CONTENT = {
     hero: {
@@ -467,6 +469,24 @@ function renderView(container, content) {
                     <div class="space-y-6 relative ml-2">
                         <!-- Connecting Line -->
                         <div class="absolute left-6 top-10 bottom-10 w-0.5 bg-white/5 z-0"></div>
+                        
+                        <!-- Dynamic Progress Line -->
+                        ${(() => {
+                            const now = new Date();
+                            const start = new Date(REGENERACE_START_DATE);
+                            const diffDays = Math.max(0, Math.floor((now - start) / (1000 * 60 * 60 * 24)));
+                            
+                            // Calculate percentage of line to fill (very approximate based on current active phase)
+                            let fillPercent = 0;
+                            if (diffDays > 0) {
+                                if (diffDays <= 3) fillPercent = 10;
+                                else if (diffDays <= 14) fillPercent = 35;
+                                else if (diffDays <= 30) fillPercent = 65;
+                                else fillPercent = 100;
+                            }
+                            
+                            return `<div class="absolute left-6 top-10 bottom-10 w-0.5 bg-gradient-to-b from-blue-500 via-purple-500 to-green-500 z-0 transition-all duration-[2000ms]" style="height: ${fillPercent}%"></div>`;
+                        })()}
 
                         ${content.timeline.map((t, idx) => {
         const themes = [
@@ -478,18 +498,50 @@ function renderView(container, content) {
         const theme = themes[idx] || themes[0];
         const parsed = formatTimelineCard(t.text);
 
+        // Dynamic State Logic
+        const now = new Date();
+        const start = new Date(REGENERACE_START_DATE);
+        const diffMs = now - start;
+        const diffDays = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+        
+        let state = 'future'; // past, active, future
+        
+        // Phase Day Thresholds (logic based on content period names)
+        const dayRanges = [3, 14, 30, 60];
+        const currentThreshold = dayRanges[idx];
+        const prevThreshold = idx > 0 ? dayRanges[idx - 1] : -1;
+
+        if (diffMs < 0) {
+            state = 'future';
+        } else if (diffDays > currentThreshold) {
+            state = 'past';
+        } else if (diffDays > prevThreshold && diffDays <= currentThreshold) {
+            state = 'active';
+        }
+
+        const isActive = state === 'active';
+        const isPast = state === 'past';
+        
+        // Dynamic Styles
+        const cardClass = isActive 
+            ? `ring-2 ring-${theme.accent.replace('text-', '')}/50 shadow-[0_0_20px_rgba(255,255,255,0.05)] animate-[pulse_3s_infinite]` 
+            : (isPast ? 'opacity-80' : 'opacity-60');
+            
+        const iconClass = isActive ? `scale-110 ${theme.shadow} border-${theme.accent.replace('text-', '')}/50` : 'opacity-50';
+
         return `
                             <div class="relative flex gap-6 z-10 group animate-fade-in" style="animation-delay: ${idx * 150}ms">
                                 <!-- Node -->
-                                <div class="flex-shrink-0 w-12 h-12 rounded-2xl bg-[#2f3136] border border-white/10 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-500">
+                                <div class="flex-shrink-0 w-12 h-12 rounded-2xl bg-[#2f3136] border border-white/10 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-500 ${iconClass}">
                                      <span class="text-2xl">${theme.icon}</span>
                                 </div>
 
                                 <!-- Card -->
-                                <div class="flex-1 glass-card bg-gradient-to-br ${theme.bg} to-transparent rounded-[2rem] p-6 border ${theme.border} ${theme.shadow} space-y-5">
+                                <div class="flex-1 glass-card bg-gradient-to-br ${theme.bg} to-transparent rounded-[2rem] p-6 border ${theme.border} ${theme.shadow} space-y-5 transition-all duration-700 ${cardClass}">
                                     <div class="flex justify-between items-start">
                                         <div class="inline-flex items-center px-3 py-1 rounded-full bg-white/5 border border-white/10">
                                             <span class="text-[10px] font-black text-white uppercase tracking-widest">${t.period}</span>
+                                            ${isPast ? '<i class="fas fa-check-circle text-green-500 ml-2 text-[8px]"></i>' : ''}
                                         </div>
                                     </div>
 
