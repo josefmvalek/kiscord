@@ -9,6 +9,16 @@
 }
 .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
 
+/* Subtile Staggered Entrance (Optimized for Speed) */
+@keyframes entrance-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.stagger-item {
+  opacity: 0;
+  animation: entrance-up 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
 /* Alias used in premium card system */
 @keyframes fadeIn {
   from { opacity: 0; }
@@ -231,4 +241,32 @@ button:active i.fa-tint { animation: waterSplash 0.3s ease-out; }
 @keyframes sf-sway-head {
   0%   { transform: rotate(-2deg) translateY(-1px); }
   100% { transform: rotate(2deg) translateY(1px); }
+}
+
+/* --- NIGHT SKY STARS --- */
+@keyframes star-twinkle {
+  0%, 100% { transform: scale(1); opacity: 0.3; filter: brightness(1) blur(0px); }
+  50% { transform: scale(1.2); opacity: 1; filter: brightness(1.5) blur(1px); }
+}
+
+.particle-star {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 5;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  animation: star-twinkle var(--duration) ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+/* --- MOOD GLOW EFFECTS --- */
+.mood-glow-shadow {
+  transition: box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --- HEADER MASK --- */
+.dashboard-header-mask {
+  mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
 }

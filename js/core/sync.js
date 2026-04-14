@@ -31,7 +31,18 @@ export function setupRealtimeSync() {
             if (payload.payload.from === state.currentUser?.id) return;
 
             // Update partner state (DO NOT update state.healthData - that is for the local user)
+            const oldMood = state.partnerHealthData?.mood;
             state.partnerHealthData = row;
+
+            // --- MOOD SUPPORT NOTIFICATION ---
+            if (row.mood > 0 && row.mood <= 3 && row.mood !== oldMood) {
+                const partnerName = state.currentUser?.name === 'Jožka' ? 'Klárka' : 'Jožka';
+                const msg = `${partnerName} se dneska necítí úplně nejlíp... 🥺 Pošli mu/jí sluníčko!`;
+                
+                import('./notifications.js').then(m => {
+                    m.handlePartnerAction('mood', msg);
+                });
+            }
 
             // Notify UI modules
             window.dispatchEvent(new CustomEvent('health-updated', { 
@@ -52,6 +63,41 @@ export function setupRealtimeSync() {
         .on('broadcast', { event: 'pomodoro-update' }, (payload) => {
             if (payload.payload.user_id === state.currentUser?.id) return;
             window.dispatchEvent(new CustomEvent('pomodoro-updated', { detail: payload.payload }));
+        })
+        // A6. Handle Broadcasts (Plan Updates)
+        .on('broadcast', { event: 'plan-update' }, (payload) => {
+            if (payload.payload.from === state.currentUser?.id) return;
+            
+            // Check if user has planning notifications enabled
+            const config = state.settings.notifications?.partner?.planning;
+            if (config && !config.enabled) return;
+
+            const { type, name, status } = payload.payload;
+            let msg = "";
+            
+            if (type === 'proposal') {
+                msg = `Nová pozvánka: ${name}! ❤️`;
+            } else if (type === 'response') {
+                msg = status === 'confirmed' ? "Plán byl potvrzen! 🥂" : "Plán byl zrušen. 🥀";
+            }
+            
+            if (msg && typeof window.showNotification === 'function') {
+                window.showNotification(msg, "info");
+                if (config?.haptic && typeof triggerHaptic === 'function') triggerHaptic('medium');
+            }
+        })
+        // A7. Handle Broadcasts (Sleep Status)
+        .on('broadcast', { event: 'sleep-status' }, (payload) => {
+            if (payload.payload.from === state.currentUser?.id) return;
+            
+            if (payload.payload.isSleeping) {
+                const partnerName = state.currentUser?.name === 'Jožka' ? 'Klárka' : 'Jožka';
+                const msg = `${partnerName} právě zalehl/a do postýlky. Sladké sny! 🌙💤`;
+                
+                import('./notifications.js').then(m => {
+                    m.handlePartnerAction('sleep', msg);
+                });
+            }
         })
         // B. Handle Database Changes (Health Data)
         .on('postgres_changes', { 
@@ -112,7 +158,12 @@ export function setupRealtimeSync() {
                          name: row.name,
                          cat: row.cat,
                          time: row.time,
-                         note: row.note
+                         note: row.note,
+                         status: row.status || 'idea',
+                         proposed_by: row.proposed_by,
+                         rejection_reason: row.rejection_reason || '',
+                         backup_plan: row.backup_plan || '',
+                         checklist: typeof row.checklist === 'string' ? JSON.parse(row.checklist) : (row.checklist || [])
                      };
                  }
              }
@@ -218,6 +269,18 @@ export async function broadcastGameVote(payload) {
 }
 
 /**
+ * Broadcasts a sleep status update (started/stopped) to the partner.
+ */
+export async function broadcastSleepStatus(isSleeping) {
+    if (!mainChannel) return;
+    await mainChannel.send({
+        type: 'broadcast',
+        event: 'sleep-status',
+        payload: { from: state.currentUser?.id, isSleeping }
+    });
+}
+
+/**
  * Sends a Matura SOS signal to the other user.
  */
 export async function broadcastMaturaSOS() {
@@ -238,6 +301,18 @@ export async function broadcastPomodoroUpdate(payload) {
         type: 'broadcast',
         event: 'pomodoro-update',
         payload: { ...payload, user_id: state.currentUser?.id }
+    });
+}
+
+/**
+ * Broadcasts a planning update (new plan, confirm, reject) to the partner for instant toast notifications.
+ */
+export async function broadcastPlanUpdate(payload) {
+    if (!mainChannel) return;
+    await mainChannel.send({
+        type: 'broadcast',
+        event: 'plan-update',
+        payload: { ...payload, from: state.currentUser?.id }
     });
 }
 

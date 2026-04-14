@@ -103,6 +103,18 @@ export function updateMoodVisuals(val, activateBubble = false) {
 
     triggerHaptic("light");
     
+    // Update container glow
+    const moodContainer = document.getElementById('mood-container');
+    if (moodContainer) {
+        const color = moodColors[value - 1];
+        // Only update the closest glass-card parent to avoid inner borders/shadows
+        const cardNode = moodContainer.closest('.glass-card');
+        if (cardNode) {
+            cardNode.style.boxShadow = `0 10px 50px -10px ${color}30, 0 0 30px ${color}10`;
+            cardNode.style.borderColor = `${color}40`;
+        }
+    }
+
     const todayKey = getTodayKey();
     if (state.healthData && state.healthData[todayKey]) {
         state.healthData[todayKey].mood = value;
@@ -160,7 +172,7 @@ export function generateMovementChips(movement = []) {
     if (!movement || !Array.isArray(movement)) movement = [];
     
     const activities = [
-        { id: 'gym', icon: '💪', label: 'Fitko', color: 'text-red-400', border: 'border-red-500/50', bg: 'bg-red-500/10' },
+        { id: 'gym', icon: '💪', label: 'Fitko', color: 'text-fuchsia-400', border: 'border-fuchsia-500/50', bg: 'bg-fuchsia-500/10' },
         { id: 'walk', icon: '🌲', label: 'Procházka', color: 'text-green-400', border: 'border-green-500/50', bg: 'bg-green-500/10' }
     ];
 
@@ -227,7 +239,7 @@ export function updatePillsVisuals() {
 
 export function generatePillsChip(isTaken = false, streak = 0) {
     const activeClass = isTaken
-        ? "bg-red-500/10 text-red-400 border-red-500/50 shadow-[0_0_10px_rgba(237,66,69,0.3)]"
+        ? "bg-blue-500/10 text-blue-400 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)]"
         : "bg-[#36393f] text-gray-500 border-gray-700 hover:border-gray-500";
 
     const streakColor = isTaken ? 'text-orange-400' : 'text-gray-600 opacity-40';

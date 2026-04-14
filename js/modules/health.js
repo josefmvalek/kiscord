@@ -1,7 +1,7 @@
 import { state, saveStateToCache } from '../core/state.js';
 import { triggerHaptic, getTodayKey } from '../core/utils.js';
 import { supabase } from '../core/supabase.js';
-import { broadcastHealthUpdate } from '../core/sync.js';
+import { broadcastHealthUpdate, broadcastSleepStatus } from '../core/sync.js';
 import { safeUpsert } from '../core/offline.js';
 
 // --- INITIALIZATION ---
@@ -311,6 +311,9 @@ export function startSleep() {
     // Refresh UI
     window.dispatchEvent(new CustomEvent('health-updated'));
     
+    // Broadcast to partner
+    broadcastSleepStatus(true);
+    
     const controls = document.getElementById('sleep-controls-container');
     if (controls) {
         import('/js/modules/dashboard/health_ui.js').then(m => {
@@ -406,6 +409,8 @@ export async function wakeUp() {
             });
         }
     }
+
+    broadcastSleepStatus(false);
 }
 
 // REMOVED duplicate generateSleepControls here. 

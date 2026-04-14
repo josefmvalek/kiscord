@@ -33,13 +33,15 @@ export function renderSettings() {
             magnesium: { enabled: false, time: '21:00', haptic: true, sound: true }
         });
     }
-    if (!state.settings.notifications.partner || !state.settings.notifications.partner.sunlight) {
+    if (!state.settings.notifications.partner || !state.settings.notifications.partner.planning || !state.settings.notifications.partner.mood) {
         state.settings.notifications.partner = {
-            sunlight: { enabled: true, haptic: true, sound: true },
-            dailyQuestions: { enabled: true, haptic: true, sound: true },
-            letters: { enabled: true, haptic: true, sound: true },
-            confessions: { enabled: true, haptic: true, sound: true },
-            mood: { enabled: true, haptic: true, sound: false }
+            ...state.settings.notifications.partner,
+            sunlight: state.settings.notifications.partner?.sunlight || { enabled: true, haptic: true, sound: true },
+            dailyQuestions: state.settings.notifications.partner?.dailyQuestions || { enabled: true, haptic: true, sound: true },
+            letters: state.settings.notifications.partner?.letters || { enabled: true, haptic: true, sound: true },
+            planning: state.settings.notifications.partner?.planning || { enabled: true, haptic: true, sound: true },
+            mood: { enabled: true, haptic: true, sound: true },
+            sleep: { enabled: true, haptic: true, sound: true }
         };
     }
     if (!state.settings.notifications.system || !state.settings.notifications.system.quests) {
@@ -161,8 +163,11 @@ export function renderSettings() {
                             <h3 class="text-[10px] font-black text-[#8e9297] uppercase tracking-[2px] mt-8 mb-2 px-1">Partner a Láska</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 ${renderNotificationCard('partner', 'sunlight', 'Sluníčko', 'none')}
+                                ${renderNotificationCard('partner', 'planning', 'Plánování', 'none')}
                                 ${renderNotificationCard('partner', 'dailyQuestions', 'Otázky', 'none')}
                                 ${renderNotificationCard('partner', 'letters', 'Dopisy', 'none')}
+                                ${renderNotificationCard('partner', 'mood', 'Podpora nálady', 'none')}
+                                ${renderNotificationCard('partner', 'sleep', 'Uspávání', 'none')}
                             </div>
                         </div>
                     </section>
@@ -280,6 +285,7 @@ export function renderSettings() {
         if (id === 'sunlight') message = "Myslím na tebe! ☀️";
         if (id === 'dailyQuestions') message = "Denní otázka byla zodpovězena! ❓";
         if (id === 'letters') message = "Dostal/a jsi nový dopis! 💌";
+        if (id === 'planning') message = "Nová pozvánka na rande! 🥂";
         if (id === 'iron') message = "Nezapomeň na železo! 🩸 (Ne s kávou!)";
         if (id === 'zinc') message = "Čas na zinek! ✨";
         if (id === 'magnesium') message = "Čas na hořčík před spaním! 🌙";
@@ -381,6 +387,9 @@ function renderNotificationCard(category, id, title, inputType = 'none') {
         sunlight: '<i class="fas fa-sun text-[10px] text-[#fcc419] drop-shadow-[0_0_8px_rgba(252,196,25,0.6)] animate-pulse"></i>',
         dailyQuestions: '<i class="fas fa-lightbulb text-[11px] text-orange-200 drop-shadow-[0_0_8px_rgba(255,144,0,0.5)] animate-pulse"></i>',
         letters: '<i class="fas fa-envelope text-[11px] text-white animate-pulse"></i>',
+        planning: '<i class="fas fa-calendar-alt text-[10px] text-pink-300 animate-pulse"></i>',
+        mood: '<i class="fas fa-heart text-[10px] text-red-400 animate-pulse"></i>',
+        sleep: '<i class="fas fa-moon text-[10px] text-indigo-300 animate-pulse"></i>',
         iron: '<i class="fas fa-tint text-[10px] text-red-400 drop-shadow-[0_0_5px_rgba(248,113,113,0.5)] animate-pulse"></i>',
         zinc: '<i class="fas fa-star text-[10px] text-yellow-400 drop-shadow-[0_0_5px_rgba(250,204,21,0.5)] animate-pulse"></i>',
         magnesium: '<i class="fas fa-moon text-[10px] text-purple-400 drop-shadow-[0_0_5px_rgba(192,132,252,0.5)] animate-pulse"></i>'

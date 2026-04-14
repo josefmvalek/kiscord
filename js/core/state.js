@@ -84,7 +84,10 @@ const state = {
             partner: {
                 sunlight: { enabled: true, haptic: true, sound: true },
                 dailyQuestions: { enabled: true, haptic: true, sound: true },
-                letters: { enabled: true, haptic: true, sound: true }
+                letters: { enabled: true, haptic: true, sound: true },
+                planning: { enabled: true, haptic: true, sound: true },
+                mood: { enabled: true, haptic: true, sound: true },
+                sleep: { enabled: true, haptic: true, sound: true }
             },
             system: {
                 quests: { enabled: true, haptic: true, sound: false },
@@ -103,7 +106,8 @@ const state = {
         games: false,
         facts: false,
         conv_topics: false,
-        regenerace: false
+        regenerace: false,
+        dailyArchive: false
     }
 };
 
@@ -254,7 +258,10 @@ async function initializeState() {
                 todayDates.forEach(row => {
                     state.plannedDates[row.date_key] = {
                         id: row.id, name: row.name, cat: row.cat, time: row.time, note: row.note,
-                        status: row.status || 'idea', backup_plan: row.backup_plan || '',
+                        status: row.status || 'idea', 
+                        proposed_by: row.proposed_by,
+                        rejection_reason: row.rejection_reason || '',
+                        backup_plan: row.backup_plan || '',
                         checklist: typeof row.checklist === 'string' ? JSON.parse(row.checklist) : (row.checklist || [])
                     };
                 });
@@ -350,6 +357,12 @@ function markLoaded(key) {
 async function ensureCalendarData(force = false) {
     if (state._loaded.calendar && !force && !isStale('calendar')) return;
     try {
+        // Timeline and Library are dependencies for specific icons in the calendar grid
+        await Promise.all([
+            ensureTimelineData(force),
+            ensureLibraryData(force)
+        ]);
+
         const [health, dates, school] = await Promise.all([
             supabase.from('health_data').select('*').eq('user_id', state.currentUser?.id),
             supabase.from('planned_dates').select('*'),
@@ -361,7 +374,10 @@ async function ensureCalendarData(force = false) {
         if (dates.data) dates.data.forEach(row => {
             state.plannedDates[row.date_key] = {
                 id: row.id, name: row.name, cat: row.cat, time: row.time, note: row.note,
-                status: row.status || 'idea', backup_plan: row.backup_plan || '',
+                status: row.status || 'idea', 
+                proposed_by: row.proposed_by,
+                rejection_reason: row.rejection_reason || '',
+                backup_plan: row.backup_plan || '',
                 checklist: typeof row.checklist === 'string' ? JSON.parse(row.checklist) : (row.checklist || [])
             };
         });
@@ -634,10 +650,50 @@ async function ensureDailyQuizData() {
         if (aData && state.dailyQuestion) {
             state.dailyAnswers = aData.filter(a => a.question_id === state.dailyQuestion.id);
         }
-
         state._loaded.daily = true;
     } catch (e) {
         console.error("DailyQuiz Load Error:", e);
+    }
+}
+
+async function ensureDailyArchiveData(force = false) {
+    if (state._loaded.dailyArchive && !force && !isStale('dailyArchive')) return;
+
+    try {
+        const [{ data: qData }, { data: aData }] = await Promise.all([
+            supabase.from('daily_questions').select('*'),
+            supabase.from('daily_answers').select('*').order('created_at', { ascending: false })
+        ]);
+
+        if (qData && aData) {
+            // Group answers by question_id
+            const answerMap = aData.reduce((acc, a) => {
+                if (!acc[a.question_id]) acc[a.question_id] = [];
+                acc[a.question_id].push(a);
+                return acc;
+            }, {});
+
+            // Map questions to their answers and include basic metadata
+            state.dailyArchive = qData
+                .map(q => ({
+                    ...q,
+                    answers: answerMap[q.id] || [],
+                    lastAnswerAt: answerMap[q.id]?.[0]?.created_at || null
+                }))
+                // Filter only questions that have at least one answer
+                .filter(q => q.answers.length > 0)
+                // Sort by last answer date (most recent first)
+                .sort((a, b) => {
+                    if (!a.lastAnswerAt) return 1;
+                    if (!b.lastAnswerAt) return -1;
+                    return new Date(b.lastAnswerAt) - new Date(a.lastAnswerAt);
+                });
+
+            markLoaded('dailyArchive');
+            stateEvents.emit('dailyArchive');
+        }
+    } catch (e) {
+        console.error("DailyArchive Load Error:", e);
     }
 }
 
@@ -706,6 +762,7 @@ export {
     ensureGamesData,
     ensureDrawStrokesData,
     ensureDailyQuizData,
+    ensureDailyArchiveData,
     ensureAllHealthData,
     ensureRegeneraceData,
     ensureAssetsData,

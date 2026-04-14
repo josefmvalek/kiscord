@@ -651,4 +651,89 @@
     border-color: rgba(88, 101, 242, 0.4);
     color: var(--text-header);
 }
+/* ==========================================================
+   NEON GLOWS & POMODORO RING
+   ========================================================== */
 
+/* Specific Glows for original cards */
+.glow-pink:hover { 
+    box-shadow: 0 0 25px rgba(235, 69, 158, 0.15), 0 10px 40px rgba(0, 0, 0, 0.4) !important; 
+    border-color: rgba(235, 69, 158, 0.4) !important; 
+}
+.glow-blue:hover { 
+    box-shadow: 0 0 25px rgba(88, 101, 242, 0.15), 0 10px 40px rgba(0, 0, 0, 0.4) !important; 
+    border-color: rgba(88, 101, 242, 0.4) !important; 
+}
+.glow-green:hover { 
+    box-shadow: 0 0 25px rgba(59, 165, 92, 0.15), 0 10px 40px rgba(0, 0, 0, 0.4) !important; 
+    border-color: rgba(59, 165, 92, 0.4) !important; 
+}
+
+/* Circular Progress Timer */
+.pomodoro-ring-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.pomodoro-ring-bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.05);
+}
+
+.pomodoro-ring-fill {
+    fill: none;
+    stroke: #5865F2;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+    filter: drop-shadow(0 0 5px rgba(88, 101, 242, 0.4));
+}
+
+.pomodoro-ring-fill.studying {
+    stroke: #eb459e;
+    filter: drop-shadow(0 0 10px rgba(235, 69, 158, 0.5));
+    animation: pomodoro-pulse 2s infinite ease-in-out;
+}
+
+@keyframes pomodoro-pulse {
+    0%, 100% { filter: drop-shadow(0 0 10px rgba(235, 69, 158, 0.5)); }
+    50% { filter: drop-shadow(0 0 15px rgba(235, 69, 158, 0.7)); }
+}
+
+.pomodoro-time-display {
+    position: absolute;
+    font-family: 'Consolas', monospace;
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    font-size: 1.5rem;
+    color: white;
+}
+
+/* ==========================================================
+   VIEW TRANSITIONS (Smooth Morphing)
+   ========================================================== */
+
+/* Enable morphing for the search bar */
+.matura-search-wrapper {
+    view-transition-name: matura-search-bar;
+}
+
+/* Enable smooth fade for the content area */
+#messages-container {
+    view-transition-name: matura-content;
+}
+
+::view-transition-old(matura-search-bar),
+::view-transition-new(matura-search-bar) {
+    height: 100%;
+    width: auto;
+}
+
+::view-transition-old(matura-content),
+::view-transition-new(matura-content) {
+    animation-duration: 0.25s;
+}

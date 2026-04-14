@@ -3,7 +3,7 @@ import { state, saveStateToCache, stateEvents } from '../core/state.js';
 import { triggerHaptic, getInflectedName, getTodayKey, triggerConfetti } from '../core/utils.js';
 import { getAssetUrl } from '../core/assets.js';
 import { showNotification } from '../core/theme.js';
-import { broadcastSunlight } from '../core/sync.js';
+import { broadcastSunlight, broadcastPlanUpdate } from '../core/sync.js';
 import { getTodayData, getPillsStreak } from './health.js';
 
 // Re-export modularized components to maintain compatibility with global onclick handlers
@@ -34,6 +34,33 @@ let dashboardTimer = null; // Ticker pro odpočet
 let bedtimeReminderInterval = null;
 let easterEggClicks = 0;
 let lastEasterEggClick = 0;
+
+// --- NIGHT SKY PARTICLES ---
+function generateStaticStars(count = 50) {
+    let particles = "";
+    for (let i = 0; i < count; i++) {
+        const size = Math.random() * 2 + 0.5;
+        const left = Math.random() * 100;
+        const top = Math.random() * 100;
+        const duration = Math.random() * 3 + 2;
+        const delay = Math.random() * 5;
+        
+        // Stars are mostly white or very pale blue/yellow
+        const colors = ['#ffffff', '#f8fafc', '#fff7ed', '#e0f2fe'];
+        const color = colors[Math.floor(Math.random() * colors.length)];
+
+        particles += `<div class="particle-star" style="
+            width: ${size}px; 
+            height: ${size}px; 
+            left: ${left}%; 
+            top: ${top}%; 
+            --duration: ${duration}s; 
+            --delay: ${delay}s; 
+            background: ${color};
+        "></div>`;
+    }
+    return particles;
+}
 
 // --- FACT OF THE DAY ---
 function getDailyFactSeed() {
@@ -456,9 +483,26 @@ export async function renderDashboard(forceRefresh = false) {
 
     container.innerHTML = `
           <div class="flex-1 overflow-y-auto no-scrollbar bg-[#36393f] relative w-full h-full pb-20">
-              <div class="relative bg-gradient-to-br from-[#5865F2] to-[#eb459e] shadow-lg overflow-hidden flex-shrink-0 pt-3 pb-0 rounded-b-3xl">
-                  <div class="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
-                  <div class="relative z-10 px-6 mb-0 flex justify-between items-end min-h-[140px]">
+              <div class="relative shadow-lg overflow-hidden flex-shrink-0 pt-3 pb-0 rounded-b-3xl dashboard-header-mask" 
+                   style="background: linear-gradient(135deg, #020617 0%, #0f172a 40%, #1e1b4b 100%);">
+                  <div class="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
+                  
+                  <!-- Nebula Effect -->
+                  <div class="absolute top-[-20%] right-[-10%] w-[60%] h-[80%] bg-purple-900/20 blur-[120px] rounded-full pointer-events-none"></div>
+                  <div class="absolute bottom-[-10%] left-[-5%] w-[40%] h-[60%] bg-blue-900/20 blur-[100px] rounded-full pointer-events-none"></div>
+
+                  <!-- Stars -->
+                  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+                      ${generateStaticStars(60)}
+                  </div>
+
+                  <!-- Subtle Moon -->
+                  <div class="absolute top-6 right-10 w-12 h-12 pointer-events-none opacity-80">
+                      <div class="absolute inset-0 bg-yellow-100/10 blur-xl rounded-full animate-pulse"></div>
+                      <div class="relative text-2xl filter drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]">🌙</div>
+                  </div>
+
+                  <div class="relative z-10 px-6 mb-0 flex justify-between items-end min-h-[140px] pb-8">
                       <div class="pb-2">
                            <p class="text-[10px] font-bold uppercase tracking-wider text-white/90 mb-0.5">${niceDate}</p>
                            <h1 class="text-2xl font-black text-white leading-tight flex items-center gap-3">
@@ -490,58 +534,142 @@ export async function renderDashboard(forceRefresh = false) {
                           </div>
                       </div>
                   </div>
-                  <div class="bg-black/20 backdrop-blur-md border-t border-white/10 px-6 py-3 flex items-center justify-between cursor-pointer" onclick="${nextDate ? `import('./js/modules/dashboard.js').then(m => m.handleNextDateClick('${nextDate[0]}'))` : `window.switchChannel('dateplanner')`}">
-                      ${nextDate ? `
-                            <div class="flex items-center gap-3">
-                                <div class="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center">${getCategoryIcon(nextDate[1].cat)}</div>
-                                <div>
-                                    <div class="text-[9px] font-bold text-white/70 uppercase">Příště: <span id="countdown-timer">--:--:--</span></div>
-                                    <div class="font-bold text-white text-sm uppercase">${nextDate[1].name}</div>
+                  <div id="dashboard-planning-area" class="bg-black/20 backdrop-blur-md border-t border-white/10 px-6 py-3 flex items-center justify-between cursor-pointer">
+                      ${(() => {
+                          const todayStr = new Date().toISOString().split("T")[0];
+                          const upcoming = Object.entries(state.plannedDates || {})
+                              .filter(([date, entry]) => date >= todayStr)
+                              .sort((a, b) => {
+                                  // Priority: pending invitations from partner first
+                                  const aPending = a[1].status === 'pending' && a[1].proposed_by !== state.currentUser.id;
+                                  const bPending = b[1].status === 'pending' && b[1].proposed_by !== state.currentUser.id;
+                                  if (aPending && !bPending) return -1;
+                                  if (!aPending && bPending) return 1;
+                                  return a[0].localeCompare(b[0]);
+                              });
+                          
+                          const plan = upcoming.length > 0 ? upcoming[0] : null;
+                          if (!plan) {
+                              return `<div class="text-white/90 text-sm font-medium w-full" onclick="import('./js/modules/dashboard.js').then(m => m.showQuickPlanModal())">Nic v plánu... <span class="font-bold underline text-[#eb459e]">Plánovat?</span></div>`;
+                          }
+
+                          const [dateKey, entry] = plan;
+                          const isPendingFromPartner = entry.status === 'pending' && entry.proposed_by !== state.currentUser.id;
+                          const isPendingFromMe = entry.status === 'pending' && entry.proposed_by === state.currentUser.id;
+                          const isRejected = entry.status === 'rejected';
+
+                          if (isPendingFromPartner) {
+                              const dateLabel = dateKey === todayStr ? 'Dnes' : (dateKey === new Date(Date.now() + 86400000).toISOString().split('T')[0] ? 'Zítra' : dateKey);
+                              return `
+                                <div class="flex items-center justify-between w-full">
+                                    <div class="flex items-center gap-3">
+                                        <div class="bg-[#eb459e] w-8 h-8 rounded-full flex items-center justify-center animate-bounce-short shadow-[0_0_15px_rgba(235,69,158,0.5)]">${getCategoryIcon(entry.cat)}</div>
+                                        <div>
+                                            <div class="text-[9px] font-bold text-[#eb459e] uppercase animate-pulse">Pozvánka: ${dateLabel}${entry.time ? ` v ${entry.time}` : ''}!</div>
+                                            <div class="font-bold text-white text-sm uppercase truncate max-w-[150px] leading-tight">${entry.name}</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <button onclick="event.stopPropagation(); import('./js/modules/dashboard.js').then(m => m.respondToPlan('${dateKey}', 'confirmed'))" 
+                                                class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition active:scale-90 shadow-lg flex items-center gap-1">
+                                            ✅ <span class="hidden xs:inline">Jasně</span>
+                                        </button>
+                                        <button onclick="event.stopPropagation(); import('./js/modules/dashboard.js').then(m => m.showRejectionModal('${dateKey}'))" 
+                                                class="bg-white/10 hover:bg-white/20 text-white/70 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition active:scale-90 flex items-center gap-1">
+                                            ❌ <span class="hidden xs:inline">Teď ne</span>
+                                        </button>
+                                    </div>
                                 </div>
+                              `;
+                          }
+
+                          if (isPendingFromMe) {
+                              const dateLabel = dateKey === todayStr ? '' : (dateKey === new Date(Date.now() + 86400000).toISOString().split('T')[0] ? 'zítra ' : `${dateKey} `);
+                              return `
+                                <div class="flex items-center justify-between w-full" onclick="import('./js/modules/dashboard.js').then(m => m.handleNextDateClick('${dateKey}'))">
+                                    <div class="flex items-center gap-3 opacity-60">
+                                        <div class="bg-gray-700 w-8 h-8 rounded-full flex items-center justify-center">${getCategoryIcon(entry.cat)}</div>
+                                        <div>
+                                            <div class="text-[9px] font-bold text-white/50 uppercase">Čekám na odpověď... ${dateLabel}${entry.time ? `(v ${entry.time})` : ''}</div>
+                                            <div class="font-bold text-white text-sm uppercase">${entry.name}</div>
+                                        </div>
+                                    </div>
+                                    <i class="fas fa-hourglass-half text-white/30 text-[10px] animate-spin-slow"></i>
+                                </div>
+                              `;
+                          }
+
+                          if (isRejected) {
+                              return `
+                                <div class="flex items-center justify-between w-full" onclick="import('./js/modules/dashboard.js').then(m => m.showQuickPlanModal())">
+                                    <div class="flex items-center gap-3">
+                                        <div class="bg-red-900/40 w-8 h-8 rounded-full flex items-center justify-center text-xs">🥀</div>
+                                        <div>
+                                            <div class="text-[9px] font-bold text-red-400 uppercase">Plán zrušen: ${entry.rejection_reason || 'Změna plánu'}</div>
+                                            <div class="font-bold text-white/40 text-sm uppercase line-through">${entry.name}</div>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] font-bold text-white underline">Zkusit jiný?</span>
+                                </div>
+                              `;
+                          }
+
+                          // Confirmed/Happened
+                          return `
+                            <div class="flex items-center justify-between w-full" onclick="import('./js/modules/dashboard.js').then(m => m.handleNextDateClick('${dateKey}'))">
+                                <div class="flex items-center gap-3">
+                                    <div class="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center shadow-lg">${getCategoryIcon(entry.cat)}</div>
+                                    <div>
+                                        <div class="text-[9px] font-bold text-white/70 uppercase">Příště: <span id="countdown-timer">--:--:--</span></div>
+                                        <div class="font-bold text-white text-sm uppercase">${entry.name}</div>
+                                    </div>
+                                </div>
+                                <i class="fas fa-chevron-right text-white/30 text-[10px]"></i>
                             </div>
-                        ` : `
-                            <div class="text-white/90 text-sm font-medium">Nic v plánu... <span class="font-bold underline">Plánovat?</span></div>
-                        `}
-                      <i class="fas fa-chevron-right text-white/30 text-[10px]"></i>
+                          `;
+                      })()}
                   </div>
               </div>
 
               <div class="max-w-3xl mx-auto px-3 mt-4 space-y-3">
                   ${state.settings.dashboardWidgets.health ? `
-                  <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5">
+                  <div class="glass-card rounded-2xl p-6 stagger-item" style="animation-delay: 0.05s">
                       <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Jak ses vyspala?</h3>
                       <div id="sleep-container">${generateSleepSlider(data)}</div>
                   </div>
-                  <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5">
+                  <div class="glass-card rounded-2xl p-6 stagger-item" style="animation-delay: 0.1s">
                       <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Voda</h3>
                       <div class="flex justify-between gap-1" id="water-container">${generateWaterIcons(data.water || 0)}</div>
                   </div>
-                  <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5">
+                  <div class="glass-card rounded-2xl p-6 stagger-item" style="animation-delay: 0.15s">
                       <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Jak se dnes cítíš?</h3>
-                      <div id="mood-container">${generateMoodSlider(data.mood)}</div>
+                      <div id="mood-container" class="mood-glow-shadow">${generateMoodSlider(data.mood)}</div>
                   </div>
                   <div class="grid grid-cols-2 gap-3">
-                      <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5">
+                      <div class="glass-card rounded-2xl p-6 stagger-item" style="animation-delay: 0.2s">
                           <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Pohyb</h3>
                           <div class="flex flex-col gap-2" id="movement-container">${generateMovementChips(data.movement)}</div>
                       </div>
-                      <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5">
+                      <div class="glass-card rounded-2xl p-6 stagger-item" style="animation-delay: 0.2s">
                           <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Léky</h3>
                           <div id="pills-container">${generatePillsChip(data.pills, getPillsStreak())}</div>
                       </div>
                   </div>
                   ` : ''}
-
+                  
                   ${state.settings.dashboardWidgets.supplements ? `
-                  <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5">
+                  <div class="glass-card rounded-2xl p-6 stagger-item" style="animation-delay: 0.25s">
                       <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Regenerace & Suplementy</h3>
                       <div class="flex flex-wrap justify-between gap-2" id="supplements-container">${generateSupplementsChips(data.supplements)}</div>
                   </div>
                   ` : ''}
 
-                  ${generateDailyQuestionCard()}
-                  ${state.settings.dashboardWidgets.funfacts ? generateFactOfTheDay() : ''}
-                  ${state.settings.dashboardWidgets.tetris ? `<div id="tetris-tracker-container">${generateTetrisMiniTracker()}</div>` : ''}
+                  <div class="stagger-item" style="animation-delay: 0.3s">
+                      ${generateDailyQuestionCard()}
+                  </div>
+                  
+                  ${state.settings.dashboardWidgets.funfacts ? `<div class="stagger-item" style="animation-delay: 0.35s">${generateFactOfTheDay()}</div>` : ''}
+                  ${state.settings.dashboardWidgets.tetris ? `<div id="tetris-tracker-container" class="stagger-item" style="animation-delay: 0.4s">${generateTetrisMiniTracker()}</div>` : ''}
               </div>
           </div>
     `;
@@ -622,6 +750,243 @@ export async function handleNextDateClick(dateKey) {
     const { showDayDetail } = await import('./calendar.js');
     setTimeout(() => { showDayDetail(dateKey); }, 50);
 }
+// --- QUICK PLAN MODAL ---
+let quickPlanData = { cat: 'discord', name: '', time: '' };
+
+export function showQuickPlanModal(step = 1) {
+    const { renderModal, renderButton, renderInputGroup } =  { 
+        renderModal: (c) => import('../core/ui.js').then(m => m.renderModal(c)),
+        renderButton: (c) => import('../core/ui.js').then(m => m.renderButton(c)),
+        renderInputGroup: (c) => import('../core/ui.js').then(m => m.renderInputGroup(c))
+    };
+    
+    import('../core/ui.js').then(ui => {
+        let content = '';
+        let title = 'Naplánovat něco?';
+        let actions = '';
+
+        if (step === 1) {
+            title = 'Co podnikneme?';
+            content = `
+                <div class="grid grid-cols-1 gap-3">
+                    <button onclick="import('./js/modules/dashboard.js').then(m => m.selectQuickPlanCategory('discord'))" 
+                            class="bg-black/20 hover:bg-[#5865F2]/20 p-5 rounded-2xl border border-white/5 hover:border-[#5865F2]/50 transition-all flex items-center gap-4 group">
+                        <div class="text-3xl bg-[#5865F2]/10 p-3 rounded-xl group-hover:scale-110 transition">🎧</div>
+                        <div class="text-left">
+                            <div class="font-bold text-white uppercase text-xs tracking-widest">Discord Call</div>
+                            <p class="text-[10px] text-gray-500">Pokec, streamování nebo jen tak být spolu.</p>
+                        </div>
+                    </button>
+                    <button onclick="import('./js/modules/dashboard.js').then(m => m.selectQuickPlanCategory('date'))" 
+                            class="bg-black/20 hover:bg-[#eb459e]/20 p-5 rounded-2xl border border-white/5 hover:border-[#eb459e]/50 transition-all flex items-center gap-4 group">
+                        <div class="text-3xl bg-[#eb459e]/10 p-3 rounded-xl group-hover:scale-110 transition">🥂</div>
+                        <div class="text-left">
+                            <div class="font-bold text-white uppercase text-xs tracking-widest">Rande</div>
+                            <p class="text-[10px] text-gray-500">Venku, doma, večera nebo dobrodružství.</p>
+                        </div>
+                    </button>
+                    <button onclick="import('./js/modules/dashboard.js').then(m => m.selectQuickPlanCategory('movie'))" 
+                            class="bg-black/20 hover:bg-[#faa61a]/20 p-5 rounded-2xl border border-white/5 hover:border-[#faa61a]/50 transition-all flex items-center gap-4 group">
+                        <div class="text-3xl bg-[#faa61a]/10 p-3 rounded-xl group-hover:scale-110 transition">🎬</div>
+                        <div class="text-left">
+                            <div class="font-bold text-white uppercase text-xs tracking-widest">Film / Seriál</div>
+                            <p class="text-[10px] text-gray-500">Společné koukání na Netflix nebo kino.</p>
+                        </div>
+                    </button>
+                </div>
+            `;
+        } else {
+            const catInfo = { 
+                discord: { icon: '🎧', title: 'Discord Call' },
+                date: { icon: '🥂', title: 'Rande' },
+                movie: { icon: '🎬', title: 'Film / Seriál' }
+            }[quickPlanData.cat];
+
+            title = `${catInfo.icon} ${catInfo.title}`;
+            content = `
+                <div class="space-y-5 animate-fade-in">
+                    ${ui.renderInputGroup({ 
+                        label: 'Co přesně budeme dělat?', 
+                        id: 'qp-name', 
+                        placeholder: 'Např. Minecraft, Marvelovka, Procházka...',
+                        value: quickPlanData.name
+                    })}
+                    
+                    <div class="space-y-2">
+                        <label class="block text-[10px] text-gray-500 font-bold uppercase tracking-widest">Kdy?</label>
+                        <div class="flex gap-2">
+                             <input type="time" id="qp-time" class="bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none flex-1">
+                             <div class="flex gap-1">
+                                <button onclick="document.getElementById('qp-time').value = '20:00'" class="bg-white/5 hover:bg-white/10 px-3 rounded-lg text-[10px] font-bold text-gray-400">20:00</button>
+                                <button onclick="document.getElementById('qp-time').value = '21:00'" class="bg-white/5 hover:bg-white/10 px-3 rounded-lg text-[10px] font-bold text-gray-400">21:00</button>
+                             </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <button onclick="import('./js/modules/dashboard.js').then(m => m.submitQuickPlan())" 
+                                class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition active:scale-95 shadow-xl flex items-center justify-center gap-2">
+                            <i class="fas fa-paper-plane text-[10px]"></i> Odeslat pozvánku
+                        </button>
+                        <button onclick="import('./js/modules/dashboard.js').then(m => m.showQuickPlanModal(1))" 
+                                class="w-full mt-3 text-gray-500 hover:text-white py-1 text-[10px] font-bold uppercase transition">
+                            <i class="fas fa-arrow-left mr-1"></i> Zpět na výběr
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        const modalHtml = ui.renderModal({
+            id: 'quick-plan-modal',
+            title: title,
+            subtitle: step === 1 ? 'Vyber si typ aktivity' : 'Doplň podrobnosti',
+            content: content,
+            onClose: "document.getElementById('quick-plan-modal').remove()"
+        });
+
+        // Remove existing if any
+        document.getElementById('quick-plan-modal')?.remove();
+        
+        const div = document.createElement('div');
+        div.innerHTML = modalHtml;
+        document.body.appendChild(div.firstElementChild);
+        document.getElementById('quick-plan-modal').style.display = 'flex';
+    });
+}
+
+export function selectQuickPlanCategory(cat) {
+    quickPlanData.cat = cat;
+    triggerHaptic('light');
+    showQuickPlanModal(2);
+}
+
+export async function submitQuickPlan() {
+    const name = document.getElementById('qp-name')?.value.trim();
+    const time = document.getElementById('qp-time')?.value.trim();
+    
+    if (!name) return showNotification("Napiš, co budeme dělat!", "warning");
+    
+    triggerHaptic('success');
+    document.getElementById('quick-plan-modal')?.remove();
+
+    const todayKey = getTodayKey();
+    const planId = crypto.randomUUID();
+    
+    const newPlan = {
+        id: planId,
+        date_key: todayKey,
+        name: name,
+        cat: quickPlanData.cat,
+        time: time,
+        proposed_by: state.currentUser.id,
+        status: 'pending'
+    };
+
+    try {
+        const { error } = await supabase.from('planned_dates').upsert(newPlan, { onConflict: 'date_key' });
+        if (error) throw error;
+        
+        showNotification("Pozvánka odeslána! 💌", "success");
+        
+        // Broadcast instant notification
+        broadcastPlanUpdate({ type: 'proposal', name: name, cat: quickPlanData.cat });
+
+        // Instant local update
+        state.plannedDates[todayKey] = newPlan;
+        renderDashboard();
+        
+    } catch (err) {
+        console.error("Plan submit error:", err);
+        showNotification("Chyba při odesílání plánu.", "error");
+    }
+}
+
+export async function respondToPlan(dateKey, status) {
+    const plan = state.plannedDates[dateKey];
+    if (!plan) return;
+
+    triggerHaptic(status === 'confirmed' ? 'success' : 'medium');
+    
+    try {
+        const { error } = await supabase.from('planned_dates')
+            .update({ status: status })
+            .eq('date_key', dateKey);
+            
+        if (error) throw error;
+        
+        state.plannedDates[dateKey].status = status;
+        showNotification(status === 'confirmed' ? "Plán potvrzen! ❤️" : "Plán zrušen.", "info");
+
+        broadcastPlanUpdate({ type: 'response', status: status, dateKey: dateKey });
+
+        renderDashboard();
+    } catch (err) {
+        console.error("Response error:", err);
+    }
+}
+
+export function showRejectionModal(dateKey) {
+    import('../core/ui.js').then(ui => {
+        const reasons = [
+            { id: 'tired', text: 'Jsem unavený/á... 😴' },
+            { id: 'study', text: 'Musím se učit 📚' },
+            { id: 'busy', text: 'Už něco mám 🏃‍♀️' },
+            { id: 'vibe', text: 'Nemám dnes energii ✨' }
+        ];
+
+        const content = `
+            <div class="space-y-2">
+                <p class="text-xs text-gray-400 mb-4 px-1 italic">To nevadí! ❤️ Vyber důvod, ať partner ví...</p>
+                <div class="grid grid-cols-1 gap-2">
+                    ${reasons.map(r => `
+                        <button onclick="import('./js/modules/dashboard.js').then(m => m.rejectPlanWithReason('${dateKey}', '${r.text}'))"
+                                class="w-full bg-black/20 hover:bg-red-500/10 p-4 rounded-xl border border-white/5 hover:border-red-500/30 text-left transition text-sm text-gray-200">
+                            ${r.text}
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+
+        const modalHtml = ui.renderModal({
+            id: 'rejection-modal',
+            title: 'Teď raději ne?',
+            content: content,
+            onClose: "document.getElementById('rejection-modal').remove()"
+        });
+
+        document.getElementById('rejection-modal')?.remove();
+        const div = document.createElement('div');
+        div.innerHTML = modalHtml;
+        document.body.appendChild(div.firstElementChild);
+        document.getElementById('rejection-modal').style.display = 'flex';
+    });
+}
+
+export async function rejectPlanWithReason(dateKey, reason) {
+    triggerHaptic('medium');
+    document.getElementById('rejection-modal')?.remove();
+
+    try {
+        const { error } = await supabase.from('planned_dates')
+            .update({ 
+                status: 'rejected',
+                rejection_reason: reason 
+            })
+            .eq('date_key', dateKey);
+            
+        if (error) throw error;
+        
+        state.plannedDates[dateKey].status = 'rejected';
+        state.plannedDates[dateKey].rejection_reason = reason;
+        renderDashboard();
+        showNotification("Plán zrušen s důvodem.", "info");
+    } catch (err) {
+        console.error("Rejection error:", err);
+    }
+}
+
 export async function syncDashboardData(forceRefresh = false) {
     const todayKey = getTodayKey();
     const indicator = document.getElementById("dashboard-sync-indicator");

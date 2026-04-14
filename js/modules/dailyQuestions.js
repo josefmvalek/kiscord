@@ -8,6 +8,9 @@ let subscription = null;
 export function renderDailyQuestions() {
     const container = document.getElementById("messages-container");
     if (!container) return;
+    
+    // Clear subscription if we switch views inside the channel
+    cleanupRealtime();
 
     if (!state.dailyQuestion) {
         // ... (existing empty state)
@@ -42,6 +45,12 @@ export function renderDailyQuestions() {
                 </div>
                 <h1 class="text-3xl font-black text-white tracking-tight uppercase">Dnešní Otázka</h1>
                 <p class="text-gray-400 mt-2 text-sm font-medium max-w-sm">Upřímnost je základ. Odpovědi se odemknou, až odpovíte oba! ❤️</p>
+                
+                <div class="mt-6">
+                    <button onclick="import('./js/modules/dailyQuestions.js').then(m => m.showArchive())" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#202225] text-gray-400 hover:text-white hover:bg-[#40444b] transition-all border border-gray-700 text-xs font-bold uppercase tracking-widest">
+                        <i class="fas fa-history"></i> Zobrazit archiv odpovědí
+                    </button>
+                </div>
             </div>
 
             <!-- Content -->
@@ -194,11 +203,194 @@ export async function submitAnswer() {
     }
 }
 
+// --- ARCHIVE LOGIC ---
+
+export async function showArchive() {
+    const container = document.getElementById("messages-container");
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="h-full bg-[#36393f] flex flex-col items-center justify-center">
+            <div class="animate-spin text-4xl text-[#faa61a]">
+                <i class="fas fa-spinner"></i>
+            </div>
+            <p class="text-gray-400 mt-4 font-bold uppercase tracking-widest text-xs">Otevírám kroniku vzpomínek...</p>
+        </div>
+    `;
+
+    try {
+        const { ensureDailyArchiveData } = await import('../core/state.js');
+        await ensureDailyArchiveData();
+        renderDailyArchive();
+    } catch (err) {
+        console.error("Archive Load Error:", err);
+        container.innerHTML = `<div class="p-8 text-center text-red-500">Chyba při načítání archivu: ${err.message}</div>`;
+    }
+}
+
+export function renderDailyArchive() {
+    const container = document.getElementById("messages-container");
+    if (!container) return;
+
+    const archive = state.dailyArchive || [];
+
+    container.innerHTML = `
+        <div class="h-full bg-[#36393f] flex flex-col font-sans animate-fade-in">
+            <!-- Header -->
+            <div class="bg-[#2f3136] shadow-sm z-10 flex-shrink-0 border-b border-[#202225] p-6 lg:p-10 flex flex-col items-center text-center">
+                <div class="w-full flex justify-start mb-4">
+                    <button onclick="import('./js/modules/dailyQuestions.js').then(m => m.renderDailyQuestions())" class="text-gray-400 hover:text-white transition flex items-center gap-2 font-bold text-xs uppercase tracking-widest p-1">
+                        <i class="fas fa-arrow-left"></i> Zpět
+                    </button>
+                </div>
+                
+                <div class="w-16 h-16 rounded-2xl bg-[#202225] border border-gray-700 shadow-lg mb-6 flex items-center justify-center">
+                    <i class="fas fa-book-open text-[#faa61a] text-3xl"></i>
+                </div>
+                <h1 class="text-3xl font-black text-white tracking-tight uppercase">Archiv Odpovědí</h1>
+                <p class="text-gray-400 mt-2 text-sm font-medium max-w-sm uppercase tracking-tighter">Všechny vaše společné myšlenky na jednom místě.</p>
+            </div>
+
+            <!-- List -->
+            <div class="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+                <div class="max-w-3xl mx-auto space-y-4 pb-20">
+                    ${archive.length === 0 ? `
+                        <div class="text-center py-20 opacity-40">
+                            <i class="fas fa-box-open text-6xl mb-4"></i>
+                            <p class="font-bold uppercase tracking-widest text-sm">Archiv je zatím prázdný</p>
+                        </div>
+                    ` : archive.map(item => renderArchiveCard(item)).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderArchiveCard(item) {
+    const isRevealed = item.answers.length >= 2;
+    const myAnswer = item.answers.find(a => a.user_id === state.currentUser.id);
+    const partnerAnswer = item.answers.find(a => a.user_id !== state.currentUser.id);
+    
+    // Status Badge
+    let statusHtml = '';
+    if (isRevealed) {
+        statusHtml = `<span class="bg-[#3ba55c]/20 text-[#3ba55c] text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest">Odemčeno</span>`;
+    } else if (myAnswer) {
+        statusHtml = `<span class="bg-[#faa61a]/20 text-[#faa61a] text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest">Čekáme na partnera</span>`;
+    } else {
+        statusHtml = `<span class="bg-[#ed4245]/20 text-[#ed4245] text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest">Čeká na tebe</span>`;
+    }
+
+    const dateStr = item.lastAnswerAt ? new Date(item.lastAnswerAt).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long' }) : 'Neznámé datum';
+
+    return `
+        <div onclick="import('./js/modules/dailyQuestions.js').then(m => m.showArchiveDetail('${item.id}'))" 
+             class="bg-[#2f3136] p-5 rounded-2xl border border-gray-700/50 hover:border-[#faa61a]/50 transition-all cursor-pointer group relative overflow-hidden">
+            <div class="flex justify-between items-start mb-2">
+                <div class="flex items-center gap-2">
+                    ${statusHtml}
+                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">${dateStr}</span>
+                </div>
+                <i class="fas fa-chevron-right text-gray-600 group-hover:text-[#faa61a] transition-colors text-xs"></i>
+            </div>
+            <h3 class="text-white font-bold leading-snug pr-8 line-clamp-2">"${item.text}"</h3>
+            
+            <!-- Category Indicator Dot -->
+            <div class="absolute right-0 top-0 w-1 h-full opacity-30 ${item.category === 'love' ? 'bg-[#eb459e]' : 'bg-[#5865F2]'}"></div>
+        </div>
+    `;
+}
+
+export function showArchiveDetail(questionId) {
+    const archive = state.dailyArchive || [];
+    const item = archive.find(q => q.id === questionId);
+    if (!item) return;
+
+    const container = document.getElementById("messages-container");
+    if (!container) return;
+
+    const myAnswer = item.answers.find(a => a.user_id === state.currentUser.id);
+    const partnerAnswer = item.answers.find(a => a.user_id !== state.currentUser.id);
+    const isRevealed = !!(myAnswer && partnerAnswer);
+
+    container.innerHTML = `
+        <div class="h-full bg-[#36393f] flex flex-col font-sans animate-fade-in">
+            <!-- Header -->
+            <div class="bg-[#2f3136] shadow-sm z-10 flex-shrink-0 border-b border-[#202225] p-6 lg:p-10 flex flex-col items-center text-center">
+                <div class="w-full flex justify-start mb-4">
+                    <button onclick="import('./js/modules/dailyQuestions.js').then(m => m.renderDailyArchive())" class="text-gray-400 hover:text-white transition flex items-center gap-2 font-bold text-xs uppercase tracking-widest p-1">
+                        <i class="fas fa-arrow-left"></i> Zpět do archivu
+                    </button>
+                </div>
+                
+                <div class="text-[9px] font-black text-[#faa61a] uppercase tracking-[0.3em] mb-4">Detail vzpomínky</div>
+                <h2 class="text-xl md:text-2xl font-bold text-white leading-tight max-w-2xl">
+                    "${item.text}"
+                </h2>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 overflow-y-auto p-4 md:p-10 custom-scrollbar">
+                <div class="max-w-4xl mx-auto space-y-8 pb-20">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- My Answer Slot -->
+                        <div class="space-y-3">
+                            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest pl-2">Tvoje odpověď</h3>
+                            ${renderArchiveAnswer(myAnswer, true)}
+                        </div>
+
+                        <!-- Partner Answer Slot -->
+                        <div class="space-y-3">
+                            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest pl-2">Partnerova odpověď</h3>
+                            ${renderArchiveAnswer(partnerAnswer, !!myAnswer)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderArchiveAnswer(answer, iCanSeeIt) {
+    if (!answer) {
+        return `
+            <div class="bg-[#202225]/40 p-6 rounded-2xl border border-gray-800 border-dashed flex flex-col items-center justify-center text-center py-10">
+                <div class="text-gray-600 text-xl mb-2"><i class="fas fa-question-circle"></i></div>
+                <p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest">Ještě nebylo zodpovězeno</p>
+            </div>
+        `;
+    }
+
+    if (iCanSeeIt) {
+        return `
+            <div class="bg-[#202225] p-6 rounded-2xl border border-gray-700 shadow-lg min-h-[150px] flex flex-col justify-between">
+                <p class="text-gray-200 leading-relaxed font-medium capitalize-first">${answer.answer_text}</p>
+                <div class="text-[9px] text-gray-500 mt-4 flex justify-between items-center opacity-70">
+                    <span>${new Date(answer.created_at).toLocaleDateString('cs-CZ')}</span>
+                    <span>${new Date(answer.created_at).toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+            </div>
+        `;
+    } else {
+        return `
+            <div class="bg-[#2f3136] p-6 rounded-2xl border border-gray-700 shadow-lg min-h-[150px] flex flex-col items-center justify-center text-center">
+                <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center mb-3 text-[#faa61a] animate-pulse">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <p class="text-white font-bold text-xs uppercase tracking-widest">Obsah je zamčen</p>
+                <p class="text-[9px] text-gray-500 mt-1">Musíš nejdřív odpovědět u dnešní otázky (pokud je tahle dnes aktivní).</p>
+            </div>
+        `;
+    }
+}
+
 function setupRealtime() {
     if (subscription) return;
 
+    // Use a unique channel for each subscription attempt to avoid "callback after subscribe" errors
+    const channelId = `daily-answers-${Date.now()}`;
     subscription = supabase
-        .channel('daily-answers-channel')
+        .channel(channelId)
         .on(
             'postgres_changes',
             { event: 'INSERT', schema: 'public', table: 'daily_answers', filter: `question_id=eq.${state.dailyQuestion?.id}` },

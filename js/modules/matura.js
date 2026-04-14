@@ -129,23 +129,23 @@ function renderDashboard(container) {
             <!-- Glow background -->
             <div class="absolute top-10 left-1/2 -translate-x-1/2 w-64 h-64 bg-[#eb459e]/10 rounded-full blur-[80px] pointer-events-none"></div>
 
-            <div class="text-center space-y-2 relative">
+            <div class="text-center space-y-2 relative pt-4">
                 <button onclick="import('/js/modules/matura.js').then(m => m.toggleLocalTheme('matura-dashboard-container'))" 
                         class="absolute right-0 top-0 p-3 rounded-full hover:bg-white/5 text-[var(--interactive-normal)] hover:text-[var(--text-header)] transition-all"
                         title="Přepnout téma okna">
-                    <i class="fas fa-sun theme-toggle-icon"></i>
+                    <i class="fas fa-sun theme-toggle-icon text-sm"></i>
                 </button>
                 <h1 class="text-3xl md:text-5xl font-black text-[var(--text-header)] tracking-tighter uppercase italic">
                     <span class="text-[#eb459e]">Cesta</span> ke svobodě
                 </h1>
-                <p class="text-[var(--interactive-normal)] text-sm tracking-widest uppercase font-bold mb-4">Maturitní Akademie 2026</p>
+                <p class="text-[var(--interactive-normal)] text-sm tracking-widest uppercase font-bold mb-8">Maturitní Akademie 2026</p>
                 
                 <!-- Search Bar -->
-                <div class="max-w-xl mx-auto relative group">
+                <div class="max-w-xl mx-auto relative group matura-search-wrapper">
                     <div class="absolute inset-y-0 left-5 flex items-center pointer-events-none text-gray-500 group-focus-within:text-[#5865F2] transition-colors">
                         <i class="fas fa-search text-sm"></i>
                     </div>
-                    <input type="text" 
+                    <input type="text" id="global-search-input"
                         oninput="import('/js/modules/matura.js').then(m => m.handleMaturaSearch(this.value))"
                         placeholder="Hledat téma, autora nebo okruh..." 
                         class="w-full bg-[var(--bg-secondary)] border border-white/5 group-hover:border-white/10 focus:border-[#5865F2]/50 focus:ring-4 focus:ring-[#5865F2]/10 rounded-2xl py-4 pl-12 pr-6 text-sm text-[var(--text-header)] placeholder-gray-500 outline-none transition-all shadow-xl font-bold tracking-tight">
@@ -155,14 +155,14 @@ function renderDashboard(container) {
             <!-- Main Stats Row -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Countdown -->
-                <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5 shadow-2xl flex flex-col items-center justify-center text-center group hover:border-[#eb459e]/30 transition-all duration-300">
+                <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5 shadow-2xl flex flex-col items-center justify-center text-center group hover:border-[#eb459e]/30 transition-all duration-300 glow-pink">
                     <div class="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] mb-1">Dní do vysvobození</div>
                     <div class="text-6xl font-black text-[var(--text-header)] group-hover:scale-110 transition-transform duration-500 drop-shadow-[0_0_15px_rgba(235,69,158,0.3)]">${days}</div>
                     <div class="text-[10px] text-[#eb459e] font-bold mt-2 uppercase">Uteče to jako voda! 🌊</div>
                 </div>
 
                 <!-- Overall Readiness Gauge -->
-                <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5 shadow-2xl flex flex-col items-center justify-center relative group overflow-hidden">
+                <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5 shadow-2xl flex flex-col items-center justify-center relative group overflow-hidden glow-blue">
                     <div class="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] mb-4">Celková připravenost</div>
                     <div class="readiness-gauge-container">
                         <div class="readiness-gauge-bg"></div>
@@ -173,8 +173,8 @@ function renderDashboard(container) {
                     </div>
                 </div>
 
-                <!-- Jožka vs Klárka comparison -->
-                <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5 shadow-2xl flex flex-col justify-between gap-4">
+                <!-- Comparison -->
+                <div class="bg-[var(--bg-secondary)] rounded-2xl p-6 border border-white/5 shadow-2xl flex flex-col justify-between gap-4 glow-blue">
                     <div class="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">Souboj Titánů</div>
                     <div class="space-y-3">
                         <div class="leaderboard-row ${isJozka ? 'border-[#5865F2]/30' : ''}">
@@ -197,19 +197,19 @@ function renderDashboard(container) {
 
             <!-- Focus & Priorities Row -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Personalized Priorities -->
-                <div class="lg:col-span-1 space-y-4">
-                    <div class="bg-[var(--bg-secondary)] border border-white/5 rounded-2xl p-6 relative overflow-hidden group">
+                <!-- Priorities -->
+                <div class="lg:col-span-1 space-y-4 glow-pink">
+                    <div class="bg-[var(--bg-secondary)] border border-white/5 rounded-2xl p-5 relative overflow-hidden group">
                         <div class="absolute top-0 right-0 p-2 opacity-5 scale-150 rotate-12 group-hover:scale-125 transition-transform"><i class="fas fa-bullseye text-4xl"></i></div>
-                        <h3 class="text-[10px] font-black uppercase tracking-widest text-[#ed4245] mb-4 flex items-center gap-2">
+                        <h3 class="text-[10px] font-black uppercase tracking-widest text-[#ed4245] mb-3 flex items-center gap-2">
                             <i class="fas fa-fire"></i> Tvoje priority
                         </h3>
-                        <div class="space-y-2">
+                        <div class="space-y-1.5">
                             ${priorityTopics.length > 0 ? priorityTopics.map(t => `
                                 <button onclick="import('/js/modules/matura.js').then(m => m.openKnowledgeBase('${t.id}'))" class="critical-topic-btn">
                                     <span class="text-base">${t.icon || '📝'}</span>
                                     <div class="flex-1 min-w-0">
-                                        <div class="text-[10px] font-bold text-white truncate">${t.title}</div>
+                                        <div class="text-[10px] font-bold text-white truncate px-0.5">${t.title}</div>
                                         <div class="text-[8px] text-gray-500 uppercase font-black">${t.author || 'Okruh IT'}</div>
                                     </div>
                                     <i class="fas fa-chevron-right text-[10px] text-gray-600"></i>
@@ -219,56 +219,70 @@ function renderDashboard(container) {
                     </div>
                     
                     <!-- Streak info -->
-                    <div class="bg-[var(--bg-secondary)] border border-white/5 rounded-2xl p-6 flex items-center justify-between group hover:border-orange-500/30 transition-all">
+                    <div class="bg-[var(--bg-secondary)] border border-white/5 rounded-2xl p-5 flex items-center justify-between group hover:border-orange-500/30 transition-all glow-green">
                         <div>
                             <div class="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">Tvůj Streak</div>
-                            <div class="text-3xl font-black text-[var(--text-header)] flex items-center gap-2">
+                            <div class="text-2xl font-black text-[var(--text-header)] flex items-center gap-2">
                                 <span class="text-orange-500 animate-pulse">🔥</span> 
                                 ${state.maturaStreaks[isJozka ? 'jose' : 'klarka'] || 0} dní
                             </div>
                         </div>
                         <div class="text-right">
                              <div class="text-[9px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-1">${isJozka ? 'Klárka' : 'Jožka'}</div>
-                             <div class="text-xl font-bold text-[var(--text-muted)] flex items-center gap-1 justify-end">
+                             <div class="text-lg font-bold text-[var(--text-muted)] flex items-center gap-1 justify-end">
                                 <span>🔥</span> ${state.maturaStreaks[isJozka ? 'klarka' : 'jose'] || 0}
                              </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Timer Hub -->
-                <div class="lg:col-span-2 bg-gradient-to-br from-[#1e1f22] to-[var(--bg-secondary)] border border-white/5 rounded-3xl p-8 shadow-2xl flex flex-col justify-between">
-                     <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+                <!-- FOCUS HUB (Original 2/3 width) -->
+                <div class="lg:col-span-2 bg-gradient-to-br from-[#1e1f22] to-[var(--bg-secondary)] border border-white/5 rounded-3xl p-6 shadow-2xl flex flex-col justify-between group glow-pink overflow-hidden relative">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-[#eb459e]/5 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                    
+                    <div class="flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
                         <div class="text-center md:text-left">
-                            <h2 class="text-2xl font-black text-[var(--text-header)] uppercase italic leading-none mb-2">Focus Hub</h2>
-                            <p class="text-xs text-[var(--text-muted)]">Zapni Pomodoro a studujte společně.</p>
+                            <h2 class="text-2xl font-black text-[var(--text-header)] uppercase italic leading-none mb-2">Focus Hub <span class="text-[#eb459e] text-sm not-italic ml-2">2.0</span></h2>
+                            <p class="text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-bold">Společné soustředění v reálném čase</p>
                         </div>
-                        <div class="flex items-center gap-6">
-                            <div id="pomodoro-timer" class="text-4xl font-black text-[var(--text-header)] font-mono bg-black/20 px-6 py-4 rounded-2xl border border-white/5 tabular-nums">25:00</div>
+                        
+                        <div class="flex items-center gap-10">
+                            <!-- Compact Circular Timer -->
+                            <div class="pomodoro-ring-container !w-24 !h-24">
+                                <svg class="w-full h-full -rotate-90">
+                                    <circle class="pomodoro-ring-bg" cx="48" cy="48" r="40" stroke-width="6" />
+                                    <circle id="pomodoro-ring-fill" class="pomodoro-ring-fill" cx="48" cy="48" r="40" 
+                                            stroke-width="6" stroke-dasharray="252" stroke-dashoffset="252" />
+                                </svg>
+                                <div id="pomodoro-timer" class="pomodoro-time-display !text-xl">25:00</div>
+                            </div>
+
                             <button id="pomodoro-btn" onclick="import('/js/modules/matura.js').then(m => m.togglePomodoro())" 
-                                    class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg transition active:scale-95">
-                                Start 🧠
+                                    class="bg-[#eb459e] hover:bg-[#d43d8b] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest shadow-[0_10px_20px_rgba(235,69,158,0.2)] transition active:scale-95 flex items-center gap-2">
+                                <i class="fas fa-brain"></i>
+                                <span>Start</span>
                             </button>
                         </div>
-                     </div>
-                     <div id="pomodoro-status-list" class="mt-8 flex gap-2 overflow-x-auto pb-2 scrollbar-none"></div>
+                    </div>
+                    
+                    <div id="pomodoro-status-list" class="mt-6 flex gap-2 overflow-x-auto pb-2 scrollbar-none relative z-10"></div>
                 </div>
             </div>
 
             <!-- SOS & Quests -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <button onclick="import('/js/modules/matura.js').then(m => m.triggerSOS())" 
-                        class="bg-[#ed4245]/10 hover:bg-[#ed4245]/20 border border-[#ed4245]/20 p-6 rounded-2xl transition-all group flex flex-col items-center gap-2">
+                        class="bg-[#ed4245]/10 hover:bg-[#ed4245]/20 border border-[#ed4245]/20 p-6 rounded-2xl transition-all group flex flex-col items-center gap-2 glow-pink">
                     <div class="text-2xl group-hover:scale-110 transition">🆘</div>
                     <div class="text-[9px] font-black text-[#ed4245] uppercase tracking-widest leading-none">Panic Button</div>
                 </button>
 
-                <div class="md:col-span-3 bg-[var(--bg-secondary)] border border-white/5 p-6 rounded-2xl flex items-center gap-6 relative overflow-hidden group">
+                <div class="md:col-span-3 bg-[var(--bg-secondary)] border border-white/5 p-6 rounded-2xl flex items-center gap-6 relative overflow-hidden group glow-blue">
                     <div class="absolute -right-4 -bottom-4 text-7xl opacity-5 transition-transform group-hover:scale-150 rotate-12">🎖️</div>
                     <div class="text-3xl">🎓</div>
                     <div>
                         <h3 class="font-black text-[var(--text-header)] uppercase tracking-tight text-sm">Aktuální Milestone</h3>
-                        <p class="text-xs text-[var(--text-muted)]">Pokud oba dokončíte <b>všechny sítě</b>, objednáváme pizzu! 🍕</p>
+                        <p class="text-xs text-[var(--text-muted)]">Pokud oba dokončíte <b>všechny sítě</b> před víkendem, objednáváme pizzu! 🍕</p>
                     </div>
                 </div>
             </div>
@@ -319,16 +333,37 @@ function renderDashboard(container) {
 }
 
 export function handleMaturaSearch(query) {
-    if (!query || query.trim().length === 0) {
-        // If empty, just re-show dashboard
-        const container = document.getElementById("messages-container");
-        renderDashboard(container);
-        return;
-    }
+    const container = document.getElementById("messages-container");
+    if (!container) return;
 
-    import('./search.js').then(search => {
-        search.renderGlobalSearch(query);
-    });
+    const restoreFocus = () => {
+        const input = document.getElementById('global-search-input');
+        if (input) {
+            input.focus();
+            const val = input.value;
+            input.setSelectionRange(val.length, val.length);
+        }
+    };
+
+    const performUpdate = () => {
+        if (!query || query.trim().length === 0) {
+            renderDashboard(container);
+            restoreFocus();
+            return Promise.resolve();
+        } else {
+            return import('./search.js').then(search => {
+                search.renderGlobalSearch(query);
+                restoreFocus();
+            });
+        }
+    };
+
+    // Smooth Morphing Transition
+    if (document.startViewTransition) {
+        document.startViewTransition(() => performUpdate());
+    } else {
+        performUpdate();
+    }
 }
 
 // --- LIST RENDERING ---
@@ -798,6 +833,10 @@ function updatePomodoroUI() {
     const timerEl = document.getElementById('pomodoro-timer');
     const btnEl = document.getElementById('pomodoro-btn');
     const statusListEl = document.getElementById('pomodoro-status-list');
+    const ringFill = document.getElementById('pomodoro-ring-fill');
+
+    const totalSeconds = 25 * 60; // Default 25 min
+    const isStudying = pomodoroState.status === 'running';
 
     if (timerEl) {
         const mins = Math.floor(pomodoroState.timeLeft / 60);
@@ -805,26 +844,50 @@ function updatePomodoroUI() {
         timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
     }
 
+    // Update Circular Ring
+    if (ringFill) {
+        const circumference = 252;
+        const percent = Math.min(100, Math.max(0, (pomodoroState.timeLeft / totalSeconds) * 100));
+        const offset = circumference - (percent / 100) * circumference;
+        ringFill.style.strokeDashoffset = offset;
+        
+        if (isStudying) {
+            ringFill.classList.add('studying');
+        } else {
+            ringFill.classList.remove('studying');
+        }
+    }
+
     if (btnEl) {
-        btnEl.textContent = pomodoroState.status === 'running' ? 'Stop 🛑' : 'Start 🧠';
-        btnEl.className = pomodoroState.status === 'running'
-            ? "bg-[#ed4245] hover:bg-[#c03537] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg transition active:scale-95"
-            : "bg-[#5865F2] hover:bg-[#4752c4] text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg transition active:scale-95";
+        btnEl.innerHTML = isStudying 
+            ? '<i class="fas fa-pause"></i> <span>Stop</span>' 
+            : '<i class="fas fa-brain"></i> <span>Start</span>';
+        
+        btnEl.className = isStudying
+            ? "bg-[#ed4245] hover:bg-[#c03537] text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest shadow-[0_10px_20px_rgba(237,66,69,0.3)] transition-all active:scale-95 flex items-center gap-3"
+            : "bg-[#eb459e] hover:bg-[#d43d8b] text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest shadow-[0_10px_20px_rgba(235,69,158,0.3)] transition-all active:scale-95 flex items-center gap-3";
     }
 
     if (statusListEl) {
+        // Prevent redundant refreshes that break CSS animations
+        if (statusListEl.dataset.lastStatus === isStudying.toString()) return;
+        statusListEl.dataset.lastStatus = isStudying.toString();
+
         const partnerName = state.currentUser?.name === 'Jožka' ? 'Klárka' : 'Jožka';
         const partnerImg = state.currentUser?.name === 'Jožka' ? getAssetUrl('klarka_profile') : getAssetUrl('jozka_profile');
-        const isStudying = pomodoroState.status === 'running';
+        const myImg = state.currentUser?.name === 'Jožka' ? getAssetUrl('jozka_profile') : getAssetUrl('klarka_profile');
 
         statusListEl.innerHTML = `
-            <div class="flex-shrink-0 bg-white/5 px-4 py-2 rounded-full text-[10px] font-bold ${isStudying ? 'text-green-400 border border-green-500/20 shadow-[0_0_10px_rgba(34,197,94,0.1)]' : 'text-gray-400'} uppercase tracking-widest flex items-center gap-2">
-                <img src="${partnerImg}" class="w-4 h-4 rounded-full object-cover ${isStudying ? '' : 'grayscale opacity-50'}"> 
-                ${partnerName} ${isStudying ? 'právě poctivě studuje... 🔥' : 'se teď fláká...'}
+            <!-- Current User Status -->
+            <div class="flex-shrink-0 bg-white/5 border border-white/5 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all duration-700 ${isStudying ? 'text-[#eb459e] border-[#eb459e]/30 shadow-[0_5px_15px_rgba(235,69,158,0.1)]' : 'text-gray-500 opacity-50 grayscale'}">
+                <img src="${myImg}" class="w-6 h-6 rounded-full object-cover"> 
+                <span>Já ${isStudying ? 'právě makám! 🚀' : 'odpočívám'}</span>
             </div>
-            <div class="flex-shrink-0 bg-white/5 px-4 py-2 rounded-full text-[10px] font-bold ${isStudying ? 'text-[#eb459e] border border-[#eb459e]/20' : 'text-gray-400'} uppercase tracking-widest flex items-center gap-2">
-                <img src="${state.currentUser?.name === 'Jožka' ? getAssetUrl('jozka_profile') : getAssetUrl('klarka_profile')}" class="w-4 h-4 rounded-full object-cover ${isStudying ? '' : 'grayscale opacity-50'}"> 
-                Já ${isStudying ? 'makám na své budoucnosti! 🚀' : 'mám v plánu studovat.'}
+
+            <!-- Partner Status -->
+            <div class="flex-shrink-0 bg-white/5 border border-white/5 px-5 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-all duration-700 ${isStudying ? 'text-green-400 border-green-500/30' : 'text-gray-500 opacity-50 grayscale'}">
+                <img src="${partnerImg}" class="w-6 h-6 rounded-full object-cover"> 
+                <span>${partnerName} ${isStudying ? 'studuje se mnou 🔥' : 'se taky fláká...'}</span>
             </div>
         `;
     }
