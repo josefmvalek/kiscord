@@ -139,7 +139,7 @@ export function showDayDetail(dateKey) {
         if (timelineEvent) {
             plansHtml += `
             <div class="bg-gradient-to-r from-[#5865F2]/10 to-[#eb459e]/10 border border-[#5865F2]/30 rounded-lg p-3 relative group hover:border-[#eb459e] transition cursor-pointer"
-                 onclick="Calendar.closeDayModal(); import('./js/modules/timeline.js').then(m => m.jumpToTimeline('${timelineEvent.id}'))">
+                 onclick="Calendar.closeDayModal(); window.loadModule('timeline').then(m => m.jumpToTimeline('${timelineEvent.id}'))">
                 <div class="font-bold text-white text-sm flex items-center justify-between gap-2">
                     <span class="flex items-center gap-2">
                         <i class="fas ${timelineEvent.icon || "fa-star"} text-[#faa61a]"></i>
@@ -240,7 +240,7 @@ export function showDayDetail(dateKey) {
                 
                 plansHtml += `
                 <div class="bg-[#2f3136] border border-[#202225] rounded-xl p-3 hover:border-[#eb459e]/30 transition cursor-pointer"
-                     onclick="import('./js/modules/library.js').then(m => m.openHistoryModal(${item.media_id}))">
+                     onclick="window.loadModule('library').then(m => m.openHistoryModal(${item.media_id}))">
                     <div class="flex items-center gap-3 mb-2">
                         <div class="text-xl">${icon}</div>
                         <div class="flex-1 overflow-hidden">

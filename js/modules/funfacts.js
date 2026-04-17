@@ -82,7 +82,7 @@ export function renderFunFacts() {
                     <h1 class="text-4xl font-black text-white mb-2">Encyklopedie Kiscordu 📚</h1>
                     <p class="text-gray-400 font-medium">Vědomosti, které změní tvůj pohled na svět.</p>
                     <div class="mt-6 flex justify-center">
-                        <button onclick="import('./js/modules/funfacts.js').then(m => m.showAddFactModal())" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-6 py-3 rounded-2xl font-black transition shadow-lg flex items-center gap-3 transform hover:scale-105 active:scale-95 border border-white/10 uppercase tracking-widest text-xs">
+                        <button onclick="window.loadModule('funfacts').then(m => m.showAddFactModal())" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-6 py-3 rounded-2xl font-black transition shadow-lg flex items-center gap-3 transform hover:scale-105 active:scale-95 border border-white/10 uppercase tracking-widest text-xs">
                             <i class="fas fa-plus"></i> Přidat moudrost
                         </button>
                     </div>
@@ -113,7 +113,7 @@ export function renderFunFacts() {
         percent = totalCount > 0 ? Math.min(100, Math.round((totalSeen / totalCount) * 100)) : 0;
 
         html += `
-            <div onclick="import('./js/modules/funfacts.js').then(m => m.openFactCategory('${cat.id}'))" 
+            <div onclick="window.loadModule('funfacts').then(m => m.openFactCategory('${cat.id}'))" 
                  class="glass-card rounded-3xl p-6 cursor-pointer border border-white/5 hover:border-[${cat.color}]/50 hover:-translate-y-2 transition-all duration-500 shadow-2xl group relative overflow-hidden flex flex-col h-full min-h-[200px]">
                 <div class="absolute -right-6 -top-6 text-9xl opacity-5 group-hover:opacity-10 transition-all duration-700 grayscale group-hover:grayscale-0 rotate-12 select-none pointer-events-none group-hover:scale-110">${cat.icon}</div>
                 <div class="flex items-start justify-between mb-4">
@@ -221,7 +221,7 @@ export function openFactCategory(catId, sub1 = '', sub2 = '') {
         <div class="flex-1 flex flex-col bg-[#36393f] animate-fade-in overflow-hidden relative">
             <div class="p-3 md:p-8 flex justify-between items-start z-10 shrink-0">
                 <div class="flex items-center gap-3 md:gap-4 overflow-hidden">
-                    <button onclick="import('./js/modules/funfacts.js').then(m => m.${sub2 ? `openFactCategory('${catId}', '${sub1}')` : sub1 ? `openFactCategory('${catId}')` : `renderFunFacts()`})" 
+                    <button onclick="window.loadModule('funfacts').then(m => m.${sub2 ? `openFactCategory('${catId}', '${sub1}')` : sub1 ? `openFactCategory('${catId}')` : `renderFunFacts()`})" 
                             class="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-[#2f3136] hover:bg-[#eb459e] text-white flex items-center justify-center shrink-0 transition-all border border-white/5 shadow-lg group">
                         <i class="fas fa-chevron-left group-hover:-translate-x-1 transition-transform text-sm"></i>
                     </button>
@@ -237,7 +237,7 @@ export function openFactCategory(catId, sub1 = '', sub2 = '') {
                     </div>
                 </div>
 
-                <button onclick="import('./js/modules/funfacts.js').then(m => m.resetFactCategory('${catId}', '${targetSub1}', '${targetSub2}'))" 
+                <button onclick="window.loadModule('funfacts').then(m => m.resetFactCategory('${catId}', '${targetSub1}', '${targetSub2}'))" 
                         class="px-3 py-1.5 md:px-4 md:py-2 rounded-xl bg-[#2f3136] text-gray-400 hover:text-red-400 border border-white/5 transition-all text-[10px] md:text-xs font-bold flex items-center gap-1.5 shrink-0">
                     <i class="fas fa-undo-alt text-[9px]"></i> <span class="hidden sm:inline">RESETOVAT</span>
                 </button>
@@ -251,7 +251,7 @@ export function openFactCategory(catId, sub1 = '', sub2 = '') {
                         <i class="fas fa-quote-right absolute bottom-6 right-6 md:bottom-10 md:right-10 text-4xl md:text-6xl opacity-5 text-white group-hover:scale-110 group-hover:opacity-10 transition-all duration-700"></i>
                         
                         <!-- Favorite Button -->
-                        <button onclick="import('./js/modules/funfacts.js').then(m => m.toggleFactFavorite('${currentFact?.id}', '${catId}', '${targetSub1}', '${targetSub2}'))" 
+                        <button onclick="window.loadModule('funfacts').then(m => m.toggleFactFavorite('${currentFact?.id}', '${catId}', '${targetSub1}', '${targetSub2}'))" 
                                 class="absolute top-4 right-4 md:top-8 md:right-8 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center transition-all hover:bg-white/10 active:scale-90 z-20">
                             <i class="fas fa-heart ${state.factFavorites.some(favId => String(favId) === String(currentFact?.id)) ? 'fact-glowing-heart' : 'text-white/20'} text-lg md:text-xl transition-all"></i>
                         </button>
@@ -275,12 +275,12 @@ export function openFactCategory(catId, sub1 = '', sub2 = '') {
             </div>
 
             <div class="p-4 pb-8 md:p-8 md:pb-12 flex justify-center gap-4 md:gap-6 z-10 shrink-0">
-                <button onclick="import('./js/modules/funfacts.js').then(m => m.prevFact('${catId}', '${targetSub1}', '${targetSub2}'))" 
+                <button onclick="window.loadModule('funfacts').then(m => m.prevFact('${catId}', '${targetSub1}', '${targetSub2}'))" 
                         class="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/5 border border-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-all hover:scale-110 active:scale-90 shadow-2xl hover:bg-white/10">
                     <i class="fas fa-arrow-left text-lg md:text-xl"></i>
                 </button>
 
-                <button onclick="import('./js/modules/funfacts.js').then(m => m.nextFact('${catId}', '${targetSub1}', '${targetSub2}'))" 
+                <button onclick="window.loadModule('funfacts').then(m => m.nextFact('${catId}', '${targetSub1}', '${targetSub2}'))" 
                         class="flex-1 max-w-[240px] md:px-12 h-14 md:h-16 rounded-2xl bg-gradient-to-br from-[#eb459e] shadow-[0_10px_30px_rgba(235,69,158,0.4)] to-[#5865F2] text-white font-black text-xs md:text-sm tracking-widest flex items-center justify-center gap-2 md:gap-3 transition-all hover:scale-110 active:scale-95 shadow-2xl group border border-white/20">
                         <i class="fas fa-sparkles text-sm md:text-base"></i> DALŠÍ
                 </button>
@@ -306,7 +306,7 @@ function renderSubcategorySelection(cat, subcats, level, existingSub1 = '') {
         <div class="flex-1 overflow-y-auto px-4 py-8 custom-scrollbar bg-[#36393f] animate-fade-in">
             <div class="max-w-4xl mx-auto space-y-8">
                 <div class="flex items-center gap-6 mb-12">
-                    <button onclick="import('./js/modules/funfacts.js').then(m => m.${level === 2 ? `openFactCategory('${cat.id}')` : `renderFunFacts()`})" 
+                    <button onclick="window.loadModule('funfacts').then(m => m.${level === 2 ? `openFactCategory('${cat.id}')` : `renderFunFacts()`})" 
                             class="w-14 h-14 rounded-2xl bg-[#2f3136] hover:bg-[#eb459e] text-white flex items-center justify-center transition-all border border-white/5 shadow-2xl group active:scale-95">
                         <i class="fas fa-arrow-left text-xl group-hover:-translate-x-1 transition-transform"></i>
                     </button>
@@ -334,7 +334,7 @@ function renderSubcategorySelection(cat, subcats, level, existingSub1 = '') {
         const percent = totalCount > 0 ? Math.min(100, Math.round((seenCount / totalCount) * 100)) : 0;
 
         html += `
-            <div onclick="import('./js/modules/funfacts.js').then(m => m.openFactCategory('${cat.id}', '${level === 1 ? sub : existingSub1}', '${level === 2 ? sub : ''}'))"
+            <div onclick="window.loadModule('funfacts').then(m => m.openFactCategory('${cat.id}', '${level === 1 ? sub : existingSub1}', '${level === 2 ? sub : ''}'))"
                  class="premium-fact-sub-card rounded-[2rem] p-6 cursor-pointer border border-white/5 hover:border-[${cat.color}]/50 transition-all duration-500 group relative overflow-hidden flex flex-col min-h-[140px] shadow-2xl">
                 
                 <!-- Background Icon Decor -->
@@ -368,7 +368,7 @@ function renderSubcategorySelection(cat, subcats, level, existingSub1 = '') {
         const percent = totalCount > 0 ? Math.round((seenCount / totalCount) * 100) : 0;
 
         html += `
-            <div onclick="import('./js/modules/funfacts.js').then(m => m.openFactCategory('${cat.id}', '__random__'))"
+            <div onclick="window.loadModule('funfacts').then(m => m.openFactCategory('${cat.id}', '__random__'))"
                  class="premium-fact-sub-card rounded-[2rem] p-6 cursor-pointer border-2 border-dashed border-[#eb459e]/30 hover:border-[#eb459e] transition-all duration-500 group relative overflow-hidden flex flex-col min-h-[140px] shadow-2xl bg-[#eb459e]/5">
                 
                 <div class="absolute -right-4 -bottom-4 text-8xl opacity-[0.1] group-hover:opacity-[0.2] transition-all duration-700 pointer-events-none select-none grayscale-0 scale-110 rotate-12">🔀</div>
@@ -591,7 +591,7 @@ export function showAddFactModal() {
             </div>
             
             <div class="p-8 bg-white/5 border-t border-white/5">
-                <button onclick="import('./js/modules/funfacts.js').then(m => m.saveNewFact())" class="w-full bg-gradient-to-r from-[#5865F2] to-[#eb459e] text-white py-5 rounded-2xl font-black text-lg transition-all shadow-2xl transform active:scale-95 uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(88,101,242,0.3)]">
+                <button onclick="window.loadModule('funfacts').then(m => m.saveNewFact())" class="w-full bg-gradient-to-r from-[#5865F2] to-[#eb459e] text-white py-5 rounded-2xl font-black text-lg transition-all shadow-2xl transform active:scale-95 uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(88,101,242,0.3)]">
                     Zapsat do historie 📚
                 </button>
             </div>

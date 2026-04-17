@@ -1,10 +1,12 @@
-const CACHE_NAME = 'kiscord-v-vite-1';
+const CACHE_NAME = 'kiscord-v-vite-4';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
     '/css/app.css',
     '/manifest.json',
-    '/img/app/czippel2_kytka-modified.webp',
+    '/img/app/czippel2_kytka.jpg',
+    '/img/app/czippel2_kytka-modified.png',
+    '/img/app/klarka_profilovka.webp',
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
@@ -84,4 +86,3 @@ self.addEventListener('notificationclick', (event) => {
         })
     );
 });
-

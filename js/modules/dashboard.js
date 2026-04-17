@@ -102,12 +102,12 @@ function generateFactOfTheDay() {
                     <i class="fas fa-lightbulb text-[#faa61a]"></i> Dnešní moudrost
                 </h3>
                 <div class="flex items-center gap-2">
-                    <button onclick="import('/js/modules/funfacts.js').then(m => { window.switchChannel('funfacts'); })"
+                    <button onclick="window.loadModule('funfacts').then(m => { window.switchChannel('funfacts'); })"
                             class="text-[10px] text-gray-500 hover:text-[#5865F2] transition font-bold uppercase tracking-widest flex items-center gap-1">
                         více <i class="fas fa-chevron-right text-[8px]"></i>
                     </button>
                     <button id="fotd-heart-btn"
-                            onclick="import('/js/modules/funfacts.js').then(m => m.toggleFactFavorite('${fact.id}', '${fact._catId}', '${fact.subcategory || ''}', '${fact.subcategory_level2 || ''}')).then(() => import('/js/modules/dashboard.js').then(d => d.refreshFactOfTheDayHeart('${fact.id}')))"
+                            onclick="window.loadModule('funfacts').then(m => m.toggleFactFavorite('${fact.id}', '${fact._catId}', '${fact.subcategory || ''}', '${fact.subcategory_level2 || ''}')).then(() => window.loadModule('dashboard').then(d => d.refreshFactOfTheDayHeart('${fact.id}')))"
                             class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center transition-all hover:bg-white/10 active:scale-90">
                         <i class="${heartIcon} fa-heart ${heartClass} transition-colors"></i>
                     </button>
@@ -168,7 +168,7 @@ function generateDailyQuestionCard() {
                               class="w-full bg-transparent text-gray-200 text-sm outline-none resize-none min-h-[80px] placeholder-gray-600 font-medium leading-relaxed custom-scrollbar"></textarea>
                 </div>
                 <button id="dashboard-btn-submit-answer"
-                        onclick="import('/js/modules/dashboard.js').then(m => m.submitDailyAnswerFromDashboard())" 
+                        onclick="window.loadModule('dashboard').then(m => m.submitDailyAnswerFromDashboard())" 
                         class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-3 rounded-xl font-bold transition shadow-lg active:scale-95 flex items-center justify-center gap-2 group/btn relative overflow-hidden">
                     <div class="absolute inset-0 bg-white/10 opacity-0 group-hover/btn:opacity-100 transition"></div>
                     <i class="fas fa-paper-plane text-[10px]"></i> <span class="text-xs uppercase font-black">Odeslat moji odpověď</span>
@@ -323,7 +323,7 @@ function showBedtimeReminderWidget() {
             <div class="relative z-10">
                 <div class="text-3xl mb-2 animate-pulse">🌙</div>
                 <p class="text-white text-xs font-bold mb-3 leading-snug">Čas spát,<br>Klárko! 😴</p>
-                <button onclick="import('/js/modules/health.js').then(m => m.startSleep()); document.getElementById('bedtime-reminder-widget')?.remove();"
+                <button onclick="window.loadModule('health').then(m => m.startSleep()); document.getElementById('bedtime-reminder-widget')?.remove();"
                         class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-2 px-3 rounded-xl text-[11px] font-black transition active:scale-95 shadow-lg">
                     <i class="fas fa-moon mr-1"></i> Jít spát
                 </button>
@@ -512,11 +512,11 @@ export async function renderDashboard(forceRefresh = false) {
                                </div>
                            </h1>
                           <div class="flex items-center gap-2 mt-3">
-                              <div class="bg-white/20 backdrop-blur-md px-2 py-1 rounded text-center border border-white/10" onclick="import('./js/modules/dashboard.js').then(m => m.handleEasterEggClick())">
+                              <div class="bg-white/20 backdrop-blur-md px-2 py-1 rounded text-center border border-white/10" onclick="window.loadModule('dashboard').then(m => m.handleEasterEggClick())">
                                   <span class="block text-[8px] uppercase font-bold text-white leading-none mb-0.5">Spolu</span>
                                   <span class="block text-sm font-black text-white leading-none">${daysTogether} dní</span>
                               </div>
-                              <button onclick="import('./js/modules/dashboard.js').then(m => m.sendSunlight())" 
+                              <button onclick="window.loadModule('dashboard').then(m => m.sendSunlight())" 
                                       class="sun-send-btn w-9 h-9 bg-white/20 backdrop-blur-sm rounded-xl border border-white/10 flex items-center justify-center text-xl shadow-lg transition-all transform active:scale-90">
                                   <span>☀️</span>
                               </button>
@@ -550,7 +550,7 @@ export async function renderDashboard(forceRefresh = false) {
                           
                           const plan = upcoming.length > 0 ? upcoming[0] : null;
                           if (!plan) {
-                              return `<div class="text-white/90 text-sm font-medium w-full" onclick="import('./js/modules/dashboard.js').then(m => m.showQuickPlanModal())">Nic v plánu... <span class="font-bold underline text-[#eb459e]">Plánovat?</span></div>`;
+                              return `<div class="text-white/90 text-sm font-medium w-full" onclick="window.loadModule('dashboard').then(m => m.showQuickPlanModal())">Nic v plánu... <span class="font-bold underline text-[#eb459e]">Plánovat?</span></div>`;
                           }
 
                           const [dateKey, entry] = plan;
@@ -570,11 +570,11 @@ export async function renderDashboard(forceRefresh = false) {
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1.5">
-                                        <button onclick="event.stopPropagation(); import('./js/modules/dashboard.js').then(m => m.respondToPlan('${dateKey}', 'confirmed'))" 
+                                        <button onclick="event.stopPropagation(); window.loadModule('dashboard').then(m => m.respondToPlan('${dateKey}', 'confirmed'))" 
                                                 class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition active:scale-90 shadow-lg flex items-center gap-1">
                                             ✅ <span class="hidden xs:inline">Jasně</span>
                                         </button>
-                                        <button onclick="event.stopPropagation(); import('./js/modules/dashboard.js').then(m => m.showRejectionModal('${dateKey}'))" 
+                                        <button onclick="event.stopPropagation(); window.loadModule('dashboard').then(m => m.showRejectionModal('${dateKey}'))" 
                                                 class="bg-white/10 hover:bg-white/20 text-white/70 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition active:scale-90 flex items-center gap-1">
                                             ❌ <span class="hidden xs:inline">Teď ne</span>
                                         </button>
@@ -586,7 +586,7 @@ export async function renderDashboard(forceRefresh = false) {
                           if (isPendingFromMe) {
                               const dateLabel = dateKey === todayStr ? '' : (dateKey === new Date(Date.now() + 86400000).toISOString().split('T')[0] ? 'zítra ' : `${dateKey} `);
                               return `
-                                <div class="flex items-center justify-between w-full" onclick="import('./js/modules/dashboard.js').then(m => m.handleNextDateClick('${dateKey}'))">
+                                <div class="flex items-center justify-between w-full" onclick="window.loadModule('dashboard').then(m => m.handleNextDateClick('${dateKey}'))">
                                     <div class="flex items-center gap-3 opacity-60">
                                         <div class="bg-gray-700 w-8 h-8 rounded-full flex items-center justify-center">${getCategoryIcon(entry.cat)}</div>
                                         <div>
@@ -601,7 +601,7 @@ export async function renderDashboard(forceRefresh = false) {
 
                           if (isRejected) {
                               return `
-                                <div class="flex items-center justify-between w-full" onclick="import('./js/modules/dashboard.js').then(m => m.showQuickPlanModal())">
+                                <div class="flex items-center justify-between w-full" onclick="window.loadModule('dashboard').then(m => m.showQuickPlanModal())">
                                     <div class="flex items-center gap-3">
                                         <div class="bg-red-900/40 w-8 h-8 rounded-full flex items-center justify-center text-xs">🥀</div>
                                         <div>
@@ -616,7 +616,7 @@ export async function renderDashboard(forceRefresh = false) {
 
                           // Confirmed/Happened
                           return `
-                            <div class="flex items-center justify-between w-full" onclick="import('./js/modules/dashboard.js').then(m => m.handleNextDateClick('${dateKey}'))">
+                            <div class="flex items-center justify-between w-full" onclick="window.loadModule('dashboard').then(m => m.handleNextDateClick('${dateKey}'))">
                                 <div class="flex items-center gap-3">
                                     <div class="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center shadow-lg">${getCategoryIcon(entry.cat)}</div>
                                     <div>
@@ -769,7 +769,7 @@ export function showQuickPlanModal(step = 1) {
             title = 'Co podnikneme?';
             content = `
                 <div class="grid grid-cols-1 gap-3">
-                    <button onclick="import('./js/modules/dashboard.js').then(m => m.selectQuickPlanCategory('discord'))" 
+                    <button onclick="window.loadModule('dashboard').then(m => m.selectQuickPlanCategory('discord'))" 
                             class="bg-black/20 hover:bg-[#5865F2]/20 p-5 rounded-2xl border border-white/5 hover:border-[#5865F2]/50 transition-all flex items-center gap-4 group">
                         <div class="text-3xl bg-[#5865F2]/10 p-3 rounded-xl group-hover:scale-110 transition">🎧</div>
                         <div class="text-left">
@@ -777,7 +777,7 @@ export function showQuickPlanModal(step = 1) {
                             <p class="text-[10px] text-gray-500">Pokec, streamování nebo jen tak být spolu.</p>
                         </div>
                     </button>
-                    <button onclick="import('./js/modules/dashboard.js').then(m => m.selectQuickPlanCategory('date'))" 
+                    <button onclick="window.loadModule('dashboard').then(m => m.selectQuickPlanCategory('date'))" 
                             class="bg-black/20 hover:bg-[#eb459e]/20 p-5 rounded-2xl border border-white/5 hover:border-[#eb459e]/50 transition-all flex items-center gap-4 group">
                         <div class="text-3xl bg-[#eb459e]/10 p-3 rounded-xl group-hover:scale-110 transition">🥂</div>
                         <div class="text-left">
@@ -785,7 +785,7 @@ export function showQuickPlanModal(step = 1) {
                             <p class="text-[10px] text-gray-500">Venku, doma, večera nebo dobrodružství.</p>
                         </div>
                     </button>
-                    <button onclick="import('./js/modules/dashboard.js').then(m => m.selectQuickPlanCategory('movie'))" 
+                    <button onclick="window.loadModule('dashboard').then(m => m.selectQuickPlanCategory('movie'))" 
                             class="bg-black/20 hover:bg-[#faa61a]/20 p-5 rounded-2xl border border-white/5 hover:border-[#faa61a]/50 transition-all flex items-center gap-4 group">
                         <div class="text-3xl bg-[#faa61a]/10 p-3 rounded-xl group-hover:scale-110 transition">🎬</div>
                         <div class="text-left">
@@ -824,11 +824,11 @@ export function showQuickPlanModal(step = 1) {
                     </div>
 
                     <div class="pt-2">
-                        <button onclick="import('./js/modules/dashboard.js').then(m => m.submitQuickPlan())" 
+                        <button onclick="window.loadModule('dashboard').then(m => m.submitQuickPlan())" 
                                 class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition active:scale-95 shadow-xl flex items-center justify-center gap-2">
                             <i class="fas fa-paper-plane text-[10px]"></i> Odeslat pozvánku
                         </button>
-                        <button onclick="import('./js/modules/dashboard.js').then(m => m.showQuickPlanModal(1))" 
+                        <button onclick="window.loadModule('dashboard').then(m => m.showQuickPlanModal(1))" 
                                 class="w-full mt-3 text-gray-500 hover:text-white py-1 text-[10px] font-bold uppercase transition">
                             <i class="fas fa-arrow-left mr-1"></i> Zpět na výběr
                         </button>
@@ -940,7 +940,7 @@ export function showRejectionModal(dateKey) {
                 <p class="text-xs text-gray-400 mb-4 px-1 italic">To nevadí! ❤️ Vyber důvod, ať partner ví...</p>
                 <div class="grid grid-cols-1 gap-2">
                     ${reasons.map(r => `
-                        <button onclick="import('./js/modules/dashboard.js').then(m => m.rejectPlanWithReason('${dateKey}', '${r.text}'))"
+                        <button onclick="window.loadModule('dashboard').then(m => m.rejectPlanWithReason('${dateKey}', '${r.text}'))"
                                 class="w-full bg-black/20 hover:bg-red-500/10 p-4 rounded-xl border border-white/5 hover:border-red-500/30 text-left transition text-sm text-gray-200">
                             ${r.text}
                         </button>

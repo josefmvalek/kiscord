@@ -34,7 +34,7 @@ export function renderDailyQuestions() {
             <!-- Header -->
             <div class="bg-[#2f3136] shadow-sm z-10 flex-shrink-0 border-b border-[#202225] p-6 lg:p-10 flex flex-col items-center text-center relative">
                 <div class="absolute top-4 right-4 group">
-                    <button onclick="import('./js/modules/dailyQuestions.js').then(m => m.showAddQuestionModal())" class="bg-[#5865F2] hover:bg-[#4752c4] text-white p-3 rounded-full shadow-lg transition-all active:scale-95" title="Navrhnout novou otázku">
+                    <button onclick="window.loadModule('dailyQuestions').then(m => m.showAddQuestionModal())" class="bg-[#5865F2] hover:bg-[#4752c4] text-white p-3 rounded-full shadow-lg transition-all active:scale-95" title="Navrhnout novou otázku">
                         <i class="fas fa-plus"></i>
                     </button>
                     <span class="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-black/80 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none uppercase font-bold tracking-widest border border-gray-700">Navrhnout otázku</span>
@@ -47,7 +47,7 @@ export function renderDailyQuestions() {
                 <p class="text-gray-400 mt-2 text-sm font-medium max-w-sm">Upřímnost je základ. Odpovědi se odemknou, až odpovíte oba! ❤️</p>
                 
                 <div class="mt-6">
-                    <button onclick="import('./js/modules/dailyQuestions.js').then(m => m.showArchive())" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#202225] text-gray-400 hover:text-white hover:bg-[#40444b] transition-all border border-gray-700 text-xs font-bold uppercase tracking-widest">
+                    <button onclick="window.loadModule('dailyQuestions').then(m => m.showArchive())" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#202225] text-gray-400 hover:text-white hover:bg-[#40444b] transition-all border border-gray-700 text-xs font-bold uppercase tracking-widest">
                         <i class="fas fa-history"></i> Zobrazit archiv odpovědí
                     </button>
                 </div>
@@ -113,7 +113,7 @@ function renderMyAnswerSlot(myAnswer) {
             <div class="bg-[#2f3136] p-6 rounded-2xl border-2 border-dashed border-gray-700 hover:border-[#5865F2] transition-colors" id="answer-form-container">
                 <textarea id="daily-answer-input" placeholder="Tady napiš svoji upřímnou odpověď..." 
                           class="w-full bg-transparent text-white border-0 focus:ring-0 outline-none resize-none min-h-[100px] placeholder-gray-600 font-medium"></textarea>
-                <button onclick="import('./js/modules/dailyQuestions.js').then(m => m.submitAnswer())" 
+                <button onclick="window.loadModule('dailyQuestions').then(m => m.submitAnswer())" 
                         id="btn-submit-answer"
                         class="mt-4 w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-3 rounded-xl font-bold transition transform hover:scale-[1.02] active:scale-95 shadow-lg flex items-center justify-center gap-2">
                     <i class="fas fa-paper-plane text-xs"></i> Odeslat moji odpověď
@@ -239,7 +239,7 @@ export function renderDailyArchive() {
             <!-- Header -->
             <div class="bg-[#2f3136] shadow-sm z-10 flex-shrink-0 border-b border-[#202225] p-6 lg:p-10 flex flex-col items-center text-center">
                 <div class="w-full flex justify-start mb-4">
-                    <button onclick="import('./js/modules/dailyQuestions.js').then(m => m.renderDailyQuestions())" class="text-gray-400 hover:text-white transition flex items-center gap-2 font-bold text-xs uppercase tracking-widest p-1">
+                    <button onclick="window.loadModule('dailyQuestions').then(m => m.renderDailyQuestions())" class="text-gray-400 hover:text-white transition flex items-center gap-2 font-bold text-xs uppercase tracking-widest p-1">
                         <i class="fas fa-arrow-left"></i> Zpět
                     </button>
                 </div>
@@ -284,7 +284,7 @@ function renderArchiveCard(item) {
     const dateStr = item.lastAnswerAt ? new Date(item.lastAnswerAt).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long' }) : 'Neznámé datum';
 
     return `
-        <div onclick="import('./js/modules/dailyQuestions.js').then(m => m.showArchiveDetail('${item.id}'))" 
+        <div onclick="window.loadModule('dailyQuestions').then(m => m.showArchiveDetail('${item.id}'))" 
              class="bg-[#2f3136] p-5 rounded-2xl border border-gray-700/50 hover:border-[#faa61a]/50 transition-all cursor-pointer group relative overflow-hidden">
             <div class="flex justify-between items-start mb-2">
                 <div class="flex items-center gap-2">
@@ -318,7 +318,7 @@ export function showArchiveDetail(questionId) {
             <!-- Header -->
             <div class="bg-[#2f3136] shadow-sm z-10 flex-shrink-0 border-b border-[#202225] p-6 lg:p-10 flex flex-col items-center text-center">
                 <div class="w-full flex justify-start mb-4">
-                    <button onclick="import('./js/modules/dailyQuestions.js').then(m => m.renderDailyArchive())" class="text-gray-400 hover:text-white transition flex items-center gap-2 font-bold text-xs uppercase tracking-widest p-1">
+                    <button onclick="window.loadModule('dailyQuestions').then(m => m.renderDailyArchive())" class="text-gray-400 hover:text-white transition flex items-center gap-2 font-bold text-xs uppercase tracking-widest p-1">
                         <i class="fas fa-arrow-left"></i> Zpět do archivu
                     </button>
                 </div>
@@ -458,7 +458,7 @@ export function showAddQuestionModal() {
             </div>
             
             <div class="p-6 bg-[#2f3136] border-t border-gray-700">
-                <button onclick="import('./js/modules/dailyQuestions.js').then(m => m.saveNewQuestion())" class="w-full bg-gradient-to-r from-[#faa61a] to-[#eb459e] text-white py-4 rounded-xl font-black text-lg transition shadow-[0_0_20px_rgba(250,166,26,0.2)] transform active:scale-95">
+                <button onclick="window.loadModule('dailyQuestions').then(m => m.saveNewQuestion())" class="w-full bg-gradient-to-r from-[#faa61a] to-[#eb459e] text-white py-4 rounded-xl font-black text-lg transition shadow-[0_0_20px_rgba(250,166,26,0.2)] transform active:scale-95">
                     PŘIDAT DO OSUDÍ 🗳️
                 </button>
             </div>

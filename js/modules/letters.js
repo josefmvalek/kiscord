@@ -45,15 +45,15 @@ export async function renderLetters() {
         <div class="px-6 flex-1 flex flex-col overflow-hidden">
             <!-- Navigation -->
             <div class="flex items-center gap-4 py-4 border-b border-white/5 mb-4">
-                <button onclick="import('./js/modules/letters.js').then(m => m.setView('inbox'))" 
+                <button onclick="window.loadModule('letters').then(m => m.setView('inbox'))" 
                     class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${currentView === 'inbox' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-gray-200'}">
                     <i class="fas fa-inbox"></i> Doručené (${inbox.length})
                 </button>
-                <button onclick="import('./js/modules/letters.js').then(m => m.setView('compose'))" 
+                <button onclick="window.loadModule('letters').then(m => m.setView('compose'))" 
                     class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${currentView === 'compose' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-gray-200'}">
                     <i class="fas fa-edit"></i> Napsat
                 </button>
-                <button onclick="import('./js/modules/letters.js').then(m => m.setView('sent'))" 
+                <button onclick="window.loadModule('letters').then(m => m.setView('sent'))" 
                     class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${currentView === 'sent' ? 'bg-white/10 text-[#eb459e]' : 'text-gray-400 hover:text-gray-200'}">
                     <i class="fas fa-paper-plane"></i> Odeslané (${sent.length})
                 </button>
@@ -90,7 +90,7 @@ function renderInbox(letters) {
 
         return `
             <div class="bg-[#2f3136] hover:bg-[#34373c] transition-all duration-200 rounded-lg p-3 cursor-pointer border-l-2 ${isUnlocked && !l.is_read ? 'border-[#eb459e]' : 'border-transparent'} group relative flex items-center gap-4" 
-                 onclick="${isUnlocked ? `import('./js/modules/letters.js').then(m => m.openLetter('${l.id}'))` : ''}">
+                 onclick="${isUnlocked ? `window.loadModule('letters').then(m => m.openLetter('${l.id}'))` : ''}">
                 
                 <!-- Status Icon with Dot -->
                 <div class="relative shrink-0 w-12 h-12 bg-[#202225] rounded-full flex items-center justify-center text-2xl">
@@ -176,7 +176,7 @@ function renderCompose() {
                         </div>
 
                         <input type="file" id="letter-photo-input" class="hidden" accept="image/*" 
-                            onchange="import('./js/modules/letters.js').then(m => m.handlePhotoSelect(this))">
+                            onchange="window.loadModule('letters').then(m => m.handlePhotoSelect(this))">
                         
                         <div id="letter-photo-preview-box" class="${pendingFile ? '' : 'hidden'} flex-1 flex flex-col min-w-0">
                             <span id="letter-photo-name" class="text-xs text-gray-300 font-bold truncate">${pendingFile ? pendingFile.name : ''}</span>
@@ -184,7 +184,7 @@ function renderCompose() {
                         </div>
 
                         <div id="letter-photo-actions" class="${pendingFile ? '' : 'hidden'}">
-                            <button onclick="import('./js/modules/letters.js').then(m => m.removePhoto())" 
+                            <button onclick="window.loadModule('letters').then(m => m.removePhoto())" 
                                 class="text-gray-500 hover:text-red-500 transition-all p-3 rounded-xl hover:bg-red-500/10">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
@@ -204,11 +204,11 @@ function renderCompose() {
         </div>
 
         <div class="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-white/5 max-w-2xl mx-auto">
-            <button onclick="import('./js/modules/letters.js').then(m => m.setView('inbox'))"
+            <button onclick="window.loadModule('letters').then(m => m.setView('inbox'))"
                 class="px-8 py-3 rounded-xl text-gray-500 hover:text-white transition font-bold text-sm">
                 Zrušit
             </button>
-            <button onclick="import('./js/modules/letters.js').then(m => m.sendLetter())"
+            <button onclick="window.loadModule('letters').then(m => m.sendLetter())"
                 class="px-12 py-3 rounded-xl bg-[#eb459e] hover:bg-[#d63b8c] text-white font-bold text-sm transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-[#eb459e]/20 flex items-center gap-3">
                 <i class="fas fa-paper-plane"></i> Odeslat dopis
             </button>
@@ -232,7 +232,7 @@ function renderSent(letters) {
 
         return `
             <div class="bg-[#2f3136] hover:bg-[#34373c] transition-all duration-200 rounded-lg p-3 cursor-pointer border border-white/5 flex items-center gap-4" 
-                 onclick="import('./js/modules/letters.js').then(m => m.openLetter('${l.id}'))">
+                 onclick="window.loadModule('letters').then(m => m.openLetter('${l.id}'))">
                 
                 <div class="shrink-0 w-12 h-12 bg-[#202225] rounded-full flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
                     📬
@@ -301,7 +301,7 @@ export async function openLetter(id) {
         <!-- Header -->
         <div class="px-6 py-4 bg-[#36393f] border-b border-white/5 z-10 shrink-0 flex items-center justify-between shadow-lg">
             <div class="flex items-center gap-4">
-                <button onclick="import('./js/modules/letters.js').then(m => m.renderLetters())"
+                <button onclick="window.loadModule('letters').then(m => m.renderLetters())"
                     class="w-10 h-10 rounded-xl bg-[#202225] hover:bg-[#40444b] text-gray-400 hover:text-white transition flex items-center justify-center">
                     <i class="fas fa-arrow-left"></i>
                 </button>
@@ -312,7 +312,7 @@ export async function openLetter(id) {
                     </p>
                 </div>
             </div>
-            <button onclick="import('./js/modules/letters.js').then(m => m.deleteLetter('${letter.id}', true))"
+            <button onclick="window.loadModule('letters').then(m => m.deleteLetter('${letter.id}', true))"
                 class="w-10 h-10 rounded-xl hover:bg-red-500/10 text-gray-600 hover:text-red-500 transition flex items-center justify-center">
                 <i class="fas fa-trash-alt text-sm"></i>
             </button>
@@ -332,7 +332,7 @@ export async function openLetter(id) {
                     <div class="p-8 pb-10">
                         ${letter.image_url ? `
                         <div class="mb-8 relative group/img rounded-xl overflow-hidden bg-black/20 border border-white/5 shadow-lg cursor-zoom-in" 
-                             onclick="import('./js/modules/letters.js').then(m => m.openFullscreen('${letter.image_url}'))">
+                             onclick="window.loadModule('letters').then(m => m.openFullscreen('${letter.image_url}'))">
                             <img src="${letter.image_url}" 
                                  class="w-full h-auto max-h-[500px] object-contain transition-transform duration-700 group-hover/img:scale-105" />
                             <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">

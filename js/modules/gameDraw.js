@@ -130,7 +130,7 @@ export function renderGameDraw() {
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <button onclick="import('./js/modules/drawGallery.js').then(m => m.renderGallery())" class="w-8 h-8 bg-[#4f545c] text-white rounded-lg flex items-center justify-center transition shadow-lg border border-white/5" title="Galerie"><i class="fas fa-images text-xs"></i></button>
+                        <button onclick="window.loadModule('drawGallery').then(m => m.renderGallery())" class="w-8 h-8 bg-[#4f545c] text-white rounded-lg flex items-center justify-center transition shadow-lg border border-white/5" title="Galerie"><i class="fas fa-images text-xs"></i></button>
                         <button onclick="window.clearCanvas()" class="w-8 h-8 bg-[#ed4245] text-white rounded-lg flex items-center justify-center transition shadow-lg border border-white/5" title="Smazat"><i class="fas fa-trash-alt text-xs"></i></button>
                         <button onclick="window.saveCanvas()" class="h-8 px-3 bg-[#3ba55c] text-white rounded-lg font-bold text-[10px] uppercase tracking-widest transition flex items-center justify-center gap-2 shadow-lg border border-white/5">
                             <i class="fas fa-save text-xs"></i> <span class="hidden sm:inline">Uložit</span>
@@ -682,11 +682,11 @@ export function showAddPromptModal() {
                         <textarea id="prompt-text" rows="3" class="w-full bg-[#202225] text-white p-3 rounded-xl border border-white/5 outline-none focus:border-[#f472b6] transition resize-none" placeholder="Např. Nakresli nás na Marsu..."></textarea>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="import('./js/modules/gameDraw.js').then(m => m.saveNewPrompt())" class="w-full bg-[#f472b6] hover:bg-[#db2777] text-white font-bold py-3 rounded-xl shadow-lg transition transform hover:scale-[1.02] active:scale-95">
+                        <button onclick="window.loadModule('gameDraw').then(m => m.saveNewPrompt())" class="w-full bg-[#f472b6] hover:bg-[#db2777] text-white font-bold py-3 rounded-xl shadow-lg transition transform hover:scale-[1.02] active:scale-95">
                             Uložit téma
                         </button>
                         ${isJosef(state.currentUser) ? `
-                            <button onclick="import('./js/modules/gameDraw.js').then(m => m.showPromptManagementModal())" class="bg-[#2f3136] hover:bg-[#3ba55c] text-white p-2 rounded-xl transition" title="Spravovat témata">
+                            <button onclick="window.loadModule('gameDraw').then(m => m.showPromptManagementModal())" class="bg-[#2f3136] hover:bg-[#3ba55c] text-white p-2 rounded-xl transition" title="Spravovat témata">
                                 <i class="fas fa-cog"></i>
                             </button>
                         ` : ''}
@@ -762,7 +762,7 @@ export function showPromptManagementModal() {
                   state.gamePrompts.map(p => `
                     <div class="flex items-center justify-between gap-4 bg-[#202225] p-3 rounded-xl border border-white/5 group hover:border-[#f472b6]/30 transition">
                         <span class="text-gray-200 text-sm font-medium">${p.text}</span>
-                        <button onclick="import('./js/modules/gameDraw.js').then(m => m.deletePrompt('${p.id}'))" class="text-gray-500 hover:text-red-400 transition opacity-0 group-hover:opacity-100 p-2">
+                        <button onclick="window.loadModule('gameDraw').then(m => m.deletePrompt('${p.id}'))" class="text-gray-500 hover:text-red-400 transition opacity-0 group-hover:opacity-100 p-2">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>

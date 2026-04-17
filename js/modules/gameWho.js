@@ -100,7 +100,7 @@ function renderContent(question) {
                 <div class="mb-8 relative group">
                     <span class="px-3 py-1 bg-[#faa61a]/20 text-[#faa61a] rounded-full text-xs font-bold uppercase tracking-widest mb-4 inline-block">Kdo spíše?</span>
                     ${state.currentUser && (state.currentUser.email.toLowerCase().includes('josef') || state.currentUser.email.toLowerCase().includes('jozk')) ? `
-                        <button onclick="import('./js/modules/gameWho.js').then(m => m.showAddGameQuestionModal())" class="absolute -top-1 right-0 md:-right-8 opacity-0 group-hover:opacity-100 bg-[#2f3136] hover:bg-[#faa61a] text-white hover:text-black p-2 rounded-lg transition shadow-lg" title="Přidat otázku">
+                        <button onclick="window.loadModule('gameWho').then(m => m.showAddGameQuestionModal())" class="absolute -top-1 right-0 md:-right-8 opacity-0 group-hover:opacity-100 bg-[#2f3136] hover:bg-[#faa61a] text-white hover:text-black p-2 rounded-lg transition shadow-lg" title="Přidat otázku">
                             <i class="fas fa-plus"></i>
                         </button>
                     ` : ''}
@@ -254,7 +254,7 @@ export function showAddGameQuestionModal() {
                         <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Kdo spíše...</label>
                         <textarea id="game-q-text" rows="3" class="w-full bg-[#202225] text-white p-3 rounded-xl border border-white/5 outline-none focus:border-[#faa61a] transition resize-none" placeholder="Např. ...vymyslí větší hovadinu?"></textarea>
                     </div>
-                    <button onclick="import('./js/modules/gameWho.js').then(m => m.saveNewGameQuestion())" class="w-full bg-[#faa61a] hover:bg-[#e09216] text-black font-black py-3 rounded-xl shadow-lg transition transform hover:scale-[1.02] active:scale-95">
+                    <button onclick="window.loadModule('gameWho').then(m => m.saveNewGameQuestion())" class="w-full bg-[#faa61a] hover:bg-[#e09216] text-black font-black py-3 rounded-xl shadow-lg transition transform hover:scale-[1.02] active:scale-95">
                         Uložit otázku
                     </button>
                 </div>

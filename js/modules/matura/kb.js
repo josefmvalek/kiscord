@@ -77,18 +77,18 @@ export async function openKnowledgeBase(itemId) {
             <div class="flex flex-wrap items-center gap-1 flex-1 sm:flex-none">
                 <div class="flex items-center gap-1 flex-1 sm:flex-none">
                     ${quizExists ? `
-                        <button onclick="import('/js/modules/quiz.js').then(m => m.openQuiz('${itemId}'))" 
+                        <button onclick="window.loadModule('quiz').then(m => m.openQuiz('${itemId}'))" 
                                 class="flex-1 sm:flex-none bg-[#48b4e0] hover:bg-[#3ba1cc] text-[#1b1d20] px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition shadow-[0_0_15px_rgba(72,180,224,0.3)]">
                             <i class="fas fa-play text-[8px]"></i> <span>Cvičný test</span>
                         </button>
                         <button data-ai-action="quiz-${itemId}"
-                                onclick="import('/js/modules/matura.js').then(async m => { if(await window.showConfirmDialog('Chceš test vygenerovat znovu? Původní otázky budou smazány.', 'Ano', 'Zrušit')) m.generateAIQuiz('${itemId}'); })"
+                                onclick="window.loadModule('matura').then(async m => { if(await window.showConfirmDialog('Chceš test vygenerovat znovu? Původní otázky budou smazány.', 'Ano', 'Zrušit')) m.generateAIQuiz('${itemId}'); })"
                                 class="bg-white/5 hover:bg-white/10 text-gray-500 p-2.5 rounded-xl text-xs transition min-w-[40px] flex items-center justify-center border border-white/5" title="Vygenerovat test znovu">
                             <i class="fas fa-sync-alt"></i>
                         </button>
                     ` : `
                         <button data-ai-action="quiz-${itemId}"
-                                onclick="import('/js/modules/matura.js').then(m => m.generateAIQuiz('${itemId}'))" 
+                                onclick="window.loadModule('matura').then(m => m.generateAIQuiz('${itemId}'))" 
                                 class="flex-1 sm:flex-none bg-[#48b4e0]/10 hover:bg-[#48b4e0]/20 text-[#48b4e0] border border-[#48b4e0]/30 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition">
                             <i class="fas fa-file-alt text-[8px]"></i> Generovat test
                         </button>
@@ -96,18 +96,18 @@ export async function openKnowledgeBase(itemId) {
                 </div>
                 <div class="flex items-center gap-1 flex-1 sm:flex-none">
                     ${cardsExists ? `
-                        <button onclick="import('/js/modules/flashcards.js').then(m => m.openFlashcards('${itemId}'))" 
+                        <button onclick="window.loadModule('flashcards').then(m => m.openFlashcards('${itemId}'))" 
                                 class="flex-1 sm:flex-none bg-[#eb459e] hover:bg-[#d83c8d] text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition shadow-[0_0_15px_rgba(235,69,158,0.3)]">
                             <i class="fas fa-layer-group text-[8px]"></i> <span>Kartičky</span>
                         </button>
                         <button data-ai-action="cards-${itemId}"
-                                onclick="import('/js/modules/matura.js').then(async m => { if(await window.showConfirmDialog('Chceš kartičky vygenerovat znovu?', 'Ano', 'Zrušit')) m.generateAITest('${itemId}'); })"
+                                onclick="window.loadModule('matura').then(async m => { if(await window.showConfirmDialog('Chceš kartičky vygenerovat znovu?', 'Ano', 'Zrušit')) m.generateAITest('${itemId}'); })"
                                 class="bg-white/5 hover:bg-white/10 text-gray-500 p-2.5 rounded-xl text-xs transition min-w-[40px] flex items-center justify-center border border-white/5" title="Vygenerovat kartičky znovu">
                             <i class="fas fa-sync-alt"></i>
                         </button>
                     ` : `
                         <button data-ai-action="cards-${itemId}"
-                                onclick="import('/js/modules/matura.js').then(m => m.generateAITest('${itemId}'))" 
+                                onclick="window.loadModule('matura').then(m => m.generateAITest('${itemId}'))" 
                                 class="flex-1 sm:flex-none bg-[#eb459e]/10 hover:bg-[#eb459e]/20 text-[#eb459e] border border-[#eb459e]/30 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition">
                             <i class="fas fa-magic text-[8px]"></i> Generovat kartičky
                         </button>
@@ -115,15 +115,15 @@ export async function openKnowledgeBase(itemId) {
                 </div>
             </div>
             <div class="flex items-center gap-1 pt-2 sm:pt-0 sm:ml-auto border-t border-white/5 sm:border-0 grow sm:grow-0 overflow-x-auto no-scrollbar">
-                <button onclick="import('/js/modules/matura.js').then(m => m.openEditor('${itemId}'))" 
+                <button onclick="window.loadModule('matura').then(m => m.openEditor('${itemId}'))" 
                         class="bg-white/5 hover:bg-white/10 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition border border-white/5">
                     <i class="fas fa-pencil-alt text-[8px]"></i> <span class="hidden sm:inline">Upravit</span>
                 </button>
-                <button onclick="import('/js/modules/matura.js').then(m => m.openNotes('${itemId}'))" 
+                <button onclick="window.loadModule('matura').then(m => m.openNotes('${itemId}'))" 
                         class="bg-white/5 hover:bg-white/10 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition border border-white/5">
                     <i class="fas fa-sticky-note text-[8px]"></i> <span class="hidden sm:inline">Poznámky</span>
                 </button>
-                <button onclick="import('/js/modules/matura.js').then(m => m.openGeminiSettings())" 
+                <button onclick="window.loadModule('matura').then(m => m.openGeminiSettings())" 
                         class="bg-white/5 hover:bg-white/10 text-gray-500 border border-white/10 px-3 py-2 rounded-xl text-[10px] transition shrink-0" title="Nastavení Gemini API">
                     <i class="fas fa-cog"></i>
                 </button>
@@ -141,9 +141,9 @@ export async function openKnowledgeBase(itemId) {
                     ${formattedContent}
                 </div>
             </div>
-            ${isMobile ? `<div id="kb-sidebar-backdrop-${itemId}" class="fixed inset-0 z-[1010] bg-black/60 hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="import('/js/modules/matura.js').then(m => m.toggleMobileTOC('${itemId}'))"></div>` : ''}
+            ${isMobile ? `<div id="kb-sidebar-backdrop-${itemId}" class="fixed inset-0 z-[1010] bg-black/60 hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm" onclick="window.loadModule('matura').then(m => m.toggleMobileTOC('${itemId}'))"></div>` : ''}
             <div id="kb-sidebar-${itemId}" class="${isMobile ? 'fixed inset-x-0 bottom-0 top-auto z-[1011] translate-y-full max-h-[85vh] rounded-t-3xl border-t overscroll-contain' : 'w-80 border-l'} bg-[var(--bg-secondary)] border-white/5 flex flex-col flex-shrink-0 overflow-y-auto custom-scrollbar p-6 space-y-8 shadow-2xl transition-transform duration-300">
-                <div class="md:hidden sticky -top-6 bg-[var(--bg-secondary)] pt-6 pb-6 -mx-6 px-6 -mt-6 z-50 flex justify-center items-center border-b border-transparent cursor-pointer" onclick="import('/js/modules/matura.js').then(m => m.toggleMobileTOC('${itemId}'))">
+                <div class="md:hidden sticky -top-6 bg-[var(--bg-secondary)] pt-6 pb-6 -mx-6 px-6 -mt-6 z-50 flex justify-center items-center border-b border-transparent cursor-pointer" onclick="window.loadModule('matura').then(m => m.toggleMobileTOC('${itemId}'))">
                     <div class="w-16 h-1.5 rounded-full bg-white/20 pointer-events-none"></div>
                 </div>
                 <div class="space-y-4">
@@ -170,7 +170,7 @@ export async function openKnowledgeBase(itemId) {
                 </div>
             </div>
             ${isMobile ? `
-                <button onclick="import('/js/modules/matura.js').then(m => m.toggleMobileTOC('${itemId}'))" 
+                <button onclick="window.loadModule('matura').then(m => m.toggleMobileTOC('${itemId}'))" 
                         class="fixed bottom-32 right-6 w-14 h-14 bg-[#5865F2] hover:bg-[#4752c4] text-white rounded-full shadow-2xl flex items-center justify-center z-[1000] animate-bounce-slow border-4 border-[var(--bg-primary)] scale-100 active:scale-95 transition-transform">
                     <i class="fas fa-list-ul text-xl"></i>
                 </button>
@@ -181,7 +181,7 @@ export async function openKnowledgeBase(itemId) {
     document.body.insertAdjacentHTML('beforeend', renderModal({
         id: modalId, title: item.title, subtitle: `${item.cat || 'Maturita'} • ${item.author || 'Okruh'}`,
         content: modalContent, size: 'full', actions: actions,
-        onClose: `import('/js/modules/matura.js').then(m => m.closeKnowledgeBase('${modalId}'))`
+        onClose: `window.loadModule('matura').then(m => m.closeKnowledgeBase('${modalId}'))`
     }));
 
     const modal = document.getElementById(modalId);
@@ -194,8 +194,8 @@ export async function openKnowledgeBase(itemId) {
     if (headerExtra) {
         headerExtra.innerHTML = `
             <div class="flex items-center gap-2">
-                <button onclick="import('/js/modules/matura.js').then(m => m.toggleAllSections('${itemId}'))" class="matura-collapse-all-btn" id="btn-toggle-all-${itemId}" title="Sbalit/Rozbalit vše">Sbalit vše</button>
-                <button onclick="import('/js/modules/matura.js').then(m => m.toggleLocalTheme('${modalId}'))" class="p-2 rounded-full hover:bg-white/5 text-[var(--interactive-normal)] hover:text-[var(--text-header)] transition-all" title="Přepnout téma okna">
+                <button onclick="window.loadModule('matura').then(m => m.toggleAllSections('${itemId}'))" class="matura-collapse-all-btn" id="btn-toggle-all-${itemId}" title="Sbalit/Rozbalit vše">Sbalit vše</button>
+                <button onclick="window.loadModule('matura').then(m => m.toggleLocalTheme('${modalId}'))" class="p-2 rounded-full hover:bg-white/5 text-[var(--interactive-normal)] hover:text-[var(--text-header)] transition-all" title="Přepnout téma okna">
                     <i class="fas fa-sun theme-toggle-icon"></i>
                 </button>
             </div>
@@ -228,7 +228,7 @@ function generateTOC(html, itemId) {
         const text = h.textContent.trim();
         const slug = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
         const indent = level === 'h1' ? 'pl-0 font-bold text-[var(--text-header)]' : (level === 'h2' ? 'pl-3 text-[var(--text-normal)]' : 'pl-6 opacity-60 text-[var(--text-muted)]');
-        return `<li class="${indent} hover:text-[var(--blurple)] cursor-pointer transition py-2 md:py-0.5 truncate font-medium text-[11px]" onclick="document.querySelectorAll('.matura-content h1, .matura-content h2, .matura-content h3').forEach(el => { const elSlug = el.textContent.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, ''); if (elSlug === '${slug}') el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }); import('/js/modules/matura.js').then(m => { const sb = document.getElementById('kb-sidebar-${itemId}'); if(sb && sb.classList.contains('translate-y-0')) m.toggleMobileTOC('${itemId}'); });">${text}</li>`;
+        return `<li class="${indent} hover:text-[var(--blurple)] cursor-pointer transition py-2 md:py-0.5 truncate font-medium text-[11px]" onclick="document.querySelectorAll('.matura-content h1, .matura-content h2, .matura-content h3').forEach(el => { const elSlug = el.textContent.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, ''); if (elSlug === '${slug}') el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }); window.loadModule('matura').then(m => { const sb = document.getElementById('kb-sidebar-${itemId}'); if(sb && sb.classList.contains('translate-y-0')) m.toggleMobileTOC('${itemId}'); });">${text}</li>`;
     }).join('');
 }
 
@@ -239,7 +239,7 @@ export function formatMarkdown(text) {
     Object.values(state.maturaTopics || {}).flat().forEach(t => { topicMap[t.title.toLowerCase()] = t.id; });
     processedText = processedText.replace(/\[\[(.*?)\]\]/g, (match, title) => {
         const foundId = topicMap[title.toLowerCase()];
-        return foundId ? `<span class="matura-wikilink" onclick="import('/js/modules/matura.js').then(m => m.openKnowledgeBase('${foundId}'))">${title}</span>` : `<span class="text-[var(--text-muted)] italic opacity-60" title="Téma nenalezeno">[[${title}]]</span>`;
+        return foundId ? `<span class="matura-wikilink" onclick="window.loadModule('matura').then(m => m.openKnowledgeBase('${foundId}'))">${title}</span>` : `<span class="text-[var(--text-muted)] italic opacity-60" title="Téma nenalezeno">[[${title}]]</span>`;
     });
 
     const mathBlocks = [];
@@ -300,8 +300,8 @@ export async function openEditor(itemId, existingContent = null) {
         <div class="flex-1 flex flex-col md:flex-row bg-[#1b1d20] relative h-full overflow-hidden">
             ${isMobile ? `
                 <div class="flex bg-[#2f3136] border-b border-white/5 p-1 gap-1">
-                    <button id="tab-write" onclick="import('/js/modules/matura.js').then(m => m.switchEditorTab('write'))" class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest text-[#5865F2] bg-white/5 rounded-xl border border-[#5865F2]/30 transition-all"><i class="fas fa-pen-nib mr-2"></i> Psát</button>
-                    <button id="tab-preview" onclick="import('/js/modules/matura.js').then(m => m.switchEditorTab('preview'))" class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-gray-300 transition-all"><i class="fas fa-eye mr-2"></i> Náhled</button>
+                    <button id="tab-write" onclick="window.loadModule('matura').then(m => m.switchEditorTab('write'))" class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest text-[#5865F2] bg-white/5 rounded-xl border border-[#5865F2]/30 transition-all"><i class="fas fa-pen-nib mr-2"></i> Psát</button>
+                    <button id="tab-preview" onclick="window.loadModule('matura').then(m => m.switchEditorTab('preview'))" class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-gray-300 transition-all"><i class="fas fa-eye mr-2"></i> Náhled</button>
                 </div>
             ` : ''}
             <div id="editor-col" class="flex-1 flex flex-col border-r border-white/5">
@@ -312,7 +312,7 @@ export async function openEditor(itemId, existingContent = null) {
                     <button onmousedown="event.preventDefault(); window.insertAtCursor('textarea-kb', '- ', '')" class="w-10 h-10 flex text-gray-300 hover:bg-white/5 rounded-lg transition items-center justify-center"><i class="fas fa-list-ul"></i></button>
                     <button onmousedown="event.preventDefault(); window.insertAtCursor('textarea-kb', '\\u0060\\u0060\\u0060\\n', '\\n\\u0060\\u0060\\u0060')" class="w-10 h-10 flex text-gray-300 hover:bg-white/5 rounded-lg transition items-center justify-center"><i class="fas fa-code"></i></button>
                     <button onmousedown="event.preventDefault(); window.insertAtCursor('textarea-kb', '[', '](URL)')" class="w-10 h-10 flex text-gray-300 hover:bg-white/5 rounded-lg transition items-center justify-center"><i class="fas fa-link"></i></button>
-                    <label class="w-10 h-10 flex items-center justify-center text-[#5865F2] hover:bg-white/5 rounded-lg transition cursor-pointer"><i class="fas fa-image text-sm"></i><input type="file" accept="image/*" class="hidden" onchange="import('/js/modules/matura.js').then(m => m.handleImageUpload(this, '${itemId}'))"></label>
+                    <label class="w-10 h-10 flex items-center justify-center text-[#5865F2] hover:bg-white/5 rounded-lg transition cursor-pointer"><i class="fas fa-image text-sm"></i><input type="file" accept="image/*" class="hidden" onchange="window.loadModule('matura').then(m => m.handleImageUpload(this, '${itemId}'))"></label>
                 </div>
                 <textarea id="textarea-kb" class="flex-1 w-full bg-transparent text-gray-200 p-6 md:p-8 outline-none text-base font-mono leading-relaxed resize-none custom-scrollbar" oninput="window.updateKBPreview(); window.saveKBDraft('${itemId}')">${initialContent}</textarea>
             </div>
@@ -324,7 +324,7 @@ export async function openEditor(itemId, existingContent = null) {
         </div>
         <div class="p-4 bg-[var(--bg-tertiary)] border-t border-white/5 flex items-center justify-between gap-4">
              <button onclick="document.getElementById('edit-modal').remove()" class="text-gray-500 font-bold uppercase text-[10px] px-4 hover:text-white transition">Zrušit</button>
-             <div class="flex items-center gap-3"><span id="save-warning" class="hidden text-[#ed4245] text-[10px] font-bold animate-pulse">POZOR: Někdo jiný změnil tento zápis!</span><button onclick="import('/js/modules/matura.js').then(m => m.saveKBContent('${itemId}'))" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-8 py-3 rounded-2xl font-black uppercase tracking-widest transition shadow-[0_0_20px_rgba(59,165,92,0.3)] active:scale-95">Uložit zápis</button></div>
+             <div class="flex items-center gap-3"><span id="save-warning" class="hidden text-[#ed4245] text-[10px] font-bold animate-pulse">POZOR: Někdo jiný změnil tento zápis!</span><button onclick="window.loadModule('matura').then(m => m.saveKBContent('${itemId}'))" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-8 py-3 rounded-2xl font-black uppercase tracking-widest transition shadow-[0_0_20px_rgba(59,165,92,0.3)] active:scale-95">Uložit zápis</button></div>
         </div>
     `;
 
@@ -493,7 +493,7 @@ export function openNotes(itemId) {
     const user = state.currentUser?.name === 'Jožka' ? 'jose' : 'klarka';
     const notes = prog[user]?.notes || '';
     const modalHtml = `<div class="space-y-4"><label class="block text-[10px] font-black text-gray-500 uppercase tracking-widest">Moje poznámky</label><textarea id="notes-textarea" class="w-full h-48 bg-[#202225] text-white p-4 rounded-xl border border-white/5 outline-none focus:border-[#eb459e]/50 transition-all text-sm custom-scrollbar">${notes}</textarea></div>`;
-    const actions = `<button onclick="import('/js/modules/matura.js').then(m => m.saveNotes('${itemId}'))" class="bg-[#eb459e] hover:bg-[#d83c8d] text-white px-6 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition shadow-lg active:scale-95">Uložit poznámky</button>`;
+    const actions = `<button onclick="window.loadModule('matura').then(m => m.saveNotes('${itemId}'))" class="bg-[#eb459e] hover:bg-[#d83c8d] text-white px-6 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition shadow-lg active:scale-95">Uložit poznámky</button>`;
     document.body.insertAdjacentHTML('beforeend', renderModal({ id: 'notes-modal', title: 'Poznámky k tématu', subtitle: 'Společný whiteboard ✍️', content: modalHtml, actions: actions, onClose: "document.getElementById('notes-modal')?.remove()" }));
     document.getElementById('notes-modal').classList.remove('hidden');
     document.getElementById('notes-modal').classList.add('flex');

@@ -51,7 +51,7 @@ function renderHub(quizzes) {
 
     return `
     <!-- Create Button -->
-    <button onclick="import('./js/modules/coupleQuiz.js').then(m => m.startCreate())"
+    <button onclick="window.loadModule('coupleQuiz').then(m => m.startCreate())"
         class="w-full py-4 bg-gradient-to-r from-[#5865F2] to-[#eb459e] text-white font-black rounded-xl shadow-lg hover:shadow-[#5865F2]/30 transition transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 mb-2">
         <i class="fas fa-plus-circle"></i> Vytvořit nový kvíz
     </button>
@@ -93,7 +93,7 @@ function renderHub(quizzes) {
                         ? `<div class="bg-[#202225] rounded-lg p-3 text-center">
                             <p class="text-gray-400 text-xs">Již odpovězeno · Sdílej výsledky s partnerem</p>
                            </div>`
-                        : `<button onclick="import('./js/modules/coupleQuiz.js').then(m => m.startPlay('${quiz.id}'))"
+                        : `<button onclick="window.loadModule('coupleQuiz').then(m => m.startPlay('${quiz.id}'))"
                                 class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-2.5 rounded-lg font-bold text-sm transition">
                                 <i class="fas fa-play mr-2"></i> Odpovědět na kvíz
                            </button>`
@@ -123,7 +123,7 @@ function renderHub(quizzes) {
             <div class="bg-[#2f3136] rounded-xl border border-[#202225] shadow-md overflow-hidden mb-3 relative">
                 ${isDraft ? `<div class="absolute top-0 right-0 bg-[#faa61a] text-black text-[8px] font-black px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">Draft</div>` : ''}
                 <div class="p-4 flex items-center gap-4">
-                    <div class="flex-1 min-w-0 cursor-pointer" onclick="import('./js/modules/coupleQuiz.js').then(m => m.toggleHistory('${quiz.id}'))">
+                    <div class="flex-1 min-w-0 cursor-pointer" onclick="window.loadModule('coupleQuiz').then(m => m.toggleHistory('${quiz.id}'))">
                         <h3 class="font-bold text-white flex items-center gap-2 truncate">
                             ${quiz.title}
                             ${partnerAnswers.length > 1 ? `<span class="bg-[#5865F2]/20 text-[#5865F2] text-[9px] px-1.5 py-0.5 rounded shrink-0">${partnerAnswers.length} pokusy</span>` : ''}
@@ -138,11 +138,11 @@ function renderHub(quizzes) {
                         : `<span class="text-[10px] text-gray-500 italic shrink-0">${isDraft ? 'Koncept' : 'Čeká na partnera...'}</span>`
                     }
                     <div class="flex items-center gap-2 shrink-0">
-                        <button onclick="import('./js/modules/coupleQuiz.js').then(m => m.startEdit('${quiz.id}'))"
+                        <button onclick="window.loadModule('coupleQuiz').then(m => m.startEdit('${quiz.id}'))"
                             class="w-8 h-8 flex items-center justify-center bg-[#202225] text-gray-400 hover:text-[#5865F2] rounded-lg transition shadow-inner">
                             <i class="fas fa-edit text-xs"></i>
                         </button>
-                        <button onclick="import('./js/modules/coupleQuiz.js').then(m => m.deleteQuiz('${quiz.id}'))"
+                        <button onclick="window.loadModule('coupleQuiz').then(m => m.deleteQuiz('${quiz.id}'))"
                             class="w-8 h-8 flex items-center justify-center bg-[#202225] text-gray-400 hover:text-red-400 rounded-lg transition shadow-inner">
                             <i class="fas fa-trash text-xs"></i>
                         </button>
@@ -166,7 +166,7 @@ function renderHistory(quiz) {
                 <h3 class="text-[10px] font-black text-white uppercase tracking-wider">Historie pokusů</h3>
                 <p class="text-[9px] text-gray-400">${quiz.title}</p>
             </div>
-            <button onclick="import('./js/modules/coupleQuiz.js').then(m => m.toggleHistory(null))" 
+            <button onclick="window.loadModule('coupleQuiz').then(m => m.toggleHistory(null))" 
                 class="w-6 h-6 flex items-center justify-center rounded-full bg-[#202225] text-gray-500 hover:text-white transition">
                 <i class="fas fa-times text-[10px]"></i>
             </button>
@@ -211,14 +211,14 @@ function renderCreate() {
             <div>
                 <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Název kvízu</label>
                 <input type="text" id="quiz-title" placeholder="Co víš o mně?" maxlength="60" value="${quizTitle}"
-                    onchange="import('./js/modules/coupleQuiz.js').then(m => m.updateTitle(this.value))"
+                    onchange="window.loadModule('coupleQuiz').then(m => m.updateTitle(this.value))"
                     class="w-full bg-[#202225] text-white text-sm p-3 rounded-lg border border-[#202225] outline-none focus:border-[#5865F2] transition placeholder-gray-600">
             </div>
 
             <div>
                 <div class="flex items-center justify-between mb-2">
                     <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Otázky</label>
-                    <button onclick="import('./js/modules/coupleQuiz.js').then(m => m.addQuestion())"
+                    <button onclick="window.loadModule('coupleQuiz').then(m => m.addQuestion())"
                         class="text-[10px] bg-[#5865F2] text-white px-3 py-1 rounded font-bold hover:bg-[#4752c4] transition">
                         <i class="fas fa-plus mr-1"></i> Přidat otázku
                     </button>
@@ -234,12 +234,12 @@ function renderCreate() {
                             <div class="flex items-center justify-between mb-3">
                                 <div class="w-6 h-6 bg-[#5865F2] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">${i + 1}</div>
                                 <div class="flex items-center gap-2">
-                                    <button onclick="import('./js/modules/coupleQuiz.js').then(m => m.toggleQuestionType(${i}))"
+                                    <button onclick="window.loadModule('coupleQuiz').then(m => m.toggleQuestionType(${i}))"
                                         class="text-[9px] font-black px-2.5 py-1 rounded-md uppercase transition shadow-sm ${q.type === 'choice' ? 'bg-[#5865F2] text-white' : 'bg-[#36393f] text-gray-400 hover:text-white'}">
                                         <i class="fas ${q.type === 'choice' ? 'fa-th-large' : 'fa-font'} mr-1.5 opacity-70"></i>
                                         ${q.type === 'choice' ? 'Výběr' : 'Text'}
                                     </button>
-                                    <button onclick="import('./js/modules/coupleQuiz.js').then(m => m.removeQuestion(${i}))"
+                                    <button onclick="window.loadModule('coupleQuiz').then(m => m.removeQuestion(${i}))"
                                         class="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-full transition">
                                         <i class="fas fa-times text-xs"></i>
                                     </button>
@@ -248,7 +248,7 @@ function renderCreate() {
 
                             <div class="flex flex-col gap-3">
                                 <input type="text" value="${q.question}" placeholder="Tvá otázka..."
-                                    onchange="import('./js/modules/coupleQuiz.js').then(m => m.updateQuestion(${i}, 'question', this.value))"
+                                    onchange="window.loadModule('coupleQuiz').then(m => m.updateQuestion(${i}, 'question', this.value))"
                                     class="w-full bg-[#2f3136] text-white text-sm p-3 rounded border border-[#40444b] outline-none focus:border-[#5865F2] transition shadow-inner">
 
                                 ${q.type === 'choice' ? `
@@ -256,9 +256,9 @@ function renderCreate() {
                                         ${[0,1,2,3].map(optIdx => `
                                             <div class="relative group">
                                                 <input type="text" value="${q.options?.[optIdx] || ''}" placeholder="Možnost ${optIdx+1}"
-                                                    onchange="import('./js/modules/coupleQuiz.js').then(m => m.updateOption(${i}, ${optIdx}, this.value))"
+                                                    onchange="window.loadModule('coupleQuiz').then(m => m.updateOption(${i}, ${optIdx}, this.value))"
                                                     class="w-full bg-[#36393f] text-white text-xs p-2.5 rounded border ${q.correct_idx === optIdx ? 'border-[#3ba55c]' : 'border-[#40444b]'} outline-none focus:border-[#5865F2] transition">
-                                                <button onclick="import('./js/modules/coupleQuiz.js').then(m => m.setCorrectOption(${i}, ${optIdx}))"
+                                                <button onclick="window.loadModule('coupleQuiz').then(m => m.setCorrectOption(${i}, ${optIdx}))"
                                                     class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-[#40444b] ${q.correct_idx === optIdx ? 'bg-[#3ba55c] border-[#3ba55c]' : 'bg-transparent group-hover:border-gray-500'} transition flex items-center justify-center">
                                                     ${q.correct_idx === optIdx ? '<i class="fas fa-check text-[8px] text-white"></i>' : ''}
                                                 </button>
@@ -269,7 +269,7 @@ function renderCreate() {
                                 ` : `
                                     <div class="ml-9">
                                         <input type="text" value="${q.my_answer}" placeholder="Tvá správná odpověď..."
-                                            onchange="import('./js/modules/coupleQuiz.js').then(m => m.updateQuestion(${i}, 'my_answer', this.value))"
+                                            onchange="window.loadModule('coupleQuiz').then(m => m.updateQuestion(${i}, 'my_answer', this.value))"
                                             class="w-full bg-[#2f3136] text-[#3ba55c] text-sm p-2 rounded border border-[#40444b] outline-none focus:border-[#3ba55c] transition placeholder-gray-600">
                                         <p class="text-[10px] text-gray-600 mt-1">↑ Tuhle odpověď partner uvidí po vyhodnocení</p>
                                     </div>
@@ -281,16 +281,16 @@ function renderCreate() {
             </div>
 
             <div class="grid grid-cols-2 gap-3 pt-2">
-                <button onclick="import('./js/modules/coupleQuiz.js').then(m => m.saveQuiz(false))"
+                <button onclick="window.loadModule('coupleQuiz').then(m => m.saveQuiz(false))"
                     class="py-3 rounded-lg border border-[#202225] text-gray-400 hover:text-white hover:bg-[#36393f] transition font-bold text-sm">
                     Uložit jako koncept
                 </button>
-                <button onclick="import('./js/modules/coupleQuiz.js').then(m => m.saveQuiz(true))"
+                <button onclick="window.loadModule('coupleQuiz').then(m => m.saveQuiz(true))"
                     class="py-3 rounded-lg bg-[#5865F2] hover:bg-[#4752c4] text-white font-bold text-sm transition transform hover:scale-105 active:scale-95 shadow-lg">
                     <i class="fas fa-paper-plane mr-2"></i> Publikovat
                 </button>
             </div>
-            <button onclick="import('./js/modules/coupleQuiz.js').then(m => m.cancelCreate())"
+            <button onclick="window.loadModule('coupleQuiz').then(m => m.cancelCreate())"
                 class="w-full py-2 text-xs text-gray-500 hover:text-gray-400 transition underline">
                 Zrušit a odejít
             </button>
@@ -456,7 +456,7 @@ function renderPlayScreen() {
                         <div class="bg-gradient-to-r from-[#5865F2] to-[#eb459e] h-2 rounded-full transition-all duration-500" style="width: ${progress}%"></div>
                     </div>
                 </div>
-                <button onclick="import('./js/modules/coupleQuiz.js').then(m => m.renderCoupleQuiz())"
+                <button onclick="window.loadModule('coupleQuiz').then(m => m.renderCoupleQuiz())"
                     class="ml-4 w-8 h-8 flex items-center justify-center rounded-full bg-[#202225] text-gray-500 hover:text-white transition shrink-0"
                     title="Ukončit kvíz">
                     <i class="fas fa-times"></i>
@@ -476,7 +476,7 @@ function renderPlayScreen() {
                     ${q.type === 'choice' ? `
                         <div class="grid grid-cols-1 gap-3">
                             ${q.options.filter(o => o.trim()).map((opt, i) => `
-                                <button onclick="import('./js/modules/coupleQuiz.js').then(m => m.selectOption('${opt}'))"
+                                <button onclick="window.loadModule('coupleQuiz').then(m => m.selectOption('${opt}'))"
                                     class="w-full p-4 rounded-xl border border-[#40444b] bg-[#202225] text-white text-left hover:border-[#5865F2] hover:bg-[#5865F2]/10 transition flex items-center justify-between group">
                                     <span class="font-medium">${opt}</span>
                                     <div class="w-6 h-6 rounded-full border-2 border-[#40444b] group-hover:border-[#5865F2] flex items-center justify-center">
@@ -488,17 +488,17 @@ function renderPlayScreen() {
                     ` : `
                         <input type="text" id="quiz-answer-input" placeholder="Tvá odpověď..."
                             class="w-full bg-[#202225] text-white text-center text-lg p-4 rounded-xl border border-[#40444b] outline-none focus:border-[#5865F2] transition placeholder-gray-600"
-                            onkeydown="if(event.key==='Enter') import('./js/modules/coupleQuiz.js').then(m => m.nextQuestion())">
+                            onkeydown="if(event.key==='Enter') window.loadModule('coupleQuiz').then(m => m.nextQuestion())">
                     `}
                 </div>
 
                 <div class="flex gap-3">
                     ${currentQuestionIdx > 0 ? `
-                    <button onclick="import('./js/modules/coupleQuiz.js').then(m => m.prevQuestion())"
+                    <button onclick="window.loadModule('coupleQuiz').then(m => m.prevQuestion())"
                         class="flex-1 py-3 rounded-xl border border-[#202225] text-gray-400 hover:text-white hover:bg-[#36393f] transition font-bold">
                         <i class="fas fa-arrow-left mr-2"></i> Zpět
                     </button>` : ''}
-                    <button onclick="import('./js/modules/coupleQuiz.js').then(m => m.nextQuestion())"
+                    <button onclick="window.loadModule('coupleQuiz').then(m => m.nextQuestion())"
                         class="flex-1 py-3 rounded-xl bg-[#5865F2] hover:bg-[#4752c4] text-white font-bold transition transform hover:scale-105 active:scale-95 shadow-lg">
                         ${currentQuestionIdx < total - 1 ? 'Další <i class="fas fa-arrow-right ml-2"></i>' : 'Vyhodnotit <i class="fas fa-check ml-2"></i>'}
                     </button>
@@ -621,7 +621,7 @@ function renderResults(score, total) {
             }).join('')}
         </div>
 
-        <button onclick="import('./js/modules/coupleQuiz.js').then(m => m.renderCoupleQuiz())"
+        <button onclick="window.loadModule('coupleQuiz').then(m => m.renderCoupleQuiz())"
             class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-8 py-3 rounded-xl font-bold transition transform hover:scale-105 shadow-lg">
             <i class="fas fa-home mr-2"></i> Zpět na kvízy
         </button>

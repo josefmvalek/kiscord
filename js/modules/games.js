@@ -198,7 +198,7 @@ export function renderPuzzleGame(selectedImage = null) {
     const currentImageSrc = selectedImage || (puzzleImages.length > 0 ? puzzleImages[0].src : getAssetUrl('puzzle_original'));
 
     const galleryHtml = puzzleImages.map(img =>
-        `<div onclick="import('./js/modules/games.js').then(m => m.renderPuzzleGame('${img.src}'))" 
+        `<div onclick="window.loadModule('games').then(m => m.renderPuzzleGame('${img.src}'))" 
             class="flex-shrink-0 cursor-pointer border-2 ${img.src === currentImageSrc ? 'border-[#ff69b4]' : 'border-transparent'} rounded overflow-hidden hover:scale-105 transition w-16 h-16 bg-black/20">
           <img src="${img.src}" class="w-full h-full object-cover opacity-80 hover:opacity-100" onerror="this.parentElement.style.display='none'">
        </div>`
@@ -227,16 +227,16 @@ export function renderPuzzleGame(selectedImage = null) {
           </div>
           
           <div class="mt-6 flex flex-wrap gap-4 justify-center">
-             <button onclick="import('./js/modules/games.js').then(m => m.renderPuzzleGame('${currentImageSrc}'))" class="bg-[#ff1493] hover:bg-[#ff0080] text-white px-6 py-2.5 rounded-full font-bold shadow-lg transition transform hover:scale-105 flex items-center gap-2">
+             <button onclick="window.loadModule('games').then(m => m.renderPuzzleGame('${currentImageSrc}'))" class="bg-[#ff1493] hover:bg-[#ff0080] text-white px-6 py-2.5 rounded-full font-bold shadow-lg transition transform hover:scale-105 flex items-center gap-2">
                  <i class="fas fa-undo"></i> Restart
              </button>
-             <button onclick="import('./js/modules/games.js').then(m => m.showPuzzleGallery())" class="bg-[#ff69b4] hover:bg-[#ff1493] text-white px-6 py-2.5 rounded-full font-bold shadow-lg transition transform hover:scale-105 flex items-center gap-2">
+             <button onclick="window.loadModule('games').then(m => m.showPuzzleGallery())" class="bg-[#ff69b4] hover:bg-[#ff1493] text-white px-6 py-2.5 rounded-full font-bold shadow-lg transition transform hover:scale-105 flex items-center gap-2">
                  <i class="fas fa-images"></i> Galerie
              </button>
              <button onclick="document.getElementById('puzzle-upload-input').click()" class="bg-white/10 hover:bg-white/20 text-white px-6 py-2.5 rounded-full font-bold border border-white/20 transition flex items-center gap-2">
                  <i class="fas fa-upload"></i> Nahrát
              </button>
-             <input type="file" id="puzzle-upload-input" class="hidden" accept="image/*" onchange="import('./js/modules/games.js').then(m => m.uploadPuzzleImage(this.files[0]))">
+             <input type="file" id="puzzle-upload-input" class="hidden" accept="image/*" onchange="window.loadModule('games').then(m => m.uploadPuzzleImage(this.files[0]))">
              <button onclick="window.switchChannel('dashboard')" class="bg-transparent hover:text-white text-gray-400 px-4 py-2.5 rounded-full font-bold transition">
                  Zpět
              </button>
@@ -313,13 +313,13 @@ export async function showPuzzleGallery() {
                 <div class="flex-1 overflow-y-auto custom-scrollbar puzzle-gallery-grid">
                     ${puzzleImages.map(img => `
                         <div class="puzzle-card relative cursor-pointer group" 
-                             onclick="import('./js/modules/games.js').then(m => { m.renderPuzzleGame('${img.src}'); document.getElementById('puzzle-gallery-modal').remove(); })">
+                             onclick="window.loadModule('games').then(m => { m.renderPuzzleGame('${img.src}'); document.getElementById('puzzle-gallery-modal').remove(); })">
                              <img src="${img.src}" class="w-full h-full object-cover" onerror="this.parentElement.style.display='none'">
                              <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2 pointer-events-none">
                                 <span class="text-[10px] text-white font-bold truncate">${img.name || 'Vzpomínka'}</span>
                              </div>
                              ${img.isDeletable ? `
-                                <button onclick="event.stopPropagation(); import('./js/modules/games.js').then(m => m.deletePuzzleImage('${img.id}', '${img.src}'))" 
+                                <button onclick="event.stopPropagation(); window.loadModule('games').then(m => m.deletePuzzleImage('${img.id}', '${img.src}'))" 
                                         class="absolute top-1 right-1 w-6 h-6 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center shadow-lg transition-all transform hover:scale-110 z-20" title="Smazat">
                                     <i class="fas fa-trash-alt text-[10px]"></i>
                                 </button>

@@ -39,7 +39,7 @@ function renderGalleryContent(drawings) {
             <!-- Header -->
             <div class="p-6 bg-[#2f3136] border-b border-[#202225] flex items-center justify-between shadow-lg z-10">
                 <div class="flex items-center gap-4">
-                    <button onclick="import('./js/modules/gameDraw.js').then(m => m.renderGameDraw())" class="w-10 h-10 flex items-center justify-center rounded-full bg-[#36393f] text-gray-400 hover:text-white hover:bg-[#4f545c] transition">
+                    <button onclick="window.loadModule('gameDraw').then(m => m.renderGameDraw())" class="w-10 h-10 flex items-center justify-center rounded-full bg-[#36393f] text-gray-400 hover:text-white hover:bg-[#4f545c] transition">
                         <i class="fas fa-arrow-left"></i>
                     </button>
                     <div>
@@ -67,7 +67,7 @@ function renderGalleryContent(drawings) {
                         ${drawings.map(d => `
                             <div class="group bg-[#2f3136] rounded-2xl overflow-hidden border border-[#202225] hover:border-[#eb459e]/50 transition-all duration-300 shadow-lg hover:shadow-[#eb459e]/10 flex flex-col">
                                 <!-- Thumbnail -->
-                                <div class="aspect-square bg-white relative overflow-hidden cursor-pointer" onclick="import('./js/modules/drawGallery.js').then(m => m.viewFullImage('${d.thumbnail}', '${d.title.replace(/'/g, "\\'")}'))">
+                                <div class="aspect-square bg-white relative overflow-hidden cursor-pointer" onclick="window.loadModule('drawGallery').then(m => m.viewFullImage('${d.thumbnail}', '${d.title.replace(/'/g, "\\'")}'))">
                                     <img src="${d.thumbnail}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500">
                                     <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                                         <i class="fas fa-search-plus text-white text-3xl"></i>
@@ -78,13 +78,13 @@ function renderGalleryContent(drawings) {
                                 <div class="p-4 flex flex-col gap-1">
                                     <div class="flex items-center justify-between">
                                         <h3 class="text-white font-bold truncate pr-2">${d.title || 'Bez názvu'}</h3>
-                                        <button onclick="import('./js/modules/drawGallery.js').then(m => m.deleteDrawing('${d.id}'))" class="text-gray-600 hover:text-red-400 p-1 transition">
+                                        <button onclick="window.loadModule('drawGallery').then(m => m.deleteDrawing('${d.id}'))" class="text-gray-600 hover:text-red-400 p-1 transition">
                                             <i class="fas fa-trash-alt text-xs"></i>
                                         </button>
                                     </div>
                                     <div class="flex items-center justify-between mt-2">
                                         <span class="text-[10px] text-gray-500 font-bold uppercase">${new Date(d.created_at).toLocaleDateString('cs-CZ')}</span>
-                                        <button onclick="import('./js/modules/drawGallery.js').then(m => m.pinDrawing('${d.id}'))" class="text-[10px] px-2 py-0.5 bg-[#5865F2]/10 text-[#5865F2] rounded-full font-bold hover:bg-[#5865F2] hover:text-white transition" title="Připnout na Dashboard">
+                                        <button onclick="window.loadModule('drawGallery').then(m => m.pinDrawing('${d.id}'))" class="text-[10px] px-2 py-0.5 bg-[#5865F2]/10 text-[#5865F2] rounded-full font-bold hover:bg-[#5865F2] hover:text-white transition" title="Připnout na Dashboard">
                                             PIN
                                         </button>
                                     </div>

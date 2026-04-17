@@ -130,7 +130,7 @@ export function renderInputGroup({ label, id, type = 'text', placeholder = '', v
  */
 export function renderErrorState({ message = 'Něco se nepovedlo...', onRetry = '', containerId = '' }) {
     const retryIcon = 'fas fa-redo-alt';
-    const retryOnClick = onRetry ? `import('./js/core/utils.js').then(u => { u.triggerHaptic('light'); ${onRetry} })` : '';
+    const retryOnClick = onRetry ? `window.loadModule('utils').then(u => { u.triggerHaptic('light'); ${onRetry} })` : '';
 
     return `
         <div class="flex flex-col items-center justify-center py-20 px-6 text-center animate-fade-in group w-full">

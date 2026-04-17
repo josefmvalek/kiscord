@@ -36,7 +36,7 @@ export function ensureProfileModal() {
                     <i class="fas fa-history"></i> Obnovit data (z JSON)
                 </button>
 
-                <button onclick="import('./js/core/auth.js').then(m => m.signOut())"
+                <button onclick="window.loadModule('auth').then(m => m.signOut())"
                     class="w-full mt-2 bg-[#ed4245]/10 hover:bg-[#ed4245] text-[#ed4245] hover:text-white py-2 rounded text-xs font-bold transition border border-[#ed4245]/20 flex items-center justify-center gap-2">
                     <i class="fas fa-sign-out-alt"></i> Odhlásit se
                 </button>

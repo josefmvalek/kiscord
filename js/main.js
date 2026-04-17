@@ -703,6 +703,62 @@ function toggleMobileMenu() {
 
 // --- GLOBALS EXPOSURE ---
 
+window.loadModule = (name) => {
+    switch(name) {
+        // Core
+        case 'ai_helper': return import('./core/ai_helper.js');
+        case 'auth': return import('./core/auth.js');
+        case 'loader': return import('./core/loader.js');
+        case 'migration': return import('./migration.js');
+        case 'notifications': return import('./core/notifications.js');
+        case 'offline': return import('./core/offline.js');
+        case 'state': return import('./core/state.js');
+        case 'supabase': return import('./core/supabase.js');
+        case 'sync': return import('./core/sync.js');
+        case 'theme': return import('./core/theme.js');
+        case 'ui': return import('./core/ui.js');
+        case 'utils': return import('./core/utils.js');
+        // Modules
+        case 'achievements': return import('./modules/achievements.js');
+        case 'bucketlist': return import('./modules/bucketlist.js');
+        case 'calendar': return import('./modules/calendar.js');
+        case 'confession': return import('./modules/confession.js');
+        case 'coupleQuiz': return import('./modules/coupleQuiz.js');
+        case 'dailyQuestions': return import('./modules/dailyQuestions.js');
+        case 'dashboard': return import('./modules/dashboard.js');
+        case 'drawGallery': return import('./modules/drawGallery.js');
+        case 'flashcards': return import('./modules/flashcards.js');
+        case 'funfacts': return import('./modules/funfacts.js');
+        case 'gameDraw': return import('./modules/gameDraw.js');
+        case 'gameWho': return import('./modules/gameWho.js');
+        case 'games': return import('./modules/games.js');
+        case 'gamesHub': return import('./modules/gamesHub.js');
+        case 'health': return import('./modules/health.js');
+        case 'health_ui': return import('./modules/dashboard/health_ui.js');
+        case 'highlighter': return import('./modules/highlighter.js');
+        case 'letters': return import('./modules/letters.js');
+        case 'library': return import('./modules/library.js');
+        case 'map': return import('./modules/map.js');
+        case 'matura': return import('./modules/matura.js');
+        case 'profile': return import('./modules/profile.js');
+        case 'progress': return import('./modules/progress.js');
+        case 'quests': return import('./modules/quests.js');
+        case 'quiz': return import('./modules/quiz.js');
+        case 'regenerace': return import('./modules/regenerace.js');
+        case 'restore': return import('./modules/restore.js');
+        case 'search': return import('./modules/search.js');
+        case 'settings': return import('./modules/settings.js');
+        case 'spaced_repetition': return import('./modules/spaced_repetition.js');
+        case 'stats': return import('./modules/stats.js');
+        case 'tierlist': return import('./modules/tierlist.js');
+        case 'timeline': return import('./modules/timeline.js');
+        case 'topics': return import('./modules/topics.js');
+        // cache-buster: force reload to purge the temporary loop bug
+        case 'watchlist': return import('./modules/watchlist.js');
+        default: console.error('Unknown loadModule request:', name); return Promise.reject(new Error('Module not found'));
+    }
+};
+
 function exposeGlobals() {
     window.switchChannel = switchChannel;
     window.triggerConfetti = triggerConfetti;

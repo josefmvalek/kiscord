@@ -45,10 +45,10 @@ export function renderGlobalSearch(query) {
             </div>
             <input type="text" id="global-search-input"
                 value="${query}"
-                oninput="import('/js/modules/matura.js').then(m => m.handleMaturaSearch(this.value))"
+                oninput="window.loadModule('matura').then(m => m.handleMaturaSearch(this.value))"
                 placeholder="Hledat v tématech..." 
                 class="w-full bg-[var(--bg-secondary)] border border-white/5 group-hover:border-white/10 focus:border-[#5865F2]/50 focus:ring-4 focus:ring-[#5865F2]/10 rounded-2xl py-4 pl-12 pr-6 text-sm text-[var(--text-header)] placeholder-gray-500 outline-none transition-all shadow-xl font-bold tracking-tight">
-            <button onclick="import('/js/modules/matura.js').then(m => m.handleMaturaSearch(''))" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition">
+            <button onclick="window.loadModule('matura').then(m => m.handleMaturaSearch(''))" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -63,7 +63,7 @@ export function renderGlobalSearch(query) {
               <div class="flex flex-col items-center justify-center py-20 text-gray-500">
                   <i class="fas fa-search text-4xl mb-4 opacity-50"></i>
                   <p>Žádné maturitní téma pro "<strong>${query}</strong>" nenalezeno... 😢</p>
-                  <button onclick="import('/js/modules/matura.js').then(m => m.handleMaturaSearch(''))" class="mt-4 text-[#5865F2] hover:underline font-bold uppercase text-[10px] tracking-widest">Smazat a vrátit se</button>
+                  <button onclick="window.loadModule('matura').then(m => m.handleMaturaSearch(''))" class="mt-4 text-[#5865F2] hover:underline font-bold uppercase text-[10px] tracking-widest">Smazat a vrátit se</button>
               </div>
           </div>`;
         container.innerHTML = html;
@@ -83,7 +83,7 @@ export function renderGlobalSearch(query) {
     foundMatura.forEach(topic => {
         html += `
           <div class="bg-[#2f3136] p-4 rounded-2xl border border-white/5 hover:border-[#5865F2] transition-all shadow-xl cursor-pointer flex gap-4 items-center group relative overflow-hidden"
-               onclick="import('/js/modules/matura.js').then(m => m.openKnowledgeBase('${topic.id}'))">
+               onclick="window.loadModule('matura').then(m => m.openKnowledgeBase('${topic.id}'))">
               <div class="text-3xl transform group-hover:scale-110 transition duration-300 transform-gpu">${topic.icon}</div>
               <div class="flex-1 min-w-0">
                   <div class="text-[9px] font-black uppercase text-[#5865F2] tracking-widest mb-0.5 opacity-60">${topic.cat || 'Ostatní'}</div>

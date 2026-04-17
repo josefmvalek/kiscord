@@ -113,7 +113,7 @@ function renderModal() {
             <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest" id="fc-progress">Kartička 1 / ${cards.length}</span>
             <div class="flex gap-2">
                 ${!isCompetitive ? `
-                    <button id="duel-btn" onclick="import('./js/modules/flashcards.js').then(m => m.startDuel())" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition border border-amber-500/20 flex items-center gap-2">
+                    <button id="duel-btn" onclick="window.loadModule('flashcards').then(m => m.startDuel())" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition border border-amber-500/20 flex items-center gap-2">
                         <i class="fas fa-swords"></i> Duel ⚔️
                     </button>
                 ` : ''}

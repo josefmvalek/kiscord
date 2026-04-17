@@ -16,7 +16,7 @@ export async function renderList(container, categoryId) {
                     <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Okruhy k maturitní zkoušce</p>
                 </div>
                 <div class="flex items-center gap-2">
-                     <button onclick="import('/js/modules/matura.js').then(m => m.addNewTopic('${categoryId}'))" 
+                     <button onclick="window.loadModule('matura').then(m => m.addNewTopic('${categoryId}'))" 
                              class="bg-white/5 hover:bg-white/10 text-gray-400 p-3 rounded-xl border border-white/5 transition" title="Přidat téma">
                          <i class="fas fa-plus"></i>
                      </button>
@@ -62,16 +62,16 @@ function renderTopicCard(item, isJozka) {
 
             <div class="flex items-center justify-between gap-2 mt-auto pt-4 border-t border-white/5">
                 <div class="flex items-center gap-1">
-                    <button onclick="import('/js/modules/matura.js').then(m => m.openKnowledgeBase('${item.id}'))" 
+                    <button onclick="window.loadModule('matura').then(m => m.openKnowledgeBase('${item.id}'))" 
                             class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition flex items-center gap-2">
                         <i class="fas fa-book-open"></i> Studovat
                     </button>
-                    <button onclick="import('/js/modules/matura.js').then(m => m.cycleStatus('${item.id}', this))" 
+                    <button onclick="window.loadModule('matura').then(m => m.cycleStatus('${item.id}', this))" 
                             class="bg-white/5 hover:bg-white/10 text-gray-400 p-2 rounded-xl border border-white/5 transition tooltip" data-tip="Změnit stav">
                         <i class="fas fa-check-circle"></i>
                     </button>
                 </div>
-                <button onclick="import('/js/modules/matura.js').then(m => m.showScheduleMenu('${item.id}', this))"
+                <button onclick="window.loadModule('matura').then(m => m.showScheduleMenu('${item.id}', this))"
                         class="text-gray-600 hover:text-[#eb459e] p-2 transition-colors">
                     <i class="fas fa-calendar-plus text-xs"></i>
                 </button>

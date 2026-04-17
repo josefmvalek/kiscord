@@ -106,7 +106,7 @@ function renderQuestion() {
         if (result) {
             const isLast = currentIndex + 1 >= quizData.length;
             footerCenter.innerHTML = `
-                <button onclick="import('/js/modules/quiz.js').then(m => m.nextQuestion())"
+                <button onclick="window.loadModule('quiz').then(m => m.nextQuestion())"
                         class="${isLast ? 'bg-[#eb459e] border-[#eb459e]' : 'bg-[#5865F2] border-[#5865F2]'} hover:brightness-110 text-white px-6 md:px-10 py-2.5 rounded-xl border font-black uppercase text-[10px] tracking-widest transition-all shadow-lg flex items-center gap-2 animate-pop-in">
                     <span class="hidden xs:inline">${isLast ? 'Zobrazit výsledky' : 'Další otázka'}</span>
                     <span class="xs:hidden">${isLast ? 'Výsledek' : 'Další'}</span>
@@ -122,7 +122,7 @@ function renderQuestion() {
         footerLeft.innerHTML = `
             <div class="flex items-center gap-2">
                 ${currentIndex > 0 ? `
-                    <button onclick="import('/js/modules/quiz.js').then(m => m.prevQuestion())" 
+                    <button onclick="window.loadModule('quiz').then(m => m.prevQuestion())" 
                             class="bg-white/5 hover:bg-white/10 text-gray-400 p-2 rounded-lg transition" title="Předchozí otázka">
                         <i class="fas fa-arrow-left text-[10px]"></i>
                     </button>
@@ -185,7 +185,7 @@ function renderQuestion() {
                     }
 
                     return `
-                        <button onclick="import('/js/modules/quiz.js').then(m => m.handleAnswer(${i}))" class="${classes}">
+                        <button onclick="window.loadModule('quiz').then(m => m.handleAnswer(${i}))" class="${classes}">
                             <div class="${letterClasses}">
                                 ${String.fromCharCode(65 + i)}
                             </div>
@@ -266,7 +266,7 @@ export function handleAnswer(index) {
     if (footerCenter) {
         const isLast = currentIndex + 1 >= quizData.length;
         footerCenter.innerHTML = `
-            <button onclick="import('/js/modules/quiz.js').then(m => m.nextQuestion())"
+            <button onclick="window.loadModule('quiz').then(m => m.nextQuestion())"
                     class="${isLast ? 'bg-[#eb459e] border-[#eb459e]' : 'bg-[#5865F2] border-[#5865F2]'} hover:brightness-110 text-white px-6 md:px-10 py-2.5 rounded-xl border font-black uppercase text-[10px] tracking-widest transition-all shadow-lg flex items-center gap-2 animate-pop-in">
                 <span class="hidden xs:inline">${isLast ? 'Zobrazit výsledky' : 'Další otázka'}</span>
                 <span class="xs:hidden">${isLast ? 'Výsledek' : 'Další'}</span>
@@ -346,7 +346,7 @@ function showSummary() {
                          class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-4 rounded-2xl font-black uppercase tracking-widest transition shadow-xl active:scale-95">
                     Zavřít test
                  </button>
-                 <button onclick="import('/js/modules/quiz.js').then(m => m.restartQuiz())" 
+                 <button onclick="window.loadModule('quiz').then(m => m.restartQuiz())" 
                          class="w-full bg-white/5 hover:bg-white/10 text-gray-400 py-3 rounded-xl font-bold uppercase text-[10px] tracking-widest transition">
                     Zkusit znovu
                  </button>

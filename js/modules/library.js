@@ -182,7 +182,7 @@ export function renderLibrary(category) {
                 <p class="text-sm text-gray-400 mb-8 max-w-xs leading-relaxed">
                     Nepodařilo se načíst obsah knihovny. Zkusíme to znovu?
                 </p>
-                <button onclick="import('./js/core/state.js').then(async m => { await m.initializeState(); import('./js/modules/library.js').then(l => l.renderLibrary('${category}')); }); triggerHaptic('light')" 
+                <button onclick="window.loadModule('state').then(async m => { await m.initializeState(); window.loadModule('library').then(l => l.renderLibrary('${category}')); }); triggerHaptic('light')" 
                         class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-8 py-3 rounded-xl font-black uppercase tracking-widest transition-all transform hover:scale-105 active:scale-95 shadow-xl flex items-center gap-3">
                     <i class="fas fa-sync-alt"></i>
                     Zkusit znovu
@@ -266,13 +266,13 @@ export function renderLibrary(category) {
                   <div class="library-card group relative bg-[#2f3136] rounded-xl overflow-hidden border border-[#202225] hover:border-[#5865F2] transition-all shadow-lg flex flex-col">
                       ${statusBadge}
 
-                      <button onclick="event.stopPropagation(); import('./js/modules/library.js').then(m => m.toggleWatchlist(${item.id}))" 
+                      <button onclick="event.stopPropagation(); window.loadModule('library').then(m => m.toggleWatchlist(${item.id}))" 
                               class="absolute top-2 right-2 z-20 w-8 h-8 rounded-full bg-black/50 backdrop-blur hover:bg-[#eb459e] flex items-center justify-center transition ${isBookmarked ? "text-[#eb459e] bg-white/10" : "text-gray-400"}">
                           <i class="${isBookmarked ? "fas" : "far"} fa-heart"></i>
                       </button>
 
                       <div class="poster-area h-40 bg-[#202225] flex items-center justify-center text-5xl group-hover:scale-105 transition-transform duration-500 relative cursor-pointer" 
-                           onclick="import('./js/modules/library.js').then(m => m.openHistoryModal(${item.id}))">
+                           onclick="window.loadModule('library').then(m => m.openHistoryModal(${item.id}))">
                           ${item.icon}
                           ${item.trailer ? '<div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fas fa-play text-white/80 text-3xl drop-shadow-lg"></i></div>' : ""}
                       </div>
@@ -287,11 +287,11 @@ export function renderLibrary(category) {
                     ? `<button onclick="event.stopPropagation(); Library.playTrailer('${safeTrailer}')" class="text-gray-400 hover:text-[#ff0000] p-1.5 rounded transition"><i class="fab fa-youtube"></i></button>`
                     : `<div class="w-6"></div>`
                 }
-                              <button onclick="event.stopPropagation(); import('./js/modules/library.js').then(m => m.openPlanningModal('${safeTitle}', '${itemType}'))" class="text-gray-400 hover:text-[#5865F2] p-1.5 rounded transition" title="Naplánovat"><i class="far fa-calendar-plus"></i></button>
+                              <button onclick="event.stopPropagation(); window.loadModule('library').then(m => m.openPlanningModal('${safeTitle}', '${itemType}'))" class="text-gray-400 hover:text-[#5865F2] p-1.5 rounded transition" title="Naplánovat"><i class="far fa-calendar-plus"></i></button>
 
-                              <button onclick="event.stopPropagation(); import('./js/modules/library.js').then(m => m.openDownloadModal('${safeMagnet}', '${safeGdrive}'))" class="text-gray-400 hover:text-[#3ba55c] p-1.5 rounded transition"><i class="fas fa-cloud-download-alt"></i></button>
+                              <button onclick="event.stopPropagation(); window.loadModule('library').then(m => m.openDownloadModal('${safeMagnet}', '${safeGdrive}'))" class="text-gray-400 hover:text-[#3ba55c] p-1.5 rounded transition"><i class="fas fa-cloud-download-alt"></i></button>
 
-                              <button onclick="event.stopPropagation(); import('./js/modules/library.js').then(m => m.openHistoryModal(${item.id}))" class="${userRating > 0 ? "text-[#faa61a]" : "text-gray-400"} hover:text-white p-1.5 rounded transition"><i class="${userRating > 0 ? "fas" : "far"} fa-star"></i></button>
+                              <button onclick="event.stopPropagation(); window.loadModule('library').then(m => m.openHistoryModal(${item.id}))" class="${userRating > 0 ? "text-[#faa61a]" : "text-gray-400"} hover:text-white p-1.5 rounded transition"><i class="${userRating > 0 ? "fas" : "far"} fa-star"></i></button>
                           </div>
                       </div>
                   </div>`;
@@ -721,7 +721,7 @@ export function renderUpgrade() {
                                   <span class="font-bold text-[var(--text-header)]">Jožka</span>
                                   <span class="text-xs text-[var(--interactive-normal)]">Pinned</span>
                               </div>
-                              <div onclick="import('./js/modules/library.js').then(m => m.startConfession())" class="mt-4 bg-[#2f3136] border border-[#292b2f] rounded p-3 flex items-center gap-3 w-full max-w-sm cursor-pointer hover:bg-[#36393f] transition group">
+                              <div onclick="window.loadModule('library').then(m => m.startConfession())" class="mt-4 bg-[#2f3136] border border-[#292b2f] rounded p-3 flex items-center gap-3 w-full max-w-sm cursor-pointer hover:bg-[#36393f] transition group">
                                   <div class="file-icon-wrapper w-10 h-10 flex items-center justify-center text-4xl text-[#5865F2]">
                                       <i class="fas fa-file-code"></i>
                                   </div>

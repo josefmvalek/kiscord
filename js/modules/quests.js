@@ -24,7 +24,7 @@ export async function renderQuests() {
                     </h2>
                     <div class="flex gap-2">
                         ${isJosef(state.currentUser) ? `
-                            <button onclick="import('./js/modules/quests.js').then(m => m.showAddQuestModal())" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-3 py-2 rounded-lg transition-all font-bold text-sm flex items-center gap-2">
+                            <button onclick="window.loadModule('quests').then(m => m.showAddQuestModal())" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-3 py-2 rounded-lg transition-all font-bold text-sm flex items-center gap-2">
                                 <i class="fas fa-plus"></i> Nová mise
                             </button>
                         ` : ''}
@@ -125,7 +125,7 @@ async function fetchQuestProgress() {
             grid.classList.remove('hidden');
             grid.innerHTML = window.renderErrorState({
                 message: "Nepodařilo se mi spočítat vaše questy. Zkus to prosím znovu.",
-                onRetry: "import('./js/modules/quests.js').then(m => m.renderQuests())"
+                onRetry: "window.loadModule('quests').then(m => m.renderQuests())"
             });
         }
     }
@@ -254,7 +254,7 @@ export function showAddQuestModal() {
 
     const modalActions = renderButton({
         text: 'VYTVOŘIT MISI ⚔️',
-        onclick: "import('./js/modules/quests.js').then(m => m.saveNewQuest())",
+        onclick: "window.loadModule('quests').then(m => m.saveNewQuest())",
         className: 'w-full py-4 text-lg'
     });
 

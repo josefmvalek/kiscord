@@ -18,7 +18,7 @@ function ensureModals() {
                     <div class="flex gap-2">
                         <div class="w-3 h-3 bg-gray-400"></div>
                         <div class="w-3 h-3 bg-gray-400"></div>
-                        <div class="w-3 h-3 bg-red-500 cursor-pointer" onclick="import('./js/modules/confession.js').then(m => m.closeModal('confession-modal'))"></div>
+                        <div class="w-3 h-3 bg-red-500 cursor-pointer" onclick="window.loadModule('confession').then(m => m.closeModal('confession-modal'))"></div>
                     </div>
                 </div>
                 <div class="cmd-body" id="terminal-body">
@@ -38,16 +38,16 @@ function ensureModals() {
         finalModal.className = "fixed inset-0 z-[100] hidden modal-backdrop items-center justify-center p-4";
         finalModal.innerHTML = `
             <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-md border border-[#5865F2]/30 overflow-hidden relative animate-fade-in" id="final-modal-box">
-                <button onclick="import('./js/modules/confession.js').then(m => m.closeModal('final-confession-modal'))" class="absolute top-5 right-5 text-gray-400 hover:text-white transition-all w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10">
+                <button onclick="window.loadModule('confession').then(m => m.closeModal('final-confession-modal'))" class="absolute top-5 right-5 text-gray-400 hover:text-white transition-all w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10">
                     <i class="fas fa-times text-lg"></i>
                 </button>
                 <div class="p-10 text-center" id="final-modal-content">
                     <div id="typing-container" class="text-gray-200 mb-8 text-left space-y-4 leading-relaxed min-h-[200px] mt-8 text-lg font-medium italic"></div>
                     <div id="confession-buttons" class="space-y-4 hidden animate-slide-up">
-                        <button onclick="import('./js/modules/confession.js').then(m => m.responseYes())" class="w-full bg-gradient-to-r from-[#eb459e] to-[#5865F2] hover:opacity-90 text-white py-4 rounded-xl font-bold text-lg transition shadow-xl active:scale-95">
+                        <button onclick="window.loadModule('confession').then(m => m.responseYes())" class="w-full bg-gradient-to-r from-[#eb459e] to-[#5865F2] hover:opacity-90 text-white py-4 rounded-xl font-bold text-lg transition shadow-xl active:scale-95">
                             Ano, pojďme to zkusit <i class="fas fa-heart ml-2"></i>
                         </button>
-                        <button onclick="import('./js/modules/confession.js').then(m => m.responseNo())" class="w-full text-gray-500 hover:text-white py-2 font-bold transition text-xs uppercase tracking-widest">
+                        <button onclick="window.loadModule('confession').then(m => m.responseNo())" class="w-full text-gray-500 hover:text-white py-2 font-bold transition text-xs uppercase tracking-widest">
                             Zůstaňme kamarádi
                         </button>
                     </div>
@@ -179,10 +179,10 @@ function showFinalTypewriter() {
     finalModalContent.innerHTML = `
         <div id="typing-container" class="text-gray-300 mb-8 text-left space-y-4 leading-relaxed min-h-[200px] mt-8"></div>
         <div id="confession-buttons" class="space-y-3 hidden">
-            <button onclick="import('./js/modules/confession.js').then(m => m.responseYes())" class="w-full bg-gradient-to-r from-[#eb459e] to-[#5865F2] hover:opacity-90 text-white py-4 rounded-lg font-bold text-lg transition shadow-lg flex items-center justify-center gap-2">
+            <button onclick="window.loadModule('confession').then(m => m.responseYes())" class="w-full bg-gradient-to-r from-[#eb459e] to-[#5865F2] hover:opacity-90 text-white py-4 rounded-lg font-bold text-lg transition shadow-lg flex items-center justify-center gap-2">
                 Ano, pojďme to zkusit <i class="fas fa-heart"></i>
             </button>
-            <button onclick="import('./js/modules/confession.js').then(m => m.responseNo())" class="w-full bg-[#4f545c] hover:bg-[#5d6269] text-white py-3 rounded-lg transition font-medium">
+            <button onclick="window.loadModule('confession').then(m => m.responseNo())" class="w-full bg-[#4f545c] hover:bg-[#5d6269] text-white py-3 rounded-lg transition font-medium">
                 Zůstaňme kamarádi
             </button>
         </div>
@@ -290,7 +290,7 @@ export function responseYes() {
                 Těším se na všechno, co nás čeká.
             </p>
             <div class="space-y-3">
-                <button onclick="import('./js/modules/confession.js').then(m => m.closeModal('final-confession-modal')); window.switchChannel('dateplanner');" class="w-full bg-gradient-to-r from-[#eb459e] to-[#5865F2] hover:opacity-90 text-white py-4 rounded-xl font-bold text-xl shadow-lg transition transform hover:scale-105 active:scale-95">
+                <button onclick="window.loadModule('confession').then(m => m.closeModal('final-confession-modal')); window.switchChannel('dateplanner');" class="w-full bg-gradient-to-r from-[#eb459e] to-[#5865F2] hover:opacity-90 text-white py-4 rounded-xl font-bold text-xl shadow-lg transition transform hover:scale-105 active:scale-95">
                     Naplánovat první rande 🥂
                 </button>
             </div>
@@ -313,7 +313,7 @@ export function responseNo() {
                 <br><br>
                 Nic se nemění – dál budeme yappovat o teoriích a hrát Tetris. 😊
             </p>
-            <button onclick="import('./js/modules/confession.js').then(m => m.closeModal('final-confession-modal'))" class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-3 rounded-xl font-bold transition">
+            <button onclick="window.loadModule('confession').then(m => m.closeModal('final-confession-modal'))" class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-3 rounded-xl font-bold transition">
                 Zpět na server
             </button>
         </div>

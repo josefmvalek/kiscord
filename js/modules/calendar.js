@@ -50,7 +50,7 @@ export function renderCalendar(year = null, month = null) {
     if (state.loadError) {
         container.innerHTML = window.renderErrorState({
             message: "Nepodařilo se mi načíst tvé plány a události. Zkusíme to znovu rozmrazit?",
-            onRetry: "import('./js/core/state.js').then(async m => { await m.initializeState(); Calendar.renderCalendar(); })"
+            onRetry: "window.loadModule('state').then(async m => { await m.initializeState(); Calendar.renderCalendar(); })"
         });
         return;
     }

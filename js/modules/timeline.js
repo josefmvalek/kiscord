@@ -327,7 +327,7 @@ export async function renderTimeline() {
                             <div class="text-xs text-[#8e9297] flex items-center gap-2 mt-0.5">
                                 ${dateStr ? `<span class="flex items-center gap-1"><i class="far fa-calendar-alt"></i> ${dateStr}</span>` : ''}
                                 ${event.location_id ? `
-                                    <button onclick="event.stopPropagation(); import('./js/modules/map.js').then(m => m.jumpToLocation(${event.location_id}))" class="flex items-center gap-1 text-[#5865F2] hover:underline">
+                                    <button onclick="event.stopPropagation(); window.loadModule('map').then(m => m.jumpToLocation(${event.location_id}))" class="flex items-center gap-1 text-[#5865F2] hover:underline">
                                         <i class="fas fa-map-marker-alt"></i> Lokace uložena
                                     </button>` : ''}
                             </div>
