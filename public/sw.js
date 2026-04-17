@@ -37,31 +37,21 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
-    // Skip Supabase API calls (let the offline.js handle them)
+    // Skip Supabase API calls
     if (url.hostname.includes('supabase.co')) return;
 
-    // Strategy: Cache-First for static assets, Network-First for others
+    // TEMPORARY DEV FIX: Network-First strategy to ensure latest files are loaded
     event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) return cachedResponse;
-
-            return fetch(event.request).then((networkResponse) => {
-                // Cache images and fonts dynamically
-                if (
-                    event.request.destination === 'image' || 
-                    event.request.destination === 'font' ||
-                    url.pathname.endsWith('.js')
-                ) {
-                    const responseClone = networkResponse.clone();
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseClone);
-                    });
-                }
-                return networkResponse;
-            }).catch(() => {
-                // Fallback for offline (optional: return a default image if image fails)
-                return null;
-            });
+        fetch(event.request).then((networkResponse) => {
+            // Update cache in background
+            if (event.request.destination === 'image' || event.request.destination === 'font' || url.pathname.endsWith('.js')) {
+                const responseClone = networkResponse.clone();
+                caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseClone));
+            }
+            return networkResponse;
+        }).catch(() => {
+            // Fallback to cache if network fails
+            return caches.match(event.request);
         })
     );
 });
