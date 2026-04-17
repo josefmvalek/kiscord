@@ -2,7 +2,7 @@ import { state, ensureMaturaData, refreshMaturaTopics } from '../core/state.js';
 import { triggerHaptic, triggerConfetti } from '../core/utils.js';
 import { showNotification } from '../core/theme.js';
 import { supabase } from '../core/supabase.js';
-import { renderModal } from '../core/ui.js';
+import { renderModal, renderInputGroup } from '../core/ui.js';
 import { broadcastMaturaSOS, broadcastPomodoroUpdate } from '../core/sync.js';
 import { safeInsert, safeUpsert, safeUpdate, enqueueOperation } from '../core/offline.js';
 import { uploadFile } from '../core/storage.js';
@@ -422,9 +422,14 @@ function renderList(container, subject) {
                 <div class="flex items-start gap-4 mb-4">
                     <div class="text-4xl group-hover:scale-110 transition-transform duration-300 transform-gpu">${item.icon}</div>
                     <div class="flex-1 min-w-0">
-                        <div class="text-[9px] font-black uppercase text-[#5865F2] tracking-widest mb-0.5">${item.cat || 'Ostatní'}</div>
-                        <h3 class="font-bold text-[var(--text-header)] leading-tight truncate px-0.5 group-hover:text-[#5865F2] transition-colors" title="${item.title}">${item.title}</h3>
-                        ${item.author ? `<p class="text-xs text-[var(--text-muted)] italic">${item.author}</p>` : ''}
+                        <div class="flex items-center justify-between gap-2 mb-0.5">
+                            <div class="text-[9px] font-black uppercase text-[#5865F2] tracking-widest matura-cat-label">${item.cat || 'Ostatní'}</div>
+                            <button onclick="import('/js/modules/matura.js').then(m => m.openTopicEditor('${item.id}'))" class="text-gray-600 hover:text-[#5865F2] transition-colors p-1 -m-1" title="Upravit informace">
+                                <i class="fas fa-pencil-alt text-[8px]"></i>
+                            </button>
+                        </div>
+                        <h3 class="font-bold text-[var(--text-header)] leading-tight truncate px-0.5 group-hover:text-[#5865F2] transition-colors matura-topic-title" title="${item.title}">${item.title}</h3>
+                        <div class="matura-topic-author">${item.author ? `<p class="text-xs text-[var(--text-muted)] italic">${item.author}</p>` : ''}</div>
                     </div>
                 </div>
 
@@ -644,6 +649,24 @@ export async function updateTopicCardUI(itemId) {
 
     const joseProg = prog.jose || { status: 'none', notes: '' };
     const klarkaProg = prog.klarka || { status: 'none', notes: '' };
+
+    // Update Header
+    const iconWrapper = card.querySelector('.group-hover\\:scale-110');
+    if (iconWrapper) iconWrapper.textContent = item.icon;
+
+    const catLabel = card.querySelector('.matura-cat-label');
+    if (catLabel) catLabel.textContent = item.cat || 'Ostatní';
+
+    const titleEl = card.querySelector('.matura-topic-title');
+    if (titleEl) {
+        titleEl.textContent = item.title;
+        titleEl.title = item.title;
+    }
+
+    const authorDiv = card.querySelector('.matura-topic-author');
+    if (authorDiv) {
+        authorDiv.innerHTML = item.author ? `<p class="text-xs text-[var(--text-muted)] italic">${item.author}</p>` : '';
+    }
 
     const jStatusIcon = joseProg.status === 'done' ? '✅' : (joseProg.status === 'started' ? '📖' : '⚪');
     const jStatusClass = joseProg.status === 'done' ? 'text-green-400' : (joseProg.status === 'started' ? 'text-blue-400' : 'text-gray-600');
@@ -2391,5 +2414,122 @@ export function updateCollapseAllButtonText(itemId) {
                              .some(c => !c.classList.contains('collapsed'));
     
     btn.textContent = anyExpanded ? 'Sbalit vše' : 'Rozbalit vše';
+}
+
+/**
+ * Metadata Editor for Matura Topics
+ */
+export async function openTopicEditor(itemId) {
+    let item = null;
+    for (const cat in state.maturaTopics) {
+        item = state.maturaTopics[cat].find(i => i.id === itemId);
+        if (item) break;
+    }
+    if (!item) return;
+
+    const modalHtml = `
+        <div class="space-y-4">
+            ${renderInputGroup({
+                label: 'Ikona (Emoji)',
+                id: 'edit-topic-icon',
+                value: item.icon || '📓',
+                placeholder: 'Vlož emoji...'
+            })}
+            ${renderInputGroup({
+                label: 'Název tématu',
+                id: 'edit-topic-title',
+                value: item.title,
+                placeholder: 'Zadej název...'
+            })}
+            ${renderInputGroup({
+                label: 'Podkategorie / Předmět',
+                id: 'edit-topic-cat',
+                value: item.cat || '',
+                placeholder: 'např. Renesance, Hardware...'
+            })}
+            ${renderInputGroup({
+                label: 'Autor / Podtitul',
+                id: 'edit-topic-author',
+                value: item.author || '',
+                placeholder: 'např. William Shakespeare...'
+            })}
+        </div>
+    `;
+
+    const actions = `
+        <button onclick="import('/js/modules/matura.js').then(m => m.saveTopicMetadata('${itemId}'))"
+                class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-6 py-2 rounded-xl font-black text-xs uppercase tracking-widest transition shadow-lg active:scale-95">
+            Uložit změny
+        </button>
+        <button onclick="document.getElementById('topic-edit-modal').remove()"
+                class="text-gray-500 hover:text-white px-4 py-2 text-[10px] font-black uppercase tracking-widest transition">
+            Zrušit
+        </button>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', renderModal({
+        id: 'topic-edit-modal',
+        title: 'Upravit informace o tématu',
+        subtitle: 'Změny se projeví u obou uživatelů 👥',
+        content: modalHtml,
+        actions: actions,
+        onClose: "document.getElementById('topic-edit-modal')?.remove()"
+    }));
+    
+    document.getElementById('topic-edit-modal').classList.remove('hidden');
+    document.getElementById('topic-edit-modal').classList.add('flex');
+    triggerHaptic('light');
+}
+
+export async function saveTopicMetadata(itemId) {
+    const icon = document.getElementById('edit-topic-icon').value;
+    const title = document.getElementById('edit-topic-title').value;
+    const cat = document.getElementById('edit-topic-cat').value;
+    const author = document.getElementById('edit-topic-author').value;
+
+    if (!title) {
+        showNotification("Název tématu nesmí být prázdný!", "warning");
+        return;
+    }
+
+    try {
+        const updateData = {
+            icon,
+            title,
+            cat,
+            author,
+            updated_at: new Date().toISOString()
+        };
+
+        const { error } = await supabase
+            .from('matura_topics')
+            .update(updateData)
+            .eq('id', itemId);
+
+        if (error) throw error;
+
+        // Update local state
+        for (const categoryId in state.maturaTopics) {
+            const index = state.maturaTopics[categoryId].findIndex(i => i.id === itemId);
+            if (index !== -1) {
+                state.maturaTopics[categoryId][index] = { 
+                    ...state.maturaTopics[categoryId][index], 
+                    ...updateData 
+                };
+                break;
+            }
+        }
+
+        showNotification("Změny uloženy! ✅", "success");
+        triggerHaptic('success');
+        
+        document.getElementById('topic-edit-modal')?.remove();
+        
+        // Refresh the specific card
+        updateTopicCardUI(itemId);
+    } catch (e) {
+        console.error("Save metadata error:", e);
+        showNotification("Chyba při ukládání změn.", "error");
+    }
 }
 

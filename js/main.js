@@ -328,7 +328,9 @@ export function updateUserProfileUI(user) {
     const bioParagraph = document.getElementById('popout-user-bio');
 
     const isMeJose = isJosef(user);
-      if (isMeJose) {
+    const isMeKlarka = isKlarka(user);
+
+    if (isMeJose) {
         const avatarUrl = getAssetUrl('jozka_profile');
         state.currentUser = { name: 'Jožka', email: user.email, id: user.id, avatar: avatarUrl };
         if (sidebarName) sidebarName.textContent = 'Jožka';

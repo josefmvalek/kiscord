@@ -129,3 +129,21 @@
 
 /* --- MATURA MODULE --- */
 
+/* --- REGENERACE MODULE --- */
+.reg-section-highlight {
+    animation: reg-glow-highlight 2s ease-out;
+}
+
+@keyframes reg-glow-highlight {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+    15% { transform: scale(1.02); box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.2); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}

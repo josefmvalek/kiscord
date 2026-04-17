@@ -270,3 +270,21 @@ button:active i.fa-tint { animation: waterSplash 0.3s ease-out; }
   mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
   -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
 }
+
+/* --- REGENERACE MODULE --- */
+@keyframes reg-pulse-glow {
+  0% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.1); transform: scale(1); }
+  50% { box-shadow: 0 0 25px rgba(255, 255, 255, 0.2); transform: scale(1.05); }
+  100% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.1); transform: scale(1); }
+}
+@keyframes reg-line-flow {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}
+.animate-reg-glow {
+  animation: reg-pulse-glow 3s infinite ease-in-out;
+}
+.animate-reg-flow {
+  animation: reg-line-flow 2s infinite ease-in-out;
+}
