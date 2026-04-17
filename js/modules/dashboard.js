@@ -26,8 +26,8 @@ import {
     updateSupplementsVisuals,
     updateMoodVisuals,
     updateSleep
-} from '/js/modules/dashboard/health_ui.js';
-import { handleWelcomeChat, refreshDashboardFact } from '/js/modules/dashboard/chat.js';
+} from './dashboard/health_ui.js';
+import { handleWelcomeChat, refreshDashboardFact } from './dashboard/chat.js';
 
 let dashboardListenersSet = false;
 let dashboardTimer = null; // Ticker pro odpočet

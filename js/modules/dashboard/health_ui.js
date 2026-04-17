@@ -1,8 +1,8 @@
 import { state } from '../../core/state.js';
-import { triggerHaptic, getTodayKey } from '/js/core/utils.js';
+import { triggerHaptic, getTodayKey } from '../../core/utils.js';
 import { getAssetUrl } from '../../core/assets.js';
-import { updateSunflowersDOM } from '/js/modules/dashboard/sunflowers.js';
-import { getPillsStreak } from '/js/modules/health.js';
+import { updateSunflowersDOM } from './sunflowers.js';
+import { getPillsStreak } from '../health.js';
 
 // --- VISUAL GENERATORS (Mood/Water/Movement/Sleep) ---
 

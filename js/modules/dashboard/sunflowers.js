@@ -1,5 +1,5 @@
 import { state } from '../../core/state.js';
-import { getTodayKey } from '/js/core/utils.js';
+import { getTodayKey } from '../../core/utils.js';
 
 /**
  * Helper to interpolate between two hex colors.
