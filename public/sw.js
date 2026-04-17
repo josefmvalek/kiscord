@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kiscord-v-vite-4';
+const CACHE_NAME = 'kiscord-v-vite-6';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
