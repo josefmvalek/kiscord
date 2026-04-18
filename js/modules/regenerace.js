@@ -1575,12 +1575,12 @@ window.toggleSupplementDetail = (id) => {
     // Toggle current
     if (isClosed) {
         detail.classList.remove('max-h-0', 'opacity-0');
-        detail.classList.add('max-h-[2000px]', 'opacity-100');
+        detail.classList.add('max-h-[9999px]', 'opacity-100');
         arrow.classList.add('rotate-180');
         card.classList.add('ring-1', 'ring-white/10', 'bg-white/[0.05]');
     } else {
         detail.classList.add('max-h-0', 'opacity-0');
-        detail.classList.remove('max-h-[2000px]', 'opacity-100');
+        detail.classList.remove('max-h-[9999px]', 'opacity-100');
         arrow.classList.remove('rotate-180');
         card.classList.remove('ring-1', 'ring-white/10', 'bg-white/[0.05]');
     }
