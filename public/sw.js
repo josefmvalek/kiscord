@@ -1,8 +1,7 @@
-const CACHE_NAME = 'kiscord-v-vite-6';
+const CACHE_NAME = 'kiscord-v-vite-7';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
-    '/css/app.css',
     '/manifest.json',
     '/img/app/czippel2_kytka.jpg',
     '/img/app/czippel2_kytka-modified.png',
