@@ -353,10 +353,11 @@ export async function confirmResetTopic() {
         if (window.showNotification) window.showNotification("Všechny oblíbené otázky smazány! 🗑️", "success");
     } else {
         state.topicProgress[state.pendingResetId] = { index: 0, completed: false, bookmarks: [], doneIndices: [] };
-        await supabase.from('topic_progress').delete().match({ 
+        const { error } = await supabase.from('topic_progress').delete().match({ 
             user_id: state.currentUser.id, 
             topic_id: state.pendingResetId 
         });
+        if (error) console.error('[Topics] Reset topic delete error:', error);
         if (window.showNotification) window.showNotification("Postup resetován! 🔄", "success");
     }
 
@@ -490,13 +491,12 @@ export async function markQuestionDone() {
     if (!prog.doneIndices.includes(state.currentQuestionIndex)) {
         prog.doneIndices.push(state.currentQuestionIndex);
         
-        await supabase.from('topic_progress').upsert({
+        await safeUpsert('topic_progress', {
             user_id: state.currentUser.id,
             topic_id: state.currentTopicId,
             current_index: state.currentQuestionIndex,
-            bookmarks: prog.bookmarks || [],
-            // we should probably add a column for doneIndices in SQL if we want exact tracking
-            // for now let's reuse metadata or just assume progress by index
+            done_indices: prog.doneIndices,
+            bookmarks: prog.bookmarks || []
         });
     }
 
@@ -546,7 +546,7 @@ export async function toggleQuestionBookmark() {
         triggerHaptic("medium");
     }
 
-    await supabase.from('topic_progress').upsert({
+    await safeUpsert('topic_progress', {
         user_id: state.currentUser.id,
         topic_id: state.currentTopicId,
         bookmarks: prog.bookmarks

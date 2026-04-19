@@ -583,23 +583,23 @@ async function ensureRegeneraceData(force = false) {
     }
 }
 
-async function ensureGamesData() {
-    if (state._loaded.games) return;
+async function ensureGamesData(force = false) {
+    if (state._loaded.games && !force && !isStale('games')) return;
     try {
         const [{ data: q }, { data: v }, { data: p }] = await Promise.all([supabase.from('game_questions').select('*'), supabase.from('game_votes').select('*'), supabase.from('game_prompts').select('*')]);
         if (q) state.gameQuestions = q;
         if (v) state.gameVotes = v;
         if (p) state.gamePrompts = p;
-        state._loaded.games = true;
+        markLoaded('games');
     } catch (e) { console.error("Games Load Error:", e); }
 }
 
-async function ensureDrawStrokesData() {
-    if (state._loaded.draw) return;
+async function ensureDrawStrokesData(force = false) {
+    if (state._loaded.draw && !force && !isStale('draw')) return;
     try {
         const { data } = await supabase.from('draw_strokes').select('*').is('drawing_id', null).order('created_at', { ascending: true });
         if (data) state.drawStrokes = data;
-        state._loaded.draw = true;
+        markLoaded('draw');
     } catch (e) { console.error("Draw Load Error:", e); }
 }
 
@@ -714,7 +714,8 @@ async function ensureAssetsData(force = false) {
 }
 
 function resetLazyLoaders() {
-    state._loaded = { calendar: false, timeline: false, library: false, matura: false, achievements: false, games: false, facts: false, daily: false, draw: false, map: false, bucketlist: false, conv_topics: false, regenerace: false, assets: false };
+    // Dynamicky resetovat podle existujících klíčů – synchronizováno s deklarací state._loaded
+    Object.keys(state._loaded).forEach(k => { state._loaded[k] = false; });
     Object.keys(_loadedAt).forEach(k => delete _loadedAt[k]);
     console.log('[State] All lazy loaders reset.');
 }

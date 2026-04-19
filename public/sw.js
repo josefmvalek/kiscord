@@ -1,3 +1,6 @@
+// DŮLEŽITÉ: Při každém deployi změň číslo verze v CACHE_NAME,
+// aby SW smazal starý cache a uživatelé dostali čerstvé soubory.
+// Verze synchronizuj s APP_VERSION v js/main.js.
 const CACHE_NAME = 'kiscord-v-vite-8';
 const ASSETS_TO_CACHE = [
     '/manifest.json',

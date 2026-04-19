@@ -169,8 +169,6 @@ export function updateBedtime(time) {
     const data = getTodayData();
     const todayKey = getTodayKey();
     data.bedtime = time;
-    const storageKey = `vault_health_${state.currentUser.name.toLowerCase()}`;
-    localStorage.setItem(storageKey, JSON.stringify(state.healthData));
     saveStateToCache();
     triggerHaptic('light');
 
@@ -350,7 +348,7 @@ export async function wakeUp() {
                 state.healthData[todayKey] = data;
 
                 // Cloud Save (Supabase)
-                try {
+                 try {
                     const { error } = await supabase.from('health_data').upsert({
                         date_key: todayKey,
                         user_id: state.currentUser.id,
@@ -358,7 +356,8 @@ export async function wakeUp() {
                         sleep: data.sleep,
                         mood: data.mood,
                         movement: data.movement,
-                        pills: data.pills || false
+                        pills: data.pills || false,
+                        supplements: data.supplements || { iron: false, zinc: false, magnesium: false }
                     });
                     if (error) console.error("Error saving sleep to Supabase:", error);
 
@@ -370,7 +369,8 @@ export async function wakeUp() {
                         sleep: data.sleep,
                         mood: data.mood,
                         movement: data.movement,
-                        pills: data.pills || false
+                        pills: data.pills || false,
+                        supplements: data.supplements || { iron: false, zinc: false, magnesium: false }
                     });
 
                     // Achievement Hook
@@ -378,8 +378,6 @@ export async function wakeUp() {
                         m.checkHealthAchievements(todayKey, data, state.healthData);
                     });
 
-                    const storageKey = `vault_health_${state.currentUser.name.toLowerCase()}`;
-                    localStorage.setItem(storageKey, JSON.stringify(state.healthData));
                     saveStateToCache();
                 } catch (e) {
                     console.error("[Sleep] Error during wakeUp sequence:", e);

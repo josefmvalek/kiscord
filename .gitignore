@@ -1,3 +1,20 @@
 node_modules/
+dist/
+tmp/
 .DS_Store
 *.bak
+
+# Logy z buildů
+*.log
+build_error.txt
+build_log.txt
+full_build_log.txt
+full_debug_log.txt
+
+# Env soubory (citlivé údaje)
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/settings.json

@@ -6,7 +6,6 @@ if (typeof document !== 'undefined') {
     ['click', 'touchstart', 'keydown', 'pointerdown'].forEach(evt =>
         document.addEventListener(evt, () => {
             hasUserInteracted = true;
-            console.log(`[Utils] User interacted via ${evt}, haptics enabled.`);
         }, { once: true })
     );
 }

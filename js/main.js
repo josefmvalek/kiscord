@@ -267,19 +267,7 @@ function checkAppUpdate() {
 function setupNavigation() {
     document.querySelectorAll('.channel-link').forEach(link => {
         link.addEventListener('click', (e) => {
-            // Remove active class from all
-            document.querySelectorAll('.channel-link').forEach(l => {
-                l.classList.remove('active', 'bg-[#36393f]', 'text-white');
-                l.classList.add('text-[#b9bbbe]');
-            });
-
-            // Add active to clicked
-            const target = e.currentTarget;
-            target.classList.add('active', 'bg-[#36393f]', 'text-white');
-            target.classList.remove('text-[#b9bbbe]');
-
-            // Switch
-            const channelId = target.getAttribute('data-channel');
+            const channelId = e.currentTarget.getAttribute('data-channel');
             switchChannel(channelId);
         });
     });
@@ -288,10 +276,6 @@ function setupNavigation() {
 // --- INFO RENDERERS ---
 
 
-function renderUpgrade() {
-    const container = document.getElementById("messages-container");
-    if (container) container.innerHTML = '<div class="flex items-center justify-center h-full text-gray-500 text-xl font-bold">🚀 Upgrade systému... brzy!</div>';
-}
 
 export async function handleLogin(form) {
     const errorEl = document.getElementById('login-error');
@@ -535,11 +519,23 @@ export function switchChannel(channelId, push = true) {
     // Tier List special cleanup
     import('./modules/tierlist.js').then(m => m.cleanupRealtime?.());
 
+    // Centrální error handler pro navigační chyby
+    const navErr = (err) => {
+        console.error(`[NAV] Navigating to ${channelId} failed:`, err);
+        if (window.renderErrorState) {
+            container.innerHTML = window.renderErrorState({
+                message: `Nepodařilo se přepnout na kanál ${channelId}... 🦝`,
+                onRetry: `switchChannel('${channelId}')`
+            });
+        } else {
+            container.innerHTML = `<div class="p-8 text-center text-red-400">Chyba navigace: ${err.message}</div>`;
+        }
+    };
+
     // Route
-    try {
     switch (channelId) {
         case 'welcome':
-            import('./modules/dashboard.js').then(m => m.renderWelcome());
+            import('./modules/dashboard.js').then(m => m.renderWelcome()).catch(navErr);
             break;
         case 'music':
             StaticPages.renderMusicBot();
@@ -548,69 +544,69 @@ export function switchChannel(channelId, push = true) {
             renderDashboard();
             break;
         case 'dateplanner':
-            import('./core/state.js').then(s => s.ensureMapData()).then(() => moduleMap.map()).then(m => m.renderMap());
+            import('./core/state.js').then(s => s.ensureMapData()).then(() => moduleMap.map()).then(m => m.renderMap()).catch(navErr);
             break;
         case 'bucketlist':
-            import('./core/state.js').then(s => s.ensureBucketListData()).then(() => moduleMap.bucketlist()).then(m => m.renderBucketList());
+            import('./core/state.js').then(s => s.ensureBucketListData()).then(() => moduleMap.bucketlist()).then(m => m.renderBucketList()).catch(navErr);
             break;
         case 'calendar':
-            import('./core/state.js').then(s => s.ensureCalendarData()).then(() => moduleMap.calendar().then(m => m.renderCalendar()));
+            import('./core/state.js').then(s => s.ensureCalendarData()).then(() => moduleMap.calendar().then(m => m.renderCalendar())).catch(navErr);
             break;
         case 'timeline':
-            import('./core/state.js').then(s => s.ensureTimelineData()).then(() => moduleMap.timeline().then(m => m.renderTimeline()));
+            import('./core/state.js').then(s => s.ensureTimelineData()).then(() => moduleMap.timeline().then(m => m.renderTimeline())).catch(navErr);
             break;
         case 'movies':
         case 'series':
         case 'games':
-            import('./core/state.js').then(s => s.ensureLibraryData()).then(() => moduleMap.library().then(m => m.renderLibrary(channelId)));
+            import('./core/state.js').then(s => s.ensureLibraryData()).then(() => moduleMap.library().then(m => m.renderLibrary(channelId))).catch(navErr);
             break;
         case 'watchlist':
-            import('./core/state.js').then(s => s.ensureLibraryData()).then(() => import('./modules/watchlist.js')).then(m => m.renderWatchlist());
+            import('./core/state.js').then(s => s.ensureLibraryData()).then(() => import('./modules/watchlist.js')).then(m => m.renderWatchlist()).catch(navErr);
             break;
         case 'topics':
-            import('./core/state.js').then(s => s.ensureTopicsData()).then(() => moduleMap.topics()).then(m => m.renderTopics());
+            import('./core/state.js').then(s => s.ensureTopicsData()).then(() => moduleMap.topics()).then(m => m.renderTopics()).catch(navErr);
             break;
         case 'tetris':
-            moduleMap.games().then(m => m.renderTetrisTracker());
+            moduleMap.games().then(m => m.renderTetrisTracker()).catch(navErr);
             break;
         case 'puzzle':
-            import('./core/state.js').then(s => s.ensureTimelineData()).then(() => moduleMap.games().then(m => m.renderPuzzleGame()));
+            import('./core/state.js').then(s => s.ensureTimelineData()).then(() => moduleMap.games().then(m => m.renderPuzzleGame())).catch(navErr);
             break;
         case 'quiz':
-            import('./modules/coupleQuiz.js').then(m => m.renderCoupleQuiz());
+            import('./modules/coupleQuiz.js').then(m => m.renderCoupleQuiz()).catch(navErr);
             break;
         case 'games-hub':
-            import('./core/state.js').then(s => s.ensureGamesData()).then(() => import('./modules/gamesHub.js')).then(m => m.renderGamesHub());
+            import('./core/state.js').then(s => s.ensureGamesData()).then(() => import('./modules/gamesHub.js')).then(m => m.renderGamesHub()).catch(navErr);
             break;
         case 'game-who':
-            import('./core/state.js').then(s => s.ensureGamesData()).then(() => import('./modules/gameWho.js')).then(m => m.renderGameWho());
+            import('./core/state.js').then(s => s.ensureGamesData()).then(() => import('./modules/gameWho.js')).then(m => m.renderGameWho()).catch(navErr);
             break;
         case 'game-draw':
-            import('./core/state.js').then(s => Promise.all([s.ensureGamesData(), s.ensureDrawStrokesData()])).then(() => import('./modules/gameDraw.js')).then(m => m.renderGameDraw());
+            import('./core/state.js').then(s => Promise.all([s.ensureGamesData(), s.ensureDrawStrokesData()])).then(() => import('./modules/gameDraw.js')).then(m => m.renderGameDraw()).catch(navErr);
             break;
         case 'daily-questions':
-            import('./core/state.js').then(s => s.ensureDailyQuizData()).then(() => moduleMap['daily-questions']()).then(m => m.renderDailyQuestions());
+            import('./core/state.js').then(s => s.ensureDailyQuizData()).then(() => moduleMap['daily-questions']()).then(m => m.renderDailyQuestions()).catch(navErr);
             break;
         case 'achievements':
-            import('./core/state.js').then(s => s.ensureAchievementsData()).then(() => moduleMap.achievements()).then(m => m.renderAchievements());
+            import('./core/state.js').then(s => s.ensureAchievementsData()).then(() => moduleMap.achievements()).then(m => m.renderAchievements()).catch(navErr);
             break;
         case 'quests':
-            import('./modules/quests.js').then(m => m.renderQuests());
+            import('./modules/quests.js').then(m => m.renderQuests()).catch(navErr);
             break;
         case 'funfacts':
-            import('./core/state.js').then(s => s.ensureFactsData()).then(() => moduleMap.funfacts().then(m => m.renderFunFacts()));
+            import('./core/state.js').then(s => s.ensureFactsData()).then(() => moduleMap.funfacts().then(m => m.renderFunFacts())).catch(navErr);
             break;
         case 'stats':
-            import('./core/state.js').then(s => Promise.all([s.ensureCalendarData(), s.ensureLibraryData()])).then(() => moduleMap.stats().then(m => m.renderStats()));
+            import('./core/state.js').then(s => Promise.all([s.ensureCalendarData(), s.ensureLibraryData()])).then(() => moduleMap.stats().then(m => m.renderStats())).catch(navErr);
             break;
         case 'tierlist':
-            moduleMap.tierlist().then(m => m.renderTierList());
+            moduleMap.tierlist().then(m => m.renderTierList()).catch(navErr);
             break;
         case 'restore-data':
-            moduleMap['restore-data']().then(m => m.renderRestoreData());
+            moduleMap['restore-data']().then(m => m.renderRestoreData()).catch(navErr);
             break;
         case 'letters':
-            import('./modules/letters.js').then(m => m.renderLetters());
+            import('./modules/letters.js').then(m => m.renderLetters()).catch(navErr);
             break;
         case 'manual':
             StaticPages.renderManual();
@@ -621,31 +617,18 @@ export function switchChannel(channelId, push = true) {
         case 'matura-dashboard':
         case 'matura-czech':
         case 'matura-it':
-            import('./core/state.js').then(s => s.ensureMaturaData()).then(() => moduleMap.matura().then(m => m.renderMatura(channelId)));
+            import('./core/state.js').then(s => s.ensureMaturaData()).then(() => moduleMap.matura().then(m => m.renderMatura(channelId))).catch(navErr);
             break;
-            case 'settings':
-                moduleMap.settings().then(m => m.renderSettings());
-                break;
-            case 'regenerace':
-                moduleMap.regenerace().then(m => m.renderRegenerace());
-                break;
-            case 'upgrade':
-                renderUpgrade();
-                break;
-            default:
-                import('./modules/dashboard.js').then(m => m.renderWelcome());
-        }
-    } catch (err) {
-        console.error(`[NAV] Navigating to ${channelId} failed:`, err);
-        if (window.renderErrorState) {
-            container.innerHTML = window.renderErrorState({
-                message: `Nepodařilo se přepnout na kanál ${channelId}... 🦝`,
-                onRetry: `switchChannel('${channelId}')`
-            });
-        } else {
-            container.innerHTML = `<div class="p-8 text-center text-red-400">Chyba navigace: ${err.message}</div>`;
-        }
+        case 'settings':
+            moduleMap.settings().then(m => m.renderSettings()).catch(navErr);
+            break;
+        case 'regenerace':
+            moduleMap.regenerace().then(m => m.renderRegenerace()).catch(navErr);
+            break;
+        default:
+            import('./modules/dashboard.js').then(m => m.renderWelcome()).catch(navErr);
     }
+
 
     // Mobile Sidebar Close
     const sidebar = document.getElementById('sidebar-wrapper');
@@ -655,8 +638,6 @@ export function switchChannel(channelId, push = true) {
         if (overlay) overlay.classList.add('hidden');
     }
 }
-
-// --- SEARCH ---
 
 // --- SEARCH ---
 
@@ -753,7 +734,6 @@ window.loadModule = (name) => {
         case 'tierlist': return import('./modules/tierlist.js');
         case 'timeline': return import('./modules/timeline.js');
         case 'topics': return import('./modules/topics.js');
-        // cache-buster: force reload to purge the temporary loop bug
         case 'watchlist': return import('./modules/watchlist.js');
         default: console.error('Unknown loadModule request:', name); return Promise.reject(new Error('Module not found'));
     }
@@ -847,7 +827,7 @@ function exposeGlobals() {
     window.deleteEvent = timelineFn('deleteEvent');
     window.jumpToTimeline = timelineFn('jumpToTimeline');
     window.searchTimeline = timelineFn('searchTimeline');
-    window.renderGlobalSearch = (...args) => import('./modules/search.js?v=22').then(m => m.renderGlobalSearch(...args));
+    window.renderGlobalSearch = (...args) => import('./modules/search.js').then(m => m.renderGlobalSearch(...args));
 
     // Map Lazy Functions
     window.selectLocation = (...args) => {

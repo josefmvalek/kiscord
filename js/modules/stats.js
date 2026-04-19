@@ -143,7 +143,7 @@ export async function renderStats() {
 }
 
 export async function requestPushPermission() {
-    import('../core/utils.js?v=15').then(async m => {
+    import('../core/utils.js').then(async m => {
         const granted = await m.requestNotificationPermission();
         if (granted) {
             m.sendLocalNotification("Kiscord: Oznámení povolena! ✨", { body: "Teď už ti nic neuteče." });
@@ -157,7 +157,7 @@ export async function requestPushPermission() {
 }
 
 export function testNotification() {
-    import('../core/utils.js?v=15').then(m => {
+    import('../core/utils.js').then(m => {
         if (Notification.permission === 'granted') {
             m.sendLocalNotification("Testovací mňouknutí! 🐾", {
                 body: "Takhle budou vypadat tvoje budoucí notifikace z Kiscordu.",
@@ -405,7 +405,7 @@ function getMoodColor(val) {
 // --- EXPORT FUNCTIONALITY ---
 
 export async function exportAllData() {
-    import('../core/utils.js?v=15').then(async m => {
+    import('../core/utils.js').then(async m => {
         m.triggerHaptic('heavy');
 
         const exportObj = {

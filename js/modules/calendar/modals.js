@@ -1,7 +1,8 @@
-import { state } from '../../core/state.js';
+import { state, saveStateToCache } from '../../core/state.js';
 import { triggerHaptic, getTodayKey } from '../../core/utils.js';
 import { renderCalendar } from '../calendar.js';
 import { getMoodColor } from './grid.js';
+import { safeUpsert } from '../../core/offline.js';
 
 let currentModalDateKey = null;
 
@@ -378,6 +379,7 @@ export async function deletePlannedDate(dateKey) {
         console.error('Failed to delete planned date:', err);
     }
 
+    saveStateToCache();
     showDayDetail(dateKey);
     renderCalendar();
     triggerHaptic("medium");
@@ -439,7 +441,7 @@ export async function addCustomPlan() {
     triggerHaptic("success");
 }
 
-export function addSchoolEvent() {
+export async function addSchoolEvent() {
     const input = document.getElementById("school-input");
     const title = input.value.trim();
 
@@ -451,13 +453,17 @@ export function addSchoolEvent() {
         type: "exam",
     };
 
-    import('../../core/supabase.js').then(({ supabase }) => {
-        supabase.from('school_events').upsert({
+    try {
+        const { supabase } = await import('../../core/supabase.js');
+        const { error } = await supabase.from('school_events').upsert({
             date_key: currentModalDateKey,
             title: title,
             type: "exam"
         });
-    });
+        if (error) console.error('[Calendar] Error saving school event:', error);
+    } catch (err) {
+        console.error('[Calendar] School event save failed:', err);
+    }
 
     const display = document.getElementById("school-event-display");
     const form = document.getElementById("school-add-form");
@@ -475,15 +481,19 @@ export function addSchoolEvent() {
     triggerHaptic("success");
 }
 
-export function deleteSchoolEvent() {
+export async function deleteSchoolEvent() {
     if (!currentModalDateKey) return;
 
     triggerHaptic('heavy');
     if (state.schoolEvents) delete state.schoolEvents[currentModalDateKey];
 
-    import('../../core/supabase.js').then(({ supabase }) => {
-        supabase.from('school_events').delete().eq('date_key', currentModalDateKey);
-    });
+    try {
+        const { supabase } = await import('../../core/supabase.js');
+        const { error } = await supabase.from('school_events').delete().eq('date_key', currentModalDateKey);
+        if (error) console.error('[Calendar] Error deleting school event:', error);
+    } catch (err) {
+        console.error('[Calendar] School event delete failed:', err);
+    }
 
     const display = document.getElementById("school-event-display");
     const form = document.getElementById("school-add-form");
@@ -552,7 +562,7 @@ export function toggleHealthEdit() {
     }
 }
 
-export function saveHealthRecord() {
+export async function saveHealthRecord() {
     if (!currentModalDateKey) return;
     
     const water = parseInt(document.getElementById("edit-health-water").value) || 0;
@@ -590,25 +600,25 @@ export function saveHealthRecord() {
     if (!state.healthData) state.healthData = {};
     state.healthData[currentModalDateKey] = newHealth;
 
-    import('../../core/supabase.js').then(({ supabase }) => {
-        supabase.from('health_data').upsert({
-            date_key: currentModalDateKey,
-            user_id: state.currentUser.id,
-            water: newHealth.water,
-            sleep: newHealth.sleep,
-            mood: newHealth.mood,
-            movement: newHealth.movement,
-            pills: newHealth.pills,
-            supplements: newHealth.supplements
-        });
+    // Uložit do Supabase (s offline podporou přes safeUpsert)
+    const { error } = await safeUpsert('health_data', {
+        date_key: currentModalDateKey,
+        user_id: state.currentUser.id,
+        water: newHealth.water,
+        sleep: newHealth.sleep,
+        mood: newHealth.mood,
+        movement: newHealth.movement,
+        pills: newHealth.pills,
+        supplements: newHealth.supplements
     });
+    if (error) console.error("[Calendar] Error saving health record to Supabase:", error);
 
     import('../achievements.js').then(m => {
         m.checkHealthAchievements(currentModalDateKey, newHealth, state.healthData);
     });
 
-    const storageKey = `vault_health_${state.currentUser.name.toLowerCase()}`;
-    localStorage.setItem(storageKey, JSON.stringify(state.healthData));
+    // Uložit do hlavní state cache (aby přetrvalo po refreshi)
+    saveStateToCache();
     
     showDayDetail(currentModalDateKey);
     renderCalendar();

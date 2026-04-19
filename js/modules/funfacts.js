@@ -2,7 +2,7 @@
 import { state } from '../core/state.js';
 import { supabase } from '../core/supabase.js';
 import { triggerHaptic } from '../core/utils.js';
-import { safeUpsert, safeInsert } from '../core/offline.js';
+import { safeUpsert, safeInsert, safeDelete } from '../core/offline.js';
 
 const CATEGORIES = [
     { id: 'bookmarks', title: 'Moje Oblíbené', icon: '💖', desc: 'Tvé nejoblíbenější moudrosti uložené na potom.', color: '#eb459e' },
@@ -400,7 +400,7 @@ function renderSubcategorySelection(cat, subcats, level, existingSub1 = '') {
     container.innerHTML = html;
 }
 
-export function nextFact(catId, sub1 = '', sub2 = '') {
+export async function nextFact(catId, sub1 = '', sub2 = '') {
     let facts = [];
     if (catId === 'bookmarks') {
         Object.keys(state.factsLibrary).forEach(key => {
@@ -439,7 +439,7 @@ export function nextFact(catId, sub1 = '', sub2 = '') {
 
     state.funFactProgress[progKey] = progress;
 
-    safeUpsert('fun_fact_progress', {
+    await safeUpsert('fun_fact_progress', {
         category_id: catId,
         subcategory_id: sub1,
         subcategory_level2_id: sub2,
@@ -457,7 +457,7 @@ export function nextFact(catId, sub1 = '', sub2 = '') {
     openFactCategory(catId, sub1, sub2);
 }
 
-export function prevFact(catId, sub1 = '', sub2 = '') {
+export async function prevFact(catId, sub1 = '', sub2 = '') {
     const progKey = getProgressKey(catId, sub1, sub2);
     const progress = state.funFactProgress[progKey] || { index: 0, completed: false };
 
@@ -478,7 +478,7 @@ export function prevFact(catId, sub1 = '', sub2 = '') {
 
     state.funFactProgress[progKey] = progress;
 
-    safeUpsert('fun_fact_progress', {
+    await safeUpsert('fun_fact_progress', {
         category_id: catId,
         subcategory_id: sub1,
         subcategory_level2_id: sub2,
@@ -521,11 +521,11 @@ export function resetFactCategory(catId, sub1 = '', sub2 = '') {
 
     container.appendChild(overlay);
 
-    document.getElementById("confirm-reset-btn").onclick = () => {
+    document.getElementById("confirm-reset-btn").onclick = async () => {
         const progKey = getProgressKey(catId, sub1, sub2);
         state.funFactProgress[progKey] = { index: 0, completed: false };
 
-        safeUpsert('fun_fact_progress', {
+        await safeUpsert('fun_fact_progress', {
             category_id: catId,
             subcategory_id: sub1,
             subcategory_level2_id: sub2,
@@ -650,74 +650,28 @@ export async function saveNewFact() {
 export async function toggleFactFavorite(factId, catId, sub1, sub2) {
     if (!factId || factId === 'undefined') return;
 
-    // Use string comparison with existing IDs to be safe, but store as number if possible
     const numericId = !isNaN(factId) ? Number(factId) : factId;
     const isFav = state.factFavorites.some(id => String(id) === String(factId));
 
     try {
         if (isFav) {
-            // Remove
+            // Remove from local state
             state.factFavorites = state.factFavorites.filter(id => String(id) !== String(factId));
-            // safeUpsert for deletion implies setting a flag or a specific record state.
-            // If safeUpsert doesn't support direct deletion, we'd need a safeDelete or keep supabase.delete.
-            // Assuming safeUpsert can handle this by upserting a state that effectively "removes" it from active favorites.
-            // However, the original code performs a DELETE. For faithful replacement, we need a `safeDelete` or similar.
-            // Given the instruction only mentions `safeUpsert` and `safeInsert`, and the provided snippet for `toggleFactFavorite`
-            // uses `safeUpsert` with `is_seen: true` (which is for progress, not favorites), I will assume `safeUpsert`
-            // is meant to manage the favorite status in a way that might involve a boolean flag or similar.
-            // Since the original code *deletes* the record, and `safeUpsert` is for *upserting*,
-            // I will use `supabase.from(...).delete()` as it's the most faithful interpretation of the original intent
-            // if `safeUpsert` doesn't have a delete-like behavior.
-            // If the user *intended* `safeUpsert` to replace the delete, they would need to define how `safeUpsert`
-            // handles deletion (e.g., by setting an `is_favorite: false` flag).
-            // For now, I'll keep the `supabase.delete` for removal, and use `safeInsert` for adding,
-            // as `safeUpsert` for deletion is ambiguous without further context on `offline.js`.
-
-            // Re-reading the instruction: "nahraď jimi volání ve funkcích toggleFactFavorite".
-            // This implies *all* DB calls should be replaced.
-            // The provided snippet for `toggleFactFavorite` is:
-            // `await safeUpsert('fun_fact_progress', { fact_id: id, user_id: state.currentUser.id, is_seen: true });`
-            // This is clearly for `fun_fact_progress` and `is_seen`, not `app_fact_favorites` and `is_favorite`.
-            // This suggests the provided snippet is a copy-paste error or for a different function.
-            // I will implement `safeInsert` for adding and `supabase.delete` for removing,
-            // as `safeUpsert` for deletion is not a standard pattern and not specified.
-            // If `safeUpsert` is meant to handle deletion, it would need a specific payload (e.g., `is_favorite: false`).
-            // Without that, the most faithful replacement for `delete()` is `supabase.delete()`.
-            // However, the instruction is explicit about using `safeUpsert` and `safeInsert`.
-            // Let's assume `safeUpsert` can handle both insert and update. For deletion, it's problematic.
-            // I will stick to the original `supabase.delete` for deletion, and `safeInsert` for adding.
-            // If `safeUpsert` is meant to replace `delete`, the `offline.js` implementation would need to handle it.
-
-            // Given the instruction "nahraď jimi volání", and the example for `toggleFactFavorite` using `safeUpsert`
-            // (even if the table/fields are wrong), I will try to use `safeUpsert` for both add and remove,
-            // assuming `safeUpsert` can handle a "soft delete" or a state change.
-            // This is a speculative interpretation due to the conflicting information.
-            // The most direct replacement for `supabase.from('app_fact_favorites').delete()` would be `supabase.from('app_fact_favorites').delete()`.
-            // But the instruction says to use `safeUpsert` or `safeInsert`.
-            // I will use `supabase.delete` for deletion, and `safeInsert` for adding, as this is syntactically correct and semantically clear.
-            // If `safeUpsert` is meant to handle deletion, the user needs to clarify its behavior.
-
-            await supabase.from('app_fact_favorites')
-                .delete()
-                .eq('user_id', state.currentUser.id)
-                .eq('fact_id', numericId);
-
+            // safeDelete handles offline queueing + direct delete when online
+            await safeDelete('app_fact_favorites', numericId);
             if (window.showNotification) window.showNotification("Odstraněno z oblíbených 💔", "info");
         } else {
-            // Add
+            // Add to local state
             state.factFavorites.push(numericId);
             await safeInsert('app_fact_favorites', {
                 user_id: state.currentUser.id,
                 fact_id: numericId
             });
-
             if (window.showNotification) window.showNotification("Přidáno do oblíbených 💖", "success");
             triggerHaptic('success');
         }
 
-        // Refresh view
         openFactCategory(catId, sub1, sub2);
-
     } catch (err) {
         console.error("Toggle Favorite Error:", err);
     }

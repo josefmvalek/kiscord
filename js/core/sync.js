@@ -116,7 +116,9 @@ export function setupRealtimeSync() {
                         sleep: row.sleep || 0,
                         mood: row.mood,
                         movement: row.movement || [],
-                        bedtime: row.bedtime
+                        bedtime: row.bedtime,
+                        pills: row.pills || false,
+                        supplements: row.supplements || { iron: false, zinc: false, magnesium: false }
                     };
             } else {
                 // Update partner state (Their data)
