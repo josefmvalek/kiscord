@@ -173,6 +173,38 @@ function renderView(container, content) {
     container.innerHTML = html;
 }
 
+export async function renderRegenerace() {
+    window.renderRegenerace = renderRegenerace; // For compatibility
+    const container = document.getElementById("messages-container");
+    if (!container) return;
+
+    // Load data if not already loaded
+    await ensureRegeneraceData();
+    // Merge stored data with DEFAULT_CONTENT to ensure new fields (like scienceSections) are present
+    const content = state.regeneraceContent ? {
+        ...DEFAULT_CONTENT,
+        ...state.regeneraceContent,
+        // Upgrade legacy scienceStudies (object) to scienceSections (array)
+        scienceSections: (state.regeneraceContent.scienceSections && state.regeneraceContent.scienceSections.length > 0)
+            ? state.regeneraceContent.scienceSections
+            : (state.regeneraceContent.scienceStudies ? [state.regeneraceContent.scienceStudies] : DEFAULT_CONTENT.scienceSections)
+    } : DEFAULT_CONTENT;
+
+    // --- ICON SYNC MIGRATION ---
+    content.supplements = content.supplements.map(supp => {
+        if (supp.id === 'iron' && (supp.icon === '💊' || !supp.icon)) supp.icon = '🩸';
+        if (supp.id === 'zinc' && (supp.icon === '💊' || !supp.icon)) supp.icon = '✨';
+        return supp;
+    });
+
+    if (isEditMode) {
+        renderEditor(container, content);
+    } else {
+        renderView(container, content);
+    }
+}
+
+
 
 // Global Interactivity
 window.toggleRegeneraceEdit = () => {
