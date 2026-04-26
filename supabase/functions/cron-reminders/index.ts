@@ -10,20 +10,28 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Funkce pro získání dnešního klíče YYYY-MM-DD v lokálním čase (předpoklad: Evropa/Prague nebo server time)
-function getTodayKey() {
-    const today = new Date();
-    // Posun pro CET/CEST (jednoduchý hack, ideálně použít Intl)
-    const cetOffset = 2 * 60 * 60 * 1000; 
-    const localDate = new Date(today.getTime() + cetOffset);
-    return localDate.toISOString().split('T')[0];
-}
-
-function getCurrentTimeStr() {
-    const today = new Date();
-    const cetOffset = 2 * 60 * 60 * 1000; 
-    const localDate = new Date(today.getTime() + cetOffset);
-    return `${String(localDate.getUTCHours()).padStart(2, '0')}:${String(localDate.getUTCMinutes()).padStart(2, '0')}`;
+// Funkce pro získání času a data v časovém pásmu Evropa/Praha (řeší DST automaticky)
+function getPragueTime() {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Europe/Prague',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+    
+    const parts = formatter.formatToParts(now);
+    const p: Record<string, string> = {};
+    parts.forEach(part => p[part.type] = part.value);
+    
+    // en-CA format vrací YYYY-MM-DD
+    return {
+        dateKey: `${p.year}-${p.month}-${p.day}`,
+        timeStr: `${p.hour}:${p.minute}`
+    };
 }
 
 Deno.serve(async (req) => {
@@ -43,9 +51,8 @@ Deno.serve(async (req) => {
 
         webPush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
 
-        const todayKey = getTodayKey();
-        const currentTimeStr = getCurrentTimeStr();
-        console.log(`[Cron] Running for ${todayKey} at ${currentTimeStr}`);
+    const { dateKey: todayKey, timeStr: currentTimeStr } = getPragueTime();
+    console.log(`[Cron] Running for ${todayKey} at ${currentTimeStr}`);
 
         // 1. Načti všechny profily s povolenými notifikacemi (mají settings)
         const { data: profiles, error: pError } = await supabase
