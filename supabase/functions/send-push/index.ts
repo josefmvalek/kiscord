@@ -278,14 +278,41 @@ function base64urlDecode(str: string): Uint8Array {
 }
 
 function toPkcs8(rawPrivateKey: Uint8Array): Uint8Array {
-    // EC P-256 PKCS#8 wrapper (ASN.1 DER)
-    const prefix = new Uint8Array([
-        0x30, 0x41, 0x02, 0x01, 0x00, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48,
-        0xce, 0x3d, 0x02, 0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03,
-        0x01, 0x07, 0x04, 0x27, 0x30, 0x25, 0x02, 0x01, 0x01, 0x04, 0x20,
+    // Correct PKCS#8 DER encoding for EC P-256 private key
+    // Structure:
+    //   SEQUENCE {
+    //     INTEGER 0 (version)
+    //     SEQUENCE { OID ecPublicKey, OID P-256 }
+    //     OCTET STRING {
+    //       SEQUENCE { INTEGER 1, OCTET STRING <32-byte raw key> }
+    //     }
+    //   }
+    //
+    // This wraps the raw 32-byte key in a proper ECPrivateKey (RFC 5915) then PKCS#8 (RFC 5958)
+
+    // ECPrivateKey ::= SEQUENCE { version INTEGER (1), privateKey OCTET STRING }
+    const ecPrivKey = new Uint8Array([
+        0x30, 0x23,             // SEQUENCE, length 35
+        0x02, 0x01, 0x01,       // INTEGER version = 1
+        0x04, 0x20,             // OCTET STRING, length 32
+        ...rawPrivateKey        // raw private key bytes
     ]);
-    const result = new Uint8Array(prefix.length + rawPrivateKey.length);
-    result.set(prefix);
-    result.set(rawPrivateKey, prefix.length);
-    return result;
+
+    // AlgorithmIdentifier for ecPublicKey + P-256
+    const algorithmId = new Uint8Array([
+        0x30, 0x13,                                     // SEQUENCE, length 19
+        0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, // OID 1.2.840.10045.2.1 (ecPublicKey)
+        0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07 // OID 1.2.840.10045.3.1.7 (P-256)
+    ]);
+
+    // OCTET STRING wrapping ECPrivateKey
+    const octetWrapped = new Uint8Array([0x04, ecPrivKey.length, ...ecPrivKey]);
+
+    // Outer SEQUENCE (version + algorithmId + octetWrapped)
+    const versionBytes = new Uint8Array([0x02, 0x01, 0x00]); // INTEGER 0
+    const innerLen = versionBytes.length + algorithmId.length + octetWrapped.length;
+    const outerSeq = new Uint8Array([0x30, innerLen, ...versionBytes, ...algorithmId, ...octetWrapped]);
+
+    return outerSeq;
 }
+

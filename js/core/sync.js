@@ -7,9 +7,8 @@ let mainChannel = null;
 let cachedPartnerId = null;
 
 /**
- * Dynamicky zjistí ID partnera z tabulky push_subscriptions.
- * Partner je uživatel, který má uloženou subscripci, a není to aktuálně přihlášený user.
- * Výsledek se cachuje.
+ * Vrátí Supabase user ID partnera (toho kdo není přihlášený).
+ * Využívá state.user_ids které jsou naplňovány v initializeState().
  */
 async function getPartnerId() {
     if (cachedPartnerId) return cachedPartnerId;
@@ -17,16 +16,31 @@ async function getPartnerId() {
     const myId = state.currentUser?.id;
     if (!myId) return null;
 
-    // Načti všechny subscripce a najdi tu, která nepatří mně
-    // (funguje protože RLS v push_subscriptions povoluje service_role vidět vše,
-    //  ale anonymní user vidí jen vlastní — proto použijeme auth.users přes Edge Function)
-    // Zde tedy uložíme partner ID při přihlášení z globalního state
-    // state.partnerUser je nastavován v state.js při load dat
-    const partnerId = state.partnerUser?.id || null;
-    if (partnerId) {
-        cachedPartnerId = partnerId;
+    // state.user_ids.jose a state.user_ids.klarka jsou naplňovány v initializeState()
+    const { jose, klarka } = state.user_ids || {};
+
+    // Partner je ten uživatel jehož ID není moje
+    if (jose && klarka) {
+        cachedPartnerId = (myId === jose) ? klarka : jose;
+        return cachedPartnerId;
     }
-    return partnerId;
+
+    // Fallback: pokud user_ids nejsou ještě naplněné, zkusíme je načíst z DB
+    try {
+        const { data: pData } = await supabase.from('push_subscriptions')
+            .select('user_id')
+            .neq('user_id', myId)
+            .limit(1)
+            .maybeSingle();
+        if (pData?.user_id) {
+            cachedPartnerId = pData.user_id;
+            return cachedPartnerId;
+        }
+    } catch (e) {
+        console.warn('[Push] Could not fetch partner ID from push_subscriptions:', e);
+    }
+
+    return null;
 }
 
 
@@ -397,4 +411,5 @@ export function cleanupRealtimeSync() {
         supabase.removeChannel(mainChannel);
         mainChannel = null;
     }
+    cachedPartnerId = null; // Reset cache při odhlášení
 }
