@@ -31,6 +31,15 @@ export async function handleAuthState(event, session) {
                 // Critical background tasks
                 await handleMigrations().catch(e => console.error("Migration Error:", e));
                 await initializeState().catch(e => console.error("InitializeState Error:", e));
+
+                // Auto-register Web Push subscription if notifications already granted
+                if (Notification.permission === 'granted') {
+                    import('./notifications.js').then(nm => {
+                        nm.initPushSubscription().then(ok => {
+                            if (ok) console.log('[Auth] Push subscription auto-registered.');
+                        });
+                    });
+                }
             } catch (err) {
                 console.error("[Auth] Background Task Error:", err);
             }
