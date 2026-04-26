@@ -105,23 +105,24 @@ Deno.serve(async (req) => {
             }
 
             // --- B) KONTROLA VEČERKY ---
-            if (settings.bedtime?.enabled && profile.username?.includes('Klárka')) {
+            if (settings.bedtime?.enabled) {
                 if (currentTimeStr >= settings.bedtime.time && !notified.bedtime) {
-                    pendingMessages.push("Sluníčko, už je čas jít spát. 🌙 Dobrou noc!");
+                    const msg = profile.username?.includes('Klárka') 
+                        ? "Sluníčko, už je čas jít spát. 🌙 Dobrou noc!" 
+                        : "Už je čas jít do postele, šampione. 🌙 Dobrou noc!";
+                    pendingMessages.push(msg);
                     notified.bedtime = true;
                     shouldUpdateHealthData = true;
                 }
             }
 
             // --- C) KONTROLA VODY ---
-            // Serverový CRON běží každých 15 minut. Pošleme vodu např. každé 2 hodiny, pokud je < 8.
             if (settings.water?.enabled && data.water < 8) {
                 const intervalMinutes = settings.water.interval || 120;
                 const lastWaterTimestamp = notified.last_water_ts || 0;
                 const nowMs = Date.now();
                 
                 if (nowMs - lastWaterTimestamp > intervalMinutes * 60 * 1000) {
-                    // Posílat jen mezi 8:00 a 22:00
                     const hour = parseInt(currentTimeStr.split(':')[0], 10);
                     if (hour >= 8 && hour <= 21) {
                         pendingMessages.push("Nezapomeň pít! 💧 Dnes ti ještě chybí do splnění cíle.");
@@ -129,6 +130,41 @@ Deno.serve(async (req) => {
                         shouldUpdateHealthData = true;
                     }
                 }
+            }
+
+            // --- D) KONTROLA SUPLEMENTŮ (Železo, Zinek, Hořčík) ---
+            const supplements = [
+                { id: 'iron', label: 'Železo 🩸 (Ne s kávou!)' },
+                { id: 'zinc', label: 'Zinek ✨' },
+                { id: 'magnesium', label: 'Hořčík před spaním! 🌙' }
+            ];
+
+            for (const s of supplements) {
+                const sSetting = settings[s.id];
+                if (sSetting?.enabled && sSetting.time) {
+                    if (currentTimeStr >= sSetting.time && !notified[s.id]) {
+                        // Kontrola v health_data, zda už nebylo vzato (pokud existuje klíč)
+                        const isTaken = data.supplements?.[s.id] === true;
+                        if (!isTaken) {
+                            pendingMessages.push(`Čas na tvůj suplement: ${s.label}`);
+                            notified[s.id] = true;
+                            shouldUpdateHealthData = true;
+                        }
+                    }
+                }
+            }
+
+            // --- E) PARTNER REMINDERS (Mood, Sleep) ---
+            // Pokud jsou povoleny a není u nich čas, pošleme je v "příhodnou" dobu
+            if (settings.mood?.enabled && currentTimeStr === "14:00" && !notified.mood_reminder) {
+                pendingMessages.push("Nezapomeň dnes podpořit partnera milou zprávou! ❤️");
+                notified.mood_reminder = true;
+                shouldUpdateHealthData = true;
+            }
+            if (settings.sleep?.enabled && currentTimeStr === "21:30" && !notified.sleep_reminder) {
+                pendingMessages.push("Pomalu se chystej na společné uspávání. 😴");
+                notified.sleep_reminder = true;
+                shouldUpdateHealthData = true;
             }
 
             // Odeslání push notifikací
