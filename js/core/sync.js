@@ -3,6 +3,32 @@ import { state } from './state.js';
 import { getTodayKey } from './utils.js';
 
 let mainChannel = null;
+// Cache partner ID aby se nemusel hledat při každém push volání
+let cachedPartnerId = null;
+
+/**
+ * Dynamicky zjistí ID partnera z tabulky push_subscriptions.
+ * Partner je uživatel, který má uloženou subscripci, a není to aktuálně přihlášený user.
+ * Výsledek se cachuje.
+ */
+async function getPartnerId() {
+    if (cachedPartnerId) return cachedPartnerId;
+
+    const myId = state.currentUser?.id;
+    if (!myId) return null;
+
+    // Načti všechny subscripce a najdi tu, která nepatří mně
+    // (funguje protože RLS v push_subscriptions povoluje service_role vidět vše,
+    //  ale anonymní user vidí jen vlastní — proto použijeme auth.users přes Edge Function)
+    // Zde tedy uložíme partner ID při přihlášení z globalního state
+    // state.partnerUser je nastavován v state.js při load dat
+    const partnerId = state.partnerUser?.id || null;
+    if (partnerId) {
+        cachedPartnerId = partnerId;
+    }
+    return partnerId;
+}
+
 
 /**
  * Initializes all real-time subscriptions for the application.
@@ -221,6 +247,13 @@ export function setupRealtimeSync() {
         }, (payload) => {
              if (payload.new && payload.new.sender_id !== state.currentUser?.id) {
                  window.dispatchEvent(new CustomEvent('letter-received', { detail: payload.new }));
+
+                 // Web Push — funguje i při zavřené appce
+                 sendPushToPartner(
+                     '💌 Nový dopis pro tebe!',
+                     `Dostal/a jsi nový dopis: "${payload.new.title || 'Bez názvu'}"`,
+                     'letter'
+                 );
              }
         })
         .subscribe((status) => {
@@ -246,16 +279,47 @@ export async function broadcastHealthUpdate(data) {
 }
 
 /**
+ * Sends a Web Push notification to the partner via Edge Function.
+ * Works even when the partner has the app closed.
+ */
+async function sendPushToPartner(title, body, tag = 'kiscord-push') {
+    const partnerId = await getPartnerId();
+
+    if (!partnerId) {
+        console.warn('[Push] Partner ID not found — partner may not have push subscriptions yet.');
+        return;
+    }
+
+    try {
+        const { error } = await supabase.functions.invoke('send-push', {
+            body: { userId: partnerId, title, body, tag },
+        });
+        if (error) console.error('[Push] Edge Function error:', error);
+        else console.log(`[Push] 📨 Push sent to partner (${partnerId})`);
+    } catch (err) {
+        console.error('[Push] Failed to call send-push:', err);
+    }
+}
+
+
+/**
  * Sends a sunlight broadcast to the other user.
  */
 export async function broadcastSunlight() {
     if (!mainChannel) return;
-    
+
     await mainChannel.send({
         type: 'broadcast',
         event: 'send-sunlight',
         payload: { from: state.currentUser?.id }
     });
+
+    // Web Push — funguje i při zavřené appce
+    sendPushToPartner(
+        'Sluňíčko pro tebe! ☀️',
+        `${state.currentUser?.name || 'Partner'} ti poslal/a sluňíčkový paprsek!`,
+        'sunlight'
+    );
 }
 
 /**
@@ -292,6 +356,13 @@ export async function broadcastMaturaSOS() {
         event: 'matura-sos',
         payload: { user_id: state.currentUser?.id, name: state.currentUser?.name }
     });
+
+    // Web Push — funguje i při zavřené appce
+    sendPushToPartner(
+        '🚨 Matura SOS!',
+        `${state.currentUser?.name || 'Partner'} potřebuje pomoc s maturitou!`,
+        'matura-sos'
+    );
 }
 
 /**

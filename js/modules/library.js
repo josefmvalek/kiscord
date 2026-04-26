@@ -6,6 +6,7 @@ import { showNotification } from '../core/theme.js';
 import { supabase } from '../core/supabase.js';
 import { renderModal, renderButton, renderInputGroup } from '../core/ui.js';
 import { safeUpsert, safeInsert } from '../core/offline.js';
+import * as TMDB from '../core/tmdb.js';
 
 // --- LIBRARY RENDERING ---
 
@@ -156,6 +157,24 @@ function ensureModals() {
         `;
         document.body.appendChild(planModal);
     }
+
+    if (!document.getElementById("delete-media-modal")) {
+        const delModal = document.createElement("div");
+        delModal.id = "delete-media-modal";
+        delModal.className = "fixed inset-0 z-[200] hidden modal-backdrop items-center justify-center p-4";
+        delModal.innerHTML = `
+            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-sm border border-red-500/50 p-8 text-center animate-fade-in">
+                <div class="text-4xl mb-3 text-[#ed4245]"><i class="fas fa-exclamation-triangle"></i></div>
+                <h3 class="text-xl font-bold text-white mb-2">Smazat položku?</h3>
+                <p class="text-gray-300 mb-6 text-sm">Opravdu chceš smazat <span id="delete-media-name" class="font-bold text-white"></span> z knihovny? Tuhle akci nejde vzít zpět.</p>
+                <div class="flex gap-3">
+                    <button onclick="closeModal('delete-media-modal')" class="flex-1 bg-[#2f3136] hover:bg-[#40444b] text-white py-2 rounded font-bold transition">Zrušit</button>
+                    <button id="confirm-delete-media-btn" class="flex-1 bg-[#ed4245] hover:bg-[#c03537] text-white py-2 rounded font-bold transition">Smazat</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(delModal);
+    }
 }
 
 export function renderLibrary(category) {
@@ -165,7 +184,8 @@ export function renderLibrary(category) {
         openMagnetLink, openGoogleDrive, openHistoryModal, setReactionInput, 
         setStarRating, setHistoryStatus, saveHistory, deleteHistory, 
         confirmDeleteHistory, openPlanningModal, confirmLibraryPlan, 
-        exportWatchlist, clearWatchlist, showAddMediaModal, saveNewMedia
+        exportWatchlist, clearWatchlist, showAddMediaModal, saveNewMedia,
+        searchTMDBInModal, selectTMDBResult, showEditMediaModal, updateMedia, deleteMedia
     };
 
     ensureModals();
@@ -226,9 +246,22 @@ export function renderLibrary(category) {
                 ${category === 'movies' ? 'Filmy' : (category === 'series' ? 'Seriály' : 'Hry')}
             </h2>
             <button onclick="Library.showAddMediaModal('${category}')" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-4 py-2 rounded-lg transition-all font-bold text-sm flex items-center gap-2 shadow-lg active:scale-95">
-                <i class="fas fa-plus"></i> Přidat do knihovny
+                <i class="fas fa-plus"></i> Přidat ${category === 'games' ? 'hru' : 'film'}
             </button>
         </div>
+        <!-- TMDB Search Row (Quick) -->
+        ${category !== 'games' ? `
+        <div class="px-6 mt-4 max-w-7xl mx-auto w-full">
+            <div class="bg-[#2f3136] p-1 rounded-xl flex gap-1 border border-white/5 shadow-inner">
+                <input type="text" id="tmdb-quick-search" placeholder="Hladat film/seriál na TMDB..." 
+                       class="flex-1 bg-transparent text-white px-4 py-2 outline-none text-sm"
+                       onkeydown="if(event.key === 'Enter') Library.searchTMDBInModal('${category}')">
+                <button onclick="Library.searchTMDBInModal('${category}')" class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-6 py-2 rounded-lg font-bold text-xs transition">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        ` : ''}
         <div class="p-6 pb-20 animate-fade-in space-y-10">
     `;
 
@@ -250,6 +283,12 @@ export function renderLibrary(category) {
             const watchlist = state.watchlist || [];
             const isBookmarked = watchlist.some((w) => w.id === item.id && w.user_id === state.currentUser?.id);
 
+            // Card Visuals
+            const hasPoster = !!item.poster_path;
+            const posterUrl = hasPoster ? TMDB.getTMDBImageUrl(item.poster_path, 'w342') : null;
+            const displayRating = item.rating ? item.rating.toFixed(1) : null;
+            const displayRuntime = item.runtime ? (item.runtime > 60 ? `${Math.floor(item.runtime / 60)}h ${item.runtime % 60}m` : `${item.runtime}m`) : null;
+
             const safeTitle = (item.title || "").replace(/'/g, "\\'");
             const safeMagnet = (item.magnet || "").replace(/'/g, "\\'");
             const safeGdrive = (item.gdrive || "").replace(/'/g, "\\'");
@@ -263,7 +302,7 @@ export function renderLibrary(category) {
                 statusBadge = '<span class="absolute top-2 left-2 bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded font-bold shadow-md z-10"><i class="fas fa-play"></i> ROZKOUKÁNO</span>';
 
             html += `
-                  <div class="library-card group relative bg-[#2f3136] rounded-xl overflow-hidden border border-[#202225] hover:border-[#5865F2] transition-all shadow-lg flex flex-col">
+                  <div class="library-card group relative bg-[#2f3136] rounded-xl overflow-hidden border border-[#202225] hover:border-[#5865F2] transition-all shadow-lg flex flex-col w-full">
                       ${statusBadge}
 
                       <button onclick="event.stopPropagation(); window.loadModule('library').then(m => m.toggleWatchlist(${item.id}))" 
@@ -271,10 +310,25 @@ export function renderLibrary(category) {
                           <i class="${isBookmarked ? "fas" : "far"} fa-heart"></i>
                       </button>
 
-                      <div class="poster-area h-40 bg-[#202225] flex items-center justify-center text-5xl group-hover:scale-105 transition-transform duration-500 relative cursor-pointer" 
+                      <div class="poster-area w-full aspect-[2/3] h-auto bg-[#202225] flex items-center justify-center text-5xl group-hover:scale-105 transition-transform duration-400 relative cursor-pointer overflow-hidden shadow-inner" 
                            onclick="window.loadModule('library').then(m => m.openHistoryModal(${item.id}))">
-                          ${item.icon}
+                          ${hasPoster 
+                              ? `<img src="${posterUrl}" alt="${item.title}" class="w-full h-full object-cover block">` 
+                              : `<span class="opacity-50">${item.icon}</span>`}
+                          
                           ${item.trailer ? '<div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fas fa-play text-white/80 text-3xl drop-shadow-lg"></i></div>' : ""}
+                          
+                          <!-- Metadata Overlays -->
+                          ${displayRating ? `
+                          <div class="absolute bottom-2 right-2 bg-black/70 backdrop-blur px-2 py-1 rounded text-[10px] font-black text-[#faa61a] border border-[#faa61a]/30 shadow-lg">
+                              ⭐ ${displayRating}
+                          </div>
+                          ` : ''}
+                          ${displayRuntime ? `
+                          <div class="absolute bottom-2 left-2 bg-black/70 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-gray-300 border border-white/10 shadow-lg">
+                             ${displayRuntime}
+                          </div>
+                          ` : ''}
                       </div>
 
                       <div class="p-3 flex flex-col flex-1">
@@ -283,6 +337,7 @@ export function renderLibrary(category) {
                           </div>
                           <h3 class="font-bold text-white text-sm leading-tight mb-1 group-hover:text-[#5865F2] transition line-clamp-2" title="${item.title}">${item.title}</h3>
                           <div class="mt-auto pt-3 border-t border-[#202225] flex justify-between items-center gap-1">
+                                <button onclick="event.stopPropagation(); window.loadModule('library').then(m => m.showEditMediaModal(${item.id}, '${category}'))" class="text-gray-400 hover:text-white p-1.5 rounded transition" title="Upravit"><i class="fas fa-edit"></i></button>
                               ${item.trailer
                     ? `<button onclick="event.stopPropagation(); Library.playTrailer('${safeTrailer}')" class="text-gray-400 hover:text-[#ff0000] p-1.5 rounded transition"><i class="fab fa-youtube"></i></button>`
                     : `<div class="w-6"></div>`
@@ -763,23 +818,52 @@ export function showAddMediaModal(category) {
         ? ["RPG", "FPS", "Strategie", "Simulátor", "Závodní", "Ostatní"]
         : ["Akční", "Sci-Fi", "Komedie", "Animovaný", "Fantasy", "Drama", "Horor", "Romantický", "Dobrodružný", "Ostatní"];
 
-    const modalContent = `
-        <div class="space-y-4 text-left">
-            ${renderInputGroup({ label: 'Název', id: 'm-title', placeholder: 'Např. Inception' })}
-            
-            <div class="grid grid-cols-2 gap-4">
-                ${renderInputGroup({ label: 'Ikona (emoji)', id: 'm-icon', placeholder: '🎬', attr: 'class="text-center text-2xl w-full bg-[#202225] text-white p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2] transition-all"' })}
-                <div class="space-y-1">
-                    <label class="block text-[10px] text-gray-500 font-bold uppercase tracking-widest">Kategorie</label>
-                    <select id="m-cat" class="w-full bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2] transition-all">
-                        ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
-                    </select>
+    let modalContent = `
+        <div class="space-y-6 text-left">
+            <!-- TMDB Search Section -->
+            ${category !== 'games' ? `
+            <div class="bg-black/20 p-4 rounded-2xl border border-white/5 space-y-3">
+                <div class="flex items-center justify-between mb-1">
+                    <label class="text-[10px] text-blue-400 font-black uppercase tracking-widest">Vyhledat na TMDB 🎬</label>
+                    <span class="text-[9px] text-gray-500 italic">Automatické doplnění</span>
                 </div>
+                <div class="flex gap-2">
+                    <input type="text" id="tmdb-search-input" placeholder="Zadej název filmu..." 
+                           class="flex-1 bg-[#202225] text-white p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2] transition-all text-sm">
+                    <button onclick="Library.searchTMDBInModal('${category}')" class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-4 rounded-xl transition">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <!-- Results Container -->
+                <div id="tmdb-results" class="hidden max-h-48 overflow-y-auto custom-scrollbar space-y-1 pt-2"></div>
             </div>
-            
-            ${renderInputGroup({ label: 'Magnet Link (volitelné)', id: 'm-magnet', placeholder: 'magnet:?xt=...', attr: 'class="w-full bg-[#202225] text-white text-[10px] p-3 rounded-xl border border-[#2f3136] outline-none font-mono"' })}
-            ${renderInputGroup({ label: 'Google Drive Link (volitelné)', id: 'm-gdrive', placeholder: 'https://drive.google.com/...' })}
-            ${renderInputGroup({ label: 'Mood Tags / Vibes (oddělit čárkou)', id: 'm-moods', placeholder: 'Např. Doják, Napínavé, Pohoda' })}
+            ` : ''}
+
+            <div class="space-y-4">
+                ${renderInputGroup({ label: 'Název', id: 'm-title', placeholder: 'Např. Inception' })}
+                
+                <div class="grid grid-cols-2 gap-4">
+                    ${renderInputGroup({ label: 'Ikona (emoji)', id: 'm-icon', placeholder: '🎬', attr: 'class="text-center text-2xl w-full bg-[#202225] text-white p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2] transition-all"' })}
+                    <div class="space-y-1">
+                        <label class="block text-[10px] text-gray-500 font-bold uppercase tracking-widest">Kategorie</label>
+                        <select id="m-cat" class="w-full bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2] transition-all">
+                            ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+                
+                ${renderInputGroup({ label: 'Magnet Link (volitelné)', id: 'm-magnet', placeholder: 'magnet:?xt=...', attr: 'class="w-full bg-[#202225] text-white text-[10px] p-3 rounded-xl border border-[#2f3136] outline-none font-mono"' })}
+                ${renderInputGroup({ label: 'Google Drive Link (volitelné)', id: 'm-gdrive', placeholder: 'https://drive.google.com/...' })}
+                ${renderInputGroup({ label: 'Mood Tags / Vibes (oddělit čárkou)', id: 'm-moods', placeholder: 'Např. Doják, Napínavé, Pohoda' })}
+                
+                <!-- Hidden TMDB data -->
+                <input type="hidden" id="m-tmdb-id">
+                <input type="hidden" id="m-poster-path">
+                <input type="hidden" id="m-rating">
+                <input type="hidden" id="m-runtime">
+                <input type="hidden" id="m-genres">
+                <input type="hidden" id="m-year">
+            </div>
         </div>
     `;
 
@@ -818,6 +902,13 @@ export async function saveNewMedia(category) {
         return;
     }
     
+    const tmdbId = document.getElementById('m-tmdb-id')?.value;
+    const posterPath = document.getElementById('m-poster-path')?.value;
+    const rating = parseFloat(document.getElementById('m-rating')?.value || 0);
+    const runtime = parseInt(document.getElementById('m-runtime')?.value || 0);
+    const genres = document.getElementById('m-genres')?.value;
+    const year = parseInt(document.getElementById('m-year')?.value || 0);
+
     const dbType = category === 'movies' ? 'movie' : (category === 'series' ? 'series' : 'game');
     
     triggerHaptic('success');
@@ -826,7 +917,13 @@ export async function saveNewMedia(category) {
         const { data: newItems, error } = await safeInsert('library_content', [{
             type: dbType,
             title, icon, category: cat, magnet, gdrive,
-            mood_tags: moodTags
+            mood_tags: moodTags,
+            tmdb_id: tmdbId ? parseInt(tmdbId) : null,
+            poster_path: posterPath || null,
+            rating: rating || null,
+            runtime: runtime || null,
+            genres: genres || null,
+            release_year: year || null
         }]);
         
         if (error) throw error;
@@ -841,7 +938,13 @@ export async function saveNewMedia(category) {
             cat: newItem.category,
             magnet: newItem.magnet,
             gdrive: newItem.gdrive,
-            mood_tags: newItem.mood_tags
+            mood_tags: newItem.mood_tags,
+            tmdb_id: newItem.tmdb_id,
+            poster_path: newItem.poster_path,
+            rating: newItem.rating,
+            runtime: newItem.runtime,
+            genres: newItem.genres,
+            release_year: newItem.release_year
         });
         
         // Close modal
@@ -859,6 +962,227 @@ export async function saveNewMedia(category) {
         showNotification("Chyba při ukládání: " + err.message, "error");
     }
 }
+// --- TMDB HELPERS ---
+
+export async function searchTMDBInModal(category) {
+    const input = document.getElementById('tmdb-search-input') || document.getElementById('tmdb-quick-search');
+    const resultsContainer = document.getElementById('tmdb-results');
+    const query = input?.value.trim();
+
+    if (!query) return;
+
+    triggerHaptic('light');
+    
+    // Show results container and loader
+    if (resultsContainer) {
+        resultsContainer.innerHTML = '<div class="text-center py-4 text-xs text-gray-500 animate-pulse">Hledám na TMDB... 🕵️‍♂️</div>';
+        resultsContainer.classList.remove('hidden');
+    }
+
+    const results = await TMDB.searchTMDB(query, category);
+
+    if (!resultsContainer) return;
+
+    if (results.length === 0) {
+        resultsContainer.innerHTML = '<div class="text-center py-4 text-xs text-red-400">Nebyly nalezeny žádné výsledky.</div>';
+    } else {
+        resultsContainer.innerHTML = results.slice(0, 5).map(res => {
+            const title = res.title || res.name;
+            const year = new Date(res.release_date || res.first_air_date).getFullYear() || '????';
+            const poster = res.poster_path ? TMDB.getTMDBImageUrl(res.poster_path, 'w92') : null;
+
+            return `
+                <div onclick="Library.selectTMDBResult(${res.id}, '${category}')" 
+                     class="flex items-center gap-3 p-2 bg-[#2f3136] hover:bg-[#5865F2]/20 border border-transparent hover:border-[#5865F2]/40 rounded-xl cursor-pointer transition group">
+                    <div class="w-10 h-14 bg-[#202225] rounded-lg overflow-hidden flex-shrink-0">
+                        ${poster ? `<img src="${poster}" class="w-full h-full object-cover">` : '<div class="w-full h-full flex items-center justify-center text-xs text-gray-600">🎬</div>'}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-xs font-bold text-white truncate group-hover:text-[#5865F2] transition">${title}</div>
+                        <div class="text-[10px] text-gray-500 font-medium">${year}</div>
+                    </div>
+                    <i class="fas fa-plus text-gray-700 group-hover:text-[#5865F2] mr-2"></i>
+                </div>
+            `;
+        }).join('');
+    }
+}
+
+export async function selectTMDBResult(id, category) {
+    triggerHaptic('success');
+    
+    const resultsContainer = document.getElementById('tmdb-results');
+    if (resultsContainer) resultsContainer.innerHTML = '<div class="text-center py-4 text-xs text-blue-400 animate-pulse">Stahuji detaily... 🚀</div>';
+
+    const details = await TMDB.getTMDBDetails(id, category);
+
+    if (!details) {
+        showNotification("Nepodařilo se stáhnout detaily z TMDB.", "error");
+        return;
+    }
+
+    // Auto-fill the form
+    document.getElementById('m-title').value = details.title;
+    document.getElementById('m-tmdb-id').value = details.tmdb_id;
+    document.getElementById('m-poster-path').value = details.poster_path;
+    document.getElementById('m-rating').value = details.rating;
+    document.getElementById('m-runtime').value = details.runtime;
+    document.getElementById('m-genres').value = details.genres;
+    document.getElementById('m-year').value = details.release_year;
+
+    // Set some default mood tags from genres if empty
+    const moodsInput = document.getElementById('m-moods');
+    if (!moodsInput.value.trim() && details.genres) {
+        moodsInput.value = details.genres;
+    }
+
+    // Success Visual
+    if (resultsContainer) {
+        resultsContainer.innerHTML = `
+            <div class="bg-[#3ba55c]/10 border border-[#3ba55c]/30 p-3 rounded-xl flex items-center gap-3 animate-slide-up">
+                <div class="text-xl text-[#3ba55c]"><i class="fas fa-check-circle"></i></div>
+                <div class="text-[10px] font-bold text-[#3ba55c] uppercase">Data úspěšně stažena!</div>
+            </div>
+        `;
+        setTimeout(() => resultsContainer.classList.add('hidden'), 2000);
+    }
+
+    showNotification(`Film "${details.title}" načten z TMDB!`, "success");
+}
+
+export function showEditMediaModal(itemId, category) {
+    const item = state.library[category].find(i => i.id === itemId);
+    if (!item) return;
+
+    const displayType = category === 'movies' ? 'film' : (category === 'series' ? 'seriál' : 'hru');
+    const categories = category === 'games' 
+        ? ["RPG", "FPS", "Strategie", "Simulátor", "Závodní", "Ostatní"]
+        : ["Akční", "Sci-Fi", "Komedie", "Animovaný", "Fantasy", "Drama", "Horor", "Romantický", "Dobrodružný", "Ostatní"];
+
+    let modalContent = `
+        <div class="space-y-6 text-left">
+            <div class="space-y-4">
+                <input type="hidden" id="edit-id" value="${item.id}">
+                ${renderInputGroup({ label: 'Název', id: 'm-title-edit', placeholder: 'Název', value: item.title })}
+                
+                <div class="grid grid-cols-2 gap-4">
+                    ${renderInputGroup({ label: 'Ikona (emoji)', id: 'm-icon-edit', placeholder: '🎬', value: item.icon, attr: 'class="text-center text-2xl w-full bg-[#202225] text-white p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2] transition-all"' })}
+                    <div class="space-y-1">
+                        <label class="block text-[10px] text-gray-500 font-bold uppercase tracking-widest">Kategorie</label>
+                        <select id="m-cat-edit" class="w-full bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2] transition-all">
+                            ${categories.map(c => `<option value="${c}" ${c === item.cat ? 'selected' : ''}>${c}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+                
+                ${renderInputGroup({ label: 'Magnet Link', id: 'm-magnet-edit', placeholder: 'magnet:?xt=...', value: item.magnet || '', attr: 'class="w-full bg-[#202225] text-white text-[10px] p-3 rounded-xl border border-[#2f3136] outline-none font-mono"' })}
+                ${renderInputGroup({ label: 'Google Drive Link', id: 'm-gdrive-edit', placeholder: 'https://drive.google.com/...', value: item.gdrive || '' })}
+                ${renderInputGroup({ label: 'Mood Tags (oddělit čárkou)', id: 'm-moods-edit', placeholder: 'Moods', value: (item.mood_tags || []).join(', ') })}
+            </div>
+        </div>
+    `;
+
+    const modalActions = `
+        <div class="flex gap-3 mt-2">
+            <button onclick="Library.deleteMedia(${item.id}, '${category}')" class="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-500 py-3 rounded-xl font-bold transition border border-red-500/30">
+                <i class="fas fa-trash-alt mr-2 text-xs"></i>Smazat
+            </button>
+            <button onclick="Library.updateMedia(${item.id}, '${category}')" class="flex-[2] bg-[#5865F2] hover:bg-[#4752c4] text-white py-3 rounded-xl font-bold shadow-lg transition">
+                ULOŽIT ZMĚNY 💾
+            </button>
+        </div>
+    `;
+
+    const modalHtml = renderModal({
+        id: 'media-edit-modal',
+        title: `Upravit ${displayType}`,
+        subtitle: item.title,
+        content: modalContent,
+        actions: modalActions,
+        onClose: "document.getElementById('media-edit-modal').remove()"
+    });
+
+    const container = document.createElement('div');
+    container.innerHTML = modalHtml;
+    const modalElement = container.firstElementChild;
+    document.body.appendChild(modalElement);
+    modalElement.classList.replace('hidden', 'flex');
+}
+
+export async function updateMedia(itemId, category) {
+    const title = document.getElementById('m-title-edit').value.trim();
+    const icon = document.getElementById('m-icon-edit').value.trim();
+    const cat = document.getElementById('m-cat-edit').value;
+    const magnet = document.getElementById('m-magnet-edit').value.trim();
+    const gdrive = document.getElementById('m-gdrive-edit').value.trim();
+    const mood_tags = document.getElementById('m-moods-edit').value.split(',').map(t => t.trim()).filter(t => t !== "");
+
+    if (!title) {
+        showNotification("Název je povinný!", "error");
+        return;
+    }
+
+    triggerHaptic('success');
+    
+    try {
+        const { error } = await supabase.from('library_content').update({
+            title, icon, category: cat, magnet, gdrive, mood_tags
+        }).eq('id', itemId);
+
+        if (error) throw error;
+
+        // Update local state
+        const itemIdx = state.library[category].findIndex(i => i.id === itemId);
+        if (itemIdx !== -1) {
+            state.library[category][itemIdx] = {
+                ...state.library[category][itemIdx],
+                title, icon, cat, magnet, gdrive, mood_tags
+            };
+        }
+
+        document.getElementById('media-edit-modal')?.remove();
+        showNotification("Změny uloženy! ✨", "success");
+        renderLibrary(category);
+    } catch (err) {
+        console.error("Update Media Error:", err);
+        showNotification("Chyba při ukládání: " + err.message, "error");
+    }
+}
+
+export async function deleteMedia(itemId, category) {
+    const item = state.library[category].find(i => i.id === itemId);
+    if (!item) return;
+
+    ensureModals();
+    const modal = document.getElementById("delete-media-modal");
+    const nameSpan = document.getElementById("delete-media-name");
+    const confirmBtn = document.getElementById("confirm-delete-media-btn");
+
+    if (nameSpan) nameSpan.innerText = item.title;
+    if (confirmBtn) {
+        confirmBtn.onclick = async () => {
+            triggerHaptic('heavy');
+            try {
+                const { error } = await supabase.from('library_content').delete().eq('id', itemId);
+                if (error) throw error;
+
+                // Update state
+                state.library[category] = state.library[category].filter(i => i.id !== itemId);
+                
+                closeModal('delete-media-modal');
+                document.getElementById('media-edit-modal')?.remove();
+                showNotification("Smazáno z knihovny 🗑️", "success");
+                renderLibrary(category);
+            } catch (err) {
+                console.error("Delete Media Error:", err);
+                showNotification("Chyba při mazání: " + err.message, "error");
+            }
+        };
+    }
+
+    if (modal) modal.style.display = "flex";
+}
+
 window.addEventListener('library-updated', async () => {
     await ensureLibraryData(true);
     if (['movies', 'series', 'games', 'watchlist', 'calendar'].includes(state.currentChannel)) {

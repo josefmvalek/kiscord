@@ -2,6 +2,7 @@ import { state } from '../core/state.js';
 import { supabase } from '../core/supabase.js';
 import { triggerHaptic } from '../core/utils.js';
 import { isKlarka, isJosef } from '../core/auth.js';
+import * as TMDB from '../core/tmdb.js';
 
 // --- MODERN WATCHLIST HUB ---
 
@@ -232,19 +233,32 @@ function renderMemories() {
 
 function renderWlCard(item, isTogether) {
     const iconClass = item.type === 'game' ? 'fa-gamepad' : 'fa-film';
+    const hasPoster = !!item.poster_path;
+    const posterUrl = hasPoster ? TMDB.getTMDBImageUrl(item.poster_path, 'w185') : null;
+    const itemRating = item.rating ? item.rating.toFixed(1) : null;
+
     return `
         <div class="relative group cursor-pointer" onclick="Library.openHistoryModal(${item.id})">
             <!-- Card Overlay with Moods -->
-            <div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10 rounded-xl pointer-events-none">
+            <div class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10 rounded-xl pointer-events-none">
                 <div class="flex flex-wrap gap-1">
-                    ${(item.mood_tags || []).slice(0, 2).map(tag => `<span class="text-[8px] bg-[#5865F2]/30 text-white px-1.5 py-0.5 rounded border border-[#5865F2]/50">${tag}</span>`).join('')}
+                    ${(item.mood_tags || []).slice(0, 2).map(tag => `<span class="text-[8px] bg-[#5865F2]/40 text-white px-1.5 py-0.5 rounded border border-[#5865F2]/50 font-bold backdrop-blur-sm">${tag}</span>`).join('')}
                 </div>
             </div>
 
             <!-- The Card -->
-            <div class="bg-[#2f3136] rounded-xl overflow-hidden border ${isTogether ? 'border-[#eb459e]/50 shadow-[0_0_15px_rgba(235,69,158,0.2)]' : 'border-[#202225]'} hover:border-[#5865F2] transition shadow-lg aspect-[3/4] flex flex-col">
-                <div class="flex-1 flex items-center justify-center text-5xl bg-[#202225] group-hover:scale-110 transition-transform duration-500">
-                    ${item.icon || '🎞️'}
+            <div class="bg-[#2f3136] rounded-xl overflow-hidden border ${isTogether ? 'border-[#eb459e]/50 shadow-[0_0_15px_rgba(235,69,158,0.2)]' : 'border-[#202225]'} hover:border-[#5865F2] hover:scale-[1.02] hover:-translate-y-2 transition-all duration-400 shadow-lg flex flex-col relative w-full h-auto">
+                
+                ${itemRating ? `
+                <div class="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded text-[9px] font-black text-[#faa61a] border border-[#faa61a]/30 z-20">
+                    ⭐ ${itemRating}
+                </div>
+                ` : ''}
+
+                <div class="aspect-[2/3] w-full flex items-center justify-center text-5xl bg-[#202225] group-hover:scale-105 transition-transform duration-400 overflow-hidden">
+                    ${hasPoster 
+                        ? `<img src="${posterUrl}" alt="${item.title}" class="w-full h-full object-cover">` 
+                        : `<span class="opacity-30">${item.icon || '🎞️'}</span>`}
                 </div>
                 <div class="p-3 bg-[#2f3136] border-t border-[#202225]">
                     <h3 class="text-xs font-bold text-white truncate mb-1">${item.title}</h3>
@@ -292,13 +306,18 @@ export async function rollTheDice() {
 function showWinnerModal(item) {
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl animate-fade-in';
+    const hasPoster = !!item.poster_path;
+    const posterUrl = hasPoster ? TMDB.getTMDBImageUrl(item.poster_path, 'w342') : null;
+
     modal.innerHTML = `
         <div class="bg-[#2f3136] border border-[#5865F2]/50 rounded-3xl p-10 max-w-sm w-full text-center shadow-[0_0_50px_rgba(88,101,242,0.3)] animate-scale-up">
             <div class="text-3xl font-black text-[#5865F2] mb-2">OSUD ROZHODL! 🌟</div>
-            <div class="text-gray-400 text-sm mb-8 italic">Dneska si dáme...</div>
+            <div class="text-gray-400 text-sm mb-6 italic">Dneska si dáme...</div>
             
-            <div class="w-32 h-32 bg-[#202225] rounded-3xl mx-auto flex items-center justify-center text-7xl mb-6 shadow-inner border border-white/5">
-                ${item.icon}
+            <div class="w-48 h-64 bg-[#202225] rounded-3xl mx-auto flex items-center justify-center text-7xl mb-6 shadow-inner border border-white/5 overflow-hidden">
+                ${hasPoster 
+                    ? `<img src="${posterUrl}" alt="${item.title}" class="w-full h-full object-cover">` 
+                    : item.icon || '🎬'}
             </div>
             
             <h2 class="text-2xl font-black text-white mb-2 leading-tight">${item.title}</h2>

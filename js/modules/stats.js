@@ -147,7 +147,17 @@ export async function requestPushPermission() {
         const granted = await m.requestNotificationPermission();
         if (granted) {
             m.sendLocalNotification("Kiscord: Oznámení povolena! ✨", { body: "Teď už ti nic neuteče." });
-            updateNotificationStatusUI();
+
+            // Registruj Web Push subscripci (pro notifikace i při zavřené appce)
+            import('../core/notifications.js').then(async nm => {
+                const success = await nm.initPushSubscription();
+                if (success) {
+                    window.dispatchEvent(new CustomEvent('notification', {
+                        detail: { message: "Push notifikace aktivovány! 🔔 Dostaneš zprávy i při zavřené appce.", type: "success" }
+                    }));
+                }
+                updateNotificationStatusUI();
+            });
         } else {
             window.dispatchEvent(new CustomEvent('notification', {
                 detail: { message: "Oznámení byla zamítnuta nebo nejsou podporována.", type: "error" }
@@ -178,7 +188,18 @@ function updateNotificationStatusUI() {
 
     const status = Notification.permission;
     if (status === 'granted') {
-        textEl.innerHTML = 'Stav: <span class="text-[#3ba55c]">Aktivní ✅</span>';
+        // Zkontroluj jestli máme push subscripci uloženou
+        navigator.serviceWorker?.ready.then(reg => {
+            reg.pushManager.getSubscription().then(sub => {
+                if (sub) {
+                    textEl.innerHTML = 'Stav: <span class="text-[#3ba55c]">Push aktivní ✅ (i při zavřené appce)</span>';
+                } else {
+                    textEl.innerHTML = 'Stav: <span class="text-[#faa61a]">Povoleno (bez background push) ⚠️</span>';
+                }
+            });
+        }).catch(() => {
+            textEl.innerHTML = 'Stav: <span class="text-[#3ba55c]">Aktivní ✅</span>';
+        });
         btn.innerHTML = 'Povolené <i class="fas fa-check ml-1"></i>';
         btn.disabled = true;
         btn.classList.add('opacity-50', 'cursor-default');

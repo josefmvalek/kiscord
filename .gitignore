@@ -6,10 +6,7 @@ tmp/
 
 # Logy z buildů
 *.log
-build_error.txt
-build_log.txt
-full_build_log.txt
-full_debug_log.txt
+logs/
 
 # Env soubory (citlivé údaje)
 .env

@@ -399,7 +399,22 @@ async function ensureLibraryData(force = false) {
             state.library = { movies: [], series: [], games: [] };
             libData.data.forEach(item => {
                 const typeKey = item.type === 'movie' ? 'movies' : (item.type === 'series' ? 'series' : 'games');
-                state.library[typeKey].push({ id: item.id, title: item.title, icon: item.icon, cat: item.category, magnet: item.magnet, gdrive: item.gdrive, mood_tags: item.mood_tags || [], trailer: item.trailer || "" });
+                state.library[typeKey].push({ 
+                    id: item.id, 
+                    title: item.title, 
+                    icon: item.icon, 
+                    cat: item.category, 
+                    magnet: item.magnet, 
+                    gdrive: item.gdrive, 
+                    mood_tags: item.mood_tags || [], 
+                    trailer: item.trailer || "",
+                    tmdb_id: item.tmdb_id,
+                    poster_path: item.poster_path,
+                    rating: item.rating,
+                    runtime: item.runtime,
+                    genres: item.genres,
+                    release_year: item.release_year
+                });
             });
         }
         if (watchData.data) state.watchlist = watchData.data.map(row => ({ id: parseInt(row.media_id), type: row.type, user_id: row.added_by }));

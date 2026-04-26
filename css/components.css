@@ -158,20 +158,20 @@
   background: #2f3136;
   border-radius: 8px;
   overflow: visible;
-  transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s ease, border-color 0.4s ease, background-color 0.4s ease;
   position: relative;
   height: 100%;
   border: 1px solid #202225;
 }
 .library-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
   background-color: #36393f;
   z-index: 50;
   border-color: #5865f2;
 }
 .poster-area {
-  height: 120px;
+  height: auto;
   background: #202225;
   display: flex;
   align-items: center;
