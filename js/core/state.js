@@ -136,6 +136,8 @@ const stateEvents = {
     }
 };
 
+let _settingsSyncTimeout = null;
+
 function saveStateToCache() {
     const cacheData = {
         healthData: state.healthData,
@@ -152,6 +154,16 @@ function saveStateToCache() {
         settings: state.settings
     };
     localStorage.setItem(STATE_CACHE_KEY, JSON.stringify(cacheData));
+
+    // Debounced sync of settings to Supabase profiles table
+    if (state.currentUser?.id) {
+        if (_settingsSyncTimeout) clearTimeout(_settingsSyncTimeout);
+        _settingsSyncTimeout = setTimeout(() => {
+            supabase.from('profiles').update({ settings: state.settings }).eq('id', state.currentUser.id)
+                .then(({ error }) => { if (error) console.error('[State] Failed to sync settings:', error); })
+                .catch(e => console.error('[State] Settings sync exception:', e));
+        }, 2000);
+    }
 }
 
 function loadStateFromCache() {

@@ -19,33 +19,8 @@ const lastNotified = {
 export function initNotifications() {
     console.log("[Notifications] Engine initialized.");
 
-    // PREVENT CATCH-UP NOTIFICATIONS ON REFRESH
-    // 1. Water: Start interval from now
-    lastNotified.water = Date.now();
-
-    // 2. Bedtime: If already past bedtime today, don't notify again
-    const todayKey = getTodayKey();
-    const now = new Date();
-    const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    const bedtimeConfig = state.settings.notifications.reminders.bedtime;
-    if (bedtimeConfig.enabled && currentTimeStr >= bedtimeConfig.time) {
-        lastNotified.bedtime = todayKey;
-    }
-
-    // 3. Pills: Mark all past scheduled pills today as already notified
-    const pillConfig = state.settings.notifications.reminders.pills;
-    if (pillConfig.enabled && pillConfig.reminders) {
-        lastNotified.pills[todayKey] = pillConfig.reminders
-            .filter(r => currentTimeStr >= r.time)
-            .map(r => r.time);
-    }
-    
-    // Background ticker (every 5 minutes)
-    setInterval(checkReminders, 5 * 60 * 1000);
-    
-    // Initial silent check (skip triggering, just for state if needed in future)
-    // For now, we just let the ticker handle the first real one after 5 mins
-    // or if the user performs some action.
+    // Server-side CRON now handles background reminders (water, pills, bedtime).
+    // Local checkReminders was removed to prevent duplicate notifications.
 
     // --- PARTNER ACTION LISTENERS ---
     
@@ -74,53 +49,6 @@ export function initNotifications() {
     });
 }
 
-/**
- * Checks all health and routine reminders against current state and settings.
- */
-function checkReminders() {
-    if (state.currentChannel === 'settings') return;
-
-    const now = new Date();
-    const currentH = now.getHours();
-    const currentM = now.getMinutes();
-    const currentTimeStr = `${String(currentH).padStart(2, '0')}:${String(currentM).padStart(2, '0')}`;
-    const todayKey = getTodayKey();
-    const data = state.healthData[todayKey] || { water: 0, pills: false };
-    const config = state.settings.notifications.reminders;
-
-    // 1. Water Reminder
-    if (config.water.enabled && data.water < 8) {
-        const lastWaterTime = lastNotified.water;
-        const intervalMs = config.water.interval * 60 * 1000;
-        if (Date.now() - lastWaterTime > intervalMs) {
-            triggerNotification('reminders', 'water', "Nezapomeň pít! 💧 Už jsi dlouho neměla sklenici vody.");
-            lastNotified.water = Date.now();
-        }
-    }
-
-    // 2. Pills Reminder (Multiple Times Support with Labels)
-    if (config.pills.enabled) {
-        if (!lastNotified.pills[todayKey]) lastNotified.pills[todayKey] = [];
-        
-        const reminders = config.pills.reminders || [];
-        reminders.forEach(reminder => {
-            const { time, label } = reminder;
-            // If current time is after scheduled time AND we haven't notified for THIS specific scheduled time today
-            if (currentTimeStr >= time && !lastNotified.pills[todayKey].includes(time)) {
-                triggerNotification('reminders', 'pills', `Čas na tvoje léky: ${label} (${time})! 💊`);
-                lastNotified.pills[todayKey].push(time);
-            }
-        });
-    }
-
-    // 3. Bedtime Reminder
-    if (config.bedtime.enabled && state.currentUser?.name === 'Klárka') {
-        if (currentTimeStr >= config.bedtime.time && lastNotified.bedtime !== todayKey) {
-             triggerNotification('reminders', 'bedtime', "Sluníčko, už je čas jít spát. 🌙 Dobrou noc!");
-             lastNotified.bedtime = todayKey;
-        }
-    }
-}
 
 /**
  * External gateways for notifications
