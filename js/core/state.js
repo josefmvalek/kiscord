@@ -159,10 +159,16 @@ function saveStateToCache() {
     if (state.currentUser?.id) {
         if (_settingsSyncTimeout) clearTimeout(_settingsSyncTimeout);
         _settingsSyncTimeout = setTimeout(() => {
-            supabase.from('profiles').update({ settings: state.settings }).eq('id', state.currentUser.id)
+            supabase.from('profiles').upsert({ 
+                id: state.currentUser.id,
+                username: state.currentUser.name || state.currentUser.email,
+                email: state.currentUser.email,
+                settings: state.settings 
+            }, { onConflict: 'id' })
                 .then(({ error }) => { if (error) console.error('[State] Failed to sync settings:', error); })
                 .catch(e => console.error('[State] Settings sync exception:', e));
         }, 2000);
+
     }
 }
 

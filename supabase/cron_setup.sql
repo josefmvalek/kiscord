@@ -2,8 +2,21 @@
 create extension if not exists pg_net;
 create extension if not exists pg_cron;
 
--- 2. Přidání sloupců pro uložení nastavení a stavu notifikací
-alter table public.profiles add column if not exists settings jsonb default '{}'::jsonb;
+-- 2. Vytvoření tabulky profiles, protože v projektu zatím neexistuje
+create table if not exists public.profiles (
+    id uuid references auth.users(id) on delete cascade primary key,
+    username text,
+    email text,
+    settings jsonb default '{}'::jsonb
+);
+
+-- Povolení RLS a přístupu
+alter table public.profiles enable row level security;
+create policy "Public profiles are viewable by everyone." on profiles for select using (true);
+create policy "Users can update own profile." on profiles for update using (auth.uid() = id);
+create policy "Users can insert own profile." on profiles for insert with check (auth.uid() = id);
+
+-- Přidání sloupce do health_data pro stav notifikací
 alter table public.health_data add column if not exists notified_reminders jsonb default '{}'::jsonb;
 
 -- 3. Vytvoření CRON úlohy (spouští se každých 15 minut)
