@@ -8,7 +8,6 @@ let cachedPartnerId = null;
 
 /**
  * Vrátí Supabase user ID partnera (toho kdo není přihlášený).
- * Využívá state.user_ids které jsou naplňovány v initializeState().
  */
 async function getPartnerId() {
     if (cachedPartnerId) return cachedPartnerId;
@@ -16,30 +15,34 @@ async function getPartnerId() {
     const myId = state.currentUser?.id;
     if (!myId) return null;
 
-    // state.user_ids.jose a state.user_ids.klarka jsou naplňovány v initializeState()
+    // 1. Primární zdroj: state.user_ids (naplňuje se po revalidaci)
     const { jose, klarka } = state.user_ids || {};
-
-    // Partner je ten uživatel jehož ID není moje
     if (jose && klarka) {
         cachedPartnerId = (myId === jose) ? klarka : jose;
+        console.log('[Push] Partner ID from state.user_ids:', cachedPartnerId);
         return cachedPartnerId;
     }
 
-    // Fallback: pokud user_ids nejsou ještě naplněné, zkusíme je načíst z DB
+    // 2. Fallback: profiles tabulka — vrací všechny uživatele, veřejně čitelná
     try {
-        const { data: pData } = await supabase.from('push_subscriptions')
-            .select('user_id')
-            .neq('user_id', myId)
-            .limit(1)
-            .maybeSingle();
-        if (pData?.user_id) {
-            cachedPartnerId = pData.user_id;
-            return cachedPartnerId;
+        const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, email, username');
+
+        if (profiles && profiles.length > 0) {
+            // Najdi profil který není můj
+            const partnerProfile = profiles.find(p => p.id !== myId);
+            if (partnerProfile) {
+                cachedPartnerId = partnerProfile.id;
+                console.log('[Push] Partner ID from profiles:', cachedPartnerId);
+                return cachedPartnerId;
+            }
         }
     } catch (e) {
-        console.warn('[Push] Could not fetch partner ID from push_subscriptions:', e);
+        console.warn('[Push] Could not fetch partner ID from profiles:', e);
     }
 
+    console.warn('[Push] Could not determine partner ID.');
     return null;
 }
 
