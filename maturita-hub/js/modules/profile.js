@@ -71,6 +71,30 @@ export async function renderProfile(container) {
                     </div>
                 </form>
             </div>
+            
+            <!-- Account Security (Password) -->
+            <div class="bg-darkSecondary/20 p-8 rounded-3xl border border-white/5 space-y-8">
+                <h3 class="text-xs font-black uppercase tracking-widest text-white italic border-l-2 border-accent-warning pl-4">Zabezpečení účtu</h3>
+                
+                <form id="password-update-form" class="space-y-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 px-2">Nové heslo</label>
+                        <input type="password" name="password" placeholder="••••••••" required
+                               class="w-full bg-darkSecondary border border-white/5 rounded-2xl p-4 text-white font-bold outline-none focus:border-blurple/50 transition">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-gray-500 px-2">Potvrzení nového hesla</label>
+                        <input type="password" name="confirm_password" placeholder="••••••••" required
+                               class="w-full bg-darkSecondary border border-white/5 rounded-2xl p-4 text-white font-bold outline-none focus:border-blurple/50 transition">
+                    </div>
+
+                    <div class="flex justify-end pt-4">
+                        <button type="submit" class="bg-darkSecondary border border-white/10 hover:border-blurple/50 text-white font-black px-10 py-4 rounded-2xl transition shadow-xl active:scale-95 uppercase tracking-widest text-xs flex items-center gap-3">
+                            <i class="fas fa-key"></i> Aktualizovat heslo
+                        </button>
+                    </div>
+                </form>
+            </div>
 
             <!-- Keyboard Shortcuts Cheat Sheet -->
             <div class="bg-darkSecondary/30 p-8 rounded-3xl border border-white/5 space-y-6">
@@ -192,6 +216,32 @@ export async function renderProfile(container) {
         } catch (err) {
             console.error("Profile Update Error:", err);
             await showAlert("Chyba", "Nepodařilo se uložit změny: " + err.message, "❌");
+        }
+    };
+
+    // Handle Password Change
+    const passwordForm = document.getElementById('password-update-form');
+    passwordForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const password = e.target.password.value;
+        const confirm = e.target.confirm_password.value;
+
+        if (password !== confirm) {
+            return showAlert("Chyba", "Hesla se neshodují!", "❌");
+        }
+        if (password.length < 6) {
+            return showAlert("Chyba", "Heslo musí mít alespoň 6 znaků.", "⚠️");
+        }
+
+        try {
+            const { error } = await supabase.auth.updateUser({ password });
+            if (error) throw error;
+
+            await showAlert("Heslo změněno", "Tvé nové heslo bylo úspěšně nastaveno. 🔐", "✅");
+            e.target.reset();
+        } catch (err) {
+            console.error("Password Update Error:", err);
+            await showAlert("Chyba", "Nepodařilo se změnit heslo: " + err.message, "❌");
         }
     };
 

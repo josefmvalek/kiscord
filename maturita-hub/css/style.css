@@ -1,5 +1,12 @@
-/* MaturitaHub 2026 - Modern Study Design System */
+@import "tailwindcss";
 
+@theme {
+  --color-blurple: #5865F2;
+  --color-darkPrimary: #1e1f22;
+  --color-darkSecondary: #2b2d31;
+}
+
+/* MaturitaHub 2026 - Modern Study Design System */
 :root {
     /* Color Palette - Vibrant & Focused */
     --accent-primary: #5865F2;
@@ -485,8 +492,8 @@ body.zen-mode .editor-header {
 
 main {
     flex: 1;
-    padding: 2rem 1rem;
-    max-width: 1200px;
+    padding: 4rem 2rem;
+    max-width: 1400px;
     margin: 0 auto;
     width: 100%;
 }
@@ -495,8 +502,8 @@ main {
 .card {
     background: var(--bg-secondary);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 1.5rem;
-    padding: 1.5rem;
+    border-radius: 2rem;
+    padding: 2.5rem;
     box-shadow: var(--shadow-premium);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -563,16 +570,16 @@ nav {
     position: sticky;
     top: 0;
     z-index: 100;
-    padding: 0.75rem 0;
+    padding: 1.25rem 0;
 }
 
 .nav-container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 1rem;
+    padding: 0 2rem;
 }
 
 .logo {
@@ -588,7 +595,7 @@ nav {
 
 .nav-links {
     display: flex;
-    gap: 1.5rem;
+    gap: 2.5rem;
 }
 
 .nav-link {
@@ -599,11 +606,40 @@ nav {
     text-transform: uppercase;
     letter-spacing: 0.1em;
     transition: color 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 0 0.5rem;
 }
 
 .nav-link:hover,
 .nav-link.active {
     color: var(--text-header);
+}
+
+.nav-link.active {
+    color: var(--color-blurple);
+}
+
+.mobile-nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    flex: 1;
+    height: 100%;
+}
+
+.mobile-nav-btn:hover {
+    color: var(--text-header);
+}
+
+.mobile-nav-btn.active {
+    color: var(--color-blurple);
 }
 
 /* --- Custom Scrollbar --- */

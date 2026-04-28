@@ -177,32 +177,49 @@ function renderCurrentRoute() {
         link.classList.toggle('active', link.getAttribute('href') === hash);
     });
 
+    const handleImportError = (err) => {
+        console.error("[MaturitaHub] Module Load Error:", err);
+        container.innerHTML = `
+            <div class="card p-10 text-center space-y-4 border-accent-danger max-w-md mx-auto mt-20">
+                <div class="text-4xl">🔌</div>
+                <h2 class="text-xl font-bold uppercase italic">Chyba načítání stránky</h2>
+                <p class="text-gray-500 text-sm">Nepodařilo se načíst požadovaný modul. Zkontrolujte připojení k internetu a zkuste to znovu.</p>
+                <button onclick="window.location.reload()" class="btn-primary mt-4 text-xs">Obnovit aplikaci</button>
+            </div>
+        `;
+    };
+
     try {
         if (hash === '#dashboard') {
-            import('./modules/dashboard.js').then(m => m.renderDashboard(container));
+            import('./modules/dashboard.js').then(m => m.renderDashboard(container)).catch(handleImportError);
         } else if (hash === '#library') {
-            import('./modules/library.js').then(m => m.renderLibrary(container));
+            import('./modules/library.js').then(m => m.renderLibrary(container)).catch(handleImportError);
         } else if (hash === '#browse') {
-            import('./modules/browse.js').then(m => m.renderBrowse(container));
+            import('./modules/browse.js').then(m => m.renderBrowse(container)).catch(handleImportError);
         } else if (hash === '#study-room') {
-            import('./modules/study_room.js').then(m => m.renderStudyRoom(container));
+            import('./modules/study_room.js').then(m => m.renderStudyRoom(container)).catch(handleImportError);
         } else if (hash === '#profile') {
-            import('./modules/profile.js').then(m => m.renderProfile(container));
+            import('./modules/profile.js').then(m => m.renderProfile(container)).catch(handleImportError);
         } else if (hash === '#view' && id) {
             console.log("[MaturitaHub] Opening Viewer for:", id);
-            import('./modules/viewer.js').then(m => m.openTopic(id)).catch(err => {
-                console.error("[MaturitaHub] Viewer Load Error:", err);
-                showAlert("Chyba načítání", "Nepodařilo se otevřít čtečku: " + err.message, "❌");
-            });
+            import('./modules/viewer.js').then(m => m.openTopic(id)).catch(handleImportError);
         } else if (hash === '#edit' && id) {
-            import('./modules/editor.js').then(m => m.editTopic(id));
+            import('./modules/editor.js').then(m => m.editTopic(id)).catch(handleImportError);
         } else if (hash === '#new') {
-            import('./modules/editor.js').then(m => m.openNewTopic());
+            import('./modules/editor.js').then(m => m.openNewTopic()).catch(handleImportError);
         } else {
             console.warn("[MaturitaHub] Unknown Route:", hash);
+            container.innerHTML = `
+                <div class="card p-10 text-center space-y-4 max-w-md mx-auto mt-20">
+                    <div class="text-4xl">🧭</div>
+                    <h2 class="text-xl font-bold uppercase italic">Stránka nenalezena</h2>
+                    <p class="text-gray-500 text-sm">Tato adresa neexistuje.</p>
+                    <a href="#dashboard" class="btn-primary inline-block mt-4 text-xs">Zpět domů</a>
+                </div>
+            `;
         }
     } catch (err) {
-        console.error("[MaturitaHub] Router Error:", err);
+        handleImportError(err);
     }
 }
 

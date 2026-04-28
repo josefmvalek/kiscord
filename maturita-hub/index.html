@@ -8,34 +8,23 @@
     <!-- Design & Fonts -->
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <!-- PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     
     <!-- Favicon & Manifest -->
     <link rel="icon" type="image/x-icon" href="img/favicon.ico">
     <meta name="theme-color" content="#1e1f22">
 
-    <!-- Tailwind for rapid components (optional but helpful for some layouts) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        blurple: '#5865F2',
-                        darkPrimary: '#1e1f22',
-                        darkSecondary: '#2b2d31',
-                    }
-                }
-            }
-        }
-    </script>
 </head>
 <body class="bg-darkPrimary text-gray-200">
 
     <div id="app-root">
         <!-- Modern Navigation -->
         <nav class="sticky top-0 bg-darkPrimary/80 backdrop-blur-xl border-b border-white/5 z-50">
-            <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="max-w-[1400px] mx-auto px-6 h-20 flex items-center justify-between">
                 <div class="flex items-center gap-8">
                     <a href="#dashboard" class="flex items-center gap-2 text-white font-black italic text-xl uppercase tracking-tighter">
                         <span class="text-blurple text-2xl">🎓</span> Maturita<span class="text-blurple">Hub</span>
@@ -64,7 +53,7 @@
         </nav>
 
         <!-- Main Display Area -->
-        <main id="main-content" class="max-w-7xl mx-auto px-2 md:px-6 py-8">
+        <main id="main-content" class="max-w-[1400px] mx-auto px-4 md:px-10 pt-20 pb-32">
             <!-- Dynamic Content Injected Here -->
             <div id="loading-spinner" class="flex flex-col items-center justify-center py-20 animate-pulse">
                 <div class="w-12 h-12 border-4 border-blurple border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -158,19 +147,5 @@
     <!-- Scripts -->
     <script type="module" src="js/main.js"></script>
     
-    <style type="text/tailwindcss">
-        .nav-link {
-            @apply flex flex-col items-center justify-center h-full px-2 text-gray-400 hover:text-white transition-colors;
-        }
-        .nav-link.active {
-            @apply text-blurple;
-        }
-        .mobile-nav-btn {
-            @apply flex flex-col items-center justify-center text-gray-500 hover:text-white transition-all flex-1 h-full;
-        }
-        .mobile-nav-btn.active {
-            @apply text-blurple;
-        }
-    </style>
 </body>
 </html>

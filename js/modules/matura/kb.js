@@ -123,6 +123,10 @@ export async function openKnowledgeBase(itemId) {
                         class="bg-white/5 hover:bg-white/10 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition border border-white/5">
                     <i class="fas fa-sticky-note text-[8px]"></i> <span class="hidden sm:inline">Poznámky</span>
                 </button>
+                <button onclick="window.loadModule('matura').then(m => m.downloadSinglePDF('${itemId}'))" id="btn-pdf-${itemId}"
+                        class="bg-white/5 hover:bg-white/10 text-gray-400 hover:text-red-400 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition border border-white/5 tooltip" data-tip="Stáhnout do PDF">
+                    <i class="fas fa-file-pdf"></i>
+                </button>
                 <button onclick="window.loadModule('matura').then(m => m.openGeminiSettings())" 
                         class="bg-white/5 hover:bg-white/10 text-gray-500 border border-white/10 px-3 py-2 rounded-xl text-[10px] transition shrink-0" title="Nastavení Gemini API">
                     <i class="fas fa-cog"></i>
@@ -274,6 +278,8 @@ export function updateCollapseAllButtonText(itemId) {
     const anyExpanded = Array.from(container.querySelectorAll('.matura-collapsible-content')).some(c => !c.classList.contains('collapsed'));
     btn.textContent = anyExpanded ? 'Sbalit vše' : 'Rozbalit vše';
 }
+
+
 
 /**
  * Editor

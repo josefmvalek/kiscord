@@ -23,6 +23,24 @@ const state = {
     }
 };
 
+// Load initial state from cache if available
+try {
+    const cachedTopics = localStorage.getItem(STATE_CACHE_KEY + '_topics');
+    const cachedProfiles = localStorage.getItem(STATE_CACHE_KEY + '_profiles');
+    
+    if (cachedTopics) {
+        state.maturaTopics = JSON.parse(cachedTopics);
+        state._loaded.topics = true;
+    }
+    
+    if (cachedProfiles) {
+        state.users = JSON.parse(cachedProfiles);
+        state._loaded.profiles = true;
+    }
+} catch (e) {
+    console.warn("Failed to load state from cache:", e);
+}
+
 const _listeners = {};
 const stateEvents = {
     on(event, callback) {
@@ -55,6 +73,9 @@ async function ensureMaturaData(force = false) {
                 acc[t.category].push(t);
                 return acc;
             }, {});
+            try {
+                localStorage.setItem(STATE_CACHE_KEY + '_topics', JSON.stringify(state.maturaTopics));
+            } catch(e) {}
         }
         
         if (progress) {
@@ -73,6 +94,9 @@ async function ensureProfilesData() {
         const { data } = await supabase.from('profiles').select('*');
         if (data) {
             data.forEach(p => { state.users[p.id] = p; });
+            try {
+                localStorage.setItem(STATE_CACHE_KEY + '_profiles', JSON.stringify(state.users));
+            } catch(e) {}
             state._loaded.profiles = true;
             stateEvents.emit('profiles-loaded');
         }

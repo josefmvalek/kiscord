@@ -390,6 +390,10 @@ export async function openKnowledgeBase(itemId) {
                         class="bg-white/5 hover:bg-white/10 text-gray-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition border border-white/5">
                     <i class="fas fa-sticky-note text-[8px]"></i> <span class="hidden sm:inline">Poznámky</span>
                 </button>
+                <button onclick="window.loadModule('matura').then(m => m.downloadSinglePDF('${itemId}'))" id="btn-pdf-${itemId}"
+                        class="bg-white/5 hover:bg-white/10 text-gray-400 hover:text-red-400 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition border border-white/5 tooltip" data-tip="Stáhnout do PDF">
+                    <i class="fas fa-file-pdf"></i>
+                </button>
                 <button onclick="window.loadModule('matura').then(m => m.openGeminiSettings())" 
                         class="bg-white/5 hover:bg-white/10 text-gray-500 border border-white/10 px-3 py-2 rounded-xl text-[10px] transition shrink-0" title="Nastavení Gemini API">
                     <i class="fas fa-cog"></i>
@@ -596,6 +600,395 @@ export function toggleMobileTOC(itemId) {
         }
         triggerHaptic('light');
     }
+}
+
+/**
+ * Pomocná funkce: převede markdown text na strukturované bloky pro jsPDF
+ * Nepotřebuje html2canvas – pracuje přímo s textem
+ */
+function markdownToBlocks(markdown) {
+    if (!markdown) return [];
+    const lines = markdown.replace(/\r\n/g, '\n').split('\n');
+    const blocks = [];
+    let inCodeBlock = false;
+    let codeBuffer = [];
+    let inTable = false;
+    let tableRows = [];
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        // Code blocks
+        if (line.trim().startsWith('```')) {
+            if (!inCodeBlock) {
+                inCodeBlock = true;
+                codeBuffer = [];
+            } else {
+                inCodeBlock = false;
+                blocks.push({ type: 'code', text: codeBuffer.join('\n') });
+                codeBuffer = [];
+            }
+            continue;
+        }
+        if (inCodeBlock) { codeBuffer.push(line); continue; }
+
+        // Tables
+        if (line.trim().startsWith('|')) {
+            if (!line.includes('---')) {
+                tableRows.push(line.split('|').filter(c => c.trim() !== '').map(c => c.trim()));
+            }
+            inTable = true;
+            continue;
+        }
+        if (inTable && !line.trim().startsWith('|')) {
+            if (tableRows.length > 0) blocks.push({ type: 'table', rows: tableRows });
+            tableRows = [];
+            inTable = false;
+        }
+
+        // Headings
+        if (line.startsWith('# ')) { blocks.push({ type: 'h1', text: line.slice(2) }); continue; }
+        if (line.startsWith('## ')) { blocks.push({ type: 'h2', text: line.slice(3) }); continue; }
+        if (line.startsWith('### ')) { blocks.push({ type: 'h3', text: line.slice(4) }); continue; }
+
+        // List items
+        const listMatch = line.match(/^(\s*)[-*]\s+(.+)/);
+        if (listMatch) { blocks.push({ type: 'li', indent: listMatch[1].length, text: listMatch[2] }); continue; }
+
+        // Numbered list
+        const numMatch = line.match(/^(\s*)\d+\.\s+(.+)/);
+        if (numMatch) { blocks.push({ type: 'li', indent: numMatch[1].length, text: numMatch[2] }); continue; }
+
+        // Skip math blocks ($$...$$) — too complex to render as text
+        if (line.trim().startsWith('$$') || line.trim().endsWith('$$')) continue;
+        if (line.trim().startsWith('$') && line.trim().endsWith('$') && line.length > 2) {
+            blocks.push({ type: 'math', text: line.trim().slice(1, -1) }); continue;
+        }
+
+        // Empty line
+        if (line.trim() === '') { blocks.push({ type: 'spacer' }); continue; }
+
+        // Bold/italic removal for plain text, then paragraph
+        const cleanLine = line
+            .replace(/\*\*(.+?)\*\*/g, '$1')
+            .replace(/\*(.+?)\*/g, '$1')
+            .replace(/`(.+?)`/g, '$1')
+            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+            .replace(/!\[([^\]]*)\]\([^)]+\)/g, '[obrázek: $1]')
+            .replace(/\[\[(.+?)\]\]/g, '$1');
+
+        blocks.push({ type: 'p', text: cleanLine });
+    }
+
+    if (tableRows.length > 0) blocks.push({ type: 'table', rows: tableRows });
+    return blocks;
+}
+
+/**
+ * Pomocná funkce: vygeneruje PDF blob z raw markdown textu pomocí jsPDF
+ * 100% spolehlivé – žádný html2canvas, žádné screenshottování
+ */
+function generatePDFFromMarkdown(title, markdownContent) {
+    const jsPDF = window.jspdf?.jsPDF;
+    if (!jsPDF) throw new Error('jsPDF knihovna není načtená');
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    const PAGE_W = 210;
+    const PAGE_H = 297;
+    const MARGIN = 18;
+    const TEXT_W = PAGE_W - MARGIN * 2;
+    let y = MARGIN;
+
+    const checkPage = (needed = 8) => {
+        if (y + needed > PAGE_H - MARGIN) {
+            doc.addPage();
+            y = MARGIN;
+        }
+    };
+
+    // --- Nadpis otázky ---
+    doc.setFillColor(88, 101, 242); // Discord blurple
+    doc.rect(0, 0, PAGE_W, 28, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    const titleLines = doc.splitTextToSize(title, TEXT_W);
+    doc.text(titleLines, MARGIN, 14);
+    y = 36;
+    doc.setTextColor(30, 30, 30);
+
+    const blocks = markdownToBlocks(markdownContent);
+
+    for (const block of blocks) {
+        switch (block.type) {
+            case 'h1': {
+                checkPage(12);
+                y += 4;
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(15);
+                doc.setTextColor(30, 30, 30);
+                const h1Lines = doc.splitTextToSize(block.text, TEXT_W);
+                doc.text(h1Lines, MARGIN, y);
+                y += h1Lines.length * 7 + 2;
+                doc.setDrawColor(88, 101, 242);
+                doc.setLineWidth(0.5);
+                doc.line(MARGIN, y, PAGE_W - MARGIN, y);
+                y += 3;
+                break;
+            }
+
+            case 'h2': {
+                checkPage(10);
+                y += 3;
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(13);
+                doc.setTextColor(50, 50, 50);
+                const h2Lines = doc.splitTextToSize(block.text, TEXT_W);
+                doc.text(h2Lines, MARGIN, y);
+                y += h2Lines.length * 6.5 + 2;
+                doc.setDrawColor(200, 200, 200);
+                doc.setLineWidth(0.3);
+                doc.line(MARGIN, y, PAGE_W - MARGIN, y);
+                y += 2;
+                break;
+            }
+
+            case 'h3': {
+                checkPage(8);
+                y += 2;
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(11);
+                doc.setTextColor(70, 70, 70);
+                const h3Lines = doc.splitTextToSize(block.text, TEXT_W);
+                doc.text(h3Lines, MARGIN, y);
+                y += h3Lines.length * 6 + 1;
+                break;
+            }
+
+            case 'p': {
+                checkPage(7);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor(30, 30, 30);
+                const pLines = doc.splitTextToSize(block.text, TEXT_W);
+                pLines.forEach(l => { checkPage(6); doc.text(l, MARGIN, y); y += 5.5; });
+                break;
+            }
+
+            case 'li': {
+                checkPage(7);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor(30, 30, 30);
+                const bulletX = MARGIN + (block.indent / 2) * 3;
+                const textX = bulletX + 5;
+                const availW = TEXT_W - (block.indent / 2) * 3 - 5;
+                doc.setFillColor(88, 101, 242);
+                doc.circle(bulletX + 1.5, y - 1.5, 1, 'F');
+                const liLines = doc.splitTextToSize(block.text, availW);
+                liLines.forEach(l => { checkPage(6); doc.text(l, textX, y); y += 5.5; });
+                break;
+            }
+
+            case 'code': {
+                const codeLines = block.text.split('\n');
+                const blockH = codeLines.length * 4.8 + 6;
+                checkPage(blockH);
+                doc.setFillColor(245, 245, 245);
+                doc.setDrawColor(200, 200, 200);
+                doc.roundedRect(MARGIN, y - 3, TEXT_W, blockH, 2, 2, 'FD');
+                doc.setFont('courier', 'normal');
+                doc.setFontSize(8.5);
+                doc.setTextColor(60, 60, 60);
+                y += 2;
+                codeLines.forEach(l => {
+                    const cLines = doc.splitTextToSize(l, TEXT_W - 6);
+                    cLines.forEach(cl => { checkPage(5); doc.text(cl, MARGIN + 3, y); y += 4.8; });
+                });
+                y += 3;
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                break;
+            }
+
+            case 'table': {
+                if (!block.rows || block.rows.length === 0) break;
+                checkPage(20);
+                const head = [block.rows[0]];
+                const body = block.rows.slice(1);
+                doc.autoTable({
+                    startY: y,
+                    head,
+                    body,
+                    margin: { left: MARGIN, right: MARGIN },
+                    styles: { fontSize: 8, cellPadding: 2.5, textColor: [30, 30, 30], font: 'helvetica' },
+                    headStyles: { fillColor: [88, 101, 242], textColor: [255, 255, 255], fontStyle: 'bold' },
+                    alternateRowStyles: { fillColor: [248, 248, 248] },
+                    tableWidth: TEXT_W,
+                });
+                y = doc.lastAutoTable.finalY + 4;
+                break;
+            }
+
+            case 'math': {
+                checkPage(6);
+                doc.setFont('courier', 'italic');
+                doc.setFontSize(9);
+                doc.setTextColor(100, 50, 200);
+                doc.text(`[vzorec: ${block.text}]`, MARGIN, y);
+                y += 6;
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(30, 30, 30);
+                break;
+            }
+
+            case 'spacer':
+                y += 2.5;
+                break;
+        }
+    }
+
+    // Footer
+    const pageCount = doc.getNumberOfPages();
+    for (let p = 1; p <= pageCount; p++) {
+        doc.setPage(p);
+        doc.setFontSize(7);
+        doc.setTextColor(160, 160, 160);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Kiscord MaturitaHub – ${title} – strana ${p}/${pageCount}`, MARGIN, PAGE_H - 8);
+    }
+
+    return doc.output('blob');
+}
+
+/**
+ * Export jedné otázky do PDF
+ */
+export async function downloadSinglePDF(itemId) {
+    const btn = document.getElementById(`btn-pdf-${itemId}`);
+    if (!btn) return;
+
+    if (!window.jspdf?.jsPDF) {
+        if (window.showNotification) window.showNotification('Chyba: PDF knihovna se nepodařila načíst.', 'error');
+        return;
+    }
+
+    let topicData = null;
+    if (state.maturaTopics) {
+        for (const cat in state.maturaTopics) {
+            const found = state.maturaTopics[cat].find(i => i.id === itemId);
+            if (found) { topicData = found; break; }
+        }
+    }
+    const title = topicData?.title || 'Maturitní otázka';
+
+    const originalIcon = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    btn.disabled = true;
+
+    try {
+        // Preferuj cached content, jinak stáhni z DB
+        let markdownContent = state.maturaKBContent?.[itemId]?.content || null;
+        if (!markdownContent) {
+            const { data } = await supabase.from('matura_kb').select('content').eq('item_id', itemId).maybeSingle();
+            markdownContent = data?.content || '';
+        }
+
+        const blob = generatePDFFromMarkdown(title, markdownContent);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${title.replace(/[^a-z0-9A-Z_]/gi, '_').substring(0, 60)}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        if (window.showNotification) window.showNotification('PDF staženo! 📄', 'success');
+    } catch (err) {
+        console.error('PDF Generation Error:', err);
+        if (window.showNotification) window.showNotification('Chyba při generování PDF.', 'error');
+    } finally {
+        btn.innerHTML = originalIcon;
+        btn.disabled = false;
+    }
+}
+
+/**
+ * Export všech otázek v kategorii jako ZIP PDFek
+ */
+export async function downloadAllAsZip(subject) {
+    const items = state.maturaTopics?.[subject] || [];
+    if (items.length === 0) {
+        if (window.showNotification) window.showNotification('Kategorie je prázdná.', 'warning');
+        return;
+    }
+
+    if (!window.jspdf?.jsPDF || !window.JSZip) {
+        if (window.showNotification) window.showNotification('Chyba: PDF/ZIP knihovna se nepodařila načíst.', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('btn-zip-all');
+    let originalIcon = '';
+    if (btn) {
+        originalIcon = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span class="hidden sm:inline">Generuji...</span>';
+        btn.disabled = true;
+    }
+
+    if (window.showNotification) window.showNotification('Generuji ZIP, chvíli počkej...', 'info');
+
+    try {
+        const zip = new window.JSZip();
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (btn) btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> <span class="hidden sm:inline">${i + 1}/${items.length}: ${item.title.substring(0, 20)}</span>`;
+
+            try {
+                const { data } = await supabase.from('matura_kb').select('content').eq('item_id', item.id).maybeSingle();
+                const markdownContent = data?.content || '';
+
+                const pdfBlob = generatePDFFromMarkdown(item.title, markdownContent);
+
+                const safeTitle = item.title.replace(/[^a-z0-9A-Z_\u00C0-\u024F]/gi, '_').substring(0, 50);
+                const fileName = `${String(i + 1).padStart(2, '0')}_${safeTitle}.pdf`;
+                zip.file(fileName, pdfBlob);
+
+            } catch (itemErr) {
+                console.error(`Chyba u otázky "${item.title}":`, itemErr);
+                const safeTitle = item.title.replace(/[^a-z0-9A-Z_]/gi, '_').substring(0, 50);
+                zip.file(`CHYBA_${String(i + 1).padStart(2, '0')}_${safeTitle}.txt`,
+                    `Otázku "${item.title}" se nepodařilo exportovat.\n\nDetail: ${itemErr.message || itemErr}`);
+            }
+        }
+
+        if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span class="hidden sm:inline">Balím ZIP...</span>';
+
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(zipBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        const subName = subject.startsWith('czech') ? 'Cestina' : 'Informatika';
+        a.download = `Maturita_${subName}_Komplet.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        if (window.showNotification) window.showNotification('ZIP úspěšně stažen! 🎉', 'success');
+    } catch (err) {
+        console.error('ZIP Generation Error:', err);
+        if (window.showNotification) window.showNotification('Chyba při generování ZIPu.', 'error');
+    } finally {
+        if (btn) {
+            btn.innerHTML = originalIcon;
+            btn.disabled = false;
+        }
+    }
+
+
 }
 
 /**

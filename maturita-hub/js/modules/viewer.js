@@ -114,6 +114,9 @@ function renderTopicContent(container, topic) {
                 <button id="viewer-edit-btn" class="w-14 h-14 bg-white/5 hover:bg-white/10 text-white rounded-2xl flex items-center justify-center transition active:scale-90 group" title="Upravit">
                     <i class="fas fa-pen-nib group-hover:rotate-12 transition-transform"></i>
                 </button>
+                <button id="viewer-pdf-btn" class="w-14 h-14 bg-white/5 hover:bg-white/10 text-white rounded-2xl flex items-center justify-center transition active:scale-90 group" title="Stáhnout jako PDF">
+                    <i class="fas fa-file-pdf text-accent-danger/80 group-hover:text-accent-danger group-hover:scale-110 transition-all"></i>
+                </button>
                 <div class="w-px h-8 bg-white/10"></div>
                 <button id="viewer-done-btn" class="bg-blurple hover:bg-blurple/90 text-white font-black px-10 h-14 rounded-2xl transition shadow-lg active:scale-95 uppercase tracking-widest text-xs flex items-center gap-3">
                     <i class="fas fa-check-double"></i> Mám naučeno
@@ -139,10 +142,56 @@ function renderTopicContent(container, topic) {
     // Attach Event Handlers
     const editBtn = document.getElementById('viewer-edit-btn');
     const doneBtn = document.getElementById('viewer-done-btn');
+    const pdfBtn = document.getElementById('viewer-pdf-btn');
 
     if (editBtn) {
         editBtn.onclick = () => {
             window.location.hash = `#edit/${topicId}`;
+        };
+    }
+
+    if (pdfBtn) {
+        pdfBtn.onclick = async () => {
+            const element = document.getElementById('markdown-viewer-body');
+            if (!element) return;
+            
+            // UI Feedback
+            const originalIcon = pdfBtn.innerHTML;
+            pdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin text-white"></i>';
+            pdfBtn.disabled = true;
+
+            try {
+                // Create a wrapper for PDF to include the title
+                const pdfContainer = document.createElement('div');
+                // Přidáme téma a obsah do kontejneru pro export
+                pdfContainer.innerHTML = `
+                    <div style="font-family: 'Inter', sans-serif; padding: 20px; color: black; background: white;">
+                        <h1 style="font-size: 24px; font-weight: 900; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+                            ${topic.title}
+                        </h1>
+                        <div style="font-size: 14px; line-height: 1.6;">
+                            ${element.innerHTML}
+                        </div>
+                    </div>
+                `;
+
+                const opt = {
+                  margin:       10,
+                  filename:     `${topic.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
+                  image:        { type: 'jpeg', quality: 0.98 },
+                  html2canvas:  { scale: 2, useCORS: true },
+                  jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                await html2pdf().set(opt).from(pdfContainer).save();
+            } catch (err) {
+                console.error('PDF Generation Error:', err);
+                alert('Chyba při generování PDF. Zkuste to prosím znovu.');
+            } finally {
+                // Restore UI
+                pdfBtn.innerHTML = originalIcon;
+                pdfBtn.disabled = false;
+            }
         };
     }
 

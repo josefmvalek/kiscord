@@ -26,6 +26,10 @@ export function renderList(container, subject) {
                         <div class="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-1">Maturitní Okruh</div>
                         <div class="bg-[var(--bg-secondary)] px-3 py-1 rounded-full text-xs font-bold text-[var(--text-muted)] border border-white/5">Celkem ${items.length} témat</div>
                     </div>
+                    <button onclick="window.loadModule('matura').then(m => m.downloadAllAsZip('${subject}'))" id="btn-zip-all"
+                            class="bg-[#eb459e] hover:bg-[#d83c8d] text-white p-3 rounded-2xl flex items-center gap-2 font-black uppercase text-[10px] transition shadow-lg active:scale-95 hidden sm:flex" title="Stáhnout jako ZIP PDF">
+                        <i class="fas fa-file-zipper"></i> <span class="hidden lg:inline">Stáhnout vše</span>
+                    </button>
                     <button onclick="window.loadModule('matura').then(m => m.addNewTopic('${subject}'))" 
                             class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white p-3 rounded-2xl flex items-center gap-2 font-black uppercase text-[10px] transition shadow-lg active:scale-95">
                         <i class="fas fa-plus"></i> <span class="hidden sm:inline">Nové téma</span>

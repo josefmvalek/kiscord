@@ -14,7 +14,7 @@ export async function renderLibrary(container) {
     if (!user) return;
 
     let html = `
-        <div id="matura-hub-library" class="space-y-10 animate-fade-in relative mb-20">
+        <div id="matura-hub-library" class="space-y-24 animate-fade-in relative mb-32">
             <div class="flex items-center justify-between">
                 <h1 class="text-3xl font-black text-white italic uppercase tracking-tighter">
                     Tvoje <span class="text-blurple">Knihovna</span>
@@ -26,7 +26,7 @@ export async function renderLibrary(container) {
                 </button>
             </div>
 
-            <div class="space-y-12">
+            <div class="space-y-24">
     `;
 
     // Group by category
@@ -46,14 +46,14 @@ export async function renderLibrary(container) {
             const items = state.maturaTopics[cat];
             html += `
                 <div class="category-section">
-                    <div class="flex items-center gap-4 mb-6">
+                    <div class="flex items-center gap-6 mb-8">
                         <div class="w-10 h-10 bg-blurple/10 rounded-xl flex items-center justify-center text-blurple">
                             <i class="fas ${getCategoryIcon(cat)}"></i>
                         </div>
                         <h2 class="text-xl font-black text-white uppercase italic tracking-widest m-0">${cat}</h2>
                     </div>
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
                         ${items.map(t => renderTopicCard(t)).join('')}
                     </div>
                 </div>
@@ -98,7 +98,7 @@ function renderTopicCard(item) {
     const statusText = prog.status === 'done' ? 'Hotovo' : (prog.status === 'started' ? 'Studuji' : 'Nic');
 
     return `
-        <div id="topic-card-${item.id}" class="card bg-darkSecondary/80 p-6 flex flex-col group relative border border-white/5 hover:border-blurple/30 transition-all duration-300">
+        <div id="topic-card-${item.id}" class="card bg-darkSecondary/80 p-8 flex flex-col group relative border border-white/5 hover:border-blurple/30 transition-all duration-300">
              <div class="flex items-start gap-4 mb-4">
                 <div class="text-4xl group-hover:scale-110 transition-transform duration-300 transform-gpu">${item.icon || '📝'}</div>
                 <div class="flex-1 min-w-0">
