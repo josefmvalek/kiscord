@@ -18,11 +18,72 @@ export async function renderShifts() {
     const container = document.getElementById("messages-container");
     if (!container) return;
 
-    // Make sure we have state user IDs and shift data loaded
+    // Make sure we have state user IDs, shift data, and finances loaded
     await ensureShiftsData();
+    await import('../core/state.js').then(s => s.ensureFinancesData());
 
     // Set a global reference for rerendering
     window.renderShifts = renderShifts;
+
+    const myId = state.currentUser?.id;
+    const myWage = parseFloat(localStorage.getItem(`kiscord_hourly_wage_${myId}`) || '14');
+
+    // Expose API to window for button actions
+    window.saveHourlyWage = (val) => {
+        const num = parseFloat(val);
+        if (!isNaN(num) && num > 0) {
+            localStorage.setItem(`kiscord_hourly_wage_${myId}`, num.toString());
+            showNotification(`Hodinová mzda nastavena na ${num} €/h! 💶`, 'success');
+            renderShifts();
+        }
+    };
+
+    window.payShiftWage = async (dateKey) => {
+        triggerHaptic('medium');
+        
+        const dayData = state.shifts[dateKey] || {};
+        const myShift = myId === state.user_ids.jose ? dayData.jose : dayData.klarka;
+        
+        if (!myShift || myShift.shift_type === 'volno') return;
+        
+        const hours = calculateShiftHours(myShift);
+        const wageKey = `kiscord_hourly_wage_${myId}`;
+        const currentWage = parseFloat(localStorage.getItem(wageKey) || '14');
+        const amountVal = parseFloat((hours * currentWage).toFixed(2));
+        
+        const description = `Mzda za směnu: ${dateKey}`;
+        const category = 'Mzda 💶';
+        const type = 'earning';
+        
+        try {
+            const { supabase } = await import('../core/supabase.js');
+            const { error } = await supabase
+                .from('brigade_finances')
+                .insert({
+                    user_id: myId,
+                    amount: amountVal,
+                    type,
+                    description,
+                    category
+                });
+                
+            if (error) throw error;
+            
+            if (typeof window.triggerConfetti === 'function') {
+                window.triggerConfetti();
+            }
+            
+            showNotification(`Mzda ${amountVal} € úspěšně připsána do Kasičky! 🎉`, 'success');
+            
+            const stateModule = await import('../core/state.js');
+            await stateModule.ensureFinancesData(true);
+            renderShifts();
+            
+        } catch (err) {
+            console.error('[Shifts] Pay wage failed:', err);
+            showNotification('Chyba při připisování mzdy... 🦝', 'error');
+        }
+    };
 
     const weekDates = getWeekDates(weekOffset);
     const startOfWeekStr = formatDate(weekDates[0]);
@@ -43,6 +104,13 @@ export async function renderShifts() {
                         <p class="text-xs text-white/50 font-semibold tracking-wide mt-1">
                             Slaďme naše směny v Rakousku a vyražme do hor! 🏔️
                         </p>
+                    </div>
+                    <div class="text-right flex flex-col items-end gap-1">
+                        <span class="text-[9px] font-black uppercase tracking-widest text-white/30">Moje mzda</span>
+                        <div class="flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-xl border border-white/5">
+                            <input type="number" value="${myWage}" onchange="window.saveHourlyWage(this.value)" class="bg-transparent text-white text-xs font-black w-8 outline-none border-none text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" step="0.5">
+                            <span class="text-xs text-white/60 font-bold">€/h</span>
+                        </div>
                     </div>
                 </div>
                 
@@ -371,6 +439,31 @@ export function formatDateKey(date) {
     return `${year}-${month}-${day}`;
 }
 
+function calculateShiftHours(shift) {
+    if (!shift || shift.shift_type === 'volno') return 0;
+    if (shift.shift_type === 'ranni' || shift.shift_type === 'odpoledni') {
+        return 8; // standard 8 hours
+    }
+    if (shift.shift_type === 'custom') {
+        const start = shift.time_start;
+        const end = shift.time_end;
+        if (!start || !end) return 8; // Fallback to 8
+        const [sh, sm] = start.split(':').map(Number);
+        const [eh, em] = end.split(':').map(Number);
+        if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return 8;
+        
+        let startMinutes = sh * 60 + sm;
+        let endMinutes = eh * 60 + em;
+        
+        if (endMinutes < startMinutes) {
+            // Over midnight shift
+            endMinutes += 24 * 60;
+        }
+        return (endMinutes - startMinutes) / 60;
+    }
+    return 0;
+}
+
 // Render a single day row
 function renderDayRow(date) {
     const dateKey = formatDateKey(date);
@@ -386,6 +479,35 @@ function renderDayRow(date) {
     const isMeJose = myId === state.user_ids.jose;
 
     const isToday = formatDateKey(new Date()) === dateKey;
+    const todayKey = formatDateKey(new Date());
+    const isPastOrToday = dateKey <= todayKey;
+    const myShift = isMeJose ? joseShift : klarkaShift;
+
+    let payButtonHtml = "";
+    if (myShift && myShift.shift_type !== 'volno' && isPastOrToday) {
+        const hasBeenPaid = (state.brigadeFinances || []).some(f => 
+            f.user_id === myId && 
+            f.type === 'earning' && 
+            f.category === 'Mzda 💶' && 
+            f.description === `Mzda za směnu: ${dateKey}`
+        );
+
+        if (hasBeenPaid) {
+            payButtonHtml = `
+                <button disabled 
+                        class="w-full md:w-auto px-3 py-2 text-[10px] font-black uppercase tracking-widest bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl cursor-default flex items-center gap-1.5 justify-center">
+                    Mzda připsána ✅
+                </button>
+            `;
+        } else {
+            payButtonHtml = `
+                <button onclick="window.payShiftWage('${dateKey}')" 
+                        class="w-full md:w-auto px-3 py-2 text-[10px] font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all flex items-center gap-1.5 justify-center shadow-lg active:scale-95">
+                    Připsat mzdu 💶
+                </button>
+            `;
+        }
+    }
 
     return `
         <div class="glass-card bg-white/[0.02] border ${isToday ? 'border-[#faa61a]/30 bg-[#faa61a]/[0.01]' : 'border-white/5'} rounded-3xl p-5 hover:border-white/10 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group">
@@ -406,8 +528,9 @@ function renderDayRow(date) {
                 </div>
             </div>
 
-            <!-- Edit button -->
-            <div>
+            <!-- Edit & Pay buttons -->
+            <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                ${payButtonHtml}
                 <button onclick="window.openShiftModal('${dateKey}')" 
                         class="w-full md:w-auto px-4 py-2 text-xs font-black uppercase tracking-widest text-white/50 bg-white/5 hover:bg-white/10 hover:text-white rounded-xl border border-white/5 transition-all">
                     Upravit

@@ -53,6 +53,9 @@ const state = {
     drawStrokes: [],
     pinnedDrawing: null,
     coopQuests: [],
+    brigadeFinances: [],
+    brigadeChallenges: [],
+    brigadeDiary: [],
     user_ids: { jose: null, klarka: null },
     loadError: false, // Track if initial load failed
     maturaProgress: {}, // { item_id: { jose: { status, notes }, klarka: { status, notes } } }
@@ -113,7 +116,10 @@ const state = {
         conv_topics: false,
         regenerace: false,
         dailyArchive: false,
-        shifts: false
+        shifts: false,
+        finances: false,
+        challenges: false,
+        diary: false
     }
 };
 
@@ -167,7 +173,10 @@ function saveStateToCache() {
         library: state.library,
         watchlist: state.watchlist,
         watchHistory: state.watchHistory,
-        regeneraceContent: state.regeneraceContent
+        regeneraceContent: state.regeneraceContent,
+        brigadeFinances: state.brigadeFinances,
+        brigadeChallenges: state.brigadeChallenges,
+        brigadeDiary: state.brigadeDiary
     };
     localStorage.setItem(STATE_CACHE_KEY, JSON.stringify(cacheData));
 
@@ -586,7 +595,7 @@ async function ensureMapData(force = false) {
     try {
         const [{ data: ratingData }, { data: locData }] = await Promise.all([supabase.from('date_ratings').select('*'), supabase.from('date_locations').select('*')]);
         if (ratingData) ratingData.forEach(row => { state.dateRatings[row.location_id] = row.rating; });
-        if (locData) state.dateLocations = locData.map(l => ({ id: l.id, name: l.name, cat: l.category, icon: l.icon || "📍", lat: l.lat, lng: l.lng, desc: l.description, image_url: l.image_url }));
+        if (locData) state.dateLocations = locData.map(l => ({ id: l.id, name: l.name, cat: l.category, icon: l.icon || "📍", lat: l.lat, lng: l.lng, desc: l.description, image_url: l.image_url, country: l.country || 'CZ' }));
         markLoaded('map');
         stateEvents.emit('map');
     } catch (e) { console.error("Map Load Error:", e); }
@@ -840,6 +849,45 @@ async function ensureShiftsData(force = false) {
     }
 }
 
+async function ensureFinancesData(force = false) {
+    if (state._loaded.finances && !force && !isStale('finances')) return;
+    try {
+        const { data, error } = await supabase.from('brigade_finances').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        state.brigadeFinances = data || [];
+        markLoaded('finances');
+        stateEvents.emit('finances');
+    } catch (e) {
+        console.error("Finances Load Error:", e);
+    }
+}
+
+async function ensureChallengesData(force = false) {
+    if (state._loaded.challenges && !force && !isStale('challenges')) return;
+    try {
+        const { data, error } = await supabase.from('brigade_challenges').select('*');
+        if (error) throw error;
+        state.brigadeChallenges = data || [];
+        markLoaded('challenges');
+        stateEvents.emit('challenges');
+    } catch (e) {
+        console.error("Challenges Load Error:", e);
+    }
+}
+
+async function ensureDiaryData(force = false) {
+    if (state._loaded.diary && !force && !isStale('diary')) return;
+    try {
+        const { data, error } = await supabase.from('brigade_diary').select('*').order('date_key', { ascending: false });
+        if (error) throw error;
+        state.brigadeDiary = data || [];
+        markLoaded('diary');
+        stateEvents.emit('diary');
+    } catch (e) {
+        console.error("Diary Load Error:", e);
+    }
+}
+
 function resetLazyLoaders() {
     // Dynamicky resetovat podle existujících klíčů – synchronizováno s deklarací state._loaded
     Object.keys(state._loaded).forEach(k => { state._loaded[k] = false; });
@@ -896,5 +944,8 @@ export {
     ensureAssetsData,
     refreshMaturaTopics,
     ensureShiftsData,
+    ensureFinancesData,
+    ensureChallengesData,
+    ensureDiaryData,
     resetLazyLoaders
 };

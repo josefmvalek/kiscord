@@ -44,13 +44,16 @@ export function renderCalendar(year = null, month = null) {
     ensureModals();
     setupCalendarSync();
     
-    // Trigger lazy loading of shifts just in case they aren't loaded yet
-    import('../core/state.js').then(s => s.ensureShiftsData()).then(() => {
+    // Trigger lazy loading of shifts and diary data just in case they aren't loaded yet
+    Promise.all([
+        import('../core/state.js').then(s => s.ensureShiftsData()),
+        import('../core/state.js').then(s => s.ensureDiaryData())
+    ]).then(() => {
         if (state.currentChannel === 'calendar') {
             const grid = document.getElementById('calendar-grid');
             if (grid) grid.innerHTML = generateCalendarGrid(currentCalYear, currentCalMonth);
         }
-    }).catch(err => console.error('[Calendar] Error lazy loading shifts:', err));
+    }).catch(err => console.error('[Calendar] Error lazy loading shifts or diary:', err));
     
     const container = document.getElementById("messages-container");
     if (!container) return;

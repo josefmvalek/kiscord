@@ -26,7 +26,10 @@ export const moduleMap = {
     'settings': () => import('../modules/settings.js'),
     'regenerace': () => import('../modules/regenerace.js'),
     'shifts': () => import('../modules/shifts.js'),
-    'austrian-german': () => import('../modules/austrianGerman.js')
+    'austrian-german': () => import('../modules/austrianGerman.js'),
+    'kasicka': () => import('../modules/kasicka.js'),
+    'alpska-vyzva': () => import('../modules/alpskaVyzva.js'),
+    'alpsky-denicek': () => import('../modules/alpskyDenicek.js')
 };
 
 export const channelCategories = [
@@ -71,7 +74,7 @@ export const channelCategories = [
         ]
     },
     {
-        name: "MATURITA 2026",
+        name: "ARCHIV 🎓",
         items: [
             { id: 'matura-dashboard', name: 'dashboard', icon: '<i class="fas fa-rocket"></i>', type: 'text', color: '#eb459e', desc: 'Naše cesta ke svobodě! 🎓' },
             { id: 'matura-czech', name: 'čeština', icon: '<i class="fas fa-book"></i>', type: 'text', color: '#5865F2', desc: 'Rozbory děl a literatura.' },
@@ -82,7 +85,10 @@ export const channelCategories = [
         name: "RAKOUSKO 🇦🇹",
         items: [
             { id: 'shifts', name: 'plánovač-směn', icon: '<i class="fas fa-business-time"></i>', type: 'text', color: '#faa61a', desc: 'Slaďme naše směny a společné volno 📅' },
-            { id: 'austrian-german', name: 'rakouská-němčina', icon: '<i class="fas fa-utensils"></i>', type: 'text', color: '#eb459e', desc: 'Survival slovníček a flashcards pro Alpy 🏔️' }
+            { id: 'austrian-german', name: 'rakouská-němčina', icon: '<i class="fas fa-utensils"></i>', type: 'text', color: '#eb459e', desc: 'Survival slovníček a flashcards pro Alpy 🏔️' },
+            { id: 'kasicka', name: 'kasička', icon: '<i class="fas fa-wallet"></i>', type: 'text', color: '#faa61a', desc: 'Společné finance a Schnitzel-O-Meter 💶' },
+            { id: 'alpska-vyzva', name: 'challenges', icon: '<i class="fas fa-mountain"></i>', type: 'text', color: '#3ba55c', desc: 'Každodenní alpské úkoly 🏔️' },
+            { id: 'alpsky-denicek', name: 'alpský-deníček', icon: '<i class="fas fa-journal-whills"></i>', type: 'text', color: '#eb459e', desc: 'Společný locked micro-journal 📔🔒' }
         ]
     },
     {
@@ -259,7 +265,7 @@ export function switchChannel(channelId, push = true) {
         'cleanupQuestsRealtime', 'calendarCleanup', 'timelineCleanup'
     ];
     cleanups.forEach(fn => { if (typeof window[fn] === 'function') window[fn](); });
-    
+
     // Tier List special cleanup
     import('../modules/tierlist.js').then(m => m.cleanupRealtime?.());
 
@@ -368,6 +374,15 @@ export function switchChannel(channelId, push = true) {
             break;
         case 'austrian-german':
             moduleMap['austrian-german']().then(m => m.renderAustrianGerman()).catch(navErr);
+            break;
+        case 'kasicka':
+            import('./state.js').then(s => s.ensureFinancesData()).then(() => moduleMap.kasicka().then(m => m.renderKasicka())).catch(navErr);
+            break;
+        case 'alpska-vyzva':
+            import('./state.js').then(s => s.ensureChallengesData()).then(() => moduleMap['alpska-vyzva']().then(m => m.renderAlpskaVyzva())).catch(navErr);
+            break;
+        case 'alpsky-denicek':
+            import('./state.js').then(s => s.ensureDiaryData()).then(() => moduleMap['alpsky-denicek']().then(m => m.renderAlpskyDenicek())).catch(navErr);
             break;
         case 'settings':
             moduleMap.settings().then(m => m.renderSettings()).catch(navErr);

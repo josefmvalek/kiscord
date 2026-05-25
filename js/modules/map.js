@@ -11,6 +11,7 @@ import { loadLeaflet } from '../core/loader.js'; // Fallback or imported
 let selectedDateLocation = null;
 let lastMapClick = { lat: 49.069, lng: 17.464 };
 let selectedLocCat = null;
+let selectedCountry = 'CZ'; // 'CZ' | 'AT'
 
 // --- ROUTE LOGIC ---
 
@@ -98,7 +99,7 @@ export function renderMap() {
         renderLocationList, filterMap, selectLocation, rateDate, 
         saveDateToCalendar, closeLocationDetail, pickRandomLocation, 
         searchLocations, jumpToLocation, showAddLocationModal, saveNewLocation,
-        uploadLocationMemory,
+        uploadLocationMemory, switchCountry, editLocation, saveEditedLocation, deleteLocation,
         setLocCat: (cat) => { selectedLocCat = cat; }
     };
 
@@ -153,9 +154,21 @@ export function renderMap() {
             <div class="flex-1 relative h-full bg-[#202225]">
                 <div id="leaflet-map" class="w-full h-full z-10 outline-none"></div>
 
-                <!-- OVERLAYS (Floating UI) -->
+                 <!-- OVERLAYS (Floating UI) -->
                 <div class="absolute top-4 left-4 right-4 z-[20] flex flex-col gap-3 pointer-events-none max-w-xl mx-auto">
                     
+                    <!-- Country Switch Row -->
+                    <div class="flex gap-2 pointer-events-auto shadow-xl bg-[#2f3136] p-1 rounded-xl border border-white/5 w-fit">
+                        <button onclick="window.KiscordMap.switchCountry('CZ')" id="country-btn-cz" 
+                                class="country-btn px-3 py-1.5 rounded-lg text-xs font-black uppercase transition-all flex items-center gap-1.5 ${selectedCountry === 'CZ' ? 'bg-[#5865F2] text-white' : 'text-gray-400 hover:text-white'}">
+                            <span>🇨🇿</span> Domov
+                        </button>
+                        <button onclick="window.KiscordMap.switchCountry('AT')" id="country-btn-at" 
+                                class="country-btn px-3 py-1.5 rounded-lg text-xs font-black uppercase transition-all flex items-center gap-1.5 ${selectedCountry === 'AT' ? 'bg-[#eb459e] text-white' : 'text-gray-400 hover:text-white'}">
+                            <span>🇦🇹</span> Alpy
+                        </button>
+                    </div>
+
                     <!-- Search & Actions Row -->
                     <div class="flex gap-2 pointer-events-auto shadow-xl">
                         <div class="flex-1 relative group">
@@ -215,7 +228,9 @@ export function renderMap() {
             state.mapInstance = null;
         }
 
-        const map = L.map("leaflet-map", { zoomControl: false }).setView([49.069, 17.464], 13);
+        const centerCoords = selectedCountry === 'CZ' ? [49.069, 17.464] : [47.28358, 12.81648];
+        const centerZoom = selectedCountry === 'CZ' ? 13 : 12;
+        const map = L.map("leaflet-map", { zoomControl: false }).setView(centerCoords, centerZoom);
         state.mapInstance = map;
 
         L.tileLayer(
@@ -240,8 +255,10 @@ export function renderMap() {
             await fetchMarkersMemories();
         }
         
-        renderMarkers(state.dateLocations);
-        renderLocationList(state.dateLocations);
+        // Filter by currently selected country
+        const countryLocations = state.dateLocations.filter(l => (l.country || 'CZ') === selectedCountry);
+        renderMarkers(countryLocations);
+        renderLocationList(countryLocations);
         updateRouteUI();
     }, 100);
 }
@@ -376,7 +393,8 @@ export function filterMap(category) {
     if (mobileSearch) mobileSearch.value = "";
     if (desktopSearch) desktopSearch.value = "";
 
-    const filtered = category === "all" ? state.dateLocations : state.dateLocations.filter((l) => l.cat === category);
+    const countryLocations = state.dateLocations.filter(l => (l.country || 'CZ') === selectedCountry);
+    const filtered = category === "all" ? countryLocations : countryLocations.filter((l) => l.cat === category);
     renderLocationList(filtered);
     renderMarkers(filtered);
 
@@ -463,6 +481,14 @@ export function selectLocation(id) {
                     <div class="relative bg-white p-2 pb-6 shadow-md rounded border border-gray-200 hover:scale-105 hover:rotate-0 transition-all duration-300 cursor-pointer select-none group/polaroid"
                          style="transform: rotate(${rot}deg);"
                          onclick="event.stopPropagation(); window.openGallery('${photo.eventId}')">
+                        
+                        <!-- Edit Button Overlay -->
+                        <button onclick="event.stopPropagation(); window.openEventModal('${photo.eventId}')" 
+                                class="absolute top-1.5 right-1.5 w-6 h-6 bg-black/60 hover:bg-[#5865F2] text-white rounded-full flex items-center justify-center opacity-0 group-hover/polaroid:opacity-100 transition duration-200 z-10 hover:scale-110"
+                                title="Upravit nebo smazat vzpomínku">
+                            <i class="fas fa-edit text-[10px]"></i>
+                        </button>
+
                         <div class="w-full aspect-square overflow-hidden bg-gray-100 rounded-sm">
                             <img src="${photo.url}" class="w-full h-full object-cover transition duration-300 group-hover/polaroid:scale-110" />
                         </div>
@@ -502,7 +528,7 @@ export function selectLocation(id) {
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="grid grid-cols-3 gap-3 mb-6">
+                <div class="grid grid-cols-3 gap-3 mb-4">
                     <button onclick="KiscordMap.addToRoute('${loc.id}')" class="bg-[#5865F2] hover:bg-[#4752c4] text-white py-2.5 rounded-lg font-bold shadow-lg flex items-center justify-center gap-2 transition transform hover:scale-105 active:scale-95">
                         <i class="fas fa-plus"></i> Přidat
                     </button>
@@ -512,6 +538,16 @@ export function selectLocation(id) {
                     <a href="${mapsUrl}" target="_blank" class="bg-[#2f3136] hover:bg-[#36393f] text-gray-300 hover:text-white border border-[#202225] py-2.5 rounded-lg font-medium shadow-md flex items-center justify-center gap-2 transition">
                         <i class="fas fa-external-link-alt"></i> Mapa
                     </a>
+                </div>
+
+                <!-- Admin / Management Buttons -->
+                <div class="flex gap-3 mb-6">
+                    <button onclick="KiscordMap.editLocation('${loc.id}')" class="flex-1 bg-[#2f3136] hover:bg-[#4f545c] text-gray-300 hover:text-white py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 border border-[#202225] shadow-sm">
+                        <i class="fas fa-pen text-[10px]"></i> Upravit detaily
+                    </button>
+                    <button onclick="KiscordMap.deleteLocation('${loc.id}')" class="flex-1 bg-[#ed4245]/10 hover:bg-[#ed4245] text-[#ed4245] hover:text-white py-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 border border-[#ed4245]/20 shadow-sm">
+                        <i class="fas fa-trash-alt text-[10px]"></i> Smazat místo
+                    </button>
                 </div>
 
                 <!-- Weather Widget Container -->
@@ -739,8 +775,9 @@ export async function rateDate(id, rating) {
 
     // Refresh UI
     selectLocation(id);
-    renderLocationList(state.dateFilter === 'all' ? state.dateLocations : state.dateLocations.filter(l => l.cat === state.dateFilter));
-    renderMarkers(state.dateFilter === 'all' ? state.dateLocations : state.dateLocations.filter(l => l.cat === state.dateFilter));
+    const countryLocations = state.dateLocations.filter(l => (l.country || 'CZ') === selectedCountry);
+    renderLocationList(state.dateFilter === 'all' ? countryLocations : countryLocations.filter(l => l.cat === state.dateFilter));
+    renderMarkers(state.dateFilter === 'all' ? countryLocations : countryLocations.filter(l => l.cat === state.dateFilter));
 }
 
 export async function saveDateToCalendar() {
@@ -794,9 +831,12 @@ export function closeLocationDetail() {
 }
 
 export function pickRandomLocation() {
-    // Basic implementation based on script.js
-    const candidates = state.dateLocations; // Apply filter if needed taking from DOM
-    if (candidates.length === 0) return;
+    // Filter candidates by currently selected country
+    const candidates = state.dateLocations.filter(l => (l.country || 'CZ') === selectedCountry);
+    if (candidates.length === 0) {
+        if (window.showNotification) window.showNotification("V této zemi nejsou žádná místa! 🎲", "error");
+        return;
+    }
     const winner = candidates[Math.floor(Math.random() * candidates.length)];
     selectLocation(winner.id);
     if (window.showNotification) window.showNotification(`🎲 Kostka vybrala: ${winner.name}`, "success");
@@ -804,13 +844,19 @@ export function pickRandomLocation() {
 
 export function searchLocations(query) {
     const term = query.toLowerCase();
-    const filtered = state.dateLocations.filter(l => l.name.toLowerCase().includes(term) || l.desc.toLowerCase().includes(term));
+    const countryLocations = state.dateLocations.filter(l => (l.country || 'CZ') === selectedCountry);
+    const filtered = countryLocations.filter(l => l.name.toLowerCase().includes(term) || l.desc.toLowerCase().includes(term));
     renderLocationList(filtered);
     renderMarkers(filtered);
 }
 export function jumpToLocation(id) {
     const loc = state.dateLocations.find(l => l.id == id);
     if (!loc || !state.mapInstance) return;
+    
+    const locCountry = loc.country || 'CZ';
+    if (selectedCountry !== locCountry) {
+        switchCountry(locCountry);
+    }
     
     // Switch to map channel if not already there
     if (window.switchChannel) window.switchChannel('dateplanner');
@@ -834,13 +880,14 @@ export function jumpToLocation(id) {
         
         // Open detail panel/menu
         selectLocation(id);
-    }, 100);
+    }, 200);
 }
 
 // --- ADD NEW LOCATION ---
 
 export function showAddLocationModal() {
     const coords = lastMapClick;
+    selectedLocCat = 'view'; // Pre-select first category by default
     
     const modal = document.createElement('div');
     modal.id = 'location-add-modal';
@@ -859,7 +906,7 @@ export function showAddLocationModal() {
                 <div>
                      <label class="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest text-center">Typ místa</label>
                      <div class="grid grid-cols-4 gap-2">
-                        <button onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.KiscordMap.setLocCat('view')" class="p-3 rounded-xl border-2 border-transparent bg-[#2f3136] transition flex flex-col items-center gap-1 group">
+                        <button onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.KiscordMap.setLocCat('view')" class="p-3 rounded-xl border-2 border-[#eb459e] bg-[#202225] transition flex flex-col items-center gap-1 group">
                             <span class="text-xl">⛰️</span>
                             <span class="text-[8px] font-black text-white group-hover:text-[#eb459e]">VÝHLED</span>
                         </button>
@@ -953,7 +1000,7 @@ export async function saveNewLocation() {
             lat: lat,
             lng: lng,
             category: cat,
-            user_id: state.currentUser?.id
+            country: selectedCountry
         }]);
         
         if (error) throw error;
@@ -979,7 +1026,8 @@ export async function saveNewLocation() {
             lat,
             lng,
             cat,
-            image_url: photoUrl
+            image_url: photoUrl,
+            country: selectedCountry
         });
         
         // Notification
@@ -996,6 +1044,35 @@ export async function saveNewLocation() {
         console.error("Save Location Error:", err);
         alert("Chyba při ukládání: " + err.message);
     }
+}
+
+export function switchCountry(country) {
+    selectedCountry = country;
+    
+    // Update buttons styling in DOM
+    const btnCz = document.getElementById("country-btn-cz");
+    const btnAt = document.getElementById("country-btn-at");
+    if (btnCz && btnAt) {
+        if (selectedCountry === 'CZ') {
+            btnCz.className = "country-btn px-3 py-1.5 rounded-lg text-xs font-black uppercase transition-all flex items-center gap-1.5 bg-[#5865F2] text-white";
+            btnAt.className = "country-btn px-3 py-1.5 rounded-lg text-xs font-black uppercase transition-all flex items-center gap-1.5 text-gray-400 hover:text-white";
+        } else {
+            btnCz.className = "country-btn px-3 py-1.5 rounded-lg text-xs font-black uppercase transition-all flex items-center gap-1.5 text-gray-400 hover:text-white";
+            btnAt.className = "country-btn px-3 py-1.5 rounded-lg text-xs font-black uppercase transition-all flex items-center gap-1.5 bg-[#eb459e] text-white";
+        }
+    }
+
+    // Fly map to country center
+    if (state.mapInstance) {
+        const centerCoords = selectedCountry === 'CZ' ? [49.069, 17.464] : [47.28358, 12.81648];
+        const centerZoom = selectedCountry === 'CZ' ? 13 : 12;
+        state.mapInstance.flyTo(centerCoords, centerZoom, { animate: true, duration: 1.5 });
+    }
+
+    // Re-filter list and markers
+    const countryLocations = state.dateLocations.filter(l => (l.country || 'CZ') === selectedCountry);
+    renderLocationList(countryLocations);
+    renderMarkers(countryLocations);
 }
 
 export async function uploadLocationMemory(event, locationId) {
@@ -1091,5 +1168,193 @@ export async function uploadLocationMemory(event, locationId) {
         if (window.showNotification) window.showNotification("Chyba při ukládání: " + err.message, "error");
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalBtnHtml;
+    }
+}
+
+export function editLocation(id) {
+    const loc = state.dateLocations.find(l => String(l.id) === String(id));
+    if (!loc) return;
+    
+    selectedLocCat = loc.cat;
+    
+    const modal = document.createElement('div');
+    modal.id = 'location-edit-modal';
+    modal.className = 'fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in';
+    
+    modal.innerHTML = `
+        <div class="bg-[#36393f] w-full max-w-lg rounded-2xl shadow-2xl border border-gray-700 overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#2f3136]">
+                <h3 class="text-xl font-black text-white tracking-widest uppercase">Upravit místo ✏️</h3>
+                <button onclick="this.closest('#location-edit-modal').remove()" class="text-gray-400 hover:text-white transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <div>
+                     <label class="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest text-center">Typ místa</label>
+                     <div class="grid grid-cols-4 gap-2">
+                        <button id="el-cat-view" onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.KiscordMap.setLocCat('view')" class="p-3 rounded-xl border-2 ${loc.cat === 'view' ? 'border-[#eb459e] bg-[#202225]' : 'border-transparent bg-[#2f3136]'} transition flex flex-col items-center gap-1 group">
+                            <span class="text-xl">⛰️</span>
+                            <span class="text-[8px] font-black text-white group-hover:text-[#eb459e]">VÝHLED</span>
+                        </button>
+                        <button id="el-cat-food" onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.KiscordMap.setLocCat('food')" class="p-3 rounded-xl border-2 ${loc.cat === 'food' ? 'border-[#eb459e] bg-[#202225]' : 'border-transparent bg-[#2f3136]'} transition flex flex-col items-center gap-1 group">
+                            <span class="text-xl">🍔</span>
+                            <span class="text-[8px] font-black text-white group-hover:text-[#faa61a]">JÍDLO</span>
+                        </button>
+                        <button id="el-cat-walk" onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.KiscordMap.setLocCat('walk')" class="p-3 rounded-xl border-2 ${loc.cat === 'walk' ? 'border-[#eb459e] bg-[#202225]' : 'border-transparent bg-[#2f3136]'} transition flex flex-col items-center gap-1 group">
+                            <span class="text-xl">🌲</span>
+                            <span class="text-[8px] font-black text-white group-hover:text-[#3ba55c]">POHYB</span>
+                        </button>
+                        <button id="el-cat-fun" onclick="this.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('border-[#eb459e]', 'bg-[#202225]')); this.classList.add('border-[#eb459e]', 'bg-[#202225]'); window.KiscordMap.setLocCat('fun')" class="p-3 rounded-xl border-2 ${loc.cat === 'fun' ? 'border-[#eb459e] bg-[#202225]' : 'border-transparent bg-[#2f3136]'} transition flex flex-col items-center gap-1 group">
+                            <span class="text-xl">⚡</span>
+                            <span class="text-[8px] font-black text-white group-hover:text-[#ed4245]">ZÁBAVA</span>
+                        </button>
+                     </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Název</label>
+                        <input type="text" id="el-name" value="${loc.name}" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-sm">
+                    </div>
+                     <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Ikona (emoji)</label>
+                        <input type="text" id="el-icon" value="${loc.icon || '📍'}" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-sm text-center">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Popis</label>
+                    <textarea id="el-desc" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-sm min-h-[60px]">${loc.desc || ""}</textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                     <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Latitude (Šířka)</label>
+                        <input type="number" id="el-lat" value="${loc.lat}" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-sm">
+                    </div>
+                     <div>
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Longitude (Délka)</label>
+                        <input type="number" id="el-lng" value="${loc.lng}" class="w-full bg-[#202225] text-white p-3 rounded-lg border border-transparent focus:border-[#5865F2] outline-none transition text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Fotka místa</label>
+                    <div class="flex items-center gap-3 bg-[#202225] p-3 rounded-lg border border-transparent">
+                        <button onclick="document.getElementById('el-photo').click()" class="w-10 h-10 bg-[#2f3136] rounded-lg flex items-center justify-center text-gray-400 hover:text-white transition">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                        <input type="file" id="el-photo" class="hidden" accept="image/*" onchange="const f = this.files[0]; if(f) document.getElementById('el-photo-name').innerText = f.name;">
+                        <span id="el-photo-name" class="text-[10px] text-gray-500 truncate italic">${loc.image_url ? 'Ponechat stávající fotku' : 'Volitelné: Přidej fotku...'}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-6 border-t border-gray-700 bg-[#2f3136]">
+                <button onclick="KiscordMap.saveEditedLocation('${loc.id}')" class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-4 rounded-xl font-black text-lg transition shadow-xl transform active:scale-95">
+                    ULOŽIT ZMĚNY 💾
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+export async function saveEditedLocation(id) {
+    const name = document.getElementById('el-name').value.trim();
+    const desc = document.getElementById('el-desc').value.trim();
+    const icon = document.getElementById('el-icon').value.trim() || '📍';
+    const lat = parseFloat(document.getElementById('el-lat').value);
+    const lng = parseFloat(document.getElementById('el-lng').value);
+    const cat = selectedLocCat;
+    
+    if (!name || isNaN(lat) || isNaN(lng) || !cat) {
+        alert("Vyplň název, kategorii a souřadnice!");
+        return;
+    }
+    
+    try {
+        // Photo Upload
+        const photoInput = document.getElementById('el-photo');
+        let photoUrl = null;
+        if (photoInput && photoInput.files && photoInput.files[0] && navigator.onLine) {
+            photoUrl = await uploadFile('location-photos', photoInput.files[0], `locations/${id}`);
+        }
+
+        const updatePayload = {
+            name: name,
+            description: desc,
+            icon: icon,
+            lat: lat,
+            lng: lng,
+            category: cat
+        };
+        if (photoUrl) {
+            updatePayload.image_url = photoUrl;
+        }
+
+        const { error } = await supabase.from('date_locations').update(updatePayload).eq('id', id);
+        if (error) throw error;
+        
+        // Update local state
+        const localLoc = state.dateLocations.find(l => String(l.id) === String(id));
+        if (localLoc) {
+            localLoc.name = name;
+            localLoc.desc = desc;
+            localLoc.icon = icon;
+            localLoc.lat = lat;
+            localLoc.lng = lng;
+            localLoc.cat = cat;
+            if (photoUrl) {
+                localLoc.image_url = photoUrl;
+            }
+        }
+        
+        if (window.showNotification) window.showNotification("Místo bylo úspěšně upraveno! ✏️", "success");
+        
+        // Close modal
+        document.getElementById('location-edit-modal')?.remove();
+        
+        // Refresh UI
+        renderMap();
+        selectLocation(id);
+        
+    } catch (err) {
+        console.error("Save Edited Location Error:", err);
+        alert("Chyba při ukládání: " + err.message);
+    }
+}
+
+export async function deleteLocation(id) {
+    if (typeof window.showConfirmDialog === 'function') {
+        const ok = await window.showConfirmDialog('Opravdu chceš toto místo smazat z mapy? 🥺', 'Smazat', 'Zrušit');
+        if (!ok) return;
+    } else {
+        const ok = confirm('Opravdu chceš toto místo smazat z mapy?');
+        if (!ok) return;
+    }
+    
+    try {
+        // Delete from Supabase
+        const { error } = await supabase.from('date_locations').delete().eq('id', id);
+        if (error) throw error;
+        
+        // Remove from local state
+        state.dateLocations = state.dateLocations.filter(l => String(l.id) !== String(id));
+        
+        if (window.showNotification) window.showNotification("Místo bylo smazáno z mapy. 🗑️", "info");
+        
+        // Close detail panel
+        closeLocationDetail();
+        
+        // Refresh UI
+        renderMap();
+        
+    } catch (err) {
+        console.error("Delete Location Error:", err);
+        if (window.showNotification) window.showNotification("Chyba při mazání místa: " + err.message, "error");
     }
 }

@@ -75,6 +75,7 @@ export function generateCalendarGrid(year, month) {
         const schoolEvent = (state.schoolEvents || {})[dateKey];
         const movieHistory = (state.movieHistory || {})[dateKey];
         const timelineEvent = state.timelineEvents.find((e) => e.event_date === dateKey);
+        const dayDiaryEntries = (state.brigadeDiary || []).filter(e => e.date_key === dateKey);
 
         const isToday = dateKey === getTodayKey();
         const isAnniversary = d === anniversaryDay;
@@ -158,6 +159,14 @@ export function generateCalendarGrid(year, month) {
                 if (libItem && libItem.icon) {
                     iconsHtml += `<span class="text-[10px]">${libItem.icon}</span>`;
                 }
+            }
+
+            if (dayDiaryEntries.length === 2) {
+                const avg = ((dayDiaryEntries[0].rating + dayDiaryEntries[1].rating) / 2).toFixed(1);
+                const avgStr = avg.endsWith('.0') ? avg.slice(0, -2) : avg;
+                iconsHtml += `<span class="text-[10px]" title="Deník odemčen! Průměrné hodnocení: ${avgStr}">📔🔓⭐${avgStr}</span>`;
+            } else if (dayDiaryEntries.length === 1) {
+                iconsHtml += `<span class="text-[10px]" title="Deník uzamčen (čeká se na partnera)">📔🔒</span>`;
             }
 
             if (plannedDate) {

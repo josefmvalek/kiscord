@@ -250,6 +250,107 @@ function getDailyVocab() {
     return AUSTRIAN_DICTIONARY[seed % AUSTRIAN_DICTIONARY.length];
 }
 
+function generateAlpineChallengeWidget() {
+    const todayKey = getTodayKey();
+    const dbRecord = state.brigadeChallenges?.find(c => c.date_key === todayKey) || {};
+    
+    const departureDate = new Date('2026-05-31T00:00:00');
+    const now = new Date();
+    const diffMs = now - departureDate;
+    const dayIndex = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const isTripStarted = dayIndex >= 0;
+
+    let challengeTitle = "Dnešní výzva";
+    let challengeCat = "Alpská Výzva 🏔️";
+
+    if (dbRecord.title) {
+        challengeTitle = dbRecord.title;
+        challengeCat = dbRecord.category || "Plánovaná ✍️";
+    } else if (!isTripStarted) {
+        challengeTitle = "🎒 Velké Balení & Očekávání";
+        challengeCat = "Příprava ✈️";
+    } else {
+        // Fallback or Pool retrieval
+        const pool = window.AlpskaVyzva?.CHALLENGES_POOL || [];
+        if (pool.length > 0) {
+            const idx = dayIndex % pool.length;
+            challengeTitle = pool[idx].title;
+            challengeCat = pool[idx].category;
+        } else {
+            challengeTitle = "Hledej dobrodružství v horách!";
+            challengeCat = "Výzva dne 🏔️";
+        }
+    }
+
+    // Check if revealed in localStorage
+    const revealKey = `kiscord_revealed_challenge_${todayKey}`;
+    const isRevealed = localStorage.getItem(revealKey) === 'true';
+
+    const completedByJose = dbRecord.completed_by_jose || false;
+    const completedByKlarka = dbRecord.completed_by_klarka || false;
+
+    if (!isRevealed && isTripStarted) {
+        // Locked Scratch Card Widget
+        return `
+            <div class="glass-card bg-gradient-to-br from-indigo-950 to-slate-900 border border-purple-500/30 rounded-2xl p-5 relative overflow-hidden group shadow-xl stagger-item" style="animation-delay: 0.26s">
+                <div class="absolute -right-10 -top-10 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 leading-none">
+                        <i class="fas fa-mountain text-[#eb459e]"></i> Dnešní Alpská Výzva
+                    </h3>
+                    <span class="text-[9px] font-black uppercase text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full">Uzamčeno 🔒</span>
+                </div>
+                <div class="flex flex-col items-center py-4 text-center">
+                    <span class="text-4xl block mb-3 animate-pulse">🏔️🔮</span>
+                    <p class="text-[11px] text-purple-200/60 font-semibold mb-4 leading-normal">
+                        Setřete dnešní tajné dobrodružství přímo z nástěnky!
+                    </p>
+                    <button onclick="window.loadModule('dashboard').then(m => m.scratchChallengeFromDashboard())" 
+                            class="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95">
+                        Setřít kartu 🏔️🔮
+                    </button>
+                </div>
+            </div>
+        `;
+    } else {
+        // Revealed Preview Widget
+        return `
+            <div class="glass-card rounded-2xl p-5 stagger-item relative overflow-hidden group shadow-xl hover:border-white/10 transition-all cursor-pointer" style="animation-delay: 0.26s" onclick="window.switchChannel('alpska-vyzva')">
+                <div class="absolute -right-10 -top-10 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 leading-none">
+                        <i class="fas fa-mountain text-emerald-400"></i> Dnešní Alpská Výzva
+                    </h3>
+                    <span class="text-[9px] font-black uppercase text-[#3ba55c] bg-[#3ba55c]/10 px-2 py-0.5 rounded-full">${challengeCat}</span>
+                </div>
+                
+                <div class="flex flex-col gap-2 mt-1">
+                    <h4 class="text-base font-black text-white italic tracking-tight mb-2 group-hover:text-[#3ba55c] transition-colors leading-tight">"${challengeTitle}"</h4>
+                    
+                    <div class="grid grid-cols-2 gap-3 mt-2 border-t border-white/5 pt-3">
+                        <div class="flex items-center gap-2 bg-black/15 p-2 rounded-xl border border-white/5 justify-between">
+                            <span class="text-[10px] font-black text-gray-400">🔵 Jožka</span>
+                            ${completedByJose 
+                                ? `<span class="text-[9px] font-black text-emerald-400 uppercase tracking-wider">Splněno ✅</span>`
+                                : `<span class="text-[9px] font-black text-white/20 uppercase tracking-wider">Nesplněno ⏳</span>`}
+                        </div>
+                        <div class="flex items-center gap-2 bg-black/15 p-2 rounded-xl border border-white/5 justify-between">
+                            <span class="text-[10px] font-black text-gray-400">🔴 Klárka</span>
+                            ${completedByKlarka 
+                                ? `<span class="text-[9px] font-black text-emerald-400 uppercase tracking-wider">Splněno ✅</span>`
+                                : `<span class="text-[9px] font-black text-white/20 uppercase tracking-wider">Nesplněno ⏳</span>`}
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <span class="text-[8px] text-gray-500 uppercase tracking-widest font-black underline group-hover:text-white transition-colors">Zobrazit detaily & nahrát fotku 📸</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
 function generateActiveShiftsWidget() {
     const todayKey = getTodayKey();
     const shiftsToday = state.shifts?.[todayKey] || {};
@@ -719,6 +820,9 @@ export async function renderDashboard(forceRefresh = false) {
     ensureShiftsData();
     ensureAllHealthData();
 
+    // Lazy load AlpskaVyzva module so pool is registered
+    import('./alpskaVyzva.js').catch(() => {});
+
     // 2. TRIGGER SYNC (Async, Non-blocking)
     if (navigator.onLine && (!state.dashboardFetched || forceRefresh)) {
         syncDashboardData(forceRefresh);
@@ -926,6 +1030,7 @@ export async function renderDashboard(forceRefresh = false) {
                   </div>
                   ` : ''}
 
+                  ${generateAlpineChallengeWidget()}
                   ${generateActiveShiftsWidget()}
                   ${generateAustrianWordOfTheDayCard()}
 
@@ -1022,6 +1127,14 @@ export async function handleNextDateClick(dateKey) {
     triggerHaptic('light'); window.switchChannel('calendar');
     const { showDayDetail } = await import('./calendar.js');
     setTimeout(() => { showDayDetail(dateKey); }, 50);
+}
+
+export function scratchChallengeFromDashboard() {
+    triggerHaptic('medium');
+    const todayKey = getTodayKey();
+    localStorage.setItem(`kiscord_revealed_challenge_${todayKey}`, 'true');
+    if (typeof window.triggerConfetti === 'function') window.triggerConfetti();
+    renderDashboard();
 }
 // --- QUICK PLAN MODAL ---
 let quickPlanData = { cat: 'discord', name: '', time: '' };
