@@ -288,3 +288,29 @@ button:active i.fa-tint { animation: waterSplash 0.3s ease-out; }
 .animate-reg-flow {
   animation: reg-line-flow 2s infinite ease-in-out;
 }
+
+/* --- GONDOLA SWAY & STARS --- */
+@keyframes gondola-sway {
+  0%, 100% { transform: rotate(-3deg); }
+  50%      { transform: rotate(3deg); }
+}
+@keyframes gondola-sway-fast {
+  0%, 100% { transform: rotate(-10deg); }
+  50%      { transform: rotate(10deg); }
+}
+.animate-gondola-sway {
+  animation: gondola-sway 4s ease-in-out infinite;
+  transform-origin: 50% 0%;
+}
+.animate-gondola-sway-fast {
+  animation: gondola-sway-fast 0.8s ease-in-out infinite;
+  transform-origin: 50% 0%;
+}
+@keyframes star-twinkle-countdown {
+  0%, 100% { opacity: 0.15; transform: scale(0.8); }
+  50%      { opacity: 0.85; transform: scale(1.2); }
+}
+.star-countdown {
+  animation: star-twinkle-countdown 3s ease-in-out infinite;
+}
+

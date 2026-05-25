@@ -69,6 +69,45 @@ export async function openFlashcards(itemId) {
     renderCard();
 }
 
+export async function openAustrianGermanFlashcards(deck) {
+    await Promise.all([loadMarked(), loadKaTeX()]);
+
+    cards = deck.map((item, index) => {
+        return { 
+            id: `austrian-${item.id || index}`, 
+            isHtml: true,
+            front: `<div class="text-center p-6 flex flex-col justify-center items-center gap-3">
+                      <span class="text-4xl animate-bounce-subtle">🥨</span>
+                      <h4 class="text-2xl font-black text-white italic">"${item.austrian}"</h4>
+                      <span class="text-[9px] font-black uppercase tracking-widest text-[#eb459e] bg-[#eb459e]/10 px-2.5 py-1 rounded-full">${item.category}</span>
+                    </div>`, 
+            back: `<div class="text-left space-y-4 p-4 w-full">
+                     <div>
+                       <span class="text-[9px] font-black uppercase tracking-widest text-white/40 block mb-1">Spisovná němčina</span>
+                       <span class="text-base font-bold text-amber-400">${item.german}</span>
+                     </div>
+                     <div>
+                       <span class="text-[9px] font-black uppercase tracking-widest text-white/40 block mb-1">Český význam</span>
+                       <span class="text-lg font-black text-white">${item.czech}</span>
+                     </div>
+                     ${item.example ? `
+                     <div>
+                       <span class="text-[9px] font-black uppercase tracking-widest text-white/40 block mb-1">Příklad</span>
+                       <span class="text-xs font-semibold italic text-purple-200/80">"${item.example}"</span>
+                     </div>
+                     ` : ''}
+                   </div>`
+        };
+    });
+
+    cards.sort(() => Math.random() - 0.5);
+    currentIndex = 0;
+
+    renderModal();
+    renderCard();
+}
+
+
 function renderModal() {
     if (document.getElementById('flashcard-modal')) document.getElementById('flashcard-modal').remove();
 
@@ -160,6 +199,8 @@ function renderCard() {
     // Helper for rendering Markdown + KaTeX inside cards
     const renderContent = (text) => {
         if (!text) return '';
+        if (cardData.isHtml) return text;
+        
         let html = marked.parse(text);
         
         // KaTeX Support (Inline $...$)
@@ -173,14 +214,16 @@ function renderCard() {
 
     // --- ADAPTIVE FONT SIZE LOGIC ---
     const getFrontFontSize = (text = '') => {
-        const len = text.length;
+        const plainText = cardData.isHtml ? text.replace(/<[^>]*>/g, '') : text;
+        const len = plainText.length;
         if (len > 300) return 'prose-xs text-[11px] md:text-xs';
         if (len > 200) return 'prose-sm text-sm';
         return 'prose-sm md:prose-base';
     };
 
     const getBackFontSize = (text = '') => {
-        const len = text.length;
+        const plainText = cardData.isHtml ? text.replace(/<[^>]*>/g, '') : text;
+        const len = plainText.length;
         if (len > 300) return 'text-xs md:text-sm leading-relaxed';
         if (len > 180) return 'text-sm md:text-base leading-relaxed';
         if (len > 100) return 'text-base md:text-xl leading-snug';
@@ -209,9 +252,9 @@ function renderCard() {
                 <div class="fc-back absolute inset-0 backface-hidden flex flex-col items-center justify-center bg-[#ed4245]/5 rounded-3xl rotate-y-180 border-2 border-[#ed4245]/20 p-8">
                     <div class="text-[10px] uppercase tracking-[0.3em] font-black text-[#ed4245] mb-6 opacity-80">Skrytý pojem</div>
                     <div class="flex-1 flex flex-col items-center justify-center w-full overflow-y-auto custom-scrollbar-thin pr-2">
-                        <span class="${backFontSize} font-black italic text-white tracking-tighter drop-shadow-[0_0_20px_rgba(237,66,69,0.3)] text-center">
+                        <div class="${backFontSize} font-black italic text-white tracking-tighter drop-shadow-[0_0_20px_rgba(237,66,69,0.3)] text-center">
                             ${renderContent(cardData.back)}
-                        </span>
+                        </div>
                     </div>
                 </div>
             </div>

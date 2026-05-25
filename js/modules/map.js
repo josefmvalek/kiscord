@@ -1,9 +1,10 @@
 import { supabase } from '../core/supabase.js';
 import { state } from '../core/state.js';
 import { safeUpsert, safeInsert } from '../core/offline.js';
-import { triggerHaptic, getTodayKey } from '../core/utils.js';
+import { triggerHaptic, getTodayKey, triggerConfetti } from '../core/utils.js';
 import { showNotification } from '../core/theme.js';
 import { uploadFile } from '../core/storage.js';
+import { playChime } from '../core/sound.js';
 import { loadLeaflet } from '../core/loader.js'; // Fallback or imported
 
 // --- STATE ---
@@ -97,6 +98,7 @@ export function renderMap() {
         renderLocationList, filterMap, selectLocation, rateDate, 
         saveDateToCalendar, closeLocationDetail, pickRandomLocation, 
         searchLocations, jumpToLocation, showAddLocationModal, saveNewLocation,
+        uploadLocationMemory,
         setLocCat: (cat) => { selectedLocCat = cat; }
     };
 
@@ -196,7 +198,7 @@ export function renderMap() {
                 </div>
                 
                 <!-- Bottom Sheet / Detail Panel -->
-                <div id="detail-panel" class="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-[#36393f] rounded-2xl shadow-2xl z-[40] transition-all duration-300 translate-y-[120%] flex flex-col max-h-[85vh] border border-white/5 overflow-hidden">
+                <div id="detail-panel" class="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-[#36393f] rounded-2xl shadow-2xl z-[50] transition-all duration-300 translate-y-[120%] flex flex-col max-h-[85vh] border border-white/5 overflow-hidden">
                     <!-- Content injected by selectLocation -->
                 </div>
             </div>
@@ -303,7 +305,7 @@ export function renderMarkers(locations) {
                 <div style="color:#fff; font-size:12px; font-weight:bold;">${memory.event_date || ''}</div>
                 <div style="color:#dcddde; font-size:11px; font-style:italic;">"${memory.title}"</div>
                 
-                <button onclick="Timeline.jumpToTimeline('${memory.id}')" style="margin-top: 5px; background: #eb459e; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; width: 100%;">
+                <button onclick="jumpToTimeline('${memory.id}')" style="margin-top: 5px; background: #eb459e; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 10px; cursor: pointer; width: 100%;">
                     <i class="fas fa-external-link-alt"></i> Přejít na vzpomínku
                 </button>
             </div>`;
@@ -355,7 +357,7 @@ export function renderLocationList(locations) {
         const borderClass = rating > 0 ? "border-[#faa61a]/50" : "border-[#202225]";
 
         listContainer.innerHTML += `
-        <div onclick="KiscordMap.selectLocation(${loc.id})" class="p-3 bg-[#36393f] hover:bg-[#40444b] rounded cursor-pointer transition flex items-center gap-3 border ${borderClass} group mb-1 relative overflow-hidden">
+        <div onclick="KiscordMap.selectLocation('${loc.id}')" class="p-3 bg-[#36393f] hover:bg-[#40444b] rounded cursor-pointer transition flex items-center gap-3 border ${borderClass} group mb-1 relative overflow-hidden">
             ${rating > 0 ? '<div class="absolute top-0 right-0 w-3 h-3 bg-[#faa61a] rounded-bl-lg"></div>' : ""}
             <div class="text-lg group-hover:scale-110 transition">${icon}</div>
             <div class="min-w-0">
@@ -405,113 +407,305 @@ export function filterMap(category) {
 }
 
 export function selectLocation(id) {
-    const loc = state.dateLocations.find((l) => l.id == id);
-    if (!loc) return;
-    selectedDateLocation = loc;
+    try {
+        const loc = state.dateLocations.find((l) => l.id == id);
+        if (!loc) return;
+        selectedDateLocation = loc;
 
-    const sidebar = document.getElementById("planner-sidebar");
-    if (sidebar && window.innerWidth < 768) sidebar.classList.add("-translate-x-full");
+        const sidebar = document.getElementById("planner-sidebar");
+        if (sidebar && window.innerWidth < 768) sidebar.classList.add("-translate-x-full");
 
-    const panel = document.getElementById("detail-panel");
-    if (!panel) return;
+        const panel = document.getElementById("detail-panel");
+        if (!panel) return;
 
-    // Show panel
-    panel.style.transform = "translateY(0)";
+        // Show panel
+        panel.style.transform = "";
+        panel.classList.remove("translate-y-[120%]");
+        panel.classList.add("translate-y-0");
 
-    // Rating Logic
-    const currentRating = state.dateRatings[loc.id] || 0;
-    const notes = ["Nic moc 😕", "Ušlo to 🙂", "Dobrý! 😃", "Super rande! 😍", "Best date ever! 💍"];
-    const noteText = currentRating > 0 ? notes[currentRating - 1] : "";
+        // Rating Logic
+        const currentRating = (state.dateRatings && state.dateRatings[loc.id]) || 0;
+        const notes = ["Nic moc 😕", "Ušlo to 🙂", "Dobrý! 😃", "Super rande! 😍", "Best date ever! 💍"];
+        const noteText = currentRating > 0 ? notes[currentRating - 1] : "";
 
-    let starsHtml = "";
-    for (let i = 1; i <= 5; i++) {
-        const color = i <= currentRating ? "text-[#faa61a]" : "text-gray-600";
-        starsHtml += `<i class="fas fa-star ${color} cursor-pointer hover:text-yellow-400 transition" onclick="KiscordMap.rateDate(${loc.id}, ${i})"></i>`;
-    }
+        let starsHtml = "";
+        for (let i = 1; i <= 5; i++) {
+            const color = i <= currentRating ? "text-[#faa61a]" : "text-gray-600";
+            starsHtml += `<i class="fas fa-star ${color} cursor-pointer hover:text-yellow-400 transition" onclick="KiscordMap.rateDate('${loc.id}', ${i})"></i>`;
+        }
 
-    // Google Maps URL
-    let mapsUrl = loc.url ? loc.url : "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(loc.name + " Česká republika");
+        // Google Maps URL
+        const mapsUrl = loc.url ? loc.url : "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(loc.name + " Česká republika");
 
-    panel.innerHTML = `
-        <div class="p-5 md:p-6 overflow-y-auto max-h-[85vh] relative">
-            <div class="flex items-start justify-between gap-4 mb-3">
-                <div class="flex-1 min-w-0">
-                    <h3 class="text-2xl font-bold text-white leading-tight truncate">${loc.name}</h3>
-                    <div class="flex items-center gap-2 text-xs text-gray-400 mt-1">
-                        <i class="fas fa-sun text-yellow-500"></i>
-                        <span class="font-medium">-1°C • Jasno</span>
-                    </div>
-                </div>
-                <button onclick="KiscordMap.closeLocationDetail()" 
-                        class="flex-shrink-0 w-10 h-10 bg-[#2f3136] hover:bg-[#ed4245] text-white rounded-xl flex items-center justify-center transition shadow-lg border border-white/5 group">
-                    <i class="fas fa-times text-xl group-hover:rotate-90 transition-transform"></i>
-                </button>
-            </div>
-
-            <p class="text-gray-400 text-sm mb-4 leading-relaxed">${loc.desc || ""}</p>
-
-            <!-- Rating -->
-            <div class="flex items-center gap-2 mb-6 bg-[#202225] p-2 rounded-lg border border-[#2f3136]">
-                <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">HODNOCENÍ:</span>
-                <div class="flex text-lg gap-0.5">${starsHtml}</div>
-                ${noteText ? `<span class="text-[#faa61a] text-[10px] font-bold italic ml-2 animate-fade-in">${noteText}</span>` : ''}
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="grid grid-cols-3 gap-3 mb-6">
-                <button onclick="KiscordMap.addToRoute(${loc.id})" class="bg-[#5865F2] hover:bg-[#4752c4] text-white py-2.5 rounded-lg font-bold shadow-lg flex items-center justify-center gap-2 transition transform hover:scale-105 active:scale-95">
-                    <i class="fas fa-plus"></i> Přidat
-                </button>
-                <button onclick="window.showNotification('Galerie se připravuje 📸', 'info')" class="bg-[#2f3136] hover:bg-[#36393f] text-gray-300 hover:text-white border border-[#202225] py-2.5 rounded-lg font-medium shadow-md flex items-center justify-center gap-2 transition">
-                    <i class="fas fa-images text-[#eb459e]"></i> Fotky (0)
-                </button>
-                <a href="${mapsUrl}" target="_blank" class="bg-[#2f3136] hover:bg-[#36393f] text-gray-300 hover:text-white border border-[#202225] py-2.5 rounded-lg font-medium shadow-md flex items-center justify-center gap-2 transition">
-                    <i class="fas fa-external-link-alt"></i> Mapa
-                </a>
-            </div>
-
-            <!-- Date Planner Section -->
-            <div class="bg-[#202225] rounded-xl p-4 border border-[#2f3136] shadow-inner">
-                <div class="mb-4">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Kdy to vidíš?</label>
-                    <div class="flex gap-2">
-                        <input type="datetime-local" id="date-input" class="flex-1 bg-[#2f3136] text-white text-sm p-2.5 rounded-lg border border-[#202225] outline-none focus:border-[#eb459e] focus:bg-[#36393f] transition h-10">
-                        <button onclick="KiscordMap.saveDateToCalendar()" class="w-10 h-10 bg-[#5865F2] text-white rounded-lg flex items-center justify-center hover:bg-[#4752c4] transition shadow-lg" title="Uložit do kalendáře">
-                            <i class="far fa-calendar-plus text-lg"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="mb-4">
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Poznámka</label>
-                    <div class="flex gap-2">
-                         <input type="text" id="note-input" placeholder="Dáme pak kafe?" class="flex-1 bg-[#2f3136] text-white text-sm p-2.5 rounded-lg border border-[#202225] outline-none focus:border-[#3ba55c] focus:bg-[#36393f] transition">
-                         <button onclick="KiscordMap.saveDateToCalendar()" class="w-10 h-10 bg-[#3ba55c] text-white rounded-lg flex items-center justify-center hover:bg-[#2d7d46] shadow-lg transition transform hover:scale-105 active:scale-95">
-                            <i class="fas fa-save"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    // FlyTo with Center Offset
-    if (state.mapInstance) {
-        // Calculate offset to show map above the panel
-        const mapContainer = document.getElementById("leaflet-map");
-        if (mapContainer) {
-            const mapHeight = mapContainer.offsetHeight;
-            const targetPoint = state.mapInstance.project([loc.lat, loc.lng], 16);
-            // Smaller offset (0.15 instead of 0.25) to prevent cutting off from top
-            const pointOffset = new L.Point(0, mapHeight * 0.15);
-            const newCenter = state.mapInstance.unproject(targetPoint.add(pointOffset), 16);
-
-            state.mapInstance.flyTo(newCenter, 16, {
-                animate: true,
-                duration: 1.5
+        // Gather photos from state.timelineEvents — defensively parse images field
+        // (Supabase may return JSON arrays as strings in some edge cases)
+        const locationEvents = (state.timelineEvents || []).filter(e => e.location_id == loc.id);
+        const locationPhotos = [];
+        locationEvents.forEach(e => {
+            if (!e.images) return;
+            let imgs = e.images;
+            if (typeof imgs === 'string') {
+                try { imgs = JSON.parse(imgs); } catch (_) { imgs = [imgs]; }
+            }
+            if (!Array.isArray(imgs)) return;
+            imgs.forEach(img => {
+                if (img) {
+                    locationPhotos.push({ url: img, eventId: e.id, title: e.title, date: e.event_date });
+                }
             });
-        } else {
-            state.mapInstance.flyTo([loc.lat, loc.lng], 16);
+        });
+
+        // Build polaroid photos HTML
+        const photosHtml = locationPhotos.length > 0
+            ? locationPhotos.map(photo => {
+                const rot = (Math.random() * 4 - 2).toFixed(1);
+                return `
+                    <div class="relative bg-white p-2 pb-6 shadow-md rounded border border-gray-200 hover:scale-105 hover:rotate-0 transition-all duration-300 cursor-pointer select-none group/polaroid"
+                         style="transform: rotate(${rot}deg);"
+                         onclick="event.stopPropagation(); window.openGallery('${photo.eventId}')">
+                        <div class="w-full aspect-square overflow-hidden bg-gray-100 rounded-sm">
+                            <img src="${photo.url}" class="w-full h-full object-cover transition duration-300 group-hover/polaroid:scale-110" />
+                        </div>
+                        <div class="absolute bottom-1.5 left-2 right-2 text-center font-bold text-xs truncate" style="font-family: 'Indie Flower', cursive; color: #4a5568;">
+                            ${photo.title || 'Vzpomínka'}
+                        </div>
+                    </div>
+                `;
+            }).join('')
+            : `<div class="col-span-full py-8 text-center text-gray-500 bg-[#202225] rounded-xl border border-dashed border-[#2f3136] flex flex-col items-center justify-center gap-2">
+                <i class="far fa-images text-3xl text-gray-600"></i>
+                <p class="text-sm text-gray-400">Zatím tu nemáte žádné společné fotky.</p>
+                <p class="text-xs text-gray-500">Nahrajte první vzpomínku níže! 👇</p>
+               </div>`;
+
+        panel.innerHTML = `
+            <div class="p-5 md:p-6 overflow-y-auto max-h-[85vh] relative">
+                <div class="flex items-start justify-between gap-4 mb-3">
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-2xl font-bold text-white leading-tight truncate">${loc.name}</h3>
+                        <div class="flex items-center gap-2 text-xs text-gray-400 mt-1">
+                            <i class="fas fa-map-marker-alt text-[#eb459e]"></i>
+                            <span class="font-medium truncate">${loc.desc || ""}</span>
+                        </div>
+                    </div>
+                    <button onclick="KiscordMap.closeLocationDetail()"
+                            class="flex-shrink-0 w-10 h-10 bg-[#2f3136] hover:bg-[#ed4245] text-white rounded-xl flex items-center justify-center transition shadow-lg border border-white/5 group">
+                        <i class="fas fa-times text-xl group-hover:rotate-90 transition-transform"></i>
+                    </button>
+                </div>
+
+                <!-- Rating -->
+                <div class="flex items-center gap-2 mb-6 bg-[#202225] p-2 rounded-lg border border-[#2f3136]">
+                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">HODNOCENÍ:</span>
+                    <div class="flex text-lg gap-0.5">${starsHtml}</div>
+                    ${noteText ? `<span class="text-[#faa61a] text-[10px] font-bold italic ml-2 animate-fade-in">${noteText}</span>` : ''}
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-3 gap-3 mb-6">
+                    <button onclick="KiscordMap.addToRoute('${loc.id}')" class="bg-[#5865F2] hover:bg-[#4752c4] text-white py-2.5 rounded-lg font-bold shadow-lg flex items-center justify-center gap-2 transition transform hover:scale-105 active:scale-95">
+                        <i class="fas fa-plus"></i> Přidat
+                    </button>
+                    <button onclick="document.getElementById('location-gallery-section')?.scrollIntoView({ behavior: 'smooth' })" class="bg-[#2f3136] hover:bg-[#36393f] text-gray-300 hover:text-white border border-[#202225] py-2.5 rounded-lg font-medium shadow-md flex items-center justify-center gap-2 transition">
+                        <i class="fas fa-images text-[#eb459e]"></i> Fotky (${locationPhotos.length})
+                    </button>
+                    <a href="${mapsUrl}" target="_blank" class="bg-[#2f3136] hover:bg-[#36393f] text-gray-300 hover:text-white border border-[#202225] py-2.5 rounded-lg font-medium shadow-md flex items-center justify-center gap-2 transition">
+                        <i class="fas fa-external-link-alt"></i> Mapa
+                    </a>
+                </div>
+
+                <!-- Weather Widget Container -->
+                <div id="weather-container-${loc.id}" class="mb-6 flex w-full">
+                    <div class="flex items-center gap-3 bg-[#202225] p-3 rounded-lg border border-[#2f3136] w-full text-gray-400">
+                        <i class="fas fa-spinner animate-spin text-[#eb459e]"></i>
+                        <span class="text-xs">Načítám aktuální počasí...</span>
+                    </div>
+                </div>
+
+                <!-- Date Planner Section -->
+                <div class="bg-[#202225] rounded-xl p-4 border border-[#2f3136] shadow-inner mb-6">
+                    <div class="mb-4">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Kdy to vidíš?</label>
+                        <div class="flex gap-2">
+                            <input type="datetime-local" id="date-input" class="flex-1 bg-[#2f3136] text-white text-sm p-2.5 rounded-lg border border-[#202225] outline-none focus:border-[#eb459e] focus:bg-[#36393f] transition h-10">
+                            <button onclick="KiscordMap.saveDateToCalendar()" class="w-10 h-10 bg-[#5865F2] text-white rounded-lg flex items-center justify-center hover:bg-[#4752c4] transition shadow-lg" title="Uložit do kalendáře">
+                                <i class="far fa-calendar-plus text-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Poznámka</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="note-input" placeholder="Dáme pak kafe?" class="flex-1 bg-[#2f3136] text-white text-sm p-2.5 rounded-lg border border-[#202225] outline-none focus:border-[#3ba55c] focus:bg-[#36393f] transition">
+                            <button onclick="KiscordMap.saveDateToCalendar()" class="w-10 h-10 bg-[#3ba55c] text-white rounded-lg flex items-center justify-center hover:bg-[#2d7d46] shadow-lg transition transform hover:scale-105 active:scale-95">
+                                <i class="fas fa-save"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Corkboard Gallery Section -->
+                <div id="location-gallery-section" class="mt-8 pt-6 border-t border-[#2f3136]">
+                    <h4 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fas fa-images text-[#eb459e]"></i> Společné vzpomínky z tohoto místa
+                    </h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        ${photosHtml}
+                    </div>
+                </div>
+
+                <!-- Upload New Memory Form -->
+                <div class="mt-8 pt-6 border-t border-[#2f3136]">
+                    <h4 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fas fa-camera text-[#eb459e]"></i> Přidat novou vzpomínku
+                    </h4>
+                    <form id="upload-memory-form" onsubmit="event.preventDefault(); KiscordMap.uploadLocationMemory(event, '${loc.id}')" class="space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Název milníku / vzpomínky</label>
+                            <input type="text" id="memory-title" placeholder="Např. Naše první rande zde..." required
+                                   class="w-full bg-[#202225] text-white text-sm p-3 rounded-lg border border-[#2f3136] outline-none focus:border-[#eb459e] focus:bg-[#2f3136] transition">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Datum vzpomínky</label>
+                                <input type="date" id="memory-date" required
+                                       class="w-full bg-[#202225] text-white text-sm p-3 rounded-lg border border-[#2f3136] outline-none focus:border-[#eb459e] focus:bg-[#2f3136] transition">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Ikona milníku</label>
+                                <select id="memory-icon"
+                                        class="w-full bg-[#202225] text-white text-sm p-3 rounded-lg border border-[#2f3136] outline-none focus:border-[#eb459e] focus:bg-[#2f3136] transition h-[46px]">
+                                    <option value="❤️">❤️ Srdce</option>
+                                    <option value="🍕">🍕 Jídlo</option>
+                                    <option value="☕">☕ Káva</option>
+                                    <option value="🎬">🎬 Kino</option>
+                                    <option value="🚶">🚶 Procházka</option>
+                                    <option value="🍷">🍷 Víno</option>
+                                    <option value="✨">✨ Kouzlo</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Popis (nepovinné)</label>
+                            <textarea id="memory-desc" rows="2" placeholder="Jaké to bylo?"
+                                      class="w-full bg-[#202225] text-white text-sm p-3 rounded-lg border border-[#2f3136] outline-none focus:border-[#eb459e] focus:bg-[#2f3136] transition resize-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Vyberte fotografii</label>
+                            <div class="relative group/upload cursor-pointer">
+                                <input type="file" id="memory-file" accept="image/*" required class="hidden" onchange="document.getElementById('memory-file-label').innerHTML = '<i class=\\'fas fa-check text-green-500\\'></i> ' + this.files[0]?.name">
+                                <div onclick="document.getElementById('memory-file').click()" id="memory-file-label"
+                                     class="w-full bg-[#202225] hover:bg-[#2f3136] text-gray-400 hover:text-white border border-dashed border-[#2f3136] hover:border-[#eb459e] p-4 rounded-lg text-center text-sm font-medium transition flex flex-col items-center justify-center gap-2">
+                                     <i class="fas fa-cloud-upload-alt text-2xl text-gray-500 group-hover/upload:text-[#eb459e] transition"></i>
+                                     <span>Klikni pro výběr fotky...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" id="memory-submit-btn"
+                                class="w-full bg-gradient-to-r from-[#eb459e] to-[#5865F2] hover:opacity-90 text-white py-3 rounded-xl font-bold shadow-lg transition transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2">
+                            <i class="fas fa-heart animate-pulse"></i> Uložit vzpomínku a cinknout ❤️
+                        </button>
+                    </form>
+                </div>
+            </div>
+        `;
+
+        // Fetch weather dynamically from Open-Meteo (free, no API key)
+        const weatherContainerId = `weather-container-${loc.id}`;
+        setTimeout(async () => {
+            const container = document.getElementById(weatherContainerId);
+            if (!container) return;
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lng}&current=temperature_2m,apparent_temperature,is_day,weather_code`);
+                if (!res.ok) throw new Error("Weather API failed");
+                const data = await res.json();
+                if (!data.current) throw new Error("No current weather data");
+                const temp = Math.round(data.current.temperature_2m);
+                const apparent = Math.round(data.current.apparent_temperature);
+                const code = data.current.weather_code;
+
+                const weatherMap = {
+                    0: { icon: "fa-sun text-yellow-400 animate-spin-slow", text: "Jasno ☀️" },
+                    1: { icon: "fa-cloud-sun text-orange-300", text: "Skoro jasno 🌤️" },
+                    2: { icon: "fa-cloud-sun text-gray-300", text: "Polojasno ⛅" },
+                    3: { icon: "fa-cloud text-gray-400", text: "Zataženo ☁️" },
+                    45: { icon: "fa-smog text-gray-500", text: "Mlha 🌫️" },
+                    48: { icon: "fa-smog text-gray-500", text: "Inverzná mlha 🌫️" },
+                    51: { icon: "fa-cloud-rain text-blue-300", text: "Mírné mrholení 🌧️" },
+                    53: { icon: "fa-cloud-rain text-blue-400", text: "Mrholení 🌧️" },
+                    55: { icon: "fa-cloud-rain text-blue-500", text: "Husté mrholení 🌧️" },
+                    61: { icon: "fa-cloud-showers-heavy text-blue-400", text: "Slabý déšť 🌧️" },
+                    63: { icon: "fa-cloud-showers-heavy text-blue-500", text: "Déšť 🌧️" },
+                    65: { icon: "fa-cloud-showers-heavy text-blue-600", text: "Silný déšť 🌧️" },
+                    71: { icon: "fa-snowflake text-blue-200 animate-pulse", text: "Slabé sněžení ❄️" },
+                    73: { icon: "fa-snowflake text-blue-300 animate-pulse", text: "Sněžení ❄️" },
+                    75: { icon: "fa-snowflake text-blue-400 animate-pulse", text: "Silné sněžení ❄️" },
+                    80: { icon: "fa-cloud-showers-heavy text-blue-400", text: "Slabé přeháňky 🌧️" },
+                    81: { icon: "fa-cloud-showers-heavy text-blue-500", text: "Přeháňky 🌧️" },
+                    82: { icon: "fa-cloud-showers-heavy text-blue-600", text: "Silné přeháňky 🌧️" },
+                    95: { icon: "fa-bolt text-yellow-500 animate-bounce", text: "Bouřka ⚡" }
+                };
+
+                const weather = weatherMap[code] || { icon: "fa-thermometer-half text-red-400", text: "Aktuálně" };
+
+                container.innerHTML = `
+                    <div class="flex items-center justify-between bg-[#202225] p-3 rounded-lg border border-[#2f3136] w-full animate-fade-in shadow-inner">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-[#2f3136] flex items-center justify-center text-lg">
+                                <i class="fas ${weather.icon}"></i>
+                            </div>
+                            <div>
+                                <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">AKTUÁLNÍ POČASÍ</div>
+                                <div class="text-xs text-gray-300 font-semibold">${weather.text}</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xl font-black text-white">${temp}°C</div>
+                            <div class="text-[9px] text-gray-500">Pocitově: ${apparent}°C</div>
+                        </div>
+                    </div>
+                `;
+            } catch (e) {
+                console.warn("[Weather Load Error]", e);
+                container.innerHTML = `
+                    <div class="flex items-center gap-2 text-xs text-gray-500 bg-[#202225] p-3 rounded-lg border border-[#2f3136] w-full shadow-inner">
+                        <i class="fas fa-cloud-sun text-gray-600"></i>
+                        <span>Počasí se nepodařilo načíst.</span>
+                    </div>
+                `;
+            }
+        }, 100);
+
+        // FlyTo with Center Offset
+        if (state.mapInstance) {
+            const mapContainer = document.getElementById("leaflet-map");
+            if (mapContainer) {
+                const mapHeight = mapContainer.offsetHeight;
+                const targetPoint = state.mapInstance.project([loc.lat, loc.lng], 16);
+                const pointOffset = new L.Point(0, mapHeight * 0.15);
+                const newCenter = state.mapInstance.unproject(targetPoint.add(pointOffset), 16);
+                state.mapInstance.flyTo(newCenter, 16, { animate: true, duration: 1.5 });
+            } else {
+                state.mapInstance.flyTo([loc.lat, loc.lng], 16);
+            }
+        }
+
+    } catch (err) {
+        console.error("[selectLocation] Chyba:", err);
+        const panel = document.getElementById("detail-panel");
+        if (panel) {
+            panel.style.transform = "";
+            panel.classList.remove("translate-y-[120%]");
+            panel.classList.add("translate-y-0");
+            const loc2 = state.dateLocations.find((l) => l.id == id);
+            panel.innerHTML = `
+                <div class="p-6 text-center">
+                    <i class="fas fa-exclamation-circle text-red-400 text-3xl mb-3"></i>
+                    <h3 class="text-white font-bold text-lg mb-2">${loc2 ? loc2.name : 'Místo'}</h3>
+                    <p class="text-gray-400 text-sm mb-4">Chyba: ${err.message}</p>
+                    <button onclick="KiscordMap.closeLocationDetail()" class="bg-[#5865F2] text-white px-4 py-2 rounded-lg font-bold text-sm">Zavřít</button>
+                </div>
+            `;
         }
     }
 }
@@ -594,7 +788,9 @@ export async function saveDateToCalendar() {
 export function closeLocationDetail() {
     const panel = document.getElementById('detail-panel');
     if (!panel) return;
-    panel.style.transform = 'translateY(120%)';
+    panel.style.transform = "";
+    panel.classList.remove("translate-y-0");
+    panel.classList.add("translate-y-[120%]");
 }
 
 export function pickRandomLocation() {
@@ -617,7 +813,7 @@ export function jumpToLocation(id) {
     if (!loc || !state.mapInstance) return;
     
     // Switch to map channel if not already there
-    if (window.switchChannel) window.switchChannel('map');
+    if (window.switchChannel) window.switchChannel('dateplanner');
     
     // Fly to location
     setTimeout(() => {
@@ -635,6 +831,9 @@ export function jumpToLocation(id) {
                 }
             }
         });
+        
+        // Open detail panel/menu
+        selectLocation(id);
     }, 100);
 }
 
@@ -796,5 +995,101 @@ export async function saveNewLocation() {
     } catch (err) {
         console.error("Save Location Error:", err);
         alert("Chyba při ukládání: " + err.message);
+    }
+}
+
+export async function uploadLocationMemory(event, locationId) {
+    if (event) event.preventDefault();
+
+    const titleInput = document.getElementById('memory-title');
+    const dateInput = document.getElementById('memory-date');
+    const iconInput = document.getElementById('memory-icon');
+    const descInput = document.getElementById('memory-desc');
+    const fileInput = document.getElementById('memory-file');
+    const submitBtn = document.getElementById('memory-submit-btn');
+
+    if (!titleInput || !dateInput || !fileInput) return;
+
+    const title = titleInput.value.trim();
+    const dateVal = dateInput.value;
+    const icon = iconInput ? iconInput.value : "❤️";
+    const desc = descInput ? descInput.value.trim() : "";
+    const file = fileInput.files ? fileInput.files[0] : null;
+
+    if (!title || !dateVal || !file) {
+        if (window.showNotification) window.showNotification("Vyplňte prosím název, datum a vyberte fotku!", "error");
+        return;
+    }
+
+    // Show loading spinner
+    const originalBtnHtml = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<i class="fas fa-spinner animate-spin"></i> Nahrávám vzpomínku...`;
+
+    try {
+        // 1. Insert empty/initial event to get the new event ID
+        const newEventObj = {
+            title: title,
+            event_date: dateVal,
+            icon: icon,
+            color: '#eb459e', // Beautiful love pink color
+            description: desc,
+            images: [], // Will update with photo URL after upload
+            location_id: Number(locationId),
+            is_milestone: false,
+            user_id: state.currentUser?.id
+        };
+
+        const { data: insertedEvents, error: insertError } = await safeInsert('timeline_events', [newEventObj]);
+        if (insertError) throw insertError;
+        if (!insertedEvents || insertedEvents.length === 0) throw new Error("Chyba při zakládání milníku.");
+
+        const newEventId = insertedEvents[0].id;
+
+        // 2. Upload file to storage bucket 'timeline-photos' under 'events/{newEventId}'
+        let uploadedPhotoUrl = null;
+        if (navigator.onLine) {
+            uploadedPhotoUrl = await uploadFile('timeline-photos', file, `events/${newEventId}`);
+            if (uploadedPhotoUrl) {
+                // Update Supabase event with the uploaded image URL
+                await supabase.from('timeline_events').update({ images: [uploadedPhotoUrl] }).eq('id', newEventId);
+                insertedEvents[0].images = [uploadedPhotoUrl];
+            }
+        }
+
+        // 3. Update local state.timelineEvents
+        if (!state.timelineEvents) state.timelineEvents = [];
+        state.timelineEvents.unshift({
+            id: newEventId,
+            title: title,
+            event_date: dateVal,
+            icon: icon,
+            color: '#eb459e',
+            description: desc,
+            images: uploadedPhotoUrl ? [uploadedPhotoUrl] : [],
+            location_id: Number(locationId),
+            is_milestone: false,
+            user_highlights: ""
+        });
+
+        // 4. Trigger audio & visual effects
+        if (typeof playChime === 'function') playChime();
+        if (typeof triggerConfetti === 'function') triggerConfetti();
+        if (window.showNotification) window.showNotification("Vzpomínka byla uložena! Spojení navázáno ❤️✨", "success");
+
+        // 5. Re-render UI: markers and detail panel to see the new photo instantly
+        markersMemories = state.timelineEvents.filter(e => e.location_id);
+        
+        // Re-render markers on the map
+        renderMarkers(state.dateLocations);
+
+        // Re-select/render location details so the newly uploaded polaroid shows up immediately
+        selectLocation(locationId);
+
+    } catch (err) {
+        console.error("Save Memory Error:", err);
+        if (window.showNotification) window.showNotification("Chyba při ukládání: " + err.message, "error");
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
     }
 }

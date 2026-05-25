@@ -310,11 +310,11 @@ export function renderLibrary(category) {
                           <i class="${isBookmarked ? "fas" : "far"} fa-heart"></i>
                       </button>
 
-                      <div class="poster-area w-full aspect-[2/3] h-auto bg-[#202225] flex items-center justify-center text-5xl group-hover:scale-105 transition-transform duration-400 relative cursor-pointer overflow-hidden shadow-inner" 
+                      <div class="poster-area w-full aspect-[2/3] h-auto bg-[#202225] flex items-center justify-center text-5xl relative cursor-pointer overflow-hidden shadow-inner" 
                            onclick="window.loadModule('library').then(m => m.openHistoryModal(${item.id}))">
                           ${hasPoster 
-                              ? `<img src="${posterUrl}" alt="${item.title}" class="w-full h-full object-cover block">` 
-                              : `<span class="opacity-50">${item.icon}</span>`}
+                              ? `<img src="${posterUrl}" alt="${item.title}" class="w-full h-full object-cover block transition-transform duration-500 ease-out group-hover:scale-110">` 
+                              : `<span class="opacity-50 transition-transform duration-500 ease-out group-hover:scale-110">${item.icon}</span>`}
                           
                           ${item.trailer ? '<div class="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fas fa-play text-white/80 text-3xl drop-shadow-lg"></i></div>' : ""}
                           
@@ -973,11 +973,23 @@ export async function searchTMDBInModal(category) {
 
     triggerHaptic('light');
     
-    // Show results container and loader
-    if (resultsContainer) {
-        resultsContainer.innerHTML = '<div class="text-center py-4 text-xs text-gray-500 animate-pulse">Hledám na TMDB... 🕵️‍♂️</div>';
-        resultsContainer.classList.remove('hidden');
+    // If the results container is not present, it means we are using the quick search from the main library page.
+    // In this case, we open the Add Media modal first, pre-fill the search query, and run the search.
+    if (!resultsContainer) {
+        showAddMediaModal(category);
+        const modalInput = document.getElementById('tmdb-search-input');
+        if (modalInput) {
+            modalInput.value = query;
+        }
+        setTimeout(() => {
+            searchTMDBInModal(category);
+        }, 80);
+        return;
     }
+
+    // Show results container and loader
+    resultsContainer.innerHTML = '<div class="text-center py-4 text-xs text-gray-500 animate-pulse">Hledám na TMDB... 🕵️‍♂️</div>';
+    resultsContainer.classList.remove('hidden');
 
     const results = await TMDB.searchTMDB(query, category);
 
@@ -994,18 +1006,56 @@ export async function searchTMDBInModal(category) {
             return `
                 <div onclick="Library.selectTMDBResult(${res.id}, '${category}')" 
                      class="flex items-center gap-3 p-2 bg-[#2f3136] hover:bg-[#5865F2]/20 border border-transparent hover:border-[#5865F2]/40 rounded-xl cursor-pointer transition group">
-                    <div class="w-10 h-14 bg-[#202225] rounded-lg overflow-hidden flex-shrink-0">
+                     <div class="w-10 h-14 bg-[#202225] rounded-lg overflow-hidden flex-shrink-0">
                         ${poster ? `<img src="${poster}" class="w-full h-full object-cover">` : '<div class="w-full h-full flex items-center justify-center text-xs text-gray-600">🎬</div>'}
-                    </div>
-                    <div class="flex-1 min-w-0">
+                     </div>
+                     <div class="flex-1 min-w-0">
                         <div class="text-xs font-bold text-white truncate group-hover:text-[#5865F2] transition">${title}</div>
                         <div class="text-[10px] text-gray-500 font-medium">${year}</div>
-                    </div>
-                    <i class="fas fa-plus text-gray-700 group-hover:text-[#5865F2] mr-2"></i>
+                     </div>
+                     <i class="fas fa-plus text-gray-700 group-hover:text-[#5865F2] mr-2"></i>
                 </div>
             `;
         }).join('');
     }
+}
+
+// Helper to map TMDB genre strings into Kiscord category tokens
+function mapGenresToCategory(genresString) {
+    if (!genresString) return "Ostatní";
+    const categories = ["Akční", "Sci-Fi", "Komedie", "Animovaný", "Fantasy", "Drama", "Horor", "Romantický", "Dobrodružný", "Ostatní"];
+    const genreList = genresString.split(',').map(g => g.trim().toLowerCase());
+
+    for (const genre of genreList) {
+        // Direct matching first
+        const direct = categories.find(c => c.toLowerCase() === genre);
+        if (direct) return direct;
+
+        // Substrings / Translations
+        if (genre.includes("sci-fi") || genre.includes("science fiction") || genre === "vědecko-fantastický" || genre === "sci-fi & fantasy") {
+            return "Sci-Fi";
+        }
+        if (genre === "akční a dobrodružný" || genre.includes("akční")) {
+            return "Akční";
+        }
+        if (genre === "krimi" || genre === "thriller" || genre === "mysteriózní" || genre.includes("krimi") || genre.includes("thriller")) {
+            return "Drama";
+        }
+        if (genre === "mýdlová opera") {
+            return "Romantický";
+        }
+    }
+    
+    // Fallback: Check if any category is a substring of the genres
+    for (const genre of genreList) {
+        for (const cat of categories) {
+            if (genre.includes(cat.toLowerCase()) || cat.toLowerCase().includes(genre)) {
+                if (cat !== "Ostatní") return cat;
+            }
+        }
+    }
+
+    return "Ostatní";
 }
 
 export async function selectTMDBResult(id, category) {
@@ -1034,6 +1084,15 @@ export async function selectTMDBResult(id, category) {
     const moodsInput = document.getElementById('m-moods');
     if (!moodsInput.value.trim() && details.genres) {
         moodsInput.value = details.genres;
+    }
+
+    // Automatically set and sort by Category from TMDB genres
+    if (details.genres) {
+        const mappedCat = mapGenresToCategory(details.genres);
+        const catSelect = document.getElementById('m-cat');
+        if (catSelect) {
+            catSelect.value = mappedCat;
+        }
     }
 
     // Success Visual

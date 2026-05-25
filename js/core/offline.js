@@ -9,7 +9,7 @@ const QUEUE_KEY = 'kiscord_sync_queue';
  * @param {string} action - 'upsert', 'insert', 'update', 'delete'
  * @param {object} data - The data payload
  */
-export function enqueueOperation(table, action, data) {
+export function enqueueOperation(table, action, data, match = null) {
     const queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
 
     // Check if we already have a pending upsert for this specific record (optional optimization)
@@ -20,7 +20,8 @@ export function enqueueOperation(table, action, data) {
         timestamp: new Date().toISOString(),
         table,
         action,
-        data
+        data,
+        match
     });
 
     localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
@@ -50,9 +51,11 @@ export async function processSyncQueue() {
             } else if (op.action === 'insert') {
                 result = await supabase.from(op.table).insert(op.data);
             } else if (op.action === 'update') {
-                result = await supabase.from(op.table).update(op.data).match({ id: op.data.id });
+                const matchCriteria = op.match || { id: op.data.id };
+                result = await supabase.from(op.table).update(op.data).match(matchCriteria);
             } else if (op.action === 'delete') {
-                result = await supabase.from(op.table).delete().match({ id: op.data.id });
+                const matchCriteria = op.match || op.data;
+                result = await supabase.from(op.table).delete().match(matchCriteria);
             }
 
             if (result.error) throw result.error;
@@ -131,13 +134,9 @@ export async function safeInsert(table, data) {
     return supabase.from(table).insert(data).select();
 }
 
-/**
- * Perform a Supabase update if online, or queue it if offline.
- * NOTE: For offline simplicity, we expect 'data' to contain the ID for matching in processQueue.
- */
 export async function safeUpdate(table, data, match = null) {
     if (!navigator.onLine) {
-        enqueueOperation(table, 'update', data);
+        enqueueOperation(table, 'update', data, match);
         return { data: null, error: null, offline: true };
     }
     const query = supabase.from(table).update(data);
@@ -147,10 +146,16 @@ export async function safeUpdate(table, data, match = null) {
 /**
  * Perform a Supabase delete if online, or queue it if offline.
  */
-export async function safeDelete(table, id) {
+export async function safeDelete(table, matchCriteria) {
     if (!navigator.onLine) {
-        enqueueOperation(table, 'delete', { id });
+        const isObject = typeof matchCriteria === 'object' && matchCriteria !== null;
+        const opData = isObject ? matchCriteria : { id: matchCriteria };
+        const opMatch = isObject ? matchCriteria : { id: matchCriteria };
+        enqueueOperation(table, 'delete', opData, opMatch);
         return { data: null, error: null, offline: true };
     }
-    return supabase.from(table).delete().eq('id', id);
+    const query = supabase.from(table).delete();
+    return typeof matchCriteria === 'object' && matchCriteria !== null
+        ? query.match(matchCriteria)
+        : query.eq('id', matchCriteria);
 }

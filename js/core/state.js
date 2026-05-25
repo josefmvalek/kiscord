@@ -6,6 +6,7 @@ const STATE_CACHE_KEY = 'kiscord_state_cache';
 const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
 const state = {
+    shifts: {},
     tetris: { jose: 0, klarka: 0 },
     currentChannel: "welcome",
     topicProgress: {},
@@ -67,12 +68,16 @@ const state = {
         glassmorphism: true,
         blurIntensity: 10,
         haptics: true,
+        soundEnabled: true,
+        timelineViewMode: 'list',
+        pinnedPhotos: [],
         dashboardWidgets: {
             health: true,
             supplements: true,
             tetris: true,
             quests: true,
-            funfacts: true
+            funfacts: true,
+            memoryBoard: true
         },
         notifications: {
             nativeEnabled: false,
@@ -107,7 +112,8 @@ const state = {
         facts: false,
         conv_topics: false,
         regenerace: false,
-        dailyArchive: false
+        dailyArchive: false,
+        shifts: false
     }
 };
 
@@ -140,6 +146,7 @@ let _settingsSyncTimeout = null;
 
 function saveStateToCache() {
     const cacheData = {
+        shifts: state.shifts,
         healthData: state.healthData,
         timelineEvents: state.timelineEvents,
         dateLocations: state.dateLocations,
@@ -151,7 +158,16 @@ function saveStateToCache() {
         dailyAnswers: state.dailyAnswers,
         tetris: state.tetris,
         user_ids: state.user_ids,
-        settings: state.settings
+        settings: state.settings,
+        // Extended SWR Caching Keys
+        maturaProgress: state.maturaProgress,
+        maturaStreaks: state.maturaStreaks,
+        maturaSchedule: state.maturaSchedule,
+        maturaTopics: state.maturaTopics,
+        library: state.library,
+        watchlist: state.watchlist,
+        watchHistory: state.watchHistory,
+        regeneraceContent: state.regeneraceContent
     };
     localStorage.setItem(STATE_CACHE_KEY, JSON.stringify(cacheData));
 
@@ -181,6 +197,11 @@ function loadStateFromCache() {
             // Deep merge safety for critical config objects
             if (data.settings) {
                 data.settings = { ...state.settings, ...data.settings };
+                if (data.settings.dashboardWidgets) {
+                    data.settings.dashboardWidgets = { ...state.settings.dashboardWidgets, ...data.settings.dashboardWidgets };
+                } else {
+                    data.settings.dashboardWidgets = state.settings.dashboardWidgets;
+                }
                 if (data.settings.notifications) {
                     // Update: Remove obsolete keys (movement, confessions, mood)
                     if (data.settings.notifications.reminders) delete data.settings.notifications.reminders.movement;
@@ -217,6 +238,23 @@ function loadStateFromCache() {
                 } else {
                     data.settings.notifications = state.settings.notifications;
                 }
+            }
+
+            // Deep merge safety for extended objects
+            if (data.library) {
+                data.library = { movies: [], series: [], games: [], ...data.library };
+            }
+            if (data.maturaStreaks) {
+                data.maturaStreaks = { jose: 0, klarka: 0, ...data.maturaStreaks };
+            }
+            if (data.maturaProgress) {
+                data.maturaProgress = { ...data.maturaProgress };
+            }
+            if (data.maturaTopics) {
+                data.maturaTopics = { ...data.maturaTopics };
+            }
+            if (data.watchHistory) {
+                data.watchHistory = { ...data.watchHistory };
             }
 
             Object.assign(state, data);
@@ -334,6 +372,9 @@ async function initializeState() {
             // Notify UI that data is fresh
             stateEvents.emit('dashboard');
             stateEvents.emit('health');
+            if (state.user_ids.jose && state.user_ids.klarka) {
+                stateEvents.emit('user_ids_loaded', state.user_ids);
+            }
             console.log("[State] Revalidation complete.");
 
             // Background load non-critical data
@@ -545,7 +586,7 @@ async function ensureMapData(force = false) {
     try {
         const [{ data: ratingData }, { data: locData }] = await Promise.all([supabase.from('date_ratings').select('*'), supabase.from('date_locations').select('*')]);
         if (ratingData) ratingData.forEach(row => { state.dateRatings[row.location_id] = row.rating; });
-        if (locData) state.dateLocations = locData.map(l => ({ id: l.id, name: l.name, cat: l.category, icon: l.icon || "📍", lat: l.lat, lng: l.lng, desc: l.description }));
+        if (locData) state.dateLocations = locData.map(l => ({ id: l.id, name: l.name, cat: l.category, icon: l.icon || "📍", lat: l.lat, lng: l.lng, desc: l.description, image_url: l.image_url }));
         markLoaded('map');
         stateEvents.emit('map');
     } catch (e) { console.error("Map Load Error:", e); }
@@ -746,6 +787,59 @@ async function ensureAssetsData(force = false) {
     }
 }
 
+async function ensureShiftsData(force = false) {
+    if (state._loaded.shifts && !force && !isStale('shifts')) return;
+    try {
+        const { data, error } = await supabase.from('brigade_shifts').select('*');
+        if (error) {
+            console.warn("Could not load shifts from DB, using cache or empty shifts", error);
+        }
+        
+        // Ensure profiles are mapped in case state.user_ids is incomplete
+        if (!state.user_ids.jose || !state.user_ids.klarka) {
+            const { data: pData } = await supabase.from('profiles').select('id, username, email');
+            if (pData) {
+                pData.forEach(p => {
+                    const lowerName = (p.username || "").toLowerCase();
+                    const lowerEmail = (p.email || "").toLowerCase();
+                    if (lowerName.includes('josef') || lowerName.includes('jozk') || lowerEmail === 'jozkavalek@email.cz' || lowerEmail.includes('josef')) state.user_ids.jose = p.id;
+                    if (lowerName.includes('klara') || lowerName.includes('vyslouzil') || lowerEmail === 'vyslouzilova.klara07@gmail.com' || lowerEmail.includes('klara')) state.user_ids.klarka = p.id;
+                });
+            }
+        }
+
+        if (data) {
+            state.shifts = {};
+            data.forEach(row => {
+                if (!state.shifts[row.date_key]) {
+                    state.shifts[row.date_key] = {};
+                }
+                const isJoseUser = row.user_id === state.user_ids.jose;
+                const isKlarkaUser = row.user_id === state.user_ids.klarka;
+                
+                const shiftData = {
+                    id: row.id,
+                    shift_type: row.shift_type,
+                    time_start: row.time_start || '',
+                    time_end: row.time_end || '',
+                    note: row.note || '',
+                    user_id: row.user_id
+                };
+
+                if (isJoseUser) {
+                    state.shifts[row.date_key].jose = shiftData;
+                } else if (isKlarkaUser) {
+                    state.shifts[row.date_key].klarka = shiftData;
+                }
+            });
+        }
+        markLoaded('shifts');
+        stateEvents.emit('shifts');
+    } catch (e) {
+        console.error("Shifts Load Error:", e);
+    }
+}
+
 function resetLazyLoaders() {
     // Dynamicky resetovat podle existujících klíčů – synchronizováno s deklarací state._loaded
     Object.keys(state._loaded).forEach(k => { state._loaded[k] = false; });
@@ -801,5 +895,6 @@ export {
     ensureRegeneraceData,
     ensureAssetsData,
     refreshMaturaTopics,
+    ensureShiftsData,
     resetLazyLoaders
 };

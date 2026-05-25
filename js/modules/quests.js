@@ -1,5 +1,5 @@
 import { supabase } from '../core/supabase.js';
-import { state } from '../core/state.js';
+import { state, ensureShiftsData, ensureTimelineData } from '../core/state.js';
 import { safeInsert } from '../core/offline.js';
 import { triggerHaptic } from '../core/utils.js';
 import { isJosef } from '../core/auth.js';
@@ -67,6 +67,12 @@ async function fetchQuestProgress() {
     const grid = document.getElementById('quests-grid');
 
     try {
+        // Ensure shifts and timeline data are loaded for Austria quests
+        await Promise.all([
+            ensureShiftsData(),
+            ensureTimelineData()
+        ]);
+
         const d = new Date();
         const monthPrefix = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         
@@ -98,7 +104,78 @@ async function fetchQuestProgress() {
             supabase.from('coop_quests').select('*').eq('is_active', true)
         ]);
 
-        if (definitionData) state.coopQuests = definitionData;
+        const austriaQuests = [
+            {
+                id: 'austria-euro',
+                title: '💶 Spořiví Mývalové',
+                description: 'Vydělejte společně 5000 EUR na brigádě. Každá odpracovaná směna se počítá jako 100 EUR! 💪',
+                icon: '💶',
+                color: 'from-emerald-400 to-teal-600',
+                goal: 5000,
+                unit: 'EUR',
+                type: 'austria_euro',
+                is_active: true
+            },
+            {
+                id: 'austria-km',
+                title: '🏔️ Alpský Vrchol',
+                description: 'Ujděte společně 100 km po rakouských stezkách. Každá vzpomínka na Timeline s tagem #rakousko2026 se počítá jako 10 km! 📸',
+                icon: '🏔️',
+                color: 'from-sky-400 to-blue-500',
+                goal: 100,
+                unit: 'km',
+                type: 'austria_km',
+                is_active: true
+            },
+            {
+                id: 'austria-deutsch',
+                title: '🥨 Rodilý Mluvčí',
+                description: 'Objednejte si v rakouské němčině jídlo bez zaváhání. Zlepšujte svou němčinu procvičováním slovíček! ☕',
+                icon: '🥨',
+                color: 'from-amber-400 to-orange-500',
+                goal: 25,
+                unit: 'slovíček',
+                type: 'austria_deutsch',
+                is_active: true
+            }
+        ];
+
+        if (definitionData) {
+            state.coopQuests = [...definitionData, ...austriaQuests];
+        } else {
+            state.coopQuests = austriaQuests;
+        }
+
+        // Calculate progress for Austria Quests
+        let totalShifts = 0;
+        if (state.shifts) {
+            Object.values(state.shifts).forEach(day => {
+                if (day.jose && ['ranni', 'odpoledni', 'custom'].includes(day.jose.shift_type)) totalShifts++;
+                if (day.klarka && ['ranni', 'odpoledni', 'custom'].includes(day.klarka.shift_type)) totalShifts++;
+            });
+        }
+
+        let totalKm = 0;
+        if (state.timelineEvents) {
+            state.timelineEvents.forEach(e => {
+                const text = ((e.title || '') + ' ' + (e.description || '')).toLowerCase();
+                if (text.includes('#rakousko2026') || text.includes('#rakousko')) {
+                    totalKm += 10;
+                }
+            });
+        }
+
+        let deutschProgress = 0;
+        try {
+            const [vocabRes, statsRes] = await Promise.all([
+                supabase.from('austrian_vocab').select('id', { count: 'exact', head: true }),
+                supabase.from('matura_flashcards_stats').select('id', { count: 'exact', head: true }).like('highlight_id', 'austrian-%').gte('repetition_count', 1)
+            ]);
+            deutschProgress = (vocabRes.count || 0) + (statsRes.count || 0);
+        } catch (dbErr) {
+            console.error("[Quests] Error fetching Austrian German progress from Supabase:", dbErr);
+            deutschProgress = parseInt(localStorage.getItem('kiscord_austria_deutsch_progress') || '0');
+        }
 
         questData = {
             sum_water: parseInt(waterData) || 0,
@@ -110,7 +187,10 @@ async function fetchQuestProgress() {
             count_completed_dates: parseInt(datesData) || 0,
             count_sunlight_sent: parseInt(sunlightData) || 0,
             sum_tetris_score: parseInt(tetrisData) || 0,
-            count_daily_questions: parseInt(questionsData) || 0
+            count_daily_questions: parseInt(questionsData) || 0,
+            austria_euro: totalShifts * 100,
+            austria_km: totalKm,
+            austria_deutsch: deutschProgress
         };
 
         renderQuestCards();
@@ -179,6 +259,15 @@ function renderQuestCards() {
                     <p class="text-[9px] text-center text-gray-500 font-bold uppercase tracking-tighter">
                         ${isDone ? '🏆 Skvělá práce, mývale a sovo!' : `${percentage}% splněno`}
                     </p>
+
+                    ${(q.type === 'austria_deutsch' && !isDone) ? `
+                        <div class="mt-4 pt-2 border-t border-white/5 flex justify-center">
+                            <button onclick="window.switchChannel('austrian-german')" 
+                                    class="w-full py-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-purple-500/20 flex items-center justify-center gap-2">
+                                📖 Otevřít slovníček
+                            </button>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -205,6 +294,8 @@ export function setupQuestsRealtime() {
 export function cleanupQuestsRealtime() {
     // Listeners are usually persistent, but we could remove them if needed
 }
+
+// --- GLOBAL ACTIONS ---
 
 // --- ADMIN UI ---
 

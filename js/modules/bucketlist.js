@@ -1,6 +1,6 @@
 import { supabase } from '../core/supabase.js';
 import { triggerHaptic, triggerConfetti } from '../core/utils.js';
-import { state, ensureBucketListData } from '../core/state.js';
+import { state, stateEvents, ensureBucketListData } from '../core/state.js';
 import { safeUpsert, safeInsert } from '../core/offline.js';
 import { showNotification } from '../core/theme.js';
 import { autoUnlock } from './achievements.js';
@@ -523,3 +523,10 @@ export function cleanupRealtime() {
         subscription = null;
     }
 }
+
+// Listen for user IDs loaded to re-render grid with J/K avatars
+stateEvents.on('user_ids_loaded', () => {
+    if (document.getElementById('bucket-grid')) {
+        renderGrid();
+    }
+});

@@ -1,4 +1,4 @@
-import { state } from '../core/state.js';
+import { state, stateEvents } from '../core/state.js';
 import { supabase } from '../core/supabase.js';
 import { safeInsert, safeUpsert } from '../core/offline.js';
 import { triggerHaptic, triggerConfetti } from '../core/utils.js';
@@ -294,3 +294,10 @@ export async function saveNewGameQuestion() {
         if (window.showNotification) window.showNotification("Chyba při ukládání.", "error");
     }
 }
+
+// Listen for user IDs loaded to re-render Kdo spíše to get correct avatar borders
+stateEvents.on('user_ids_loaded', () => {
+    if (state.currentChannel === 'game-who') {
+        renderGameWho();
+    }
+});

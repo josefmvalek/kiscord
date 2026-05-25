@@ -1,6 +1,7 @@
 import { state } from '../../core/state.js';
 import { triggerHaptic, getTodayKey } from '../../core/utils.js';
 import { getSleepColor } from '../dashboard/health_ui.js';
+import { SHIFT_PRESETS } from '../shifts.js';
 
 export function getMoodColor(val) {
     if (val > 10) val = Math.round(val / 10);
@@ -91,6 +92,51 @@ export function generateCalendarGrid(year, month) {
         }
 
         if (state.calendarFilter === "all") {
+            const dayShifts = (state.shifts || {})[dateKey];
+            if (dayShifts) {
+                const joseVolno = dayShifts.jose && dayShifts.jose.shift_type === 'volno';
+                const klarkaVolno = dayShifts.klarka && dayShifts.klarka.shift_type === 'volno';
+
+                if (joseVolno && klarkaVolno) {
+                    bgStyle = "bg-emerald-950/10";
+                    if (!isToday) {
+                        borderStyle = "border-emerald-500/40 shadow-[inset_0_0_10px_rgba(16,185,129,0.15)]";
+                    } else {
+                        borderStyle = "border-[#5865F2] border-2 shadow-[0_0_10px_rgba(88,101,242,0.2),_inset_0_0_10px_rgba(16,185,129,0.2)] z-10";
+                    }
+                    cellContent += `
+                        <div class="absolute bottom-1 right-1.5 flex items-center gap-0.5 px-1 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded text-[7px] font-black leading-none pointer-events-none z-20 animate-pulse" title="Společné volno! 🌴">
+                            <span>Spolu 🌴</span>
+                        </div>
+                    `;
+                }
+
+                let shiftBadges = "";
+                if (dayShifts.jose) {
+                    const preset = SHIFT_PRESETS[dayShifts.jose.shift_type] || SHIFT_PRESETS.custom;
+                    shiftBadges += `
+                        <div class="flex items-center gap-0.5 px-1 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-200 rounded text-[7px] font-black leading-none" title="Jožka: ${preset.label}">
+                            <span>J</span><span>${preset.emoji}</span>
+                        </div>
+                    `;
+                }
+                if (dayShifts.klarka) {
+                    const preset = SHIFT_PRESETS[dayShifts.klarka.shift_type] || SHIFT_PRESETS.custom;
+                    shiftBadges += `
+                        <div class="flex items-center gap-0.5 px-1 py-0.5 bg-pink-500/10 border border-pink-500/20 text-pink-200 rounded text-[7px] font-black leading-none" title="Klárka: ${preset.label}">
+                            <span>K</span><span>${preset.emoji}</span>
+                        </div>
+                    `;
+                }
+                if (shiftBadges) {
+                    cellContent += `
+                        <div class="absolute bottom-1 left-1.5 flex gap-1 z-20 pointer-events-none">
+                            ${shiftBadges}
+                        </div>
+                    `;
+                }
+            }
+
             if (isAnniversary)
                 cellContent += `<div class="absolute top-1 right-1 text-[8px] text-[#ed4245] animate-pulse">❤️</div>`;
 

@@ -133,6 +133,7 @@ export function renderSettings() {
                             ${renderWidgetToggle('tetris', 'Tetris Tracker', 'Tvoje skóre a soupeření s partnerem.')}
                             ${renderWidgetToggle('quests', 'Společné Questy', 'Přehled aktivních úkolů a progresu.')}
                             ${renderWidgetToggle('funfacts', 'Zajímavosti dne', 'Náhodné fakty o zvířatech a světě.')}
+                            ${renderWidgetToggle('memoryBoard', 'Nástěnka vzpomínek 📸📌', 'Tvoje 3 nejoblíbenější fotky z timeline.')}
                         </div>
                     </section>
 
@@ -207,6 +208,27 @@ export function renderSettings() {
                                     <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform ${state.settings.haptics ? 'translate-x-5' : ''}"></div>
                                 </div>
                             </div>
+
+                            <div class="bg-[#2f3136] p-4 rounded-xl flex items-center justify-between border border-white/5">
+                                <div>
+                                    <h3 class="text-white font-bold">Zvukové efekty 🎵</h3>
+                                    <p class="text-xs text-[#b9bbbe]">Jemné a hravé zvuky při interakci a úspěších.</p>
+                                </div>
+                                <div class="relative inline-flex items-center cursor-pointer" onclick="window.toggleSetting('soundEnabled', this)">
+                                    <div class="w-11 h-6 rounded-full transition-colors ${state.settings.soundEnabled ? 'bg-[#853ee6]' : 'bg-[#4f545c]'}"></div>
+                                    <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform ${state.settings.soundEnabled ? 'translate-x-5' : ''}"></div>
+                                </div>
+                            </div>
+
+                            <button onclick="window.migrateManualMoviesToTMDB()" class="w-full flex items-center gap-3 p-4 bg-[#2f3136] hover:bg-[#5865F2]/20 rounded-xl border border-white/5 transition group text-left">
+                                <div class="w-10 h-10 rounded-lg bg-[#202225] flex items-center justify-center text-[#5865F2] group-hover:bg-[#5865F2] group-hover:text-white transition flex-shrink-0">
+                                    <i class="fas fa-magic animate-pulse"></i>
+                                </div>
+                                <div>
+                                    <div class="text-white font-bold text-sm">Hromadná TMDB synchronizace 🪄</div>
+                                    <div class="text-[10px] text-[#b9bbbe]">Vyhledá ruční filmy na TMDB, stáhne k nim hodnocení, plakáty, délku a automaticky je roztřídí, přičemž zachová torrent a Google Drive odkazy!</div>
+                                </div>
+                            </button>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <button onclick="window.confirmClearCache()" class="flex items-center gap-3 p-4 bg-[#2f3136] hover:bg-[#ed4245]/20 rounded-xl border border-white/5 transition group">
@@ -523,6 +545,12 @@ function toggleSetting(key, el) {
         applyGlassEffect();
     }
 
+    if (key === 'soundEnabled') {
+        if (state.settings.soundEnabled) {
+            import('../core/sound.js').then(m => m.playChime()).catch(e => console.warn('[Sound] Test chime failed:', e));
+        }
+    }
+
     // Update switch UI
     const bg = el.querySelector('.rounded-full');
     const dot = el.querySelector('.absolute.bg-white');
@@ -665,3 +693,136 @@ async function confirmClearCache() {
         window.location.reload();
     }
 }
+
+window.migrateManualMoviesToTMDB = async () => {
+    triggerHaptic('medium');
+    
+    const confirm = await showConfirmDialog(
+        "Chceš spustit hromadnou synchronizaci ručních filmů s TMDB? " +
+        "Vyhledáme všechny filmy a seriály v knihovně bez TMDB ID, stáhneme pro ně obaly a hodnocení a automaticky je roztřídíme. Odkazy na Disk a torrenty zůstanou zachovány!"
+    );
+    if (!confirm) return;
+
+    showNotification("Spouštím migraci... 🚀", "info");
+
+    try {
+        const { supabase } = await import('../core/supabase.js');
+        
+        // 1. Fetch all library_content where tmdb_id is null and it's not a game
+        const { data: items, error } = await supabase
+            .from('library_content')
+            .select('*')
+            .is('tmdb_id', null)
+            .neq('type', 'game');
+
+        if (error) throw error;
+
+        if (!items || items.length === 0) {
+            showNotification("Žádné ruční filmy k migraci nebyly nalezeny! 🎉", "success");
+            return;
+        }
+
+        showNotification(`Nalezeno ${items.length} ručních titulů k migraci. Začínám... ⏳`, "info");
+
+        let migratedCount = 0;
+        let failedCount = 0;
+
+        const TMDB = await import('../core/tmdb.js');
+
+        // Internal mapping helper to match library.js categories
+        function mapGenresToCategory(genresString) {
+            if (!genresString) return "Ostatní";
+            const categories = ["Akční", "Sci-Fi", "Komedie", "Animovaný", "Fantasy", "Drama", "Horor", "Romantický", "Dobrodružný", "Ostatní"];
+            const genreList = genresString.split(',').map(g => g.trim().toLowerCase());
+
+            for (const genre of genreList) {
+                const direct = categories.find(c => c.toLowerCase() === genre);
+                if (direct) return direct;
+
+                if (genre.includes("sci-fi") || genre.includes("science fiction") || genre === "vědecko-fantastický" || genre === "sci-fi & fantasy") {
+                    return "Sci-Fi";
+                }
+                if (genre === "akční a dobrodružný" || genre.includes("akční")) {
+                    return "Akční";
+                }
+                if (genre === "krimi" || genre === "thriller" || genre === "mysteriózní" || genre.includes("krimi") || genre.includes("thriller")) {
+                    return "Drama";
+                }
+                if (genre === "mýdlová opera") {
+                    return "Romantický";
+                }
+            }
+            for (const genre of genreList) {
+                for (const cat of categories) {
+                    if (genre.includes(cat.toLowerCase()) || cat.toLowerCase().includes(genre)) {
+                        if (cat !== "Ostatní") return cat;
+                    }
+                }
+            }
+            return "Ostatní";
+        }
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const searchType = item.type === 'series' ? 'series' : 'movies';
+
+            showNotification(`Hledám (${i + 1}/${items.length}): ${item.title}... 🔍`, "info");
+
+            const results = await TMDB.searchTMDB(item.title, searchType);
+            if (results && results.length > 0) {
+                const bestMatch = results[0];
+                const details = await TMDB.getTMDBDetails(bestMatch.id, searchType);
+                
+                if (details) {
+                    const mappedCat = mapGenresToCategory(details.genres);
+
+                    // Update in-place to preserve IDs, links, watchlists and history!
+                    const { error: updateError } = await supabase
+                        .from('library_content')
+                        .update({
+                            tmdb_id: details.tmdb_id,
+                            poster_path: details.poster_path,
+                            rating: details.rating,
+                            runtime: details.runtime,
+                            genres: details.genres,
+                            release_year: details.release_year,
+                            category: mappedCat
+                        })
+                        .eq('id', item.id);
+
+                    if (updateError) {
+                        console.error(`Failed to update ${item.title}:`, updateError);
+                        failedCount++;
+                    } else {
+                        migratedCount++;
+                    }
+                } else {
+                    failedCount++;
+                }
+            } else {
+                console.warn(`No TMDB match for: ${item.title}`);
+                failedCount++;
+            }
+
+            // Small delay to prevent rate limiting
+            await new Promise(r => setTimeout(r, 200));
+        }
+
+        // Re-fetch state so UI reflects changes
+        const stateModule = await import('../core/state.js');
+        await stateModule.initializeState();
+
+        const { triggerConfetti } = await import('../core/utils.js');
+        triggerConfetti();
+
+        if (failedCount === 0) {
+            showNotification(`Všech ${migratedCount} titulů úspěšně migrováno! 🎉🍿`, "success");
+        } else {
+            showNotification(`Migrace dokončena: ${migratedCount} úspěšně, ${failedCount} nenalezeno/chyba.`, "success");
+        }
+
+    } catch (err) {
+        console.error("Migration Error:", err);
+        showNotification("Chyba při migraci: " + err.message, "error");
+    }
+};

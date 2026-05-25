@@ -52,6 +52,7 @@ async function getPartnerId() {
  * This is called once after the user is signed in.
  */
 export function setupRealtimeSync() {
+    window.supabase = supabase;
     if (mainChannel) return;
 
     const todayKey = getTodayKey();
@@ -140,6 +141,20 @@ export function setupRealtimeSync() {
                 import('./notifications.js').then(m => {
                     m.handlePartnerAction('sleep', msg);
                 });
+            }
+        })
+        // A8. Handle Broadcasts (Tinder Match)
+        .on('broadcast', { event: 'tinder-match' }, (payload) => {
+            if (payload.payload.from === state.currentUser?.id) return;
+            
+            window.dispatchEvent(new CustomEvent('tinder-match-received', { 
+                detail: payload.payload 
+            }));
+            
+            if (state.currentChannel !== 'watchlist' && typeof window.showNotification === 'function') {
+                const partnerName = state.currentUser?.name === 'Jožka' ? 'Klárka' : 'Jožka';
+                const msg = `Máme shodu! ${partnerName} a ty se shodujete na filmu "${payload.payload.media?.title || 'filmu'}"! 🍿💖`;
+                window.showNotification(msg, 'success');
             }
         })
         // B. Handle Database Changes (Health Data)
@@ -273,6 +288,22 @@ export function setupRealtimeSync() {
                  );
              }
         })
+        // J. Handle Database Changes (Brigade Shifts)
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'brigade_shifts'
+        }, (payload) => {
+             window.dispatchEvent(new CustomEvent('shifts-updated', { detail: payload }));
+        })
+        // K. Handle Database Changes (Austrian German Vocabulary)
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'austrian_vocab'
+        }, (payload) => {
+             window.dispatchEvent(new CustomEvent('vocab-updated', { detail: payload }));
+        })
         .subscribe((status) => {
             console.log(`[Sync] Realtime status: ${status}`);
         });
@@ -403,6 +434,21 @@ export async function broadcastPlanUpdate(payload) {
         type: 'broadcast',
         event: 'plan-update',
         payload: { ...payload, from: state.currentUser?.id }
+    });
+}
+
+/**
+ * Broadcasts a Tinder Match to the partner.
+ */
+export async function broadcastTinderMatch(media) {
+    if (!mainChannel) return;
+    await mainChannel.send({
+        type: 'broadcast',
+        event: 'tinder-match',
+        payload: { 
+            from: state.currentUser?.id,
+            media: media
+        }
     });
 }
 

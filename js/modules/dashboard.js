@@ -1,10 +1,20 @@
 import { supabase } from '../core/supabase.js';
-import { state, saveStateToCache, stateEvents } from '../core/state.js';
+import {
+    state,
+    saveStateToCache,
+    stateEvents,
+    ensureDailyQuizData,
+    ensureFactsData,
+    ensureShiftsData,
+    ensureAllHealthData
+} from '../core/state.js';
 import { triggerHaptic, getInflectedName, getTodayKey, triggerConfetti } from '../core/utils.js';
 import { getAssetUrl } from '../core/assets.js';
 import { showNotification } from '../core/theme.js';
 import { broadcastSunlight, broadcastPlanUpdate } from '../core/sync.js';
 import { getTodayData, getPillsStreak } from './health.js';
+import { SHIFT_PRESETS } from './shifts.js';
+import { AUSTRIAN_DICTIONARY } from './austrianGerman.js';
 
 // Re-export modularized components to maintain compatibility with global onclick handlers
 export * from './dashboard/sunflowers.js';
@@ -44,7 +54,7 @@ function generateStaticStars(count = 50) {
         const top = Math.random() * 100;
         const duration = Math.random() * 3 + 2;
         const delay = Math.random() * 5;
-        
+
         // Stars are mostly white or very pale blue/yellow
         const colors = ['#ffffff', '#f8fafc', '#fff7ed', '#e0f2fe'];
         const color = colors[Math.floor(Math.random() * colors.length)];
@@ -130,6 +140,257 @@ export function refreshFactOfTheDayHeart(factId) {
         } transition-colors`;
 }
 
+function generateAustriaCountdownWidget() {
+    const departureDate = new Date('2026-05-31T00:00:00');
+    const returnDate = new Date('2026-08-31T23:59:59');
+    const now = new Date();
+    const diffMs = departureDate - now;
+
+    if (diffMs > 0) {
+        return `
+            <div class="flex items-center bg-white/10 backdrop-blur-md rounded-full px-3 py-1 border border-white/10 shadow-lg text-white w-fit mt-2 select-none">
+                <span class="text-xs mr-1.5 animate-bounce-subtle">🇦🇹</span>
+                <div class="flex items-center gap-0.5 text-xs font-black tracking-wide">
+                    <span id="countdown-days" class="text-amber-400 tabular-nums">--</span><span class="text-white/60 font-medium mr-1">d</span>
+                    <span id="countdown-hours" class="tabular-nums">--</span><span class="text-white/60 font-medium mr-1">h</span>
+                    <span id="countdown-minutes" class="tabular-nums">--</span><span class="text-white/60 font-medium mr-1">m</span>
+                    <span id="countdown-seconds" class="text-pink-400 tabular-nums">--</span><span class="text-white/60 font-medium">s</span>
+                </div>
+                <svg viewBox="0 0 120 20" class="w-20 h-4 overflow-visible ml-1.5 select-none">
+                    <path id="gondola-path" d="M 5,12 C 40,12 80,9 105,6" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="3, 2" />
+                    <g transform="translate(108, 2)">
+                        <text class="text-[10px] filter drop-shadow-[0_0_3px_rgba(52,211,153,0.4)] animate-bounce-slow">🏡</text>
+                    </g>
+                    <g id="gondola-group" class="transition-all duration-1000 ease-out cursor-pointer" onclick="window.clickGondola()">
+                        <text id="gondola-lift" class="text-[10px] filter drop-shadow-[0_0_4px_rgba(235,69,158,0.6)] animate-gondola-sway" style="dominant-baseline: middle; text-anchor: middle; transform-origin: 0px -4px;">🚡</text>
+                    </g>
+                </svg>
+            </div>
+        `;
+    } else {
+        const totalMs = returnDate - departureDate;
+        const elapsedMs = now - departureDate;
+        const dayDiff = Math.floor(elapsedMs / (1000 * 60 * 60 * 24)) + 1; // 1-indexed
+        const totalDays = Math.ceil(totalMs / (1000 * 60 * 60 * 24)); // 92
+
+        if (dayDiff <= totalDays) {
+            const pct = Math.min(100, Math.max(0, Math.round((elapsedMs / totalMs) * 100)));
+            return `
+                <div class="flex items-center bg-white/10 backdrop-blur-md rounded-full px-3 py-1 border border-white/10 shadow-lg text-white w-fit mt-2 select-none text-xs">
+                    <span class="text-xs mr-1.5 animate-bounce-subtle">🇦🇹</span>
+                    <span class="font-bold text-white/90 mr-2">${dayDiff}. den z ${totalDays} v Alpách</span>
+                    <div class="w-16 h-2 bg-[#202225] rounded-full overflow-hidden border border-white/10 relative p-[1px] mr-1.5">
+                        <div class="h-full rounded-full bg-gradient-to-r from-[#5865F2] via-[#eb459e] to-[#faa61a]" style="width: ${pct}%"></div>
+                    </div>
+                    <span class="text-[10px] font-bold text-[#eb459e]">${pct}%</span>
+                </div>
+            `;
+        } else {
+            return `
+                <div class="flex items-center bg-emerald-950/40 backdrop-blur-md rounded-full px-3 py-1 border border-white/10 shadow-lg text-white w-fit mt-2 select-none text-xs">
+                    <span class="text-xs mr-1.5 animate-bounce-subtle">❤️</span>
+                    <span class="font-bold text-white/90">Vzpomínky na ${totalDays} dní v Rakousku 🇦🇹</span>
+                    <i class="fas fa-check-circle text-emerald-400 text-[10px] ml-2 animate-pulse"></i>
+                </div>
+            `;
+        }
+    }
+}
+
+
+function getShiftActiveStatus(shift) {
+    if (!shift || shift.shift_type === 'volno') {
+        return { active: false, label: 'Volno 🌴', color: 'text-emerald-400 font-bold' };
+    }
+
+    let start = '';
+    let end = '';
+
+    if (shift.shift_type === 'ranni') {
+        start = '06:00';
+        end = '14:00';
+    } else if (shift.shift_type === 'odpoledni') {
+        start = '14:00';
+        end = '22:00';
+    } else if (shift.shift_type === 'custom') {
+        start = shift.time_start || '';
+        end = shift.time_end || '';
+    }
+
+    if (!start || !end) return { active: false, label: 'Makat ⚙️', color: 'text-blue-450 font-bold' };
+
+    const now = new Date();
+    const todayStr = getTodayKey();
+    const startDt = new Date(`${todayStr}T${start}:00`);
+    const endDt = new Date(`${todayStr}T${end}:00`);
+
+    if (now >= startDt && now <= endDt) {
+        const diffMs = endDt - now;
+        const diffMins = Math.floor(diffMs / 60000);
+        const hours = Math.floor(diffMins / 60);
+        const mins = diffMins % 60;
+
+        const timeLeft = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+        return {
+            active: true,
+            label: `V práci 🛠️`,
+            subLabel: `padla za ${timeLeft} (${end})`,
+            color: 'text-amber-400 font-black animate-pulse'
+        };
+    } else if (now < startDt) {
+        return { active: false, label: `Začíná v ${start} ⏳`, color: 'text-purple-300 font-semibold' };
+    } else {
+        return { active: false, label: 'Padla! 🎉', color: 'text-emerald-450 font-bold' };
+    }
+}
+
+function getDailyVocab() {
+    if (!AUSTRIAN_DICTIONARY || AUSTRIAN_DICTIONARY.length === 0) return null;
+    const seed = getDailyFactSeed();
+    return AUSTRIAN_DICTIONARY[seed % AUSTRIAN_DICTIONARY.length];
+}
+
+function generateActiveShiftsWidget() {
+    const todayKey = getTodayKey();
+    const shiftsToday = state.shifts?.[todayKey] || {};
+
+    const joseShift = shiftsToday.jose;
+    const klarkaShift = shiftsToday.klarka;
+
+    const renderUserRow = (userName, shift, markerEmoji) => {
+        if (!shift) {
+            return `
+                <div class="flex items-center justify-between p-3.5 bg-white/5 rounded-2xl border border-white/5 opacity-60">
+                    <span class="text-xs text-white/90 font-black">${markerEmoji} ${userName}</span>
+                    <span class="text-[10px] font-black uppercase tracking-wider text-white/40">Nezadáno 😴</span>
+                </div>
+            `;
+        }
+
+        const preset = SHIFT_PRESETS[shift.shift_type] || SHIFT_PRESETS.custom;
+        const status = getShiftActiveStatus(shift);
+        const timeStr = shift.time_start && shift.time_end ? `${shift.time_start} - ${shift.time_end}` : '';
+
+        return `
+            <div class="flex flex-col gap-1 p-3.5 bg-gradient-to-br ${preset.color}/10 border border-white/10 rounded-2xl relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-white/90 font-black">${markerEmoji} ${userName}</span>
+                        <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-white/10 text-white/80">
+                            ${preset.emoji} ${preset.label.split(' ')[0]}
+                        </span>
+                    </div>
+                    <span class="text-[9px] ${status.color} uppercase tracking-wide">${status.label}</span>
+                </div>
+                ${timeStr ? `
+                    <div class="flex justify-between items-center mt-2">
+                        <span class="text-[10px] text-white/50 font-bold">${timeStr}</span>
+                        ${status.subLabel ? `<span class="text-[9px] text-[#eb459e] font-black tracking-wide">${status.subLabel}</span>` : ''}
+                    </div>
+                ` : ''}
+                ${shift.note ? `
+                    <div class="mt-2 text-[9px] italic text-white/40 border-t border-white/5 pt-1.5 leading-relaxed">
+                        Pozn: ${shift.note}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    };
+
+    // Check overlap text for today
+    let overlapText = '';
+    if (joseShift && klarkaShift) {
+        if (joseShift.shift_type === 'volno' && klarkaShift.shift_type === 'volno') {
+            overlapText = `<span class="text-emerald-400 font-black animate-pulse">🎉 Dnes máme oba volno! Společný čas na výlet! 🏔️</span>`;
+        } else if (joseShift.shift_type === 'ranni' && klarkaShift.shift_type === 'odpoledni') {
+            overlapText = `<span class="text-amber-400 font-bold">⚠️ Dnes se míjíme (Jožka ranní, Klárka odpolední)</span>`;
+        } else if (joseShift.shift_type === 'odpoledni' && klarkaShift.shift_type === 'ranni') {
+            overlapText = `<span class="text-amber-400 font-bold">⚠️ Dnes se míjíme (Jožka odpolední, Klárka ranní)</span>`;
+        } else if (joseShift.shift_type === klarkaShift.shift_type && joseShift.shift_type !== 'custom') {
+            overlapText = `<span class="text-purple-300 font-bold">🤝 Pracujeme oba stejně (${SHIFT_PRESETS[joseShift.shift_type]?.label.split(' ')[0]})!</span>`;
+        } else {
+            overlapText = `<span class="text-white/60 font-semibold">Slaďte své dnešní směny a aktivity!</span>`;
+        }
+    } else {
+        overlapText = `<span class="text-white/40 font-semibold italic">Zadejte své směny pro dnešní den...</span>`;
+    }
+
+    return `
+        <div class="glass-card rounded-2xl p-6 stagger-item" style="animation-delay: 0.28s">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 leading-none">
+                    <i class="fas fa-business-time text-[#faa61a]"></i> Dnešní Směny & Volno
+                </h3>
+                <button onclick="window.switchChannel('shifts')" 
+                        class="text-[10px] text-gray-500 hover:text-[#faa61a] transition font-bold uppercase tracking-widest flex items-center gap-1">
+                    plánovač <i class="fas fa-chevron-right text-[8px]"></i>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                ${renderUserRow('Jožka', joseShift, '🔵')}
+                ${renderUserRow('Klárka', klarkaShift, '🔴')}
+            </div>
+            
+            <div class="bg-black/20 rounded-xl p-3.5 border border-white/5 text-center text-xs">
+                ${overlapText}
+            </div>
+        </div>
+    `;
+}
+
+function generateAustrianWordOfTheDayCard() {
+    if (!AUSTRIAN_DICTIONARY || AUSTRIAN_DICTIONARY.length === 0) return '';
+
+    const vocab = getDailyVocab();
+    if (!vocab) return '';
+
+    return `
+        <div class="glass-card rounded-2xl p-6 stagger-item relative overflow-hidden group select-none" style="animation-delay: 0.32s">
+            <div class="absolute -right-10 -top-10 w-24 h-24 bg-[#eb459e]/5 rounded-full blur-2xl pointer-events-none"></div>
+            
+            <div class="flex justify-between items-start mb-4 relative z-10">
+                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 leading-none">
+                    <i class="fas fa-utensils text-[#eb459e]"></i> Rakouské Slovíčko Dne
+                </h3>
+                <button onclick="window.switchChannel('austrian-german')" 
+                        class="text-[10px] text-gray-500 hover:text-[#eb459e] transition font-bold uppercase tracking-widest flex items-center gap-1">
+                    slovníček <i class="fas fa-chevron-right text-[8px]"></i>
+                </button>
+            </div>
+            
+            <div class="flex flex-col gap-3 relative z-10">
+                <div class="flex justify-between items-center">
+                    <span class="text-2xl font-black text-amber-400 tracking-tight italic">
+                        "${vocab.austrian}"
+                    </span>
+                    <span class="text-[9px] font-black uppercase tracking-widest text-[#eb459e] bg-[#eb459e]/10 px-2 py-0.5 rounded-full">
+                        ${vocab.category}
+                    </span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mt-2 border-t border-white/5 pt-3">
+                    <div>
+                        <span class="text-[8px] font-black uppercase tracking-widest text-white/30 block mb-0.5">Spisovná němčina</span>
+                        <span class="text-xs font-bold text-white/80">${vocab.german}</span>
+                    </div>
+                    <div>
+                        <span class="text-[8px] font-black uppercase tracking-widest text-white/30 block mb-0.5">Český překlad</span>
+                        <span class="text-xs font-black text-white/90">${vocab.czech}</span>
+                    </div>
+                </div>
+                
+                ${vocab.example ? `
+                    <div class="bg-black/20 p-3 rounded-xl border border-white/5 mt-2">
+                        <span class="text-[8px] font-black uppercase tracking-widest text-white/30 block mb-1">Příklad použití</span>
+                        <span class="text-[10.5px] font-semibold italic text-purple-200/90 leading-relaxed block">"${vocab.example}"</span>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
 // --- DAILY QUESTION COMPACT ---
 function generateDailyQuestionCard() {
     if (!state.dailyQuestion) return '';
@@ -206,7 +467,7 @@ function generateDailyQuestionCard() {
     } else {
         // --- REVEALED STATE (Vertical List) ---
         const partnerName = state.currentUser.name === 'Jožka' ? 'Klárka' : 'Jožka';
-        
+
         content += `
             <div class="space-y-3 relative z-10">
                 <div class="bg-black/20 p-4 rounded-xl border-l-[3px] border-[#5865F2] relative group/answer animate-fade-in-right">
@@ -257,18 +518,18 @@ export async function submitDailyAnswerFromDashboard() {
 
         if (result.error) throw result.error;
         if (result.offline) {
-             showNotification("Odpověď uložena lokálně (jsi offline) 💾", "info");
-             return;
+            showNotification("Odpověď uložena lokálně (jsi offline) 💾", "info");
+            return;
         }
 
         triggerHaptic('success');
-        
+
         // Refresh local answers directly for speed
         const { data } = await supabase.from('daily_answers').select('*').eq('question_id', state.dailyQuestion.id);
         if (data) state.dailyAnswers = data;
-        
+
         saveStateToCache();
-        
+
         window.dispatchEvent(new CustomEvent('daily-questions-updated'));
 
     } catch (err) {
@@ -453,13 +714,10 @@ export async function renderDashboard(forceRefresh = false) {
         state.healthData[todayKey] = { water: 0, sleep: 0, mood: 5, movement: [], pills: false, bedtime: null, supplements: { iron: false, zinc: false, magnesium: false } };
     }
 
-    import('../core/state.js').then(m => {
-        if (typeof m.ensureDailyQuizData === 'function') m.ensureDailyQuizData();
-        if (typeof m.ensureFactsData === 'function') m.ensureFactsData();
-        if (typeof m.ensureAllHealthData === 'function') {
-            m.ensureAllHealthData();
-        }
-    });
+    ensureDailyQuizData();
+    ensureFactsData();
+    ensureShiftsData();
+    ensureAllHealthData();
 
     // 2. TRIGGER SYNC (Async, Non-blocking)
     if (navigator.onLine && (!state.dashboardFetched || forceRefresh)) {
@@ -480,6 +738,7 @@ export async function renderDashboard(forceRefresh = false) {
     const nextDate = upcomingDates.length > 0 ? upcomingDates[0] : null;
 
     startDashboardTimer(nextDate);
+    startAustriaCountdownTimer();
 
     container.innerHTML = `
           <div class="flex-1 overflow-y-auto no-scrollbar bg-[#36393f] relative w-full h-full pb-20">
@@ -534,33 +793,36 @@ export async function renderDashboard(forceRefresh = false) {
                           </div>
                       </div>
                   </div>
+                  <div class="flex justify-center pb-4 px-6 relative z-10">
+                      ${generateAustriaCountdownWidget()}
+                  </div>
                   <div id="dashboard-planning-area" class="bg-black/20 backdrop-blur-md border-t border-white/10 px-6 py-3 flex items-center justify-between cursor-pointer">
                       ${(() => {
-                          const todayStr = new Date().toISOString().split("T")[0];
-                          const upcoming = Object.entries(state.plannedDates || {})
-                              .filter(([date, entry]) => date >= todayStr)
-                              .sort((a, b) => {
-                                  // Priority: pending invitations from partner first
-                                  const aPending = a[1].status === 'pending' && a[1].proposed_by !== state.currentUser.id;
-                                  const bPending = b[1].status === 'pending' && b[1].proposed_by !== state.currentUser.id;
-                                  if (aPending && !bPending) return -1;
-                                  if (!aPending && bPending) return 1;
-                                  return a[0].localeCompare(b[0]);
-                              });
-                          
-                          const plan = upcoming.length > 0 ? upcoming[0] : null;
-                          if (!plan) {
-                              return `<div class="text-white/90 text-sm font-medium w-full" onclick="window.loadModule('dashboard').then(m => m.showQuickPlanModal())">Nic v plánu... <span class="font-bold underline text-[#eb459e]">Plánovat?</span></div>`;
-                          }
+            const todayStr = new Date().toISOString().split("T")[0];
+            const upcoming = Object.entries(state.plannedDates || {})
+                .filter(([date, entry]) => date >= todayStr)
+                .sort((a, b) => {
+                    // Priority: pending invitations from partner first
+                    const aPending = a[1].status === 'pending' && a[1].proposed_by !== state.currentUser.id;
+                    const bPending = b[1].status === 'pending' && b[1].proposed_by !== state.currentUser.id;
+                    if (aPending && !bPending) return -1;
+                    if (!aPending && bPending) return 1;
+                    return a[0].localeCompare(b[0]);
+                });
 
-                          const [dateKey, entry] = plan;
-                          const isPendingFromPartner = entry.status === 'pending' && entry.proposed_by !== state.currentUser.id;
-                          const isPendingFromMe = entry.status === 'pending' && entry.proposed_by === state.currentUser.id;
-                          const isRejected = entry.status === 'rejected';
+            const plan = upcoming.length > 0 ? upcoming[0] : null;
+            if (!plan) {
+                return `<div class="text-white/90 text-sm font-medium w-full" onclick="window.loadModule('dashboard').then(m => m.showQuickPlanModal())">Nic v plánu... <span class="font-bold underline text-[#eb459e]">Plánovat?</span></div>`;
+            }
 
-                          if (isPendingFromPartner) {
-                              const dateLabel = dateKey === todayStr ? 'Dnes' : (dateKey === new Date(Date.now() + 86400000).toISOString().split('T')[0] ? 'Zítra' : dateKey);
-                              return `
+            const [dateKey, entry] = plan;
+            const isPendingFromPartner = entry.status === 'pending' && entry.proposed_by !== state.currentUser.id;
+            const isPendingFromMe = entry.status === 'pending' && entry.proposed_by === state.currentUser.id;
+            const isRejected = entry.status === 'rejected';
+
+            if (isPendingFromPartner) {
+                const dateLabel = dateKey === todayStr ? 'Dnes' : (dateKey === new Date(Date.now() + 86400000).toISOString().split('T')[0] ? 'Zítra' : dateKey);
+                return `
                                 <div class="flex items-center justify-between w-full">
                                     <div class="flex items-center gap-3">
                                         <div class="bg-[#eb459e] w-8 h-8 rounded-full flex items-center justify-center animate-bounce-short shadow-[0_0_15px_rgba(235,69,158,0.5)]">${getCategoryIcon(entry.cat)}</div>
@@ -581,11 +843,11 @@ export async function renderDashboard(forceRefresh = false) {
                                     </div>
                                 </div>
                               `;
-                          }
+            }
 
-                          if (isPendingFromMe) {
-                              const dateLabel = dateKey === todayStr ? '' : (dateKey === new Date(Date.now() + 86400000).toISOString().split('T')[0] ? 'zítra ' : `${dateKey} `);
-                              return `
+            if (isPendingFromMe) {
+                const dateLabel = dateKey === todayStr ? '' : (dateKey === new Date(Date.now() + 86400000).toISOString().split('T')[0] ? 'zítra ' : `${dateKey} `);
+                return `
                                 <div class="flex items-center justify-between w-full" onclick="window.loadModule('dashboard').then(m => m.handleNextDateClick('${dateKey}'))">
                                     <div class="flex items-center gap-3 opacity-60">
                                         <div class="bg-gray-700 w-8 h-8 rounded-full flex items-center justify-center">${getCategoryIcon(entry.cat)}</div>
@@ -597,10 +859,10 @@ export async function renderDashboard(forceRefresh = false) {
                                     <i class="fas fa-hourglass-half text-white/30 text-[10px] animate-spin-slow"></i>
                                 </div>
                               `;
-                          }
+            }
 
-                          if (isRejected) {
-                              return `
+            if (isRejected) {
+                return `
                                 <div class="flex items-center justify-between w-full" onclick="window.loadModule('dashboard').then(m => m.showQuickPlanModal())">
                                     <div class="flex items-center gap-3">
                                         <div class="bg-red-900/40 w-8 h-8 rounded-full flex items-center justify-center text-xs">🥀</div>
@@ -612,10 +874,10 @@ export async function renderDashboard(forceRefresh = false) {
                                     <span class="text-[10px] font-bold text-white underline">Zkusit jiný?</span>
                                 </div>
                               `;
-                          }
+            }
 
-                          // Confirmed/Happened
-                          return `
+            // Confirmed/Happened
+            return `
                             <div class="flex items-center justify-between w-full" onclick="window.loadModule('dashboard').then(m => m.handleNextDateClick('${dateKey}'))">
                                 <div class="flex items-center gap-3">
                                     <div class="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center shadow-lg">${getCategoryIcon(entry.cat)}</div>
@@ -627,7 +889,7 @@ export async function renderDashboard(forceRefresh = false) {
                                 <i class="fas fa-chevron-right text-white/30 text-[10px]"></i>
                             </div>
                           `;
-                      })()}
+        })()}
                   </div>
               </div>
 
@@ -663,6 +925,9 @@ export async function renderDashboard(forceRefresh = false) {
                       <div class="flex flex-wrap justify-between gap-2" id="supplements-container">${generateSupplementsChips(data.supplements)}</div>
                   </div>
                   ` : ''}
+
+                  ${generateActiveShiftsWidget()}
+                  ${generateAustrianWordOfTheDayCard()}
 
                   <div class="stagger-item" style="animation-delay: 0.3s">
                       ${generateDailyQuestionCard()}
@@ -700,6 +965,14 @@ export function setupDashboardEvents() {
     });
 
     window.addEventListener('daily-questions-updated', () => {
+        if (state.currentChannel === 'dashboard') renderDashboard();
+    });
+
+    window.addEventListener('shifts-updated', () => {
+        if (state.currentChannel === 'dashboard') renderDashboard();
+    });
+
+    stateEvents.on('shifts', () => {
         if (state.currentChannel === 'dashboard') renderDashboard();
     });
 
@@ -741,7 +1014,7 @@ function startDashboardTimer(nextDate) {
 
 export async function sendSunlight() {
     triggerHaptic('light'); triggerConfetti();
-    try { await supabase.from('sunlight_history').insert([{ from_user_id: state.currentUser.id }]); } catch (e) {}
+    try { await supabase.from('sunlight_history').insert([{ from_user_id: state.currentUser.id }]); } catch (e) { }
     await broadcastSunlight();
 }
 
@@ -754,12 +1027,12 @@ export async function handleNextDateClick(dateKey) {
 let quickPlanData = { cat: 'discord', name: '', time: '' };
 
 export function showQuickPlanModal(step = 1) {
-    const { renderModal, renderButton, renderInputGroup } =  { 
+    const { renderModal, renderButton, renderInputGroup } = {
         renderModal: (c) => import('../core/ui.js').then(m => m.renderModal(c)),
         renderButton: (c) => import('../core/ui.js').then(m => m.renderButton(c)),
         renderInputGroup: (c) => import('../core/ui.js').then(m => m.renderInputGroup(c))
     };
-    
+
     import('../core/ui.js').then(ui => {
         let content = '';
         let title = 'Naplánovat něco?';
@@ -796,7 +1069,7 @@ export function showQuickPlanModal(step = 1) {
                 </div>
             `;
         } else {
-            const catInfo = { 
+            const catInfo = {
                 discord: { icon: '🎧', title: 'Discord Call' },
                 date: { icon: '🥂', title: 'Rande' },
                 movie: { icon: '🎬', title: 'Film / Seriál' }
@@ -805,12 +1078,12 @@ export function showQuickPlanModal(step = 1) {
             title = `${catInfo.icon} ${catInfo.title}`;
             content = `
                 <div class="space-y-5 animate-fade-in">
-                    ${ui.renderInputGroup({ 
-                        label: 'Co přesně budeme dělat?', 
-                        id: 'qp-name', 
-                        placeholder: 'Např. Minecraft, Marvelovka, Procházka...',
-                        value: quickPlanData.name
-                    })}
+                    ${ui.renderInputGroup({
+                label: 'Co přesně budeme dělat?',
+                id: 'qp-name',
+                placeholder: 'Např. Minecraft, Marvelovka, Procházka...',
+                value: quickPlanData.name
+            })}
                     
                     <div class="space-y-2">
                         <label class="block text-[10px] text-gray-500 font-bold uppercase tracking-widest">Kdy?</label>
@@ -847,7 +1120,7 @@ export function showQuickPlanModal(step = 1) {
 
         // Remove existing if any
         document.getElementById('quick-plan-modal')?.remove();
-        
+
         const div = document.createElement('div');
         div.innerHTML = modalHtml;
         document.body.appendChild(div.firstElementChild);
@@ -864,15 +1137,15 @@ export function selectQuickPlanCategory(cat) {
 export async function submitQuickPlan() {
     const name = document.getElementById('qp-name')?.value.trim();
     const time = document.getElementById('qp-time')?.value.trim();
-    
+
     if (!name) return showNotification("Napiš, co budeme dělat!", "warning");
-    
+
     triggerHaptic('success');
     document.getElementById('quick-plan-modal')?.remove();
 
     const todayKey = getTodayKey();
     const planId = crypto.randomUUID();
-    
+
     const newPlan = {
         id: planId,
         date_key: todayKey,
@@ -886,16 +1159,16 @@ export async function submitQuickPlan() {
     try {
         const { error } = await supabase.from('planned_dates').upsert(newPlan, { onConflict: 'date_key' });
         if (error) throw error;
-        
+
         showNotification("Pozvánka odeslána! 💌", "success");
-        
+
         // Broadcast instant notification
         broadcastPlanUpdate({ type: 'proposal', name: name, cat: quickPlanData.cat });
 
         // Instant local update
         state.plannedDates[todayKey] = newPlan;
         renderDashboard();
-        
+
     } catch (err) {
         console.error("Plan submit error:", err);
         showNotification("Chyba při odesílání plánu.", "error");
@@ -907,14 +1180,14 @@ export async function respondToPlan(dateKey, status) {
     if (!plan) return;
 
     triggerHaptic(status === 'confirmed' ? 'success' : 'medium');
-    
+
     try {
         const { error } = await supabase.from('planned_dates')
             .update({ status: status })
             .eq('date_key', dateKey);
-            
+
         if (error) throw error;
-        
+
         state.plannedDates[dateKey].status = status;
         showNotification(status === 'confirmed' ? "Plán potvrzen! ❤️" : "Plán zrušen.", "info");
 
@@ -970,14 +1243,14 @@ export async function rejectPlanWithReason(dateKey, reason) {
 
     try {
         const { error } = await supabase.from('planned_dates')
-            .update({ 
+            .update({
                 status: 'rejected',
-                rejection_reason: reason 
+                rejection_reason: reason
             })
             .eq('date_key', dateKey);
-            
+
         if (error) throw error;
-        
+
         state.plannedDates[dateKey].status = 'rejected';
         state.plannedDates[dateKey].rejection_reason = reason;
         renderDashboard();
@@ -993,28 +1266,19 @@ export async function syncDashboardData(forceRefresh = false) {
     if (indicator) indicator.classList.remove("hidden");
 
     try {
-        const queries = [];
-        if (state.currentUser?.id) {
-            queries.push(supabase.from('health_data').select('*').eq('date_key', todayKey).neq('user_id', state.currentUser.id).maybeSingle());
-        } else {
-            queries.push(Promise.resolve({ data: null, error: null }));
-        }
-
-        queries.push(supabase.rpc('get_dashboard_data', { p_user_id: state.currentUser?.id, p_date: todayKey }));
-
-        const [partnerRes, dashRes] = await Promise.all(queries);
-        if (dashRes.error) throw dashRes.error;
+        const { data, error } = await supabase.rpc('get_dashboard_data', { p_user_id: state.currentUser?.id, p_date: todayKey });
+        if (error) throw error;
 
         state.dashboardFetched = true;
-        const data = dashRes.data || {};
-        const partnerHealth = partnerRes.data;
+        const dashData = data || {};
 
-        if (data && data.health) {
-            state.healthData[todayKey] = { ...state.healthData[todayKey], ...data.health };
+        if (dashData.health) {
+            state.healthData[todayKey] = { ...state.healthData[todayKey], ...dashData.health };
         }
-        if (partnerHealth) state.partnerHealthData = partnerHealth;
+        if (dashData.partner_health) {
+            state.partnerHealthData = dashData.partner_health;
+        }
 
-        const { saveStateToCache } = await import('../core/state.js');
         saveStateToCache();
 
         // Update visuals if still on dashboard
@@ -1032,4 +1296,81 @@ export async function syncDashboardData(forceRefresh = false) {
     } finally {
         if (indicator) indicator.classList.add("hidden");
     }
+}
+
+function startAustriaCountdownTimer() {
+    if (window.austriaCountdownInterval) clearInterval(window.austriaCountdownInterval);
+
+    const departureDate = new Date('2026-05-31T08:37:00');
+    const startDate = new Date('2026-05-25T00:00:00');
+    const totalDuration = departureDate - startDate;
+
+    window.clickGondola = () => {
+        triggerHaptic('medium');
+        import('../core/sound.js').then(m => m.playChime());
+
+        const gondolaText = document.getElementById('gondola-lift');
+        if (gondolaText) {
+            gondolaText.classList.remove('animate-gondola-sway');
+            gondolaText.classList.add('animate-gondola-sway-fast');
+
+            if (window.gondolaSwayTimeout) clearTimeout(window.gondolaSwayTimeout);
+            window.gondolaSwayTimeout = setTimeout(() => {
+                gondolaText.classList.remove('animate-gondola-sway-fast');
+                gondolaText.classList.add('animate-gondola-sway');
+            }, 2400);
+        }
+    };
+
+    const updateCounter = () => {
+        const dEl = document.getElementById('countdown-days');
+        const hEl = document.getElementById('countdown-hours');
+        const mEl = document.getElementById('countdown-minutes');
+        const sEl = document.getElementById('countdown-seconds');
+        const gondolaGroup = document.getElementById('gondola-group');
+        const path = document.getElementById('gondola-path');
+
+        if (!dEl && !hEl && !mEl && !sEl) {
+            clearInterval(window.austriaCountdownInterval);
+            return;
+        }
+
+        const now = new Date();
+        const diffMs = departureDate - now;
+
+        if (diffMs <= 0) {
+            clearInterval(window.austriaCountdownInterval);
+            if (state.currentChannel === 'dashboard') {
+                renderDashboard();
+            }
+            return;
+        }
+
+        const totalSecs = Math.floor(diffMs / 1000);
+        const days = Math.floor(totalSecs / (3600 * 24));
+        const hours = Math.floor((totalSecs % (3600 * 24)) / 3600);
+        const mins = Math.floor((totalSecs % 3600) / 60);
+        const secs = totalSecs % 60;
+
+        const elapsed = now - startDate;
+        const pct = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+
+        if (dEl) dEl.innerText = days.toString().padStart(2, '0');
+        if (hEl) hEl.innerText = hours.toString().padStart(2, '0');
+        if (mEl) mEl.innerText = mins.toString().padStart(2, '0');
+        if (sEl) sEl.innerText = secs.toString().padStart(2, '0');
+
+        if (gondolaGroup && path) {
+            try {
+                const totalLength = path.getTotalLength();
+                const point = path.getPointAtLength(totalLength * (pct / 100));
+                gondolaGroup.setAttribute('transform', `translate(${point.x}, ${point.y})`);
+            } catch (err) {
+                console.warn("[Gondola] SVG path length error:", err);
+            }
+        }
+    };
+
+    setTimeout(updateCounter, 100);
+    window.austriaCountdownInterval = setInterval(updateCounter, 1000);
 }

@@ -8,7 +8,7 @@ import * as TMDB from '../core/tmdb.js';
 
 export async function renderWatchlist() {
     // Expose API to window
-    window.Watchlist = { renderWatchlist, rollTheDice };
+    window.Watchlist = { renderWatchlist, rollTheDice, startTinder };
 
     const container = document.getElementById("messages-container");
     if (!container) return;
@@ -36,6 +36,10 @@ export async function renderWatchlist() {
                         <p class="text-gray-400 text-sm mt-1">Co si dneska dáme za dobrodružství? 🍿🎮</p>
                     </div>
                     <div class="flex items-center gap-3">
+                        <button onclick="Watchlist.startTinder()" 
+                            class="bg-[#eb459e] hover:bg-[#d83c8c] text-white px-6 py-3 rounded-xl font-black text-sm shadow-xl hover:shadow-[#eb459e]/40 transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
+                            <i class="fas fa-fire animate-pulse"></i> FILMOVÝ TINDER
+                        </button>
                         <button onclick="Watchlist.rollTheDice()" 
                             class="bg-gradient-to-r from-[#5865F2] to-[#eb459e] text-white px-6 py-3 rounded-xl font-black text-sm shadow-xl hover:shadow-[#5865F2]/40 transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
                             <i class="fas fa-dice"></i> NÁHODA ROZHODNE
@@ -123,7 +127,7 @@ async function fetchAndRenderWatchlist() {
         const togetherSection = document.getElementById('wl-together-section');
 
         if (!watchlistData || watchlistData.length === 0) {
-            allGrid.innerHTML = `
+            container.innerHTML = `
                 <div class="col-span-full py-20 text-center">
                     <i class="fas fa-heart-broken text-6xl text-gray-700 mb-4"></i>
                     <p class="text-gray-500 font-medium">Zatím jste si nic nevybrali...</p>
@@ -255,10 +259,10 @@ function renderWlCard(item, isTogether) {
                 </div>
                 ` : ''}
 
-                <div class="aspect-[2/3] w-full flex items-center justify-center text-5xl bg-[#202225] group-hover:scale-105 transition-transform duration-400 overflow-hidden">
+                <div class="aspect-[2/3] w-full flex items-center justify-center text-5xl bg-[#202225] overflow-hidden relative">
                     ${hasPoster 
-                        ? `<img src="${posterUrl}" alt="${item.title}" class="w-full h-full object-cover">` 
-                        : `<span class="opacity-30">${item.icon || '🎞️'}</span>`}
+                        ? `<img src="${posterUrl}" alt="${item.title}" class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110">` 
+                        : `<span class="opacity-30 transition-transform duration-500 ease-out group-hover:scale-110">${item.icon || '🎞️'}</span>`}
                 </div>
                 <div class="p-3 bg-[#2f3136] border-t border-[#202225]">
                     <h3 class="text-xs font-bold text-white truncate mb-1">${item.title}</h3>
@@ -273,6 +277,20 @@ function renderWlCard(item, isTogether) {
 }
 
 // --- RANDOMIZER ---
+
+export async function startTinder() {
+    triggerHaptic('medium');
+    const container = document.getElementById("messages-container");
+    if (!container) return;
+    
+    try {
+        const m = await import('./netflixMatcher.js');
+        m.renderNetflixMatcher();
+    } catch (err) {
+        console.error("Failed to load netflixMatcher module:", err);
+        if (window.showNotification) window.showNotification("Chyba při spouštění Tinderu... 😕", "error");
+    }
+}
 
 export async function rollTheDice() {
     triggerHaptic('medium');

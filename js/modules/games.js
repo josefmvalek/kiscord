@@ -46,6 +46,7 @@ export async function updateTetrisScore(who, amount) {
         state.tetris[key] = (state.tetris[key] || 0) + amount;
 
         if (amount > 0) {
+            import('../core/sound.js').then(m => m.playArcade());
             if (typeof triggerHaptic === 'function') triggerHaptic('success');
             if (window.showNotification) window.showNotification(`${who === 'jose' ? 'Jožka' : 'Klárka'} +1 bod! 🧱`, 'success');
         }

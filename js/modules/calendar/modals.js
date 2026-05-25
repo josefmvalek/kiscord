@@ -3,6 +3,7 @@ import { triggerHaptic, getTodayKey } from '../../core/utils.js';
 import { renderCalendar } from '../calendar.js';
 import { getMoodColor } from './grid.js';
 import { safeUpsert } from '../../core/offline.js';
+import { SHIFT_PRESETS } from '../shifts.js';
 
 let currentModalDateKey = null;
 
@@ -85,6 +86,8 @@ export function ensureModals() {
                     </div>
                 </div>
 
+                <div id="modal-section-shifts" class="hidden space-y-4 pt-4 border-t border-white/5"></div>
+
                 <div id="modal-section-date" class="hidden space-y-3 pt-4 border-t border-white/5"></div>
                 
                 <div id="modal-section-school" class="hidden space-y-4 pt-4 border-t border-white/5">
@@ -109,7 +112,8 @@ export function ensureModals() {
 export function showDayDetail(dateKey) {
     ensureModals();
     currentModalDateKey = dateKey;
-    const dateObj = new Date(dateKey);
+    const [yr, mo, dy] = dateKey.split('-').map(Number);
+    const dateObj = new Date(yr, mo - 1, dy);
 
     triggerHaptic('light');
 
@@ -358,6 +362,74 @@ export function showDayDetail(dateKey) {
         }
     }
 
+    // D) SMĚNY & PRÁCE
+    const shiftsSection = document.getElementById("modal-section-shifts");
+    if (shiftsSection) {
+        const dayShifts = (state.shifts || {})[dateKey];
+        shiftsSection.classList.remove("hidden");
+        
+        let shiftsHtml = `
+            <div class="flex items-center justify-between mb-2">
+                <h4 class="text-xs font-bold text-[#faa61a] uppercase flex items-center gap-2"><i class="fas fa-business-time"></i> Směny & Volno</h4>
+                <button onclick="Calendar.closeDayModal(); window.loadModule('shifts')" class="text-[10px] font-bold text-gray-400 hover:text-white uppercase tracking-widest transition">
+                    Upravit
+                </button>
+            </div>
+        `;
+
+        const jose = dayShifts?.jose;
+        const klarka = dayShifts?.klarka;
+
+        if (jose && klarka && jose.shift_type === 'volno' && klarka.shift_type === 'volno') {
+            shiftsHtml += `
+                <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center mb-3">
+                    <span class="text-xs font-black text-emerald-400 uppercase tracking-widest">🌴 Společné volno! 🥳</span>
+                </div>
+            `;
+        }
+
+        const josePreset = jose ? (SHIFT_PRESETS[jose.shift_type] || SHIFT_PRESETS.custom) : null;
+        const klarkaPreset = klarka ? (SHIFT_PRESETS[klarka.shift_type] || SHIFT_PRESETS.custom) : null;
+
+        const joseTime = jose && jose.time_start && jose.time_end ? `${jose.time_start} - ${jose.time_end}` : '';
+        const klarkaTime = klarka && klarka.time_start && klarka.time_end ? `${klarka.time_start} - ${klarka.time_end}` : '';
+
+        shiftsHtml += `
+            <div class="grid grid-cols-2 gap-3">
+                <!-- Jožka -->
+                <div class="p-3 rounded-xl border ${jose ? 'bg-blue-500/5 border-blue-500/20' : 'bg-black/10 border-white/5 opacity-50'}">
+                    <span class="block text-[8px] text-blue-400 uppercase font-black tracking-widest mb-1">Jožka</span>
+                    ${jose ? `
+                        <div class="flex items-center gap-1.5 mb-1">
+                            <span class="text-base">${josePreset.emoji}</span>
+                            <span class="text-xs font-bold text-white">${josePreset.label.split(' ')[0]}</span>
+                        </div>
+                        ${joseTime ? `<span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-white/10 text-white/80">${joseTime}</span>` : ''}
+                        ${jose.note ? `<p class="text-[9px] text-gray-400 mt-1.5 italic truncate" title="${jose.note}">"${jose.note}"</p>` : ''}
+                    ` : `
+                        <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Nezadáno</span>
+                    `}
+                </div>
+                <!-- Klárka -->
+                <div class="p-3 rounded-xl border ${klarka ? 'bg-pink-500/5 border-pink-500/20' : 'bg-black/10 border-white/5 opacity-50'}">
+                    <span class="block text-[8px] text-pink-400 uppercase font-black tracking-widest mb-1">Klárka</span>
+                    ${klarka ? `
+                        <div class="flex items-center gap-1.5 mb-1">
+                            <span class="text-base">${klarkaPreset.emoji}</span>
+                            <span class="text-xs font-bold text-white">${klarkaPreset.label.split(' ')[0]}</span>
+                        </div>
+                        ${klarkaTime ? `<span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-white/10 text-white/80">${klarkaTime}</span>` : ''}
+                        ${klarka.note ? `<p class="text-[9px] text-gray-400 mt-1.5 italic truncate" title="${klarka.note}">"${klarka.note}"</p>` : ''}
+                    ` : `
+                        <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Nezadáno</span>
+                    `}
+                </div>
+            </div>
+        `;
+
+        shiftsSection.innerHTML = shiftsHtml;
+    }
+
     const modal = document.getElementById("day-modal");
     if (modal) modal.style.display = "flex";
 }
@@ -397,6 +469,40 @@ export async function addCustomPlan() {
         : [];
 
     if (!name || !currentModalDateKey) return;
+
+    // Kontrola konfliktů se směnami partnerů
+    if (time) {
+        const dayShifts = (state.shifts || {})[currentModalDateKey];
+        if (dayShifts) {
+            let conflictMsg = "";
+            
+            // Kontrola pro Jožku
+            if (dayShifts.jose && dayShifts.jose.shift_type !== 'volno' && dayShifts.jose.time_start && dayShifts.jose.time_end) {
+                const start = dayShifts.jose.time_start;
+                const end = dayShifts.jose.time_end;
+                if (time >= start && time <= end) {
+                    conflictMsg += `• Jožka má v tuto dobu směnu (${start} - ${end})\n`;
+                }
+            }
+            
+            // Kontrola pro Klárku
+            if (dayShifts.klarka && dayShifts.klarka.shift_type !== 'volno' && dayShifts.klarka.time_start && dayShifts.klarka.time_end) {
+                const start = dayShifts.klarka.time_start;
+                const end = dayShifts.klarka.time_end;
+                if (time >= start && time <= end) {
+                    conflictMsg += `• Klárka má v tuto dobu směnu (${start} - ${end})\n`;
+                }
+            }
+            
+            if (conflictMsg) {
+                const confirmSave = confirm(`⚠️ Pozor! Plánovaný čas koliduje s pracovní směnou:\n\n${conflictMsg}\nChceš plán přesto uložit?`);
+                if (!confirmSave) {
+                    triggerHaptic("heavy");
+                    return;
+                }
+            }
+        }
+    }
 
     if (!state.plannedDates) state.plannedDates = {};
     

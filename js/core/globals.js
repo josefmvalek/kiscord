@@ -3,6 +3,7 @@ import { toggleTheme, showNotification, toggleValentineMode } from './theme.js';
 import { switchChannel } from './router.js';
 import { toggleUserPopout, toggleMobileMenu } from './app-ui.js';
 import { handleLogin } from './auth-handler.js';
+import { state } from './state.js';
 
 window.loadModule = (name) => {
     switch(name) {
@@ -64,6 +65,7 @@ window.loadModule = (name) => {
 };
 
 export function exposeGlobals() {
+    window.state = state;
     window.switchChannel = switchChannel;
     window.triggerConfetti = triggerConfetti;
     window.triggerHaptic = triggerHaptic;

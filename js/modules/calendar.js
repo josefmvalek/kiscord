@@ -44,6 +44,14 @@ export function renderCalendar(year = null, month = null) {
     ensureModals();
     setupCalendarSync();
     
+    // Trigger lazy loading of shifts just in case they aren't loaded yet
+    import('../core/state.js').then(s => s.ensureShiftsData()).then(() => {
+        if (state.currentChannel === 'calendar') {
+            const grid = document.getElementById('calendar-grid');
+            if (grid) grid.innerHTML = generateCalendarGrid(currentCalYear, currentCalMonth);
+        }
+    }).catch(err => console.error('[Calendar] Error lazy loading shifts:', err));
+    
     const container = document.getElementById("messages-container");
     if (!container) return;
 
@@ -169,6 +177,13 @@ export function setupCalendarSync() {
             if (getCurrentModalDateKey() === row.date_key) {
                 showDayDetail(row.date_key);
             }
+        }
+    });
+
+    window.addEventListener('shifts-updated', () => {
+        if (state.currentChannel === 'calendar') {
+            const grid = document.getElementById('calendar-grid');
+            if (grid) grid.innerHTML = generateCalendarGrid(currentCalYear, currentCalMonth);
         }
     });
 

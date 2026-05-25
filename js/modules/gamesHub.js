@@ -1,5 +1,5 @@
 import { state } from '../core/state.js';
-import { switchChannel } from '../main.js';
+import { switchChannel } from '../core/router.js';
 
 export function renderGamesHub() {
     const container = document.getElementById("messages-container");

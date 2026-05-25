@@ -399,6 +399,7 @@ export async function sendLetter() {
         // Achievement Hook: Letter Writer
         import('./achievements.js').then(m => m.autoUnlock('letter_writer'));
 
+        import('../core/sound.js').then(m => m.playChime());
         triggerHaptic('success');
         if (window.showNotification) window.showNotification('Dopis odeslán! 💌', 'success');
         
@@ -458,11 +459,76 @@ export function setView(view) {
     renderLetters();
 }
 
-export function handlePhotoSelect(input) {
+function compressImage(file, maxWidth = 1600, maxHeight = 1600, quality = 0.85) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        reject(new Error("Canvas compression failed"));
+                        return;
+                    }
+                    const compressedFile = new File([blob], file.name, {
+                        type: 'image/jpeg',
+                        lastModified: Date.now()
+                    });
+                    resolve(compressedFile);
+                }, 'image/jpeg', quality);
+            };
+            img.onerror = (err) => reject(err);
+        };
+        reader.onerror = (err) => reject(err);
+    });
+}
+
+export async function handlePhotoSelect(input) {
     const file = input.files[0];
     if (!file) return;
 
-    pendingFile = file; // Persist in module state
+    let processedFile = file;
+
+    // Pokud je soubor obrázek a je větší než 1 MB, zkomprimujeme ho klientsky
+    if (file.type.startsWith('image/') && file.size > 1024 * 1024) {
+        showNotification('Zpracovávám a optimalizuji fotku... ⏳', 'info');
+        try {
+            processedFile = await compressImage(file);
+            const origSize = (file.size / (1024 * 1024)).toFixed(2);
+            const newSize = (processedFile.size / (1024 * 1024)).toFixed(2);
+            console.log(`[Letters] Obrázek zmenšen z ${origSize}MB na ${newSize}MB`);
+            showNotification(`Obrázek byl optimalizován (${origSize}MB -> ${newSize}MB) ✨`, 'success');
+        } catch (err) {
+            console.warn('[Letters] Chyba při kompresi obrázku:', err);
+            showNotification('Obrázek se nepodařilo optimalizovat, nahraje se v původní kvalitě.', 'info');
+        }
+    }
+
+    pendingFile = processedFile; // Persist in module state
 
     const nameEl = document.getElementById('letter-photo-name');
     const previewBox = document.getElementById('letter-photo-preview-box');
@@ -470,12 +536,12 @@ export function handlePhotoSelect(input) {
     const icon = document.getElementById('letter-photo-placeholder-icon');
     const actions = document.getElementById('letter-photo-actions');
 
-    if (nameEl) nameEl.innerText = file.name;
+    if (nameEl) nameEl.innerText = processedFile.name;
     if (previewBox) previewBox.classList.remove('hidden');
     if (actions) actions.classList.remove('hidden');
     
     if (previewImg && icon) {
-        previewImg.src = URL.createObjectURL(file);
+        previewImg.src = URL.createObjectURL(processedFile);
         previewImg.classList.remove('hidden');
         icon.classList.add('hidden');
     }

@@ -24,7 +24,9 @@ export const moduleMap = {
     'matura': () => import('../modules/matura.js'),
     'restore-data': () => import('../modules/restore.js'),
     'settings': () => import('../modules/settings.js'),
-    'regenerace': () => import('../modules/regenerace.js')
+    'regenerace': () => import('../modules/regenerace.js'),
+    'shifts': () => import('../modules/shifts.js'),
+    'austrian-german': () => import('../modules/austrianGerman.js')
 };
 
 export const channelCategories = [
@@ -74,6 +76,13 @@ export const channelCategories = [
             { id: 'matura-dashboard', name: 'dashboard', icon: '<i class="fas fa-rocket"></i>', type: 'text', color: '#eb459e', desc: 'Naše cesta ke svobodě! 🎓' },
             { id: 'matura-czech', name: 'čeština', icon: '<i class="fas fa-book"></i>', type: 'text', color: '#5865F2', desc: 'Rozbory děl a literatura.' },
             { id: 'matura-it', name: 'informatika', icon: '<i class="fas fa-laptop-code"></i>', type: 'text', color: '#3ba55c', desc: 'Data, sítě a algoritmy.' }
+        ]
+    },
+    {
+        name: "RAKOUSKO 🇦🇹",
+        items: [
+            { id: 'shifts', name: 'plánovač-směn', icon: '<i class="fas fa-business-time"></i>', type: 'text', color: '#faa61a', desc: 'Slaďme naše směny a společné volno 📅' },
+            { id: 'austrian-german', name: 'rakouská-němčina', icon: '<i class="fas fa-utensils"></i>', type: 'text', color: '#eb459e', desc: 'Survival slovníček a flashcards pro Alpy 🏔️' }
         ]
     },
     {
@@ -217,6 +226,9 @@ export function switchChannel(channelId, push = true) {
     // Haptic feedback for navigation
     triggerHaptic('light');
 
+    // Play page flip sound
+    import('./sound.js').then(m => m.playPageFlip()).catch(e => console.warn('[Sound] Failed to play page flip:', e));
+
     console.log(`[NAV] Switching to channel: ${channelId}`);
     state.currentChannel = channelId;
     localStorage.setItem('klarka_last_channel', channelId);
@@ -350,6 +362,12 @@ export function switchChannel(channelId, push = true) {
         case 'matura-czech':
         case 'matura-it':
             import('./state.js').then(s => s.ensureMaturaData()).then(() => moduleMap.matura().then(m => m.renderMatura(channelId))).catch(navErr);
+            break;
+        case 'shifts':
+            import('./state.js').then(s => s.ensureShiftsData()).then(() => moduleMap.shifts().then(m => m.renderShifts())).catch(navErr);
+            break;
+        case 'austrian-german':
+            moduleMap['austrian-german']().then(m => m.renderAustrianGerman()).catch(navErr);
             break;
         case 'settings':
             moduleMap.settings().then(m => m.renderSettings()).catch(navErr);
