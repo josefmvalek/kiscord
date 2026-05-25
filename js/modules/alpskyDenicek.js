@@ -232,11 +232,11 @@ function renderColumnContent(userType, entry, isRevealed, isMe) {
             
             <div class="border-t border-white/5 pt-2 space-y-2">
                 <div>
-                    <span class="text-[8px] font-black uppercase tracking-widest text-white/30 block mb-0.5">🌸 Nejhezčí věc (Highlight)</span>
+                    <span class="text-[8px] font-black uppercase tracking-widest text-white/30 block mb-0.5">🌸 Highlight dne</span>
                     <p class="text-xs text-gray-200 leading-relaxed font-semibold">${entry.highlight_text}</p>
                 </div>
                 <div>
-                    <span class="text-[8px] font-black uppercase tracking-widest text-white/30 block mb-0.5">🌋 Pruda dne (Rant)</span>
+                    <span class="text-[8px] font-black uppercase tracking-widest text-white/30 block mb-0.5">💩 Shit dne</span>
                     <p class="text-xs text-red-300/80 leading-relaxed font-medium">${entry.rant_text}</p>
                 </div>
                 ${audioHtml}
@@ -302,13 +302,13 @@ export function startRecording() {
             document.getElementById('record-btn-start').classList.remove('hidden');
             document.getElementById('record-btn-stop').classList.add('hidden');
             document.getElementById('record-btn-delete').classList.remove('hidden');
-            
+
             // Stop stream tracks
             stream.getTracks().forEach(track => track.stop());
         };
 
         mediaRecorder.start();
-        
+
         // Timer
         recordTimeLeft = 15;
         document.getElementById('record-timer').textContent = `0:${recordTimeLeft.toString().padStart(2, '0')}`;
@@ -316,7 +316,7 @@ export function startRecording() {
         document.getElementById('record-btn-stop').classList.remove('hidden');
         document.getElementById('record-btn-delete').classList.add('hidden');
         document.getElementById('voice-status').textContent = 'Nahrávám... 🎙️🔴';
-        
+
         clearInterval(recordInterval);
         recordInterval = setInterval(() => {
             recordTimeLeft--;
@@ -327,7 +327,7 @@ export function startRecording() {
                 document.getElementById('record-timer').textContent = `0:${recordTimeLeft.toString().padStart(2, '0')}`;
             }
         }, 1000);
-        
+
     }).catch(err => {
         console.error('Microphone access denied:', err);
         showNotification('Nelze získat přístup k mikrofonu!', 'warning');
@@ -351,11 +351,11 @@ export function deleteRecording() {
     audioBlob = null;
     audioChunks = [];
     recordedAudioUrl = null;
-    
+
     document.getElementById('audio-playback-container').classList.add('hidden');
     const preview = document.getElementById('voice-audio-preview');
     if (preview) preview.src = '';
-    
+
     document.getElementById('record-btn-delete').classList.add('hidden');
     document.getElementById('record-btn-start').classList.remove('hidden');
     document.getElementById('record-btn-stop').classList.add('hidden');
@@ -467,7 +467,7 @@ export function openWriteDiaryModal(dateKey, dayNum) {
     audioBlob = null;
     audioChunks = [];
     recordedAudioUrl = existing ? existing.voice_note_url : null;
-    
+
     if (recordedAudioUrl) {
         setTimeout(() => {
             const container = document.getElementById('audio-playback-container');

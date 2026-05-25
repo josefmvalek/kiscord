@@ -29,7 +29,10 @@ export const moduleMap = {
     'austrian-german': () => import('../modules/austrianGerman.js'),
     'kasicka': () => import('../modules/kasicka.js'),
     'alpska-vyzva': () => import('../modules/alpskaVyzva.js'),
-    'alpsky-denicek': () => import('../modules/alpskyDenicek.js')
+    'alpsky-denicek': () => import('../modules/alpskyDenicek.js'),
+    'changelog': () => import('../modules/changelog.js'),
+    'gym-tracker': () => import('../modules/gym.js'),
+    'austria-info': () => import('../modules/austriaInfo.js')
 };
 
 export const channelCategories = [
@@ -84,6 +87,7 @@ export const channelCategories = [
     {
         name: "RAKOUSKO 🇦🇹",
         items: [
+            { id: 'austria-info', name: 'informace', icon: '<i class="fas fa-info-circle"></i>', type: 'text', color: '#ff5252', desc: 'Důležité informace a seznam věcí na brigádu 🏔️ℹ️' },
             { id: 'shifts', name: 'plánovač-směn', icon: '<i class="fas fa-business-time"></i>', type: 'text', color: '#faa61a', desc: 'Slaďme naše směny a společné volno 📅' },
             { id: 'austrian-german', name: 'rakouská-němčina', icon: '<i class="fas fa-utensils"></i>', type: 'text', color: '#eb459e', desc: 'Survival slovníček a flashcards pro Alpy 🏔️' },
             { id: 'kasicka', name: 'kasička', icon: '<i class="fas fa-wallet"></i>', type: 'text', color: '#faa61a', desc: 'Společné finance a Schnitzel-O-Meter 💶' },
@@ -92,9 +96,16 @@ export const channelCategories = [
         ]
     },
     {
+        name: "ZDRAVÍ & FITNESS",
+        items: [
+            { id: 'gym-tracker', name: 'posilovna', icon: '<i class="fas fa-dumbbell"></i>', type: 'text', color: '#faa61a', desc: 'Logování tréninků a sledování maximálek 🏋️‍♂️💪' },
+            { id: 'regenerace', name: 'regenerace', icon: '<i class="fas fa-leaf"></i>', type: 'text', color: '#3ba55c', desc: 'Proč a jak brát suplementy. 🌿' }
+        ]
+    },
+    {
         name: "SYSTÉM",
         items: [
-            { id: 'regenerace', name: 'regenerace', icon: '<i class="fas fa-leaf"></i>', type: 'text', color: '#3ba55c', desc: 'Proč a jak brát suplementy. 🌿' },
+            { id: 'changelog', name: 'changelog', icon: '<i class="fas fa-bullhorn"></i>', type: 'text', color: '#faa61a', desc: 'Historie změn a vylepšení v Kiscordu. 📢' },
             { id: 'stats', name: 'statistiky', icon: '<i class="fas fa-chart-bar"></i>', type: 'text', color: '#faa61a', desc: 'Čísla našeho vztahu.' },
             { id: 'settings', name: 'nastavení', icon: '<i class="fas fa-cog"></i>', type: 'text', color: '#99aab5', desc: 'Přizpůsob si Kiscord podle sebe.' },
             { id: 'welcome', name: 'uvítání', icon: '<i class="fas fa-door-open"></i>', type: 'text', desc: 'Vítejte na našem soukromém serveru! ❤️' },
@@ -180,6 +191,16 @@ export function updateChannelHeader(channelId) {
         return;
     }
 
+    if (channelId === 'changelog') {
+        if (nameEl) nameEl.textContent = 'changelog';
+        if (descEl) descEl.textContent = 'Historie změn a vylepšení v Kiscordu. 📢';
+        if (iconEl) {
+            iconEl.className = 'fas fa-bullhorn text-[#faa61a] text-xl mr-2';
+            iconEl.innerHTML = '';
+        }
+        return;
+    }
+
     if (channelId === 'calendar') {
         if (nameEl) nameEl.textContent = 'Společný Kalendář';
         if (descEl) descEl.textContent = 'Plánování našich akcí a školy 📅';
@@ -255,6 +276,11 @@ export function switchChannel(channelId, push = true) {
     if (searchInput) searchInput.value = "";
     updateChannelHeader(channelId);
 
+    // Refresh global active gym workout badge if present
+    if (window.Gym && typeof window.Gym.updateGlobalWorkoutBadge === 'function') {
+        window.Gym.updateGlobalWorkoutBadge();
+    }
+
     // Render Content
     const container = document.getElementById("messages-container");
     if (container) container.innerHTML = "";
@@ -262,7 +288,7 @@ export function switchChannel(channelId, push = true) {
     // Centralized Realtime Cleanup
     const cleanups = [
         'achCleanup', 'dailyCleanup', 'bucketCleanup', 'whoCleanup', 'drawCleanup',
-        'cleanupQuestsRealtime', 'calendarCleanup', 'timelineCleanup'
+        'cleanupQuestsRealtime', 'calendarCleanup', 'timelineCleanup', 'gymCleanup'
     ];
     cleanups.forEach(fn => { if (typeof window[fn] === 'function') window[fn](); });
 
@@ -369,6 +395,9 @@ export function switchChannel(channelId, push = true) {
         case 'matura-it':
             import('./state.js').then(s => s.ensureMaturaData()).then(() => moduleMap.matura().then(m => m.renderMatura(channelId))).catch(navErr);
             break;
+        case 'austria-info':
+            moduleMap['austria-info']().then(m => m.renderAustriaInfo()).catch(navErr);
+            break;
         case 'shifts':
             import('./state.js').then(s => s.ensureShiftsData()).then(() => moduleMap.shifts().then(m => m.renderShifts())).catch(navErr);
             break;
@@ -389,6 +418,12 @@ export function switchChannel(channelId, push = true) {
             break;
         case 'regenerace':
             moduleMap.regenerace().then(m => m.renderRegenerace()).catch(navErr);
+            break;
+        case 'gym-tracker':
+            import('./state.js').then(s => s.ensureGymData()).then(() => moduleMap['gym-tracker']().then(m => m.renderGym())).catch(navErr);
+            break;
+        case 'changelog':
+            moduleMap['changelog']().then(m => m.renderChangelog()).catch(navErr);
             break;
         default:
             import('../modules/dashboard.js').then(m => m.renderWelcome()).catch(navErr);

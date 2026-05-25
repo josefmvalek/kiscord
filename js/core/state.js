@@ -56,6 +56,10 @@ const state = {
     brigadeFinances: [],
     brigadeChallenges: [],
     brigadeDiary: [],
+    gymExercises: [],
+    gymTemplates: [],
+    gymLogs: [],
+    gymPRs: [],
     user_ids: { jose: null, klarka: null },
     loadError: false, // Track if initial load failed
     maturaProgress: {}, // { item_id: { jose: { status, notes }, klarka: { status, notes } } }
@@ -119,7 +123,8 @@ const state = {
         shifts: false,
         finances: false,
         challenges: false,
-        diary: false
+        diary: false,
+        gym: false
     }
 };
 
@@ -176,7 +181,11 @@ function saveStateToCache() {
         regeneraceContent: state.regeneraceContent,
         brigadeFinances: state.brigadeFinances,
         brigadeChallenges: state.brigadeChallenges,
-        brigadeDiary: state.brigadeDiary
+        brigadeDiary: state.brigadeDiary,
+        gymExercises: state.gymExercises,
+        gymTemplates: state.gymTemplates,
+        gymLogs: state.gymLogs,
+        gymPRs: state.gymPRs
     };
     localStorage.setItem(STATE_CACHE_KEY, JSON.stringify(cacheData));
 
@@ -620,6 +629,37 @@ async function ensureAchievementsData(force = false) {
                     color: 'from-blue-400 to-indigo-600'
                 });
             }
+            // Inject Gym achievements
+            if (!state.achievementDefinitions.some(a => a.id === 'gym_rat')) {
+                state.achievementDefinitions.push({
+                    id: 'gym_rat',
+                    category: 'health',
+                    title: 'Gym Rat 🦍🏋️‍♂️',
+                    description: 'Odlogováno alespoň 10 poctivých tréninků v Kiscordu. Železo je tvůj nejlepší kamarád!',
+                    icon: '🏋️‍♂️',
+                    color: 'from-amber-500 to-red-600'
+                });
+            }
+            if (!state.achievementDefinitions.some(a => a.id === 'pr_breaker')) {
+                state.achievementDefinitions.push({
+                    id: 'pr_breaker',
+                    category: 'health',
+                    title: 'PR Breaker 🏆',
+                    description: 'Překonání tvého osobního rekordního maxima na libovolném cviku. Jdeš si za svým cílem!',
+                    icon: '🏆',
+                    color: 'from-yellow-400 to-orange-500'
+                });
+            }
+            if (!state.achievementDefinitions.some(a => a.id === 'synchro_gym')) {
+                state.achievementDefinitions.push({
+                    id: 'synchro_gym',
+                    category: 'love',
+                    title: 'Synchro Šampioni 🤝🔥',
+                    description: 'Vy i váš parťák jste odcvičili trénink ve stejný kalendářní den. Tomu se říká synergie!',
+                    icon: '🤝',
+                    color: 'from-emerald-400 to-teal-500'
+                });
+            }
         }
         markLoaded('achievements');
         stateEvents.emit('achievements');
@@ -888,6 +928,26 @@ async function ensureDiaryData(force = false) {
     }
 }
 
+async function ensureGymData(force = false) {
+    if (state._loaded.gym && !force && !isStale('gym')) return;
+    try {
+        const [exercises, templates, logs, prs] = await Promise.all([
+            supabase.from('gym_exercises').select('*').order('name'),
+            supabase.from('gym_templates').select('*').order('created_at', { ascending: false }),
+            supabase.from('gym_logs').select('*').order('logged_at', { ascending: false }),
+            supabase.from('gym_prs').select('*')
+        ]);
+        if (exercises.data) state.gymExercises = exercises.data;
+        if (templates.data) state.gymTemplates = templates.data;
+        if (logs.data) state.gymLogs = logs.data;
+        if (prs.data) state.gymPRs = prs.data;
+        markLoaded('gym');
+        stateEvents.emit('gym');
+    } catch (e) {
+        console.error("Gym Load Error:", e);
+    }
+}
+
 function resetLazyLoaders() {
     // Dynamicky resetovat podle existujících klíčů – synchronizováno s deklarací state._loaded
     Object.keys(state._loaded).forEach(k => { state._loaded[k] = false; });
@@ -947,5 +1007,6 @@ export {
     ensureFinancesData,
     ensureChallengesData,
     ensureDiaryData,
+    ensureGymData,
     resetLazyLoaders
 };
