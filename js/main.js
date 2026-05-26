@@ -72,5 +72,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // 7. Background Pre-fetching (Optimization 2.0)
+    if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(prefetchModules, { timeout: 3000 });
+    } else {
+        setTimeout(prefetchModules, 3000);
+    }
+
     console.log('--- KISCORD BOOTSTRAPPED ---');
 });
+
+// Pre-fetch klíčových komponent pro okamžité přepínání
+function prefetchModules() {
+    console.log('[App] Pre-fetching common modules in background...');
+    import('./modules/calendar.js').catch(() => {});
+    import('./modules/timeline.js').catch(() => {});
+    import('./modules/library.js').catch(() => {});
+    import('./modules/bucketlist.js').catch(() => {});
+    import('./modules/alpskaVyzva.js').catch(() => {});
+}

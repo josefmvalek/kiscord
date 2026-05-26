@@ -61,6 +61,23 @@ export function generateCalendarGrid(year, month) {
     const anniversaryDay = new Date(state.startDate).getDate();
     let html = "";
 
+    // --- PŘEDPOČÍTÁNÍ DAT (O(1) lookup pro cyklus) ---
+    const timelineEventMap = new Map();
+    (state.timelineEvents || []).forEach(e => timelineEventMap.set(e.event_date, e));
+
+    const diaryMap = new Map();
+    (state.brigadeDiary || []).forEach(e => {
+        if (!diaryMap.has(e.date_key)) diaryMap.set(e.date_key, []);
+        diaryMap.get(e.date_key).push(e);
+    });
+
+    const libraryMap = new Map();
+    if (state.library) {
+        (state.library.movies || []).forEach(m => libraryMap.set(m.id, m));
+        (state.library.series || []).forEach(m => libraryMap.set(m.id, m));
+    }
+    // ------------------------------------------------
+
     // Prázdné buňky
     for (let i = 0; i < startDayIndex; i++) {
         html += `<div class="bg-transparent"></div>`;
@@ -74,8 +91,8 @@ export function generateCalendarGrid(year, month) {
         const plannedDate = (state.plannedDates || {})[dateKey];
         const schoolEvent = (state.schoolEvents || {})[dateKey];
         const movieHistory = (state.movieHistory || {})[dateKey];
-        const timelineEvent = state.timelineEvents.find((e) => e.event_date === dateKey);
-        const dayDiaryEntries = (state.brigadeDiary || []).filter(e => e.date_key === dateKey);
+        const timelineEvent = timelineEventMap.get(dateKey);
+        const dayDiaryEntries = diaryMap.get(dateKey) || [];
 
         const isToday = dateKey === getTodayKey();
         const isAnniversary = d === anniversaryDay;
@@ -155,7 +172,7 @@ export function generateCalendarGrid(year, month) {
             if (movieHistory) {
                 iconsHtml += `<span class="text-[10px]">🎬</span>`;
                 const firstMovie = movieHistory[0];
-                const libItem = [...(state.library?.movies || []), ...(state.library?.series || [])].find(m => m.id === firstMovie.media_id);
+                const libItem = libraryMap.get(firstMovie.media_id);
                 if (libItem && libItem.icon) {
                     iconsHtml += `<span class="text-[10px]">${libItem.icon}</span>`;
                 }

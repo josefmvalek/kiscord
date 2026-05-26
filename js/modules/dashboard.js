@@ -6,7 +6,10 @@ import {
     ensureDailyQuizData,
     ensureFactsData,
     ensureShiftsData,
-    ensureAllHealthData
+    ensureAllHealthData,
+    ensureDiaryData,
+    ensureFinancesData,
+    ensureChallengesData
 } from '../core/state.js';
 import { triggerHaptic, getInflectedName, getTodayKey, triggerConfetti } from '../core/utils.js';
 import { getAssetUrl } from '../core/assets.js';
@@ -250,191 +253,230 @@ function getDailyVocab() {
     return AUSTRIAN_DICTIONARY[seed % AUSTRIAN_DICTIONARY.length];
 }
 
-function generateAlpineChallengeWidget() {
-    const todayKey = getTodayKey();
-    const dbRecord = state.brigadeChallenges?.find(c => c.date_key === todayKey) || {};
-    
-    const departureDate = new Date('2026-05-31T00:00:00');
-    const now = new Date();
-    const diffMs = now - departureDate;
-    const dayIndex = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    const isTripStarted = dayIndex >= 0;
+let renderTimeout = null;
 
-    let challengeTitle = "Dnešní výzva";
-    let challengeCat = "Alpská Výzva 🏔️";
-
-    if (dbRecord.title) {
-        challengeTitle = dbRecord.title;
-        challengeCat = dbRecord.category || "Plánovaná ✍️";
-    } else if (!isTripStarted) {
-        challengeTitle = "🎒 Velké Balení & Očekávání";
-        challengeCat = "Příprava ✈️";
-    } else {
-        // Fallback or Pool retrieval
-        const pool = window.AlpskaVyzva?.CHALLENGES_POOL || [];
-        if (pool.length > 0) {
-            const idx = dayIndex % pool.length;
-            challengeTitle = pool[idx].title;
-            challengeCat = pool[idx].category;
-        } else {
-            challengeTitle = "Hledej dobrodružství v horách!";
-            challengeCat = "Výzva dne 🏔️";
-        }
-    }
-
-    // Check if revealed in localStorage
-    const revealKey = `kiscord_revealed_challenge_${todayKey}`;
-    const isRevealed = localStorage.getItem(revealKey) === 'true';
-
-    const completedByJose = dbRecord.completed_by_jose || false;
-    const completedByKlarka = dbRecord.completed_by_klarka || false;
-
-    if (!isRevealed && isTripStarted) {
-        // Locked Scratch Card Widget
-        return `
-            <div class="glass-card bg-gradient-to-br from-indigo-950 to-slate-900 border border-purple-500/30 rounded-2xl p-5 relative overflow-hidden group shadow-xl stagger-item" style="animation-delay: 0.26s">
-                <div class="absolute -right-10 -top-10 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl pointer-events-none"></div>
-                <div class="flex justify-between items-start mb-3">
-                    <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 leading-none">
-                        <i class="fas fa-mountain text-[#eb459e]"></i> Dnešní Alpská Výzva
-                    </h3>
-                    <span class="text-[9px] font-black uppercase text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full">Uzamčeno 🔒</span>
-                </div>
-                <div class="flex flex-col items-center py-4 text-center">
-                    <span class="text-4xl block mb-3 animate-pulse">🏔️🔮</span>
-                    <p class="text-[11px] text-purple-200/60 font-semibold mb-4 leading-normal">
-                        Setřete dnešní tajné dobrodružství přímo z nástěnky!
-                    </p>
-                    <button onclick="window.loadModule('dashboard').then(m => m.scratchChallengeFromDashboard())" 
-                            class="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95">
-                        Setřít kartu 🏔️🔮
-                    </button>
-                </div>
-            </div>
-        `;
-    } else {
-        // Revealed Preview Widget
-        return `
-            <div class="glass-card rounded-2xl p-5 stagger-item relative overflow-hidden group shadow-xl hover:border-white/10 transition-all cursor-pointer" style="animation-delay: 0.26s" onclick="window.switchChannel('alpska-vyzva')">
-                <div class="absolute -right-10 -top-10 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none"></div>
-                <div class="flex justify-between items-start mb-3">
-                    <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 leading-none">
-                        <i class="fas fa-mountain text-emerald-400"></i> Dnešní Alpská Výzva
-                    </h3>
-                    <span class="text-[9px] font-black uppercase text-[#3ba55c] bg-[#3ba55c]/10 px-2 py-0.5 rounded-full">${challengeCat}</span>
-                </div>
-                
-                <div class="flex flex-col gap-2 mt-1">
-                    <h4 class="text-base font-black text-white italic tracking-tight mb-2 group-hover:text-[#3ba55c] transition-colors leading-tight">"${challengeTitle}"</h4>
-                    
-                    <div class="grid grid-cols-2 gap-3 mt-2 border-t border-white/5 pt-3">
-                        <div class="flex items-center gap-2 bg-black/15 p-2 rounded-xl border border-white/5 justify-between">
-                            <span class="text-[10px] font-black text-gray-400">🔵 Jožka</span>
-                            ${completedByJose 
-                                ? `<span class="text-[9px] font-black text-emerald-400 uppercase tracking-wider">Splněno ✅</span>`
-                                : `<span class="text-[9px] font-black text-white/20 uppercase tracking-wider">Nesplněno ⏳</span>`}
-                        </div>
-                        <div class="flex items-center gap-2 bg-black/15 p-2 rounded-xl border border-white/5 justify-between">
-                            <span class="text-[10px] font-black text-gray-400">🔴 Klárka</span>
-                            ${completedByKlarka 
-                                ? `<span class="text-[9px] font-black text-emerald-400 uppercase tracking-wider">Splněno ✅</span>`
-                                : `<span class="text-[9px] font-black text-white/20 uppercase tracking-wider">Nesplněno ⏳</span>`}
-                        </div>
-                    </div>
-                    
-                    <div class="text-center mt-3">
-                        <span class="text-[8px] text-gray-500 uppercase tracking-widest font-black underline group-hover:text-white transition-colors">Zobrazit detaily & nahrát fotku 📸</span>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
+function getDashboardAnimClass() {
+    const container = document.getElementById("messages-container");
+    const isFirstNav = !container || container.innerHTML.trim() === "";
+    return isFirstNav ? "stagger-item" : "opacity-100 animate-fade-in";
 }
 
-function generateActiveShiftsWidget() {
+function generateAlpskaHlidkaWidget() {
     const todayKey = getTodayKey();
-    const shiftsToday = state.shifts?.[todayKey] || {};
+    
+    // 1. Day of the trip calculations
+    const departureDate = new Date('2026-05-31T00:00:00');
+    const returnDate = new Date('2026-08-31T23:59:59');
+    const now = new Date();
+    
+    const totalMs = returnDate - departureDate;
+    const elapsedMs = now - departureDate;
+    const dayDiff = Math.floor(elapsedMs / (1000 * 60 * 60 * 24)) + 1; // 1-indexed
+    const totalDays = Math.ceil(totalMs / (1000 * 60 * 60 * 24)); // 92
+    const pct = Math.min(100, Math.max(0, Math.round((elapsedMs / totalMs) * 100)));
+    const isTripStarted = dayDiff >= 1;
+    const isTripEnded = dayDiff > totalDays;
+    
+    let headerText = "";
+    let progressHtml = "";
+    
+    if (!isTripStarted) {
+        headerText = "🏔️ Alpská Hlídka — Přípravy Vrcholí! ⏳";
+        progressHtml = `
+            <div class="text-[10px] text-purple-200/60 font-semibold mb-1">Do odjezdu zbývá jen chvíle! Vyjíždíme 31. května.</div>
+            <div class="w-full bg-[#202225] h-2 rounded-full overflow-hidden border border-white/5 relative p-[1px]">
+                <div class="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500" style="width: 0%"></div>
+            </div>
+        `;
+    } else if (isTripEnded) {
+        headerText = "🏔️ Alpská Hlídka — Vítejte Doma! 🏆";
+        progressHtml = `
+            <div class="text-[10px] text-emerald-400 font-bold mb-1">Zvládli jsme celých ${totalDays} dní v Rakousku! 🇦🇹❤️</div>
+            <div class="w-full bg-[#202225] h-2 rounded-full overflow-hidden border border-white/5 relative p-[1px]">
+                <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" style="width: 100%"></div>
+            </div>
+        `;
+    } else {
+        headerText = `🏔️ Alpská Hlídka — Den ${dayDiff} z ${totalDays}`;
+        progressHtml = `
+            <div class="flex justify-between items-center text-[9px] font-bold text-gray-400 mb-1">
+                <span>Průběh pobytu</span>
+                <span class="text-[#eb459e]">${pct}% v Alpách</span>
+            </div>
+            <div class="w-full bg-black/40 h-2 rounded-full overflow-hidden border border-white/5 relative p-[1px]">
+                <div class="h-full rounded-full bg-gradient-to-r from-[#5865F2] via-[#eb459e] to-[#faa61a]" style="width: ${pct}%"></div>
+            </div>
+        `;
+    }
 
+    // 2. Fetch challenge state for today
+    const challengeRecord = state.brigadeChallenges?.find(c => c.date_key === todayKey) || {};
+    const challengeRevealed = localStorage.getItem(`kiscord_revealed_challenge_${todayKey}`) === 'true';
+    const challengeCompletedJose = challengeRecord.completed_by_jose || false;
+    const challengeCompletedKlarka = challengeRecord.completed_by_klarka || false;
+
+    // 3. Fetch diary state for today
+    const diaryJose = state.brigadeDiary?.find(e => e.date_key === todayKey && e.user_id === state.user_ids?.jose);
+    const diaryKlarka = state.brigadeDiary?.find(e => e.date_key === todayKey && e.user_id === state.user_ids?.klarka);
+    const diaryCompletedJose = !!diaryJose;
+    const diaryCompletedKlarka = !!diaryKlarka;
+
+    // 4. Fetch shift state for today
+    const shiftsToday = state.shifts?.[todayKey] || {};
     const joseShift = shiftsToday.jose;
     const klarkaShift = shiftsToday.klarka;
 
-    const renderUserRow = (userName, shift, markerEmoji) => {
-        if (!shift) {
-            return `
-                <div class="flex items-center justify-between p-3.5 bg-white/5 rounded-2xl border border-white/5 opacity-60">
-                    <span class="text-xs text-white/90 font-black">${markerEmoji} ${userName}</span>
-                    <span class="text-[10px] font-black uppercase tracking-wider text-white/40">Nezadáno 😴</span>
-                </div>
-            `;
+    // 5. Personal finance calculation (Vydělané money)
+    let myEarnings = 0;
+    let myExpenses = 0;
+    const myId = state.currentUser?.id;
+    (state.brigadeFinances || []).forEach(item => {
+        if (item.user_id === myId) {
+            const val = parseFloat(item.amount) || 0;
+            if (item.type === 'earning') {
+                myEarnings += val;
+            } else {
+                myExpenses += val;
+            }
         }
+    });
+    const balance = myEarnings - myExpenses;
+    const savingsGoalKey = `kiscord_savings_goal_${myId || 'default'}`;
+    const savingsGoal = parseFloat(localStorage.getItem(savingsGoalKey) || '2000');
+    const goalPercentage = savingsGoal > 0 ? Math.min(Math.round((balance / savingsGoal) * 100), 100) : 0;
 
-        const preset = SHIFT_PRESETS[shift.shift_type] || SHIFT_PRESETS.custom;
-        const status = getShiftActiveStatus(shift);
-        const timeStr = shift.time_start && shift.time_end ? `${shift.time_start} - ${shift.time_end}` : '';
-
-        return `
-            <div class="flex flex-col gap-1 p-3.5 bg-gradient-to-br ${preset.color}/10 border border-white/10 rounded-2xl relative overflow-hidden">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs text-white/90 font-black">${markerEmoji} ${userName}</span>
-                        <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-white/10 text-white/80">
-                            ${preset.emoji} ${preset.label.split(' ')[0]}
-                        </span>
-                    </div>
-                    <span class="text-[9px] ${status.color} uppercase tracking-wide">${status.label}</span>
-                </div>
-                ${timeStr ? `
-                    <div class="flex justify-between items-center mt-2">
-                        <span class="text-[10px] text-white/50 font-bold">${timeStr}</span>
-                        ${status.subLabel ? `<span class="text-[9px] text-[#eb459e] font-black tracking-wide">${status.subLabel}</span>` : ''}
-                    </div>
-                ` : ''}
-                ${shift.note ? `
-                    <div class="mt-2 text-[9px] italic text-white/40 border-t border-white/5 pt-1.5 leading-relaxed">
-                        Pozn: ${shift.note}
-                    </div>
-                ` : ''}
-            </div>
-        `;
+    // Helper for shift badge rendering inside grid
+    const getShiftBadge = (shift) => {
+        if (!shift) return '<span class="text-white/30 text-[10px]">Nezadána 😴</span>';
+        if (shift.shift_type === 'volno') return '<span class="text-emerald-450 font-black text-[10px] uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">🌴 Volno</span>';
+        if (shift.shift_type === 'ranni') return '<span class="text-amber-400 font-black text-[10px] uppercase tracking-wider bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">🌅 Ranní</span>';
+        if (shift.shift_type === 'odpoledni') return '<span class="text-indigo-400 font-black text-[10px] uppercase tracking-wider bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-md">🌆 Odpol.</span>';
+        return '<span class="text-blue-400 font-black text-[10px] uppercase tracking-wider bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-md">⚙️ Vlastní</span>';
     };
 
-    // Check overlap text for today
-    let overlapText = '';
-    if (joseShift && klarkaShift) {
-        if (joseShift.shift_type === 'volno' && klarkaShift.shift_type === 'volno') {
-            overlapText = `<span class="text-emerald-400 font-black animate-pulse">🎉 Dnes máme oba volno! Společný čas na výlet! 🏔️</span>`;
-        } else if (joseShift.shift_type === 'ranni' && klarkaShift.shift_type === 'odpoledni') {
-            overlapText = `<span class="text-amber-400 font-bold">⚠️ Dnes se míjíme (Jožka ranní, Klárka odpolední)</span>`;
-        } else if (joseShift.shift_type === 'odpoledni' && klarkaShift.shift_type === 'ranni') {
-            overlapText = `<span class="text-amber-400 font-bold">⚠️ Dnes se míjíme (Jožka odpolední, Klárka ranní)</span>`;
-        } else if (joseShift.shift_type === klarkaShift.shift_type && joseShift.shift_type !== 'custom') {
-            overlapText = `<span class="text-purple-300 font-bold">🤝 Pracujeme oba stejně (${SHIFT_PRESETS[joseShift.shift_type]?.label.split(' ')[0]})!</span>`;
-        } else {
-            overlapText = `<span class="text-white/60 font-semibold">Slaďte své dnešní směny a aktivity!</span>`;
-        }
-    } else {
-        overlapText = `<span class="text-white/40 font-semibold italic">Zadejte své směny pro dnešní den...</span>`;
-    }
-
     return `
-        <div class="glass-card rounded-2xl p-6 stagger-item" style="animation-delay: 0.28s">
-            <div class="flex justify-between items-start mb-4">
-                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2 leading-none">
-                    <i class="fas fa-business-time text-[#faa61a]"></i> Dnešní Směny & Volno
-                </h3>
-                <button onclick="window.switchChannel('shifts')" 
-                        class="text-[10px] text-gray-500 hover:text-[#faa61a] transition font-bold uppercase tracking-widest flex items-center gap-1">
-                    plánovač <i class="fas fa-chevron-right text-[8px]"></i>
+        <div class="glass-card bg-gradient-to-b from-slate-900/60 to-slate-950/60 border border-white/5 rounded-3xl p-6 ${getDashboardAnimClass()} shadow-2xl relative overflow-hidden" style="animation-delay: 0.25s">
+            <!-- Background lights -->
+            <div class="absolute -right-16 -top-16 w-36 h-36 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -left-16 -bottom-16 w-36 h-36 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+            <!-- Header and Progress -->
+            <div class="border-b border-white/5 pb-4 mb-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-lg">🏔️</span>
+                    <h3 class="text-xs font-black text-white uppercase tracking-wider leading-none">${headerText}</h3>
+                </div>
+                ${progressHtml}
+            </div>
+
+            <!-- Main grid: Jožka vs Klárka checklist -->
+            <div class="grid grid-cols-2 gap-4 border-b border-white/5 pb-4 mb-4">
+                <!-- Column Jožka -->
+                <div class="bg-black/25 p-3.5 rounded-2xl border border-white/5 flex flex-col gap-2.5">
+                    <div class="flex items-center gap-1.5 pb-1 border-b border-white/5">
+                        <span class="text-xs">🔵</span>
+                        <span class="text-[9px] font-black uppercase tracking-wider text-white/80">Jožka</span>
+                    </div>
+                    
+                    <!-- Výzva status -->
+                    <div class="flex items-center justify-between text-xs font-semibold gap-1">
+                        <span class="text-white/40 text-[9px] font-bold uppercase tracking-tight">Výzva:</span>
+                        <span>
+                            ${!challengeRevealed && isTripStarted
+                                ? '<span class="text-purple-300 font-black uppercase text-[9px] tracking-wider animate-pulse">Uzamčeno 🔒</span>'
+                                : (challengeCompletedJose ? '<span class="text-emerald-450 font-black text-[9px] uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">Splněno ✅</span>' : '<span class="text-white/30 text-[9px] font-black uppercase tracking-wider">Čeká ⏳</span>')
+                            }
+                        </span>
+                    </div>
+
+                    <!-- Deník status -->
+                    <div class="flex items-center justify-between text-xs font-semibold gap-1">
+                        <span class="text-white/40 text-[9px] font-bold uppercase tracking-tight">Deník:</span>
+                        <span>
+                            ${diaryCompletedJose 
+                                ? '<span class="text-pink-400 font-black text-[9px] uppercase tracking-wider bg-pink-500/10 border border-pink-500/20 px-2 py-0.5 rounded-md">Zapsáno 📔</span>' 
+                                : '<span class="text-white/30 text-[9px] font-black uppercase tracking-wider animate-pulse">Čeká ✍️</span>'
+                            }
+                        </span>
+                    </div>
+
+                    <!-- Směna status -->
+                    <div class="flex items-center justify-between text-xs font-semibold gap-1">
+                        <span class="text-white/40 text-[9px] font-bold uppercase tracking-tight">Směna:</span>
+                        <span class="text-[11px] font-bold">${getShiftBadge(joseShift)}</span>
+                    </div>
+                </div>
+
+                <!-- Column Klárka -->
+                <div class="bg-black/25 p-3.5 rounded-2xl border border-white/5 flex flex-col gap-2.5">
+                    <div class="flex items-center gap-1.5 pb-1 border-b border-white/5">
+                        <span class="text-xs">🔴</span>
+                        <span class="text-[9px] font-black uppercase tracking-wider text-white/80">Klárka</span>
+                    </div>
+
+                    <!-- Výzva status -->
+                    <div class="flex items-center justify-between text-xs font-semibold gap-1">
+                        <span class="text-white/40 text-[9px] font-bold uppercase tracking-tight">Výzva:</span>
+                        <span>
+                            ${!challengeRevealed && isTripStarted
+                                ? '<span class="text-purple-300 font-black uppercase text-[9px] tracking-wider animate-pulse">Uzamčeno 🔒</span>'
+                                : (challengeCompletedKlarka ? '<span class="text-emerald-450 font-black text-[9px] uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">Splněno ✅</span>' : '<span class="text-white/30 text-[9px] font-black uppercase tracking-wider">Čeká ⏳</span>')
+                            }
+                        </span>
+                    </div>
+
+                    <!-- Deník status -->
+                    <div class="flex items-center justify-between text-xs font-semibold gap-1">
+                        <span class="text-white/40 text-[9px] font-bold uppercase tracking-tight">Deník:</span>
+                        <span>
+                            ${diaryCompletedKlarka 
+                                ? '<span class="text-pink-400 font-black text-[9px] uppercase tracking-wider bg-pink-500/10 border border-pink-500/20 px-2 py-0.5 rounded-md">Zapsáno 📔</span>' 
+                                : '<span class="text-white/30 text-[9px] font-black uppercase tracking-wider animate-pulse">Čeká ✍️</span>'
+                            }
+                        </span>
+                    </div>
+
+                    <!-- Směna status -->
+                    <div class="flex items-center justify-between text-xs font-semibold gap-1">
+                        <span class="text-white/40 text-[9px] font-bold uppercase tracking-tight">Směna:</span>
+                        <span class="text-[11px] font-bold">${getShiftBadge(klarkaShift)}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vydělané money section -->
+            <div class="bg-black/20 p-4 rounded-2xl border border-white/5 mb-4">
+                <div class="flex justify-between items-end mb-2">
+                    <div>
+                        <span class="text-[9px] font-black uppercase tracking-widest text-white/30 block mb-0.5">Moje Finance</span>
+                        <h4 class="text-xs font-black text-white uppercase tracking-wider">💶 Vydělané Money</h4>
+                    </div>
+                    <span class="text-xs font-black text-emerald-400">${balance.toFixed(2)} € / ${savingsGoal.toFixed(0)} €</span>
+                </div>
+                <div class="w-full h-2 bg-black/40 rounded-full overflow-hidden border border-white/5 relative p-[1px] mb-1">
+                    <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 via-teal-500 to-indigo-500 transition-all duration-1000 ease-out" 
+                         style="width: ${goalPercentage}%"></div>
+                </div>
+                <div class="flex justify-between items-center text-[9px] text-gray-500 font-bold px-1">
+                    <span>Pokrok k osobnímu cíli</span>
+                    <span>${goalPercentage}% splněno</span>
+                </div>
+            </div>
+
+            <!-- Interactive quick actions -->
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="window.switchChannel('alpska-vyzva')" 
+                        class="py-2.5 px-2 bg-white/5 hover:bg-white/10 text-white border border-white/5 hover:border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 shadow active:scale-95">
+                    Výzvy 🏔️
                 </button>
-            </div>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                ${renderUserRow('Jožka', joseShift, '🔵')}
-                ${renderUserRow('Klárka', klarkaShift, '🔴')}
-            </div>
-            
-            <div class="bg-black/20 rounded-xl p-3.5 border border-white/5 text-center text-xs">
-                ${overlapText}
+                <button onclick="window.switchChannel('alpsky-denicek')" 
+                        class="py-2.5 px-2 bg-white/5 hover:bg-white/10 text-white border border-white/5 hover:border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 shadow active:scale-95">
+                    Deník 📔
+                </button>
+                <button onclick="window.switchChannel('kasicka')" 
+                        class="py-2.5 px-2 bg-white/5 hover:bg-white/10 text-white border border-white/5 hover:border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 shadow active:scale-95">
+                    Kasička 💶
+                </button>
             </div>
         </div>
     `;
@@ -447,7 +489,7 @@ function generateAustrianWordOfTheDayCard() {
     if (!vocab) return '';
 
     return `
-        <div class="glass-card rounded-2xl p-6 stagger-item relative overflow-hidden group select-none" style="animation-delay: 0.32s">
+        <div class="glass-card rounded-2xl p-6 ${getDashboardAnimClass()} relative overflow-hidden group select-none" style="animation-delay: 0.32s">
             <div class="absolute -right-10 -top-10 w-24 h-24 bg-[#eb459e]/5 rounded-full blur-2xl pointer-events-none"></div>
             
             <div class="flex justify-between items-start mb-4 relative z-10">
@@ -806,6 +848,24 @@ export function renderWelcome() {
 }
 
 export async function renderDashboard(forceRefresh = false) {
+    // Eagerly trigger data loads without blocking
+    ensureDailyQuizData();
+    ensureFactsData();
+    ensureShiftsData();
+    ensureAllHealthData();
+    ensureDiaryData();
+    ensureChallengesData();
+    ensureFinancesData();
+
+    if (renderTimeout) clearTimeout(renderTimeout);
+    
+    renderTimeout = setTimeout(() => {
+        actuallyRenderDashboard(forceRefresh);
+    }, 40); // 40ms debounce to batch asynchronous database emits
+}
+
+async function actuallyRenderDashboard(forceRefresh = false) {
+    if (state.currentChannel !== 'dashboard') return;
     const container = document.getElementById("messages-container");
     if (!container) return;
 
@@ -814,11 +874,6 @@ export async function renderDashboard(forceRefresh = false) {
     if (!state.healthData[todayKey]) {
         state.healthData[todayKey] = { water: 0, sleep: 0, mood: 5, movement: [], pills: false, bedtime: null, supplements: { iron: false, zinc: false, magnesium: false } };
     }
-
-    ensureDailyQuizData();
-    ensureFactsData();
-    ensureShiftsData();
-    ensureAllHealthData();
 
     // Lazy load AlpskaVyzva module so pool is registered
     import('./alpskaVyzva.js').catch(() => {});
@@ -999,24 +1054,24 @@ export async function renderDashboard(forceRefresh = false) {
 
               <div class="max-w-3xl mx-auto px-3 mt-4 space-y-3">
                   ${state.settings.dashboardWidgets.health ? `
-                  <div class="glass-card rounded-2xl p-6 stagger-item" style="animation-delay: 0.05s">
+                  <div class="glass-card rounded-2xl p-6 ${getDashboardAnimClass()}" style="animation-delay: 0.05s">
                       <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Jak ses vyspala?</h3>
                       <div id="sleep-container">${generateSleepSlider(data)}</div>
                   </div>
-                  <div class="glass-card rounded-2xl p-6 stagger-item" style="animation-delay: 0.1s">
+                  <div class="glass-card rounded-2xl p-6 ${getDashboardAnimClass()}" style="animation-delay: 0.1s">
                       <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Voda</h3>
                       <div class="flex justify-between gap-1" id="water-container">${generateWaterIcons(data.water || 0)}</div>
                   </div>
-                  <div class="glass-card rounded-2xl p-6 stagger-item" style="animation-delay: 0.15s">
+                  <div class="glass-card rounded-2xl p-6 ${getDashboardAnimClass()}" style="animation-delay: 0.15s">
                       <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Jak se dnes cítíš?</h3>
                       <div id="mood-container" class="mood-glow-shadow">${generateMoodSlider(data.mood)}</div>
                   </div>
                   <div class="grid grid-cols-2 gap-3">
-                      <div class="glass-card rounded-2xl p-6 stagger-item" style="animation-delay: 0.2s">
+                      <div class="glass-card rounded-2xl p-6 ${getDashboardAnimClass()}" style="animation-delay: 0.2s">
                           <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Pohyb</h3>
                           <div class="flex flex-col gap-2" id="movement-container">${generateMovementChips(data.movement)}</div>
                       </div>
-                      <div class="glass-card rounded-2xl p-6 stagger-item" style="animation-delay: 0.2s">
+                      <div class="glass-card rounded-2xl p-6 ${getDashboardAnimClass()}" style="animation-delay: 0.2s">
                           <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Léky</h3>
                           <div id="pills-container">${generatePillsChip(data.pills, getPillsStreak())}</div>
                       </div>
@@ -1024,22 +1079,21 @@ export async function renderDashboard(forceRefresh = false) {
                   ` : ''}
                   
                   ${state.settings.dashboardWidgets.supplements ? `
-                  <div class="glass-card rounded-2xl p-6 stagger-item" style="animation-delay: 0.25s">
+                  <div class="glass-card rounded-2xl p-6 ${getDashboardAnimClass()}" style="animation-delay: 0.25s">
                       <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Regenerace & Suplementy</h3>
                       <div class="flex flex-wrap justify-between gap-2" id="supplements-container">${generateSupplementsChips(data.supplements)}</div>
                   </div>
                   ` : ''}
 
-                  ${generateAlpineChallengeWidget()}
-                  ${generateActiveShiftsWidget()}
+                  ${generateAlpskaHlidkaWidget()}
                   ${generateAustrianWordOfTheDayCard()}
 
-                  <div class="stagger-item" style="animation-delay: 0.3s">
+                  <div class="${getDashboardAnimClass()}" style="animation-delay: 0.3s">
                       ${generateDailyQuestionCard()}
                   </div>
                   
-                  ${state.settings.dashboardWidgets.funfacts ? `<div class="stagger-item" style="animation-delay: 0.35s">${generateFactOfTheDay()}</div>` : ''}
-                  ${state.settings.dashboardWidgets.tetris ? `<div id="tetris-tracker-container" class="stagger-item" style="animation-delay: 0.4s">${generateTetrisMiniTracker()}</div>` : ''}
+                  ${state.settings.dashboardWidgets.funfacts ? `<div class="${getDashboardAnimClass()}" style="animation-delay: 0.35s">${generateFactOfTheDay()}</div>` : ''}
+                  ${state.settings.dashboardWidgets.tetris ? `<div id="tetris-tracker-container" class="${getDashboardAnimClass()}" style="animation-delay: 0.4s">${generateTetrisMiniTracker()}</div>` : ''}
               </div>
           </div>
     `;
@@ -1082,6 +1136,30 @@ export function setupDashboardEvents() {
     });
 
     stateEvents.on('settings_changed', () => {
+        if (state.currentChannel === 'dashboard') renderDashboard();
+    });
+
+    stateEvents.on('finances', () => {
+        if (state.currentChannel === 'dashboard') renderDashboard();
+    });
+
+    stateEvents.on('challenges', () => {
+        if (state.currentChannel === 'dashboard') renderDashboard();
+    });
+
+    stateEvents.on('diary', () => {
+        if (state.currentChannel === 'dashboard') renderDashboard();
+    });
+
+    window.addEventListener('finances-updated', () => {
+        if (state.currentChannel === 'dashboard') renderDashboard();
+    });
+
+    window.addEventListener('diary-updated', () => {
+        if (state.currentChannel === 'dashboard') renderDashboard();
+    });
+
+    window.addEventListener('challenges-updated', () => {
         if (state.currentChannel === 'dashboard') renderDashboard();
     });
 

@@ -216,7 +216,7 @@ function renderTodayChallengeHtml(todayKey, dayIndex, isTripStarted) {
                             ${dbRecord.jose_image_url ? `
                                 <div class="glass-card bg-white/[0.02] border border-white/5 rounded-3xl p-4 overflow-hidden flex flex-col gap-2">
                                     <div class="w-full h-48 rounded-2xl overflow-hidden shadow-inner">
-                                        <img src="${dbRecord.jose_image_url}" class="w-full h-full object-cover">
+                                        <img src="${dbRecord.jose_image_url}" loading="lazy" class="w-full h-full object-cover">
                                     </div>
                                     <div class="flex items-start gap-2 mt-1">
                                         <div class="w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500/30 text-[8px] font-black text-blue-300 flex items-center justify-center shadow flex-shrink-0 flex-shrink-0">J</div>
@@ -227,7 +227,7 @@ function renderTodayChallengeHtml(todayKey, dayIndex, isTripStarted) {
                             ${dbRecord.klarka_image_url ? `
                                 <div class="glass-card bg-white/[0.02] border border-white/5 rounded-3xl p-4 overflow-hidden flex flex-col gap-2">
                                     <div class="w-full h-48 rounded-2xl overflow-hidden shadow-inner">
-                                        <img src="${dbRecord.klarka_image_url}" class="w-full h-full object-cover">
+                                        <img src="${dbRecord.klarka_image_url}" loading="lazy" class="w-full h-full object-cover">
                                     </div>
                                     <div class="flex items-start gap-2 mt-1">
                                         <div class="w-6 h-6 rounded-full bg-pink-500/10 border border-pink-500/30 text-[8px] font-black text-pink-300 flex items-center justify-center shadow flex-shrink-0 flex-shrink-0">K</div>
@@ -356,6 +356,7 @@ export function cleanupRealtime() {
         subscription = null;
     }
 }
+window.alpskaVyzvaCleanup = cleanupRealtime;
 
 // Add Custom Challenge Modal
 export function openAddChallengeModal() {
@@ -739,13 +740,13 @@ export function viewChallengeDetail(dateKey, dayNum, isPastOrToday) {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
                     ${dbRecord.jose_image_url ? `
                         <div class="bg-black/30 p-2.5 rounded-xl border border-white/5">
-                            <img src="${dbRecord.jose_image_url}" class="w-full h-32 object-cover rounded-lg">
+                            <img src="${dbRecord.jose_image_url}" loading="lazy" class="w-full h-32 object-cover rounded-lg">
                             <span class="text-[8px] font-black text-blue-300 uppercase tracking-widest mt-1.5 block">🔵 Jožka</span>
                         </div>
                     ` : ''}
                     ${dbRecord.klarka_image_url ? `
                         <div class="bg-black/30 p-2.5 rounded-xl border border-white/5">
-                            <img src="${dbRecord.klarka_image_url}" class="w-full h-32 object-cover rounded-lg">
+                            <img src="${dbRecord.klarka_image_url}" loading="lazy" class="w-full h-32 object-cover rounded-lg">
                             <span class="text-[8px] font-black text-pink-300 uppercase tracking-widest mt-1.5 block">🔴 Klárka</span>
                         </div>
                     ` : ''}

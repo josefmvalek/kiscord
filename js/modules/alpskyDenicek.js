@@ -271,6 +271,7 @@ export function cleanupRealtime() {
         subscription = null;
     }
 }
+window.alpskyDenicekCleanup = cleanupRealtime;
 
 let selectedRating = 5;
 

@@ -431,6 +431,14 @@ function markLoaded(key) {
     state._loaded[key] = true;
 }
 
+// Ochrana paměti - vrací datum N měsíců zpět
+function getMonthsAgoDateString(months) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - months);
+    return d.toISOString().split('T')[0];
+}
+
+
 async function ensureCalendarData(force = false) {
     if (state._loaded.calendar && !force && !isStale('calendar')) return;
     try {
@@ -440,9 +448,10 @@ async function ensureCalendarData(force = false) {
             ensureLibraryData(force)
         ]);
 
+        const sixMonthsAgo = getMonthsAgoDateString(6);
         const [health, dates, school] = await Promise.all([
-            supabase.from('health_data').select('*').eq('user_id', state.currentUser?.id),
-            supabase.from('planned_dates').select('*'),
+            supabase.from('health_data').select('*').eq('user_id', state.currentUser?.id).gte('date_key', sixMonthsAgo),
+            supabase.from('planned_dates').select('*').gte('date_key', sixMonthsAgo),
             supabase.from('school_events').select('*')
         ]);
         if (health.data) health.data.forEach(row => {
@@ -839,7 +848,8 @@ async function ensureAssetsData(force = false) {
 async function ensureShiftsData(force = false) {
     if (state._loaded.shifts && !force && !isStale('shifts')) return;
     try {
-        const { data, error } = await supabase.from('brigade_shifts').select('*');
+        const sixMonthsAgo = getMonthsAgoDateString(6);
+        const { data, error } = await supabase.from('brigade_shifts').select('*').gte('date_key', sixMonthsAgo);
         if (error) {
             console.warn("Could not load shifts from DB, using cache or empty shifts", error);
         }
@@ -892,7 +902,7 @@ async function ensureShiftsData(force = false) {
 async function ensureFinancesData(force = false) {
     if (state._loaded.finances && !force && !isStale('finances')) return;
     try {
-        const { data, error } = await supabase.from('brigade_finances').select('*').order('created_at', { ascending: false });
+        const { data, error } = await supabase.from('brigade_finances').select('*').order('created_at', { ascending: false }).limit(200);
         if (error) throw error;
         state.brigadeFinances = data || [];
         markLoaded('finances');
@@ -905,7 +915,7 @@ async function ensureFinancesData(force = false) {
 async function ensureChallengesData(force = false) {
     if (state._loaded.challenges && !force && !isStale('challenges')) return;
     try {
-        const { data, error } = await supabase.from('brigade_challenges').select('*');
+        const { data, error } = await supabase.from('brigade_challenges').select('*').order('created_at', { ascending: false }).limit(50);
         if (error) throw error;
         state.brigadeChallenges = data || [];
         markLoaded('challenges');
@@ -918,7 +928,7 @@ async function ensureChallengesData(force = false) {
 async function ensureDiaryData(force = false) {
     if (state._loaded.diary && !force && !isStale('diary')) return;
     try {
-        const { data, error } = await supabase.from('brigade_diary').select('*').order('date_key', { ascending: false });
+        const { data, error } = await supabase.from('brigade_diary').select('*').order('date_key', { ascending: false }).limit(60);
         if (error) throw error;
         state.brigadeDiary = data || [];
         markLoaded('diary');
@@ -960,9 +970,11 @@ function resetLazyLoaders() {
  */
 async function ensureAllHealthData() {
     try {
+        const sixMonthsAgo = getMonthsAgoDateString(6);
         const { data, error } = await supabase.from('health_data')
             .select('*')
             .eq('user_id', state.currentUser?.id)
+            .gte('date_key', sixMonthsAgo)
             .order('date_key', { ascending: false });
         
         if (error) throw error;

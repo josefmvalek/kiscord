@@ -221,7 +221,7 @@ function renderGrid() {
                     
                     ${item.image_url ? `
                         <div class="absolute inset-0 rounded-[2rem] overflow-hidden opacity-20 pointer-events-none">
-                            <img src="${item.image_url}" class="w-full h-full object-cover">
+                            <img src="${item.image_url}" loading="lazy" class="w-full h-full object-cover">
                             <div class="absolute inset-0 bg-gradient-to-t from-[#2f3136] via-transparent to-transparent"></div>
                         </div>
                     ` : ''}

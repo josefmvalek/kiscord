@@ -68,7 +68,7 @@ function renderGalleryContent(drawings) {
                             <div class="group bg-[#2f3136] rounded-2xl overflow-hidden border border-[#202225] hover:border-[#eb459e]/50 transition-all duration-300 shadow-lg hover:shadow-[#eb459e]/10 flex flex-col">
                                 <!-- Thumbnail -->
                                 <div class="aspect-square bg-white relative overflow-hidden cursor-pointer" onclick="window.loadModule('drawGallery').then(m => m.viewFullImage('${d.thumbnail}', '${d.title.replace(/'/g, "\\'")}'))">
-                                    <img src="${d.thumbnail}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500">
+                                    <img src="${d.thumbnail}" loading="lazy" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500">
                                     <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                                         <i class="fas fa-search-plus text-white text-3xl"></i>
                                     </div>
@@ -109,9 +109,9 @@ export function viewFullImage(src, title) {
                 <i class="fas fa-times text-xl"></i>
              </button>
         </div>
-        <div class="max-w-4xl w-full h-full flex flex-col items-center justify-center gap-6" onclick="event.stopPropagation()">
-            <img src="${src}" class="max-w-full max-h-[80vh] object-contain shadow-2xl rounded-lg">
-            <h2 class="text-2xl font-bold text-white text-center">${title}</h2>
+        <div class="relative max-w-4xl max-h-[90vh] w-full p-4 flex flex-col items-center" onclick="event.stopPropagation()">
+            <img src="${src}" loading="lazy" class="max-w-full max-h-[80vh] object-contain shadow-2xl rounded-lg">
+            <h2 class="text-2xl font-bold text-white text-center mt-4">${title}</h2>
         </div>
     `;
 

@@ -215,7 +215,7 @@ function renderCardStack() {
             <!-- NEXT CARD (Background) -->
             ${nextItem ? `
             <div class="absolute inset-0 rounded-3xl overflow-hidden border border-white/5 shadow-2xl bg-[#202225] transform translate-y-3 scale-95 opacity-60 z-0 pointer-events-none select-none">
-                <img src="${nextItem.poster_path ? TMDB.getTMDBImageUrl(nextItem.poster_path, 'w342') : ''}" class="w-full h-full object-cover blur-sm opacity-30">
+                <img src="${nextItem.poster_path ? TMDB.getTMDBImageUrl(nextItem.poster_path, 'w342') : ''}" loading="lazy" class="w-full h-full object-cover blur-sm opacity-30">
             </div>
             ` : ''}
 
@@ -236,7 +236,7 @@ function renderCardStack() {
                 <!-- Poster / Image -->
                 <div class="flex-1 bg-[#202225] relative overflow-hidden pointer-events-none select-none">
                     ${activeItem.poster_path 
-                        ? `<img src="${TMDB.getTMDBImageUrl(activeItem.poster_path, 'w342')}" alt="${activeItem.title}" class="w-full h-full object-cover">` 
+                        ? `<img src="${TMDB.getTMDBImageUrl(activeItem.poster_path, 'w342')}" loading="lazy" alt="${activeItem.title}" class="w-full h-full object-cover">` 
                         : `<div class="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#2f3136] to-[#202225] text-8xl">${activeItem.icon || '🎬'}</div>`}
                     
                     <!-- Gradient overlay on bottom of card info -->
@@ -476,7 +476,7 @@ function showMatchWinnerScreen(item) {
             <!-- Glow poster frame -->
             <div class="w-48 h-72 rounded-3xl mx-auto border-4 border-[#eb459e] shadow-[0_0_40px_rgba(235,69,158,0.5)] overflow-hidden bg-[#202225] flex items-center justify-center text-7xl">
                 ${hasPoster 
-                    ? `<img src="${posterUrl}" alt="${item.title}" class="w-full h-full object-cover">` 
+                    ? `<img src="${posterUrl}" loading="lazy" alt="${item.title}" class="w-full h-full object-cover">` 
                     : item.icon || '🎬'}
             </div>
 

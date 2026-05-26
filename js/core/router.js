@@ -288,7 +288,8 @@ export function switchChannel(channelId, push = true) {
     // Centralized Realtime Cleanup
     const cleanups = [
         'achCleanup', 'dailyCleanup', 'bucketCleanup', 'whoCleanup', 'drawCleanup',
-        'cleanupQuestsRealtime', 'calendarCleanup', 'timelineCleanup', 'gymCleanup'
+        'cleanupQuestsRealtime', 'calendarCleanup', 'timelineCleanup', 'gymCleanup',
+        'alpskaVyzvaCleanup', 'alpskyDenicekCleanup'
     ];
     cleanups.forEach(fn => { if (typeof window[fn] === 'function') window[fn](); });
 
