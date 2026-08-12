@@ -59,6 +59,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateGlobalAssetsUI();
         if (state.currentUser) updateUserProfileUI(state.currentUser);
     });
+
+    stateEvents.on('settings_changed', () => {
+        renderChannels();
+    });
     
     exposeGlobals();
 

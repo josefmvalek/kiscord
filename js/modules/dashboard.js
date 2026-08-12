@@ -256,6 +256,8 @@ function getDailyVocab() {
 let renderTimeout = null;
 
 function getDashboardAnimClass() {
+
+
     const container = document.getElementById("messages-container");
     const isFirstNav = !container || container.innerHTML.trim() === "";
     return isFirstNav ? "stagger-item" : "opacity-100 animate-fade-in";
@@ -883,12 +885,20 @@ async function actuallyRenderDashboard(forceRefresh = false) {
         syncDashboardData(forceRefresh);
     }
 
-    // 3. RENDER UI IMMEDIATELY (Optimistic)
     const data = getTodayData();
-    const niceDate = new Date().toLocaleDateString("cs-CZ", { weekday: "long", day: "numeric", month: "long" });
-    const hour = new Date().getHours();
-    let greeting = hour >= 18 ? "Krásný večer" : (hour >= 11 ? "Ahoj" : "Dobré ráno");
+    const todayObj = new Date();
+    const isKlarkaNameDay = todayObj.getMonth() === 7 && todayObj.getDate() === 12;
+
+    if (isKlarkaNameDay && !window._nameDayConfettiFired) {
+        window._nameDayConfettiFired = true;
+        setTimeout(() => { triggerConfetti(); }, 300);
+    }
+
+    const niceDate = todayObj.toLocaleDateString("cs-CZ", { weekday: "long", day: "numeric", month: "long" });
+    const hour = todayObj.getHours();
+    let greeting = isKlarkaNameDay ? "Krásný svátek 🎉" : (hour >= 18 ? "Krásný večer" : (hour >= 11 ? "Ahoj" : "Dobré ráno"));
     const daysTogether = getDaysTogether();
+
 
     const todayStr = new Date().toISOString().split("T")[0];
     const upcomingDates = Object.entries(state.plannedDates || {})
@@ -924,11 +934,14 @@ async function actuallyRenderDashboard(forceRefresh = false) {
                       <div class="pb-2">
                            <p class="text-[10px] font-bold uppercase tracking-wider text-white/90 mb-0.5">${niceDate}</p>
                            <h1 class="text-2xl font-black text-white leading-tight flex items-center gap-3">
-                               <span>${greeting}, <br>${getInflectedName(state.currentUser.name, 5)} 🌞</span>
+                               <span>${isKlarkaNameDay 
+                                   ? `Všechno nejlepší k svátku, <br>${state.currentUser?.name === 'Klárka' ? 'Klárko! 👑🌸' : 'pro Klárku! 🎉🌸'}` 
+                                   : `${greeting}, <br>${getInflectedName(state.currentUser.name, 5)} 🌞`}</span>
                                <div id="dashboard-sync-indicator" class="hidden opacity-40 pb-1">
                                    <i class="fas fa-sync-alt fa-spin text-[10px]"></i>
                                </div>
                            </h1>
+
                           <div class="flex items-center gap-2 mt-3">
                               <div class="bg-white/20 backdrop-blur-md px-2 py-1 rounded text-center border border-white/10" onclick="window.loadModule('dashboard').then(m => m.handleEasterEggClick())">
                                   <span class="block text-[8px] uppercase font-bold text-white leading-none mb-0.5">Spolu</span>
@@ -1054,6 +1067,8 @@ async function actuallyRenderDashboard(forceRefresh = false) {
 
               <div class="max-w-3xl mx-auto px-3 mt-4 space-y-3">
                   ${state.settings.dashboardWidgets.health ? `
+
+
                   <div class="glass-card rounded-2xl p-6 ${getDashboardAnimClass()}" style="animation-delay: 0.05s">
                       <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Jak ses vyspala?</h3>
                       <div id="sleep-container">${generateSleepSlider(data)}</div>
@@ -1085,12 +1100,14 @@ async function actuallyRenderDashboard(forceRefresh = false) {
                   </div>
                   ` : ''}
 
-                  ${generateAlpskaHlidkaWidget()}
-                  ${generateAustrianWordOfTheDayCard()}
+                  ${state.settings.dashboardWidgets.alpskaHlidka ? generateAlpskaHlidkaWidget() : ''}
+                  ${state.settings.dashboardWidgets.austrianWord ? generateAustrianWordOfTheDayCard() : ''}
 
+                  ${state.settings.dashboardWidgets.dailyQuestion ? `
                   <div class="${getDashboardAnimClass()}" style="animation-delay: 0.3s">
                       ${generateDailyQuestionCard()}
                   </div>
+                  ` : ''}
                   
                   ${state.settings.dashboardWidgets.funfacts ? `<div class="${getDashboardAnimClass()}" style="animation-delay: 0.35s">${generateFactOfTheDay()}</div>` : ''}
                   ${state.settings.dashboardWidgets.tetris ? `<div id="tetris-tracker-container" class="${getDashboardAnimClass()}" style="animation-delay: 0.4s">${generateTetrisMiniTracker()}</div>` : ''}

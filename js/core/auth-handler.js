@@ -2,7 +2,7 @@ import { state, initializeState, resetLazyLoaders } from './state.js';
 import { getCurrentUser, signIn, onAuthChange, isJosef, isKlarka } from './auth.js';
 import { getAssetUrl } from './assets.js';
 import { triggerHaptic } from './utils.js';
-import { switchChannel } from './router.js';
+import { switchChannel, renderChannels } from './router.js';
 
 let lastUserId = null;
 
@@ -31,6 +31,7 @@ export async function handleAuthState(event, session) {
                 // Critical background tasks
                 await handleMigrations().catch(e => console.error("Migration Error:", e));
                 await initializeState().catch(e => console.error("InitializeState Error:", e));
+                renderChannels();
 
                 // Auto-register Web Push subscription if notifications already granted
                 if (Notification.permission === 'granted') {

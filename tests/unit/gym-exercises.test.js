@@ -205,4 +205,56 @@ describe('Gym Exercises Management', () => {
       expect(badge).toBeNull();
     });
   });
+
+  describe('Pokročilé logování sérií a Časovač odpočinku', () => {
+    it('should pre-fill sets with type Normal and support set type cycling', async () => {
+      const { cycleSetType } = await import('../../js/modules/gym.js');
+      startWorkout('temp-1');
+
+      // The workout should have 4 sets of Bench Press by default, all 'N' type
+      const cached = JSON.parse(localStorage.getItem('kiscord_active_workout'));
+      expect(cached.exercises[0].sets[0].type).toBe('N');
+
+      // Cycle set type: N -> W
+      cycleSetType(0, 0);
+      const cached2 = JSON.parse(localStorage.getItem('kiscord_active_workout'));
+      expect(cached2.exercises[0].sets[0].type).toBe('W');
+
+      // Cycle set type: W -> D
+      cycleSetType(0, 0);
+      const cached3 = JSON.parse(localStorage.getItem('kiscord_active_workout'));
+      expect(cached3.exercises[0].sets[0].type).toBe('D');
+    });
+
+    it('should load exercise-specific rest timers from template', async () => {
+      // Mock template with specific rest_seconds
+      state.gymTemplates = [
+        { id: 'temp-rest', name: 'Timer Split', exercises: [{ exercise_id: 'bench_press', sets: 3, reps: 8, rest_seconds: 120 }] }
+      ];
+
+      startWorkout('temp-rest');
+
+      const cached = JSON.parse(localStorage.getItem('kiscord_active_workout'));
+      expect(cached.exercises[0].rest_seconds).toBe(120);
+    });
+
+    it('should dynamically append a new ad-hoc exercise during active workout', async () => {
+      const { addExerciseToActiveWorkout } = await import('../../js/modules/gym.js');
+      
+      // Start initial workout
+      state.gymTemplates = [
+        { id: 'temp-1', name: 'Push Split 🦍', exercises: [{ exercise_id: 'bench_press', sets: 4, reps: 8 }] }
+      ];
+      startWorkout('temp-1');
+
+      // Now add 'custom_curl' as ad-hoc exercise
+      addExerciseToActiveWorkout('custom_curl');
+
+      // Verify that active workout cache now has two exercises
+      const cached = JSON.parse(localStorage.getItem('kiscord_active_workout'));
+      expect(cached.exercises.length).toBe(2);
+      expect(cached.exercises[1].exercise_id).toBe('custom_curl');
+      expect(cached.exercises[1].sets.length).toBe(3); // Default 3 sets for ad-hoc with no history
+    });
+  });
 });

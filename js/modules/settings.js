@@ -3,6 +3,7 @@ import { changeTheme, showNotification, showConfirmDialog } from '../core/theme.
 import { triggerHaptic, requestNotificationPermission } from '../core/utils.js';
 import { signOut } from '../core/auth.js';
 import { triggerNotification } from '../core/notifications.js';
+import { channelCategories, renderChannels } from '../core/router.js';
 
 export function renderSettings() {
     const container = document.getElementById("messages-container");
@@ -84,7 +85,6 @@ export function renderSettings() {
                             <i class="fas fa-palette text-[#eb459e]"></i>
                             <h2 class="text-xs font-bold text-[#8e9297] uppercase tracking-wider">Vzhled a Téma</h2>
                         </div>
-                        
                         <!-- Theme Grid -->
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                             ${renderThemeOption('default', 'Kiscord Dark', 'bg-[#36393f]')}
@@ -92,6 +92,8 @@ export function renderSettings() {
                             ${renderThemeOption('valentines', 'Valentýn', 'bg-gradient-to-br from-[#ff7597] to-[#ff4d79]')}
                             ${renderThemeOption('christmas', 'Vánoce', 'bg-gradient-to-br from-red-600 to-green-700')}
                             ${renderThemeOption('tetris', 'Tetris War', 'bg-[#000000]')}
+                            ${renderThemeOption('forest', 'Lesní ticho 🌲', 'bg-gradient-to-br from-[#2d4a2d] to-[#1a2a1a]')}
+                            ${renderThemeOption('gold', 'Zlatý věk 👑', 'bg-gradient-to-br from-[#d4af37] to-[#1a160d]')}
                         </div>
 
                         <!-- Glassmorphism Intensity -->
@@ -130,10 +132,73 @@ export function renderSettings() {
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             ${renderWidgetToggle('health', 'Zdraví a Aktivita', 'Voda, spánek, nálada a pohyb.')}
                             ${renderWidgetToggle('supplements', 'Regenerace a Suplementy', 'Přehled braní suplementů (Železo, Zinek...).')}
+                            ${renderWidgetToggle('scheduleWidget', 'ŠKOLA — Rozvrh VUT FIT 🎓', 'Přehled dnešních přednášek a volných okének.')}
+                            ${renderWidgetToggle('studyPlannerWidget', 'ŠKOLA — Studijní Plánovač 📝', 'Přehled nadcházejících zkoušek a deadlinů.')}
                             ${renderWidgetToggle('tetris', 'Tetris Tracker', 'Tvoje skóre a soupeření s partnerem.')}
                             ${renderWidgetToggle('quests', 'Společné Questy', 'Přehled aktivních úkolů a progresu.')}
                             ${renderWidgetToggle('funfacts', 'Zajímavosti dne', 'Náhodné fakty o zvířatech a světě.')}
                             ${renderWidgetToggle('memoryBoard', 'Nástěnka vzpomínek 📸📌', 'Tvoje 3 nejoblíbenější fotky z timeline.')}
+                            ${renderWidgetToggle('alpskaHlidka', 'Alpská Hlídka 🏔️', 'Směny, rakouské výzvy, deníček a plnění cílů.')}
+                            ${renderWidgetToggle('austrianWord', 'Rakouské Slovíčko Dne 🇦🇹', 'Survival slovníček a flashcards pro Alpy.')}
+                            ${renderWidgetToggle('dailyQuestion', 'Dnešní otázka ❓', 'Naše každodenní společná otázka pro oba.')}
+                        </div>
+
+                    </section>
+
+                    <!-- SIDEBAR CUSTOMIZATION SECTION -->
+                    <section class="space-y-6 pt-6 animate-fade-in">
+                        <div class="flex items-center gap-3 border-b border-white/5 pb-3">
+                            <i class="fas fa-bars text-[#853ee6]"></i>
+                            <h2 class="text-xs font-bold text-[#8e9297] uppercase tracking-wider">Uspořádání bočního panelu</h2>
+                        </div>
+                        
+                        <div class="bg-[#2f3136] p-4 rounded-xl border border-white/5 space-y-4 shadow-inner">
+                            <div class="flex border-b border-white/5 pb-2">
+                                <button onclick="window.setSidebarSettingsTab('toggle')" id="sidebar-tab-toggle" 
+                                    class="flex-1 py-1.5 text-xs font-extrabold tracking-wider uppercase text-center text-white border-b-2 border-[#853ee6] transition-all">
+                                    👁️ Zobrazit / Skrýt
+                                </button>
+                                <button onclick="window.setSidebarSettingsTab('sort')" id="sidebar-tab-sort" 
+                                    class="flex-1 py-1.5 text-xs font-extrabold tracking-wider uppercase text-center text-gray-400 hover:text-white border-b-2 border-transparent transition-all">
+                                    🧩 Řazení kanálů
+                                </button>
+                                <button onclick="window.setSidebarSettingsTab('categories')" id="sidebar-tab-categories" 
+                                    class="flex-1 py-1.5 text-xs font-extrabold tracking-wider uppercase text-center text-gray-400 hover:text-white border-b-2 border-transparent transition-all">
+                                    📂 Řazení sekcí
+                                </button>
+                            </div>
+                            
+                            <!-- Toggle Tab Contents -->
+                            <div id="sidebar-content-toggle" class="space-y-4">
+                                <p class="text-[10px] font-bold text-[#8e9297] uppercase tracking-wider leading-relaxed">Zvolte kanály, které chcete vidět v bočním panelu:</p>
+                                <div class="space-y-5 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
+                                    ${renderAllChannelsTogglesGrouped()}
+                                </div>
+                            </div>
+                            
+                            <!-- Sort Tab Contents (Draggable list) -->
+                            <div id="sidebar-content-sort" class="hidden space-y-4">
+                                <p class="text-[10px] font-bold text-[#8e9297] uppercase tracking-wider leading-relaxed">Přetažením karet nahoru nebo dolů si přizpůsobte pořadí kanálů:</p>
+                                <div class="space-y-5 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
+                                    ${renderDraggableChannelsListGrouped()}
+                                </div>
+                            </div>
+
+                            <!-- Category Sort Tab Contents (Draggable list) -->
+                            <div id="sidebar-content-categories" class="hidden space-y-4">
+                                <p class="text-[10px] font-bold text-[#8e9297] uppercase tracking-wider leading-relaxed">Přetažením sekcí si přizpůsobte pořadí celých kategorií v panelu:</p>
+                                <div id="sortable-categories-list" class="space-y-2 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
+                                    ${renderDraggableCategoriesList()}
+                                </div>
+                            </div>
+
+                            <!-- Controls -->
+                            <div class="flex justify-end pt-3 border-t border-white/5">
+                                <button onclick="window.resetSidebarLayout()" 
+                                    class="px-4 py-2 bg-[#202225] hover:bg-gray-800 text-gray-300 rounded-lg text-[10px] font-black uppercase tracking-widest border border-gray-700/50 hover:border-gray-600 transition-all flex items-center gap-1.5 active:scale-95">
+                                    <i class="fas fa-undo text-[9px]"></i> <span>Obnovit výchozí</span>
+                                </button>
+                            </div>
                         </div>
                     </section>
 
@@ -356,6 +421,148 @@ export function renderSettings() {
 
     // Initial status check
     setTimeout(window.updateBrowserNotifStatus, 100);
+
+    // Initialize SortableJS for all category lists (channels reordering)
+    setTimeout(() => {
+        const sortContainers = document.querySelectorAll('.sortable-category-list');
+        if (sortContainers.length > 0 && typeof Sortable !== 'undefined') {
+            sortContainers.forEach(container => {
+                new Sortable(container, {
+                    group: 'channels', // Enable dragging between category lists!
+                    animation: 150,
+                    onEnd: function(evt) {
+                        const targetCategoryName = evt.to.getAttribute('data-category');
+                        const channelId = evt.item.getAttribute('data-id');
+                        
+                        if (targetCategoryName && channelId) {
+                            if (!state.settings.sidebar.channelCategoryMap) {
+                                state.settings.sidebar.channelCategoryMap = {};
+                            }
+                            if (targetCategoryName === 'main') {
+                                delete state.settings.sidebar.channelCategoryMap[channelId];
+                            } else {
+                                state.settings.sidebar.channelCategoryMap[channelId] = targetCategoryName;
+                            }
+                        }
+
+                        const allCards = document.querySelectorAll('.sortable-category-list [data-id]');
+                        const newOrder = Array.from(allCards).map(card => card.getAttribute('data-id'));
+                        
+                        state.settings.sidebar.channelOrder = newOrder;
+                        saveStateToCache();
+                        
+                        // Instant sidebar redraw!
+                        renderChannels();
+                    }
+                });
+            });
+        }
+
+        // Initialize SortableJS for sections reordering
+        const catContainer = document.getElementById('sortable-categories-list');
+        if (catContainer && typeof Sortable !== 'undefined') {
+            new Sortable(catContainer, {
+                animation: 150,
+                onEnd: function() {
+                    const cards = catContainer.querySelectorAll('[data-name]');
+                    const newCatOrder = Array.from(cards).map(card => card.getAttribute('data-name'));
+                    
+                    state.settings.sidebar.categoryOrder = newCatOrder;
+                    saveStateToCache();
+                    
+                    // Instant sidebar redraw!
+                    renderChannels();
+                }
+            });
+        }
+    }, 150);
+
+    window.setSidebarSettingsTab = (tab) => {
+        triggerHaptic('light');
+        const toggleBtn = document.getElementById('sidebar-tab-toggle');
+        const sortBtn = document.getElementById('sidebar-tab-sort');
+        const catBtn = document.getElementById('sidebar-tab-categories');
+        const toggleContent = document.getElementById('sidebar-content-toggle');
+        const sortContent = document.getElementById('sidebar-content-sort');
+        const catContent = document.getElementById('sidebar-content-categories');
+        
+        // Remove active states
+        [toggleBtn, sortBtn, catBtn].forEach(btn => {
+            btn?.classList.remove('border-[#853ee6]', 'text-white');
+            btn?.classList.add('border-transparent', 'text-gray-400');
+        });
+        
+        // Hide all tabs
+        [toggleContent, sortContent, catContent].forEach(content => {
+            content?.classList.add('hidden');
+        });
+        
+        // Activate current
+        if (tab === 'toggle') {
+            toggleBtn?.classList.add('border-[#853ee6]', 'text-white');
+            toggleBtn?.classList.remove('border-transparent', 'text-gray-400');
+            toggleContent?.classList.remove('hidden');
+        } else if (tab === 'sort') {
+            sortBtn?.classList.add('border-[#853ee6]', 'text-white');
+            sortBtn?.classList.remove('border-transparent', 'text-gray-400');
+            sortContent?.classList.remove('hidden');
+        } else if (tab === 'categories') {
+            catBtn?.classList.add('border-[#853ee6]', 'text-white');
+            catBtn?.classList.remove('border-transparent', 'text-gray-400');
+            catContent?.classList.remove('hidden');
+        }
+    };
+
+    window.toggleChannelVisibility = (id, el) => {
+        triggerHaptic('light');
+        const hidden = state.settings.sidebar.hiddenChannels || [];
+        const index = hidden.indexOf(id);
+        
+        if (index === -1) {
+            hidden.push(id);
+        } else {
+            hidden.splice(index, 1);
+        }
+        
+        state.settings.sidebar.hiddenChannels = hidden;
+        saveStateToCache();
+        
+        const bg = el.querySelector('.rounded-full');
+        const dot = el.querySelector('.absolute.bg-white');
+        const isVisible = !hidden.includes(id);
+        
+        if (bg && dot) {
+            if (isVisible) {
+                bg.classList.replace('bg-[#4f545c]', 'bg-[#3ba55c]');
+                dot.classList.add('translate-x-4');
+            } else {
+                bg.classList.replace('bg-[#3ba55c]', 'bg-[#4f545c]');
+                dot.classList.remove('translate-x-4');
+            }
+        }
+        
+        // Instant redraw and sync
+        renderChannels();
+        
+        // Debounce settings page refresh to keep draggable list synchronized
+        clearTimeout(window._settingsRefreshTimeout);
+        window._settingsRefreshTimeout = setTimeout(() => {
+            refreshSettings();
+        }, 1200);
+    };
+
+    window.resetSidebarLayout = () => {
+        triggerHaptic('medium');
+        state.settings.sidebar.hiddenChannels = [];
+        state.settings.sidebar.channelOrder = [];
+        state.settings.sidebar.categoryOrder = [];
+        state.settings.sidebar.channelCategoryMap = {};
+        saveStateToCache();
+        
+        showNotification("Boční panel obnoven do výchozího stavu! 🔄", "success");
+        renderChannels();
+        refreshSettings();
+    };
 
     window.handleSettingsSignOut = async () => {
         if (await showConfirmDialog("Opravdu se chceš odhlásit?")) {
@@ -826,3 +1033,220 @@ window.migrateManualMoviesToTMDB = async () => {
         showNotification("Chyba při migraci: " + err.message, "error");
     }
 };
+
+// =========================================================================
+// HELPERS PRO USPOŘÁDÁNÍ BOČNÍHO PANELU
+// =========================================================================
+
+function cleanTitle(title) {
+    if (!title) return '';
+    return title.replace(/^[\s\p{Emoji}]+/u, '').trim();
+}
+
+function renderChannelToggle(id, name, iconHtml) {
+    const hidden = state.settings.sidebar?.hiddenChannels || [];
+    const isVisible = !hidden.includes(id);
+    
+    return `
+        <div class="bg-[#202225] p-3.5 rounded-xl border border-white/5 flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-2 min-w-0">
+                <span class="w-5 text-center flex items-center justify-center flex-shrink-0 text-sm">${iconHtml}</span>
+                <span class="text-white text-xs font-extrabold truncate uppercase tracking-wider">${cleanTitle(name)}</span>
+            </div>
+            <div class="relative inline-flex items-center cursor-pointer flex-shrink-0" onclick="window.toggleChannelVisibility('${id}', this)">
+                <div class="w-9 h-5 rounded-full transition-colors ${isVisible ? 'bg-[#3ba55c]' : 'bg-[#4f545c]'}"></div>
+                <div class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full transition-transform ${isVisible ? 'translate-x-4' : ''}"></div>
+            </div>
+        </div>
+    `;
+}
+
+function renderAllChannelsTogglesGrouped() {
+    let html = "";
+    
+    // 1. Render Hlavní Kanály
+    html += `
+        <div class="space-y-2.5">
+            <div class="text-[10px] font-black text-[#eb459e] uppercase tracking-[1.5px] border-b border-white/5 pb-1 flex items-center gap-1.5">
+                <i class="fas fa-star text-[9px]"></i> <span>Hlavní Kanály</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                ${renderChannelToggle('dashboard', 'Můj Den', '<i class="fas fa-heart text-[#eb459e]"></i>')}
+                ${renderChannelToggle('calendar', 'Kalendář', '<i class="fas fa-calendar-alt text-[#5865F2]"></i>')}
+            </div>
+        </div>
+    `;
+
+    // 2. Render rest of categories
+    channelCategories.forEach(cat => {
+        html += `
+            <div class="space-y-2.5 mt-5">
+                <div class="text-[10px] font-black text-gray-400 uppercase tracking-[1.5px] border-b border-white/5 pb-1 flex items-center gap-1.5">
+                    <i class="fas fa-folder-open text-[9px] text-gray-500"></i> <span>${cat.name}</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                    ${cat.items.map(item => renderChannelToggle(item.id, item.name, item.icon)).join('')}
+                </div>
+            </div>
+        `;
+    });
+    
+    return html;
+}
+
+function renderDraggableChannelsListGrouped() {
+    const hidden = state.settings.sidebar?.hiddenChannels || [];
+    const order = state.settings.sidebar?.channelOrder || [];
+    const catMap = state.settings.sidebar?.channelCategoryMap || {};
+
+    const mainChannelDefinitions = {
+        dashboard: { id: 'dashboard', name: 'Můj Den', icon: '<i class="fas fa-heart text-[#eb459e]"></i>' },
+        calendar: { id: 'calendar', name: 'Kalendář', icon: '<i class="fas fa-calendar-alt text-[#5865F2]"></i>' }
+    };
+    
+    let html = "";
+    
+    // 1. Hlavní Kanály (only render in main if not moved to a category)
+    const mainItems = [];
+    if (!hidden.includes('dashboard') && !catMap['dashboard']) {
+        mainItems.push(mainChannelDefinitions.dashboard);
+    }
+    if (!hidden.includes('calendar') && !catMap['calendar']) {
+        mainItems.push(mainChannelDefinitions.calendar);
+    }
+    
+    if (mainItems.length > 0) {
+        mainItems.sort((a, b) => {
+            const indexA = order.indexOf(a.id);
+            const indexB = order.indexOf(b.id);
+            if (indexA === -1 && indexB === -1) return 0;
+            if (indexA === -1) return 1;
+            if (indexB === -1) return -1;
+            return indexA - indexB;
+        });
+
+        html += `
+            <div class="space-y-2.5">
+                <div class="text-[10px] font-black text-[#eb459e] uppercase tracking-[1.5px] border-b border-white/5 pb-1 flex items-center gap-1.5">
+                    <i class="fas fa-star text-[9px]"></i> <span>Hlavní Kanály</span>
+                </div>
+                <div class="sortable-category-list space-y-2" data-category="main">
+                    ${mainItems.map(item => renderDraggableItemHtml(item)).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    // Deep clone sidebar categories
+    const clonedCategories = channelCategories.map(cat => ({
+        name: cat.name,
+        items: [...cat.items]
+    }));
+
+    // Restructure categories dynamically according to the channelCategoryMap settings
+    Object.entries(catMap).forEach(([channelId, targetCatName]) => {
+        let foundItem = null;
+        let sourceCat = null;
+
+        clonedCategories.forEach(cat => {
+            const idx = cat.items.findIndex(item => item.id === channelId);
+            if (idx !== -1) {
+                foundItem = cat.items[idx];
+                sourceCat = cat;
+                cat.items.splice(idx, 1);
+            }
+        });
+
+        // If it's a main channel (dashboard or calendar) and not found in categories
+        if (!foundItem && mainChannelDefinitions[channelId]) {
+            foundItem = mainChannelDefinitions[channelId];
+        }
+
+        if (foundItem) {
+            const targetCat = clonedCategories.find(cat => cat.name === targetCatName);
+            if (targetCat) {
+                targetCat.items.push(foundItem);
+            } else if (sourceCat) {
+                sourceCat.items.push(foundItem);
+            }
+        }
+    });
+
+    // 2. Render each sidebar category (respecting categoryOrder)
+    const catOrder = state.settings.sidebar?.categoryOrder || [];
+    const sortedCats = [...clonedCategories];
+    sortedCats.sort((a, b) => {
+        const indexA = catOrder.indexOf(a.name);
+        const indexB = catOrder.indexOf(b.name);
+        if (indexA === -1 && indexB === -1) return 0;
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+    });
+
+    sortedCats.forEach(cat => {
+        const visibleItems = cat.items.filter(item => !hidden.includes(item.id));
+        if (visibleItems.length === 0) return;
+        
+        visibleItems.sort((a, b) => {
+            const indexA = order.indexOf(a.id);
+            const indexB = order.indexOf(b.id);
+            if (indexA === -1 && indexB === -1) return 0;
+            if (indexA === -1) return 1;
+            if (indexB === -1) return -1;
+            return indexA - indexB;
+        });
+
+        html += `
+            <div class="space-y-2.5 mt-5">
+                <div class="text-[10px] font-black text-gray-400 uppercase tracking-[1.5px] border-b border-white/5 pb-1 flex items-center gap-1.5">
+                    <i class="fas fa-folder-open text-[9px] text-gray-500"></i> <span>${cat.name}</span>
+                </div>
+                <div class="sortable-category-list space-y-2" data-category="${cat.name}">
+                    ${visibleItems.map(item => renderDraggableItemHtml(item)).join('')}
+                </div>
+            </div>
+        `;
+    });
+    
+    return html;
+}
+
+function renderDraggableItemHtml(item) {
+    return `
+        <div class="bg-[#202225] p-3 rounded-xl border border-white/5 flex items-center justify-between cursor-grab active:cursor-grabbing hover:bg-gray-800/40 transition-all select-none shadow-sm" data-id="${item.id}">
+            <div class="flex items-center gap-3 min-w-0">
+                <span class="text-white/30 text-xs flex-shrink-0 cursor-grab"><i class="fas fa-grip-vertical"></i></span>
+                <span class="w-5 text-center flex items-center justify-center flex-shrink-0 text-sm">${item.icon}</span>
+                <span class="text-white text-xs font-black uppercase tracking-wider truncate">${cleanTitle(item.name || item.title)}</span>
+            </div>
+            <div class="text-[9px] font-black text-gray-500 uppercase tracking-widest flex-shrink-0"><i class="fas fa-arrows-alt-v mr-1"></i> Přetáhnout</div>
+        </div>
+    `;
+}
+
+function renderDraggableCategoriesList() {
+    const catOrder = state.settings.sidebar?.categoryOrder || [];
+    const sortedCats = [...channelCategories];
+    
+    // Sort categories according to their saved order
+    sortedCats.sort((a, b) => {
+        const indexA = catOrder.indexOf(a.name);
+        const indexB = catOrder.indexOf(b.name);
+        if (indexA === -1 && indexB === -1) return 0;
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+    });
+
+    return sortedCats.map(cat => `
+        <div class="bg-[#202225] p-3.5 rounded-xl border border-white/5 flex items-center justify-between cursor-grab active:cursor-grabbing hover:bg-gray-800/40 transition-all select-none shadow-sm animate-fade-in" data-name="${cat.name}">
+            <div class="flex items-center gap-3 min-w-0">
+                <span class="text-white/30 text-xs flex-shrink-0 cursor-grab"><i class="fas fa-grip-vertical"></i></span>
+                <span class="w-5 text-center flex items-center justify-center flex-shrink-0 text-sm text-gray-500"><i class="fas fa-folder-open text-xs"></i></span>
+                <span class="text-white text-xs font-black uppercase tracking-wider truncate">${cat.name}</span>
+            </div>
+            <div class="text-[9px] font-black text-gray-500 uppercase tracking-widest flex-shrink-0"><i class="fas fa-arrows-alt-v mr-1"></i> Přetáhnout sekci</div>
+        </div>
+    `).join('');
+}

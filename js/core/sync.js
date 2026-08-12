@@ -304,6 +304,57 @@ export function setupRealtimeSync() {
         }, (payload) => {
              window.dispatchEvent(new CustomEvent('vocab-updated', { detail: payload }));
         })
+        // L. Handle Database Changes (Profiles for Love Coins Sync)
+        .on('postgres_changes', {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles'
+        }, (payload) => {
+             const row = payload.new;
+             if (!row) return;
+             
+             const coins = row.love_coins || 0;
+             if (row.id === state.user_ids.jose) {
+                 state.loveCoins.jose = coins;
+             } else if (row.id === state.user_ids.klarka) {
+                 state.loveCoins.klarka = coins;
+             }
+             
+             window.dispatchEvent(new CustomEvent('love-shop-updated'));
+             if (typeof window.renderLevelUI === 'function') window.renderLevelUI();
+        })
+        // M. Handle Database Changes (User Coupons / Inventory Sync)
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'user_coupons'
+        }, (payload) => {
+             if (state.currentUser?.id) {
+                 supabase
+                     .from('user_coupons')
+                     .select('*, love_shop_items(*)')
+                     .eq('owner_id', state.currentUser.id)
+                     .order('is_redeemed', { ascending: true })
+                     .order('has_star', { ascending: false })
+                     .order('created_at', { ascending: false })
+                     .then(({ data }) => {
+                          if (data) {
+                              if (payload.eventType === 'INSERT' && payload.new && payload.new.owner_id === state.currentUser?.id) {
+                                  import('./utils.js').then(m => {
+                                      m.triggerConfetti?.();
+                                      m.triggerHaptic?.('success');
+                                  });
+                                  if (typeof window.showNotification === 'function') {
+                                      const partnerName = state.currentUser?.name === 'Jožka' ? 'Klárka' : 'Jožka';
+                                      window.showNotification(`🎁 Dostal/a jsi nový kupón od ${partnerName}!`, 'success');
+                                  }
+                              }
+                              state.inventory = data;
+                              window.dispatchEvent(new CustomEvent('love-shop-updated'));
+                          }
+                     });
+             }
+        })
         .subscribe((status) => {
             console.log(`[Sync] Realtime status: ${status}`);
         });

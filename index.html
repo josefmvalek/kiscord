@@ -128,7 +128,7 @@
           class="h-[52px] bg-[var(--bg-tertiary)] flex items-center px-2 w-full cursor-pointer hover:bg-[#34373c] transition select-none"
           onclick="toggleUserPopout()">
           <div class="relative w-8 h-8 mr-2 group">
-            <img id="sidebar-user-avatar" src="/img/app/klarka_profilovka.webp" alt="Avatar"
+            <img id="sidebar-user-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%235865F2'/%3E%3Ctext x='50' y='65' font-size='45' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E🦝%3C/text%3E%3C/svg%3E" alt="Avatar"
               class="w-8 h-8 rounded-full object-cover" loading="lazy" />
             <div
               class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--green)] rounded-full border-2 border-[#292b2f]">
@@ -140,9 +140,13 @@
               #1337 • <span id="user-status">Online</span>
             </div>
           </div>
+          <button onclick="event.stopPropagation(); window.switchChannel('settings')" class="w-8 h-8 flex flex-shrink-0 items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all" title="Otevřít Nastavení">
+            <i class="fas fa-cog text-sm hover:rotate-90 transition-transform duration-300"></i>
+          </button>
         </div>
       </div>
     </div>
+
 
     <div id="mobile-overlay" onclick="toggleMobileMenu()"
       class="fixed inset-0 bg-black/60 z-40 hidden md:hidden backdrop-blur-sm transition-opacity"></div>
@@ -174,6 +178,7 @@
         class="flex-1 overflow-y-auto min-h-0 px-0 py-0 custom-scrollbar flex flex-col bg-[#36393f] relative"></div>
     </div>
 
+
     <!-- MEMBER LIST -->
     <div
       class="w-60 bg-[var(--bg-secondary)] hidden lg:flex flex-col p-3 flex-shrink-0 border-l border-[var(--bg-tertiary)] z-20">
@@ -182,7 +187,7 @@
       </h3>
       <div class="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-[var(--bg-primary)] cursor-pointer group">
         <div class="relative">
-          <img id="online-avatar-jozka" src="/img/app/jozka_profilovka.jpg" alt="Jožka" class="w-8 h-8 rounded-full object-cover"
+          <img id="online-avatar-jozka" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%235865F2'/%3E%3Ctext x='50' y='65' font-size='45' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E🦝%3C/text%3E%3C/svg%3E" alt="Jožka" class="w-8 h-8 rounded-full object-cover"
             loading="lazy" />
           <div
             class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--green)] rounded-full border-2 border-[#2f3136]">
@@ -197,7 +202,7 @@
       </div>
       <div class="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-[var(--bg-primary)] cursor-pointer group mt-1">
         <div class="relative">
-          <img id="online-avatar-klarka" src="/img/app/klarka_profilovka.webp" alt="Klárka" class="w-8 h-8 rounded-full object-cover" />
+          <img id="online-avatar-klarka" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23eb459e'/%3E%3Ctext x='50' y='65' font-size='45' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E🦉%3C/text%3E%3C/svg%3E" alt="Klárka" class="w-8 h-8 rounded-full object-cover" />
           <div
             class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--green)] rounded-full border-2 border-[#2f3136]">
           </div>
@@ -210,7 +215,15 @@
     </div>
   </div>
 
+  <!-- Floating Settings Quick Button -->
+  <button onclick="window.switchChannel('settings')"
+    class="fixed bottom-5 right-5 z-40 w-11 h-11 bg-[#2f3136] hover:bg-[#5865F2] text-gray-400 hover:text-white rounded-2xl border border-white/10 shadow-2xl flex items-center justify-center text-base transition-all duration-300 hover:scale-110 active:scale-95 group"
+    title="Otevřít Nastavení">
+    <i class="fas fa-cog group-hover:rotate-90 transition-transform duration-500"></i>
+  </button>
+
   <!-- ========== MODALS ========== -->
+
 
   <!-- Non-critical scripts/styles loaded at the end -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'" />

@@ -80,6 +80,15 @@ function triggerLevelUp(level) {
     
     const titleInfo = getLevelTitle(level);
     
+    // Server-side Level Up odměna (+20 coinů oběma)
+    supabase.rpc('reward_level_up', { new_level: level })
+        .then(({ data }) => {
+            if (data) {
+                console.log(`[Levels] Server-side Level Up odměna (+20 coinů) úspěšně připsána za level ${level}!`);
+            }
+        })
+        .catch(e => console.warn('[Levels] Nepodařilo se připsat Level Up odměnu na serveru:', e));
+    
     // Automaticky aplikovat nové téma, pokud je odemčeno
     if (titleInfo.theme) {
         changeTheme(titleInfo.theme);
@@ -134,10 +143,19 @@ function renderSidebarLevel() {
     const progressXP = currentXP % XP_PER_LEVEL;
     const percentage = Math.round((progressXP / XP_PER_LEVEL) * 100);
 
+    const coins = (state.currentUser?.id === state.user_ids?.jose) ? (state.loveCoins?.jose || 0) : 
+                  ((state.currentUser?.id === state.user_ids?.klarka) ? (state.loveCoins?.klarka || 0) : 0);
+
     badge.innerHTML = `
         <div class="flex justify-between items-center mb-1">
             <span class="text-[10px] font-black text-white uppercase tracking-wider">Level ${currentLevel}</span>
-            <span class="text-[9px] text-[#faa61a] font-bold">${currentXP} XP</span>
+            <span class="text-[9px] text-[#faa61a] font-bold flex items-center gap-1.5">
+                <span>${currentXP} XP</span>
+                <span class="text-gray-600">•</span>
+                <span class="text-yellow-400 font-black flex items-center gap-0.5 animate-pulse" id="sidebar-coins-display">
+                    ${coins} <i class="fas fa-coins text-[8px]"></i>
+                </span>
+            </span>
         </div>
         <div class="w-full h-1.5 bg-[#2f3136] rounded-full overflow-hidden">
             <div class="h-full bg-gradient-to-r ${titleInfo.color} transition-all duration-1000" style="width: ${percentage}%"></div>
@@ -145,5 +163,5 @@ function renderSidebarLevel() {
         <span class="text-[9px] text-gray-500 font-medium truncate italic mt-1 text-center">${titleInfo.name}</span>
     `;
     
-    badge.title = `Do dalšího levelu zbývá ${XP_PER_LEVEL - progressXP} XP`;
+    badge.title = `Do dalšího levelu zbývá ${XP_PER_LEVEL - progressXP} XP • Máš ${coins} Love Coinů`;
 }

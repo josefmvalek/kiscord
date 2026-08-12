@@ -453,7 +453,8 @@ export function selectLocation(id) {
         }
 
         // Google Maps URL
-        const mapsUrl = loc.url ? loc.url : "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(loc.name + " Česká republika");
+        const searchSuffix = (loc.country === 'AT') ? " Zell am See, Rakousko" : " Česká republika";
+        const mapsUrl = loc.url ? loc.url : "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(loc.name + searchSuffix);
 
         // Gather photos from state.timelineEvents — defensively parse images field
         // (Supabase may return JSON arrays as strings in some edge cases)
