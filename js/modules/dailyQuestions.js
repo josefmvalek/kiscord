@@ -1,5 +1,5 @@
 import { supabase } from '../core/supabase.js';
-import { state, saveStateToCache } from '../core/state.js';
+import { state, saveStateToCache, awardLoveCoinsToCurrentUser } from '../core/state.js';
 import { safeInsert } from '../core/offline.js';
 import { triggerHaptic } from '../core/utils.js';
 
@@ -186,6 +186,9 @@ export async function submitAnswer() {
 
         saveStateToCache();
         
+        // Award +3 Love Coins
+        await awardLoveCoinsToCurrentUser(3, 'odpověď na denní otázku');
+
         // Notify other components (like Dashboard)
         window.dispatchEvent(new CustomEvent('daily-questions-updated'));
 

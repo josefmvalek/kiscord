@@ -1,4 +1,4 @@
-import { state } from '../core/state.js';
+import { state, awardLoveCoinsToCurrentUser } from '../core/state.js';
 import { supabase } from '../core/supabase.js';
 import { triggerHaptic } from '../core/utils.js';
 import { uploadFile, deleteFile } from '../core/storage.js';
@@ -398,6 +398,9 @@ export async function sendLetter() {
 
         // Achievement Hook: Letter Writer
         import('./achievements.js').then(m => m.autoUnlock('letter_writer'));
+
+        // Award +5 Love Coins
+        await awardLoveCoinsToCurrentUser(5, 'odeslání zamilovaného dopisu');
 
         import('../core/sound.js').then(m => m.playChime());
         triggerHaptic('success');

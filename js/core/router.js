@@ -34,6 +34,7 @@ export const moduleMap = {
     'gym-tracker': () => import('../modules/gym.js'),
     'austria-info': () => import('../modules/austriaInfo.js'),
     'love-shop': () => import('../modules/loveShop.js'),
+    'dorm-hub': () => import('../modules/dormHub.js'),
     'schedule': () => import('../modules/schedule.js'),
     'study-planner': () => import('../modules/studyPlanner.js'),
     'laptop-comparison': () => import('../modules/laptopComparison.js'),
@@ -46,10 +47,11 @@ const isPostAustria = new Date() > new Date('2026-08-31T23:59:59');
 
 export const channelCategories = [
     {
-        name: "ŠKOLA 🎓",
+        name: "ŠKOLA VUT FIT 🎓",
         items: [
             { id: 'schedule', name: 'rozvrh', icon: '<i class="fas fa-calendar-week"></i>', type: 'text', color: '#5865F2', desc: 'Náš společný rozvrh na VUT FIT 📚' },
-            { id: 'study-planner', name: 'studijní-plán', icon: '<i class="fas fa-tasks"></i>', type: 'text', color: '#3ba55c', desc: 'Zkoušky, projekty a deadliny 📝' },
+            { id: 'study-planner', name: 'studijní-plán', icon: '<i class="fas fa-tasks"></i>', type: 'text', color: '#3ba55c', desc: 'Zkoušky, WIS body a projekty 🎯' },
+            { id: 'dorm-hub', name: 'koleje-brno', icon: '<i class="fas fa-building"></i>', type: 'text', color: '#faa61a', desc: 'Prádelník, checklist na pokoj & menzy 🏢' },
             { id: 'laptop-comparison', name: 'počítač', icon: '<i class="fas fa-laptop"></i>', type: 'text', color: '#faa61a', desc: 'Průvodce a srovnání notebooků na VUT FIT 💻✨' }
         ]
     },
@@ -538,6 +540,9 @@ export function switchChannel(channelId, push = true) {
             break;
         case 'study-planner':
             moduleMap['study-planner']().then(m => m.renderStudyPlanner()).catch(navErr);
+            break;
+        case 'dorm-hub':
+            moduleMap['dorm-hub']().then(m => m.renderDormHub()).catch(navErr);
             break;
         case 'laptop-comparison':
             moduleMap['laptop-comparison']().then(m => m.renderLaptopComparison()).catch(navErr);

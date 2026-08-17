@@ -504,6 +504,57 @@ export async function broadcastTinderMatch(media) {
 }
 
 /**
+ * Sends notification and broadcast when a coupon is gifted to the partner.
+ */
+export async function notifyPartnerCouponGifted(couponTitle, note = '') {
+    if (mainChannel) {
+        await mainChannel.send({
+            type: 'broadcast',
+            event: 'coupon-gifted',
+            payload: {
+                from: state.currentUser?.id,
+                title: couponTitle,
+                note: note
+            }
+        });
+    }
+
+    const senderName = state.currentUser?.name || 'Partner';
+    const bodyText = note 
+        ? `${senderName} ti daroval/a: "${couponTitle}" 🎁\nVzkaz: "${note}"`
+        : `${senderName} ti daroval/a nový kupón: "${couponTitle}" 🎁`;
+
+    sendPushToPartner(
+        'Nový kupón ve Spížce! 🎁',
+        bodyText,
+        'coupon-gifted'
+    );
+}
+
+/**
+ * Sends notification and broadcast when a coupon is redeemed by the user.
+ */
+export async function notifyPartnerCouponRedeemed(couponTitle) {
+    if (mainChannel) {
+        await mainChannel.send({
+            type: 'broadcast',
+            event: 'coupon-redeemed',
+            payload: {
+                from: state.currentUser?.id,
+                title: couponTitle
+            }
+        });
+    }
+
+    const redeemerName = state.currentUser?.name || 'Partner';
+    sendPushToPartner(
+        'Kupón uplatněn! 🔔',
+        `${redeemerName} právě uplatnil/a kupón: "${couponTitle}"! ✨`,
+        'coupon-redeemed'
+    );
+}
+
+/**
  * Cleans up subscriptions (e.g., on sign out).
  */
 export function cleanupRealtimeSync() {
@@ -513,3 +564,4 @@ export function cleanupRealtimeSync() {
     }
     cachedPartnerId = null; // Reset cache při odhlášení
 }
+

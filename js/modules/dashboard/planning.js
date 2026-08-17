@@ -5,7 +5,7 @@ import { showNotification } from '../../core/theme.js';
 import { broadcastPlanUpdate } from '../../core/sync.js';
 
 let dashboardTimer = null;
-let quickPlanData = { cat: 'discord', name: '', time: '' };
+let quickPlanData = { cat: 'date', name: '', time: '19:00' };
 
 export function getCategoryIcon(cat) {
     const icons = { food: '🍔', walk: '🌲', view: '⛰️', fun: '⚡', movie: '🎬', discord: '🎧', game: '🎮', date: '🥂' };
@@ -48,74 +48,86 @@ export async function handleNextDateClick(dateKey) {
 export function showQuickPlanModal(step = 1) {
     import('../../core/ui.js').then(ui => {
         let content = '';
-        let title = 'Naplánovat něco?';
+        let title = 'Naplánovat rande či hovor? 🥂';
 
         if (step === 1) {
             title = 'Co podnikneme?';
             content = `
-                <div class="grid grid-cols-1 gap-3">
-                    <button onclick="window.loadModule('dashboard').then(m => m.selectQuickPlanCategory('discord'))" 
-                            class="bg-black/20 hover:bg-[#5865F2]/20 p-5 rounded-2xl border border-white/5 hover:border-[#5865F2]/50 transition-all flex items-center gap-4 group">
-                        <div class="text-3xl bg-[#5865F2]/10 p-3 rounded-xl group-hover:scale-110 transition">🎧</div>
-                        <div class="text-left">
-                            <div class="font-bold text-white uppercase text-xs tracking-widest">Discord Call</div>
-                            <p class="text-[10px] text-gray-500">Pokec, streamování nebo jen tak být spolu.</p>
+                <div class="grid grid-cols-1 gap-2.5">
+                    <button onclick="window.selectQuickPlanCategory('date')" 
+                            class="bg-[#2b2d31] hover:bg-[#35373c] p-4 rounded-2xl border border-[#202225] hover:border-[#eb459e]/50 transition-all flex items-center gap-4 text-left group cursor-pointer active:scale-98">
+                        <div class="text-3xl bg-[#eb459e]/15 p-3 rounded-xl group-hover:scale-110 transition">🥂</div>
+                        <div>
+                            <div class="font-black text-white uppercase text-xs tracking-wider flex items-center gap-1.5">
+                                Rande / Dobrodružství <span class="text-[10px] text-[#eb459e]">❤️</span>
+                            </div>
+                            <p class="text-xs text-[#949ba4] mt-0.5">Večeře, procházka, piknik nebo společný výlet.</p>
                         </div>
                     </button>
-                    <button onclick="window.loadModule('dashboard').then(m => m.selectQuickPlanCategory('date'))" 
-                            class="bg-black/20 hover:bg-[#eb459e]/20 p-5 rounded-2xl border border-white/5 hover:border-[#eb459e]/50 transition-all flex items-center gap-4 group">
-                        <div class="text-3xl bg-[#eb459e]/10 p-3 rounded-xl group-hover:scale-110 transition">🥂</div>
-                        <div class="text-left">
-                            <div class="font-bold text-white uppercase text-xs tracking-widest">Rande</div>
-                            <p class="text-[10px] text-gray-500">Venku, doma, večera nebo dobrodružství.</p>
+
+                    <button onclick="window.selectQuickPlanCategory('discord')" 
+                            class="bg-[#2b2d31] hover:bg-[#35373c] p-4 rounded-2xl border border-[#202225] hover:border-[#5865F2]/50 transition-all flex items-center gap-4 text-left group cursor-pointer active:scale-98">
+                        <div class="text-3xl bg-[#5865F2]/15 p-3 rounded-xl group-hover:scale-110 transition">🎧</div>
+                        <div>
+                            <div class="font-black text-white uppercase text-xs tracking-wider flex items-center gap-1.5">
+                                Discord Call / Gamesky <span class="text-[10px] text-[#5865F2]">🎮</span>
+                            </div>
+                            <p class="text-xs text-[#949ba4] mt-0.5">Pokec, streamování nebo hraní her.</p>
                         </div>
                     </button>
-                    <button onclick="window.loadModule('dashboard').then(m => m.selectQuickPlanCategory('movie'))" 
-                            class="bg-black/20 hover:bg-[#faa61a]/20 p-5 rounded-2xl border border-white/5 hover:border-[#faa61a]/50 transition-all flex items-center gap-4 group">
-                        <div class="text-3xl bg-[#faa61a]/10 p-3 rounded-xl group-hover:scale-110 transition">🎬</div>
-                        <div class="text-left">
-                            <div class="font-bold text-white uppercase text-xs tracking-widest">Film / Seriál</div>
-                            <p class="text-[10px] text-gray-500">Společné koukání na Netflix nebo kino.</p>
+
+                    <button onclick="window.selectQuickPlanCategory('movie')" 
+                            class="bg-[#2b2d31] hover:bg-[#35373c] p-4 rounded-2xl border border-[#202225] hover:border-[#faa61a]/50 transition-all flex items-center gap-4 text-left group cursor-pointer active:scale-98">
+                        <div class="text-3xl bg-[#faa61a]/15 p-3 rounded-xl group-hover:scale-110 transition">🎬</div>
+                        <div>
+                            <div class="font-black text-white uppercase text-xs tracking-wider flex items-center gap-1.5">
+                                Film / Seriál <span class="text-[10px] text-[#faa61a]">🍿</span>
+                            </div>
+                            <p class="text-xs text-[#949ba4] mt-0.5">Společné koukání na film v posteli nebo v kině.</p>
                         </div>
                     </button>
                 </div>
             `;
         } else {
             const catInfo = {
-                discord: { icon: '🎧', title: 'Discord Call' },
-                date: { icon: '🥂', title: 'Rande' },
-                movie: { icon: '🎬', title: 'Film / Seriál' }
-            }[quickPlanData.cat];
+                discord: { icon: '🎧', title: 'Discord Call & Pokec', placeholder: 'Např. Minecraft, streamování, pokec...' },
+                date: { icon: '🥂', title: 'Rande & Výlet', placeholder: 'Např. Večeře v centru, procházka v parku, zmrzlina...' },
+                movie: { icon: '🎬', title: 'Film / Seriál', placeholder: 'Např. Marvelovka, nový díl seriálu...' }
+            }[quickPlanData.cat] || { icon: '📅', title: 'Plán', placeholder: 'Co podnikneme?' };
 
             title = `${catInfo.icon} ${catInfo.title}`;
             content = `
-                <div class="space-y-5 animate-fade-in">
-                    ${ui.renderInputGroup({
-                        label: 'Co přesně budeme dělat?',
-                        id: 'qp-name',
-                        placeholder: 'Např. Minecraft, Marvelovka, Procházka...',
-                        value: quickPlanData.name
-                    })}
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-[11px] font-black text-[#949ba4] uppercase tracking-wider mb-2">Co přesně budeme dělat?</label>
+                        <div class="bg-[#1e1f22] p-3 rounded-xl border border-[#36393f] focus-within:border-[#5865F2] transition-colors">
+                            <input type="text" id="qp-name" 
+                                   placeholder="${catInfo.placeholder}"
+                                   value="${quickPlanData.name || ''}"
+                                   class="w-full bg-transparent text-white text-sm outline-none placeholder-[#72767d]">
+                        </div>
+                    </div>
                     
-                    <div class="space-y-2">
-                        <label class="block text-[10px] text-gray-500 font-bold uppercase tracking-widest">Kdy?</label>
-                        <div class="flex gap-2">
-                             <input type="time" id="qp-time" class="bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none flex-1">
+                    <div>
+                        <label class="block text-[11px] font-black text-[#949ba4] uppercase tracking-wider mb-2">V kolik hodin?</label>
+                        <div class="flex gap-2 items-center">
+                             <input type="time" id="qp-time" value="${quickPlanData.time || '19:00'}" 
+                                    class="bg-[#1e1f22] text-white text-sm p-3 rounded-xl border border-[#36393f] outline-none flex-1 font-mono font-bold">
                              <div class="flex gap-1">
-                                <button onclick="document.getElementById('qp-time').value = '20:00'" class="bg-white/5 hover:bg-white/10 px-3 rounded-lg text-[10px] font-bold text-gray-400">20:00</button>
-                                <button onclick="document.getElementById('qp-time').value = '21:00'" class="bg-white/5 hover:bg-white/10 px-3 rounded-lg text-[10px] font-bold text-gray-400">21:00</button>
+                                <button type="button" onclick="document.getElementById('qp-time').value = '18:00'" class="bg-[#1e1f22] hover:bg-[#35373c] px-3 py-2 rounded-xl text-xs font-bold text-[#dbdee1] border border-[#36393f]">18:00</button>
+                                <button type="button" onclick="document.getElementById('qp-time').value = '20:00'" class="bg-[#1e1f22] hover:bg-[#35373c] px-3 py-2 rounded-xl text-xs font-bold text-[#dbdee1] border border-[#36393f]">20:00</button>
                              </div>
                         </div>
                     </div>
 
-                    <div class="pt-2">
-                        <button onclick="window.loadModule('dashboard').then(m => m.submitQuickPlan())" 
-                                class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition active:scale-95 shadow-xl flex items-center justify-center gap-2">
-                            <i class="fas fa-paper-plane text-[10px]"></i> Odeslat pozvánku
+                    <div class="pt-2 space-y-2">
+                        <button type="button" onclick="window.submitQuickPlan()" 
+                                class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-3.5 rounded-xl font-black uppercase tracking-wider text-xs transition active:scale-95 shadow-lg flex items-center justify-center gap-2 cursor-pointer min-h-[44px]">
+                            <i class="fas fa-paper-plane text-xs"></i> Odeslat pozvánku partnerovi
                         </button>
-                        <button onclick="window.loadModule('dashboard').then(m => m.showQuickPlanModal(1))" 
-                                class="w-full mt-3 text-gray-500 hover:text-white py-1 text-[10px] font-bold uppercase transition">
-                            <i class="fas fa-arrow-left mr-1"></i> Zpět na výběr
+                        <button type="button" onclick="window.showQuickPlanModal(1)" 
+                                class="w-full py-2 text-[#949ba4] hover:text-white text-xs font-bold uppercase transition">
+                            <i class="fas fa-arrow-left mr-1"></i> Zpět na výběr typu
                         </button>
                     </div>
                 </div>
@@ -125,9 +137,9 @@ export function showQuickPlanModal(step = 1) {
         const modalHtml = ui.renderModal({
             id: 'quick-plan-modal',
             title: title,
-            subtitle: step === 1 ? 'Vyber si typ aktivity' : 'Doplň podrobnosti',
+            subtitle: step === 1 ? 'Vyber si kategorii' : 'Nastav čas a podrobnosti',
             content: content,
-            onClose: "document.getElementById('quick-plan-modal').remove()"
+            onClose: "document.getElementById('quick-plan-modal')?.remove()"
         });
 
         document.getElementById('quick-plan-modal')?.remove();
@@ -135,7 +147,8 @@ export function showQuickPlanModal(step = 1) {
         const div = document.createElement('div');
         div.innerHTML = modalHtml;
         document.body.appendChild(div.firstElementChild);
-        document.getElementById('quick-plan-modal').style.display = 'flex';
+        const modal = document.getElementById('quick-plan-modal');
+        if (modal) modal.style.display = 'flex';
     });
 }
 
@@ -145,7 +158,7 @@ export function selectQuickPlanCategory(cat) {
     showQuickPlanModal(2);
 }
 
-export async function submitQuickPlan(renderDashboardFn) {
+export async function submitQuickPlan() {
     const name = document.getElementById('qp-name')?.value.trim();
     const time = document.getElementById('qp-time')?.value.trim();
 
@@ -161,21 +174,24 @@ export async function submitQuickPlan(renderDashboardFn) {
         id: planId,
         date_key: todayKey,
         name: name,
-        cat: quickPlanData.cat,
-        time: time,
-        proposed_by: state.currentUser.id,
+        cat: quickPlanData.cat || 'date',
+        time: time || '19:00',
+        proposed_by: state.currentUser?.id,
         status: 'pending'
     };
 
     try {
+        if (!state.plannedDates) state.plannedDates = {};
+        state.plannedDates[todayKey] = newPlan;
+
         const { error } = await supabase.from('planned_dates').upsert(newPlan, { onConflict: 'date_key' });
         if (error) throw error;
 
         showNotification("Pozvánka odeslána! 💌", "success");
         broadcastPlanUpdate({ type: 'proposal', name: name, cat: quickPlanData.cat });
 
-        state.plannedDates[todayKey] = newPlan;
-        if (renderDashboardFn) renderDashboardFn();
+        const { renderDashboard } = await import('../dashboard.js');
+        renderDashboard();
 
     } catch (err) {
         console.error("Plan submit error:", err);
@@ -183,9 +199,8 @@ export async function submitQuickPlan(renderDashboardFn) {
     }
 }
 
-export async function respondToPlan(dateKey, status, renderDashboardFn) {
-    const plan = state.plannedDates[dateKey];
-    if (!plan) return;
+export async function respondToPlan(dateKey, status) {
+    if (!state.plannedDates || !state.plannedDates[dateKey]) return;
 
     triggerHaptic(status === 'confirmed' ? 'success' : 'medium');
 
@@ -200,7 +215,8 @@ export async function respondToPlan(dateKey, status, renderDashboardFn) {
         showNotification(status === 'confirmed' ? "Plán potvrzen! ❤️" : "Plán zrušen.", "info");
 
         broadcastPlanUpdate({ type: 'response', status: status, dateKey: dateKey });
-        if (renderDashboardFn) renderDashboardFn();
+        const { renderDashboard } = await import('../dashboard.js');
+        renderDashboard();
     } catch (err) {
         console.error("Response error:", err);
     }
@@ -209,19 +225,19 @@ export async function respondToPlan(dateKey, status, renderDashboardFn) {
 export function showRejectionModal(dateKey) {
     import('../../core/ui.js').then(ui => {
         const reasons = [
-            { id: 'tired', text: 'Jsem unavený/á... 😴' },
-            { id: 'study', text: 'Musím se učit 📚' },
+            { id: 'tired', text: 'Jsem dnes unavený/á... 😴' },
+            { id: 'study', text: 'Musím se učit na FIT 📚' },
             { id: 'busy', text: 'Už něco mám 🏃‍♀️' },
-            { id: 'vibe', text: 'Nemám dnes energii ✨' }
+            { id: 'vibe', text: 'Dnes nemám energii ✨' }
         ];
 
         const content = `
-            <div class="space-y-2">
-                <p class="text-xs text-gray-400 mb-4 px-1 italic">To nevadí! ❤️ Vyber důvod, ať partner ví...</p>
+            <div class="space-y-3">
+                <p class="text-xs text-[#949ba4]">To nevadí! ❤️ Dej partnerovi vědět proč:</p>
                 <div class="grid grid-cols-1 gap-2">
                     ${reasons.map(r => `
-                        <button onclick="window.loadModule('dashboard').then(m => m.rejectPlanWithReason('${dateKey}', '${r.text}'))"
-                                class="w-full bg-black/20 hover:bg-red-500/10 p-4 rounded-xl border border-white/5 hover:border-red-500/30 text-left transition text-sm text-gray-200">
+                        <button onclick="window.rejectPlanWithReason('${dateKey}', '${r.text}')"
+                                class="w-full bg-[#2b2d31] hover:bg-[#35373c] p-3.5 rounded-xl border border-[#202225] hover:border-[#ed4245]/40 text-left transition text-xs font-bold text-[#dbdee1] cursor-pointer">
                             ${r.text}
                         </button>
                     `).join('')}
@@ -233,18 +249,19 @@ export function showRejectionModal(dateKey) {
             id: 'rejection-modal',
             title: 'Teď raději ne?',
             content: content,
-            onClose: "document.getElementById('rejection-modal').remove()"
+            onClose: "document.getElementById('rejection-modal')?.remove()"
         });
 
         document.getElementById('rejection-modal')?.remove();
         const div = document.createElement('div');
         div.innerHTML = modalHtml;
         document.body.appendChild(div.firstElementChild);
-        document.getElementById('rejection-modal').style.display = 'flex';
+        const modal = document.getElementById('rejection-modal');
+        if (modal) modal.style.display = 'flex';
     });
 }
 
-export async function rejectPlanWithReason(dateKey, reason, renderDashboardFn) {
+export async function rejectPlanWithReason(dateKey, reason) {
     triggerHaptic('medium');
     document.getElementById('rejection-modal')?.remove();
 
@@ -258,10 +275,14 @@ export async function rejectPlanWithReason(dateKey, reason, renderDashboardFn) {
 
         if (error) throw error;
 
-        state.plannedDates[dateKey].status = 'rejected';
-        state.plannedDates[dateKey].rejection_reason = reason;
-        if (renderDashboardFn) renderDashboardFn();
+        if (state.plannedDates && state.plannedDates[dateKey]) {
+            state.plannedDates[dateKey].status = 'rejected';
+            state.plannedDates[dateKey].rejection_reason = reason;
+        }
         showNotification("Plán zrušen s důvodem.", "info");
+
+        const { renderDashboard } = await import('../dashboard.js');
+        renderDashboard();
     } catch (err) {
         console.error("Rejection error:", err);
     }

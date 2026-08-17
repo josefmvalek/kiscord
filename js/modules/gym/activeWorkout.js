@@ -1,5 +1,5 @@
 import { supabase } from '../../core/supabase.js';
-import { state, ensureGymData } from '../../core/state.js';
+import { state, ensureGymData, awardLoveCoinsToCurrentUser } from '../../core/state.js';
 import { triggerHaptic, triggerConfetti, getTodayKey } from '../../core/utils.js';
 import { playArcade } from '../../core/sound.js';
 import { showNotification } from '../../core/theme.js';
@@ -509,7 +509,9 @@ export async function finishWorkout(renderGymFn) {
 
         triggerConfetti();
         triggerHaptic('success');
-        showNotification('Trénink uložen! Získali jste +20 XP do společného levelu! 🎉💪', 'success');
+
+        // Award +3 Love Coins
+        await awardLoveCoinsToCurrentUser(3, 'dokončený trénink');
 
         cleanupWorkoutTimers();
         setActiveWorkout(null);

@@ -130,17 +130,14 @@ export function renderSettings() {
                         </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            ${renderWidgetToggle('health', 'Zdraví a Aktivita', 'Voda, spánek, nálada a pohyb.')}
-                            ${renderWidgetToggle('supplements', 'Regenerace a Suplementy', 'Přehled braní suplementů (Železo, Zinek...).')}
-                            ${renderWidgetToggle('scheduleWidget', 'ŠKOLA — Rozvrh VUT FIT 🎓', 'Přehled dnešních přednášek a volných okének.')}
-                            ${renderWidgetToggle('studyPlannerWidget', 'ŠKOLA — Studijní Plánovač 📝', 'Přehled nadcházejících zkoušek a deadlinů.')}
-                            ${renderWidgetToggle('tetris', 'Tetris Tracker', 'Tvoje skóre a soupeření s partnerem.')}
-                            ${renderWidgetToggle('quests', 'Společné Questy', 'Přehled aktivních úkolů a progresu.')}
-                            ${renderWidgetToggle('funfacts', 'Zajímavosti dne', 'Náhodné fakty o zvířatech a světě.')}
-                            ${renderWidgetToggle('memoryBoard', 'Nástěnka vzpomínek 📸📌', 'Tvoje 3 nejoblíbenější fotky z timeline.')}
-                            ${renderWidgetToggle('alpskaHlidka', 'Alpská Hlídka 🏔️', 'Směny, rakouské výzvy, deníček a plnění cílů.')}
-                            ${renderWidgetToggle('austrianWord', 'Rakouské Slovíčko Dne 🇦🇹', 'Survival slovníček a flashcards pro Alpy.')}
+                            ${renderWidgetToggle('health', 'Zdraví a Aktivita 💧', 'Voda, spánek, nálada a pohyb.')}
+                            ${renderWidgetToggle('supplements', 'Regenerace a Suplementy 💊', 'Přehled braní suplementů (Hořčík, Zinek, Železo...).')}
+                            ${renderWidgetToggle('schoolDorm', 'VUT FIT & Koleje Live 🎓', 'Dnešní výuka, společná okénka a odpočet pračky.')}
                             ${renderWidgetToggle('dailyQuestion', 'Dnešní otázka ❓', 'Naše každodenní společná otázka pro oba.')}
+                            ${renderWidgetToggle('loveShop', 'Vztahový Rituál & Tržnice ❤️', 'Level vztahu, konto mincí a rychlý stav Spížky.')}
+                            ${renderWidgetToggle('tetris', 'Tetris Tracker 🕹️', 'Tvoje skóre a soupeření s partnerem.')}
+                            ${renderWidgetToggle('quests', 'Společné Questy 🛡️', 'Přehled aktivních úkolů a progresu.')}
+                            ${renderWidgetToggle('funfacts', 'Zajímavosti dne ✨', 'Náhodné fakty o zvířatech a světě.')}
                         </div>
 
                     </section>

@@ -1,6 +1,8 @@
 import { supabase } from '../core/supabase.js';
 import { state, ensureLoveShopData } from '../core/state.js';
 import { triggerHaptic, triggerConfetti } from '../core/utils.js';
+import { notifyPartnerCouponGifted, notifyPartnerCouponRedeemed } from '../core/sync.js';
+import { renderModal, renderInputGroup } from '../core/ui.js';
 
 let activeTab = 'shop'; // 'shop' nebo 'inventory'
 let rpsState = {
@@ -11,34 +13,32 @@ let rpsState = {
     result: null
 };
 
-// Mapa ikon a stylů, která spolehlivě nahrazuje emojis z databáze za prémiové FontAwesome ikony a glow efekty
+// Mapa ikon a stylů pro prémiové FontAwesome ikony a glow efekty
 const designMap = {
     'Poctivá masáž zad': { fa: 'fa-spa text-indigo-400', glow: 'rgba(129, 140, 248, 0.25)', border: 'border-indigo-500/20 hover:border-indigo-400' },
-    'Snídaně do postele': { fa: 'fa-utensils text-amber-500', glow: 'rgba(245, 158, 11, 0.25)', border: 'border-amber-500/20 hover:border-amber-400' },
-    'Úklidový Free Pass': { fa: 'fa-soap text-emerald-400', glow: 'rgba(52, 211, 153, 0.25)', border: 'border-emerald-500/20 hover:border-emerald-400' },
-    'Kafíčko na stůl': { fa: 'fa-mug-hot text-yellow-600', glow: 'rgba(217, 119, 6, 0.25)', border: 'border-yellow-600/20 hover:border-yellow-500' },
     'Hlava na klíně & Drbání': { fa: 'fa-heart text-pink-500', glow: 'rgba(244, 63, 94, 0.25)', border: 'border-pink-500/20 hover:border-pink-400' },
-    'Playlist Master': { fa: 'fa-car text-blue-400', glow: 'rgba(96, 165, 250, 0.25)', border: 'border-blue-500/20 hover:border-blue-400' },
-    'Sladké překvapení': { fa: 'fa-cookie-bite text-rose-400', glow: 'rgba(251, 113, 133, 0.25)', border: 'border-rose-500/20 hover:border-rose-400' }
+    'Západ slunce & Piknik': { fa: 'fa-wine-glass-alt text-purple-400', glow: 'rgba(192, 132, 252, 0.25)', border: 'border-purple-500/20 hover:border-purple-400' },
+    'Herní večer': { fa: 'fa-gamepad text-cyan-400', glow: 'rgba(34, 211, 238, 0.25)', border: 'border-cyan-500/20 hover:border-cyan-400' },
+    'Noční procházka': { fa: 'fa-moon text-indigo-400', glow: 'rgba(129, 140, 248, 0.25)', border: 'border-indigo-500/20 hover:border-indigo-400' },
+    'Úklidový Free Pass': { fa: 'fa-soap text-emerald-400', glow: 'rgba(52, 211, 153, 0.25)', border: 'border-emerald-500/20 hover:border-emerald-400' },
+    'Výběr filmu bez remcání': { fa: 'fa-film text-teal-400', glow: 'rgba(45, 212, 191, 0.25)', border: 'border-teal-500/20 hover:border-teal-400' },
+    'Sladké překvapení': { fa: 'fa-cookie-bite text-rose-400', glow: 'rgba(251, 113, 133, 0.25)', border: 'border-rose-500/20 hover:border-rose-400' },
+    'Zmrzlinová zastávka': { fa: 'fa-ice-cream text-amber-400', glow: 'rgba(251, 191, 36, 0.25)', border: 'border-amber-500/20 hover:border-amber-400' },
+    'Antistresový restart': { fa: 'fa-band-aid text-sky-400', glow: 'rgba(56, 189, 248, 0.25)', border: 'border-sky-500/20 hover:border-sky-400' },
+    'Právo na poslední kousek': { fa: 'fa-pizza-slice text-amber-500', glow: 'rgba(245, 158, 11, 0.25)', border: 'border-amber-500/20 hover:border-amber-400' },
+    'Okamžité medvědí objetí': { fa: 'fa-hands-holding text-rose-400', glow: 'rgba(251, 113, 133, 0.25)', border: 'border-rose-500/20 hover:border-rose-400' }
 };
 
-/**
- * Odstraní případné emoji na začátku řetězce, aby nedocházelo k chybnému vykreslování v nadpisech
- */
 function cleanTitle(title) {
     if (!title) return '';
     return title.replace(/^[\s\p{Emoji}]+/u, '').trim();
 }
 
-/**
- * Získá dynamický FA a glow design na základě názvu položky
- */
 function getItemDesign(title) {
     const cleaned = cleanTitle(title);
     const match = Object.keys(designMap).find(k => cleaned.includes(k) || k.includes(cleaned));
     if (match) return designMap[match];
     
-    // Výchozí vzhled
     return { fa: 'fa-ticket-alt text-amber-400', glow: 'rgba(245, 158, 11, 0.15)', border: 'border-amber-500/10 hover:border-amber-400' };
 }
 
@@ -78,6 +78,7 @@ function renderUI() {
     const myCoins = isMeJose ? (state.loveCoins?.jose || 0) : (isMeKlarka ? (state.loveCoins?.klarka || 0) : 0);
     const partnerName = isMeJose ? "Klárka" : "Jožka";
     const partnerCoins = isMeJose ? (state.loveCoins?.klarka || 0) : (state.loveCoins?.jose || 0);
+    const activeCouponsCount = (state.inventory || []).filter(c => !c.is_redeemed).length;
 
     let html = `
         <style>
@@ -93,7 +94,7 @@ function renderUI() {
                 transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
             }
             .glow-card:hover {
-                transform: translateY(-5px) scale(1.01);
+                transform: translateY(-4px) scale(1.01);
                 box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
                 border-color: rgba(255, 255, 255, 0.15) !important;
             }
@@ -104,14 +105,6 @@ function renderUI() {
                 border: 2px solid #faa61a !important;
                 box-shadow: 0 0 25px rgba(250, 166, 26, 0.25) !important;
             }
-            .coin-shimmer {
-                background: linear-gradient(90deg, #ffd700, #ffa500, #ffd700);
-                background-size: 200% auto;
-                animation: shine 3s linear infinite;
-            }
-            @keyframes shine {
-                to { background-position: 200% center; }
-            }
             .arcade-console {
                 background: linear-gradient(180deg, #18191c, #0b0c0e);
                 border: 2px solid #5865F2;
@@ -119,7 +112,7 @@ function renderUI() {
             }
         </style>
 
-        <div class="p-6 max-w-5xl mx-auto w-full flex flex-col gap-6 animate-fade-in">
+        <div class="p-4 sm:p-6 max-w-5xl mx-auto w-full flex flex-col gap-6 animate-fade-in">
             <!-- HLAVIČKA PENĚŽENKY -->
             <div class="bg-gradient-to-br from-[#2f3136] to-[#202225] rounded-3xl p-6 border border-gray-700/40 flex flex-col md:flex-row justify-between items-center gap-6 shadow-2xl relative overflow-hidden">
                 <div class="absolute -right-20 -top-20 w-44 h-44 bg-[#faa61a]/5 rounded-full blur-3xl pointer-events-none"></div>
@@ -133,31 +126,35 @@ function renderUI() {
                         <h2 class="text-2xl font-black text-white uppercase tracking-wider flex items-center gap-2">
                             Mývalí Tržnice
                         </h2>
-                        <p class="text-gray-400 text-xs mt-0.5 font-medium">Společný zero-pressure obchůdek s radostí a zážitky.</p>
+                        <p class="text-gray-400 text-xs mt-0.5 font-medium">Společný zero-pressure obchůdek s radostí a zážitky pro dva.</p>
                     </div>
                 </div>
                 
-                <button onclick="window.LoveShop.openCreateCustomCouponModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs uppercase tracking-wider transition flex items-center gap-1.5 shadow-lg shadow-emerald-500/10 z-10">
-                    <i class="fas fa-plus text-xs"></i> Nový kupón
-                </button>
-
+                <div class="flex items-center gap-2.5 z-10">
+                    <button onclick="window.openRelationshipMilestonesModal()" class="px-3.5 py-2 rounded-xl bg-[#202225] hover:bg-[#2f3136] border border-gray-700/50 text-amber-400 font-bold text-xs uppercase tracking-wider transition flex items-center gap-1.5 shadow">
+                        <i class="fas fa-trophy text-xs"></i> Milníky
+                    </button>
+                    <button onclick="window.LoveShop.openCreateCustomCouponModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs uppercase tracking-wider transition flex items-center gap-1.5 shadow-lg shadow-emerald-500/10">
+                        <i class="fas fa-plus text-xs"></i> Vlastní kupón
+                    </button>
+                </div>
                 
-                <div class="flex items-center gap-6 relative z-10 w-full md:w-auto justify-center md:justify-end">
+                <div class="flex items-center gap-4 relative z-10 w-full md:w-auto justify-center md:justify-end">
                     <!-- Moje konto -->
-                    <div class="bg-[#18191c]/80 backdrop-blur-md border border-gray-700/50 rounded-2xl px-5 py-3 text-center min-w-[130px] shadow-lg">
+                    <div class="bg-[#18191c]/80 backdrop-blur-md border border-gray-700/50 rounded-2xl px-5 py-3 text-center min-w-[125px] shadow-lg">
                         <span class="text-[9px] font-black text-gray-500 uppercase block tracking-widest mb-1">Tvoje konto</span>
                         <span class="text-2xl font-black text-yellow-400 flex items-center justify-center gap-1.5 drop-shadow-[0_0_10px_rgba(234,179,8,0.2)]">
-                            ${myCoins} <i class="fas fa-coins text-lg"></i>
+                            ${myCoins} <i class="fas fa-coins text-base text-yellow-500"></i>
                         </span>
                     </div>
                     
-                    <div class="text-gray-600 text-lg"><i class="fas fa-exchange-alt"></i></div>
+                    <div class="text-gray-600 text-sm"><i class="fas fa-exchange-alt"></i></div>
                     
                     <!-- Kontrola partnera -->
-                    <div class="bg-[#18191c]/80 backdrop-blur-md border border-gray-700/50 rounded-2xl px-5 py-3 text-center min-w-[130px] shadow-lg">
+                    <div class="bg-[#18191c]/80 backdrop-blur-md border border-gray-700/50 rounded-2xl px-5 py-3 text-center min-w-[125px] shadow-lg">
                         <span class="text-[9px] font-black text-gray-500 uppercase block tracking-widest mb-1">${partnerName}</span>
                         <span class="text-2xl font-black text-gray-400 flex items-center justify-center gap-1.5">
-                            ${partnerCoins} <i class="fas fa-coins text-lg text-gray-500"></i>
+                            ${partnerCoins} <i class="fas fa-coins text-base text-gray-500"></i>
                         </span>
                     </div>
                 </div>
@@ -167,11 +164,11 @@ function renderUI() {
             <div class="flex bg-[#202225] p-1.5 rounded-2xl border border-gray-700/40 shadow-inner">
                 <button onclick="window.LoveShop.switchTab('shop')" 
                     class="shop-tab-btn flex-1 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 ${activeTab === 'shop' ? 'active' : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/30'}">
-                    <i class="fas fa-store-alt text-sm"></i> <span>🏪 Obchůdek s dárky</span>
+                    <i class="fas fa-store-alt text-sm"></i> <span>🏪 Nabídka Dárků</span>
                 </button>
                 <button onclick="window.LoveShop.switchTab('inventory')" 
                     class="shop-tab-btn flex-1 py-3 text-xs font-black uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 ${activeTab === 'inventory' ? 'active' : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/30'}">
-                    <i class="fas fa-gift text-sm"></i> <span>🎁 Moje Spížka (${state.inventory.filter(c => !c.is_redeemed).length})</span>
+                    <i class="fas fa-gift text-sm"></i> <span>🎁 Moje Spížka (${activeCouponsCount})</span>
                 </button>
             </div>
 
@@ -204,7 +201,9 @@ function renderUI() {
     
     window.LoveShop = {
         switchTab,
-        buyCoupon,
+        openBuyModal,
+        confirmBuyCoupon,
+        buyCouponDirect: buyCoupon,
         redeemCoupon,
         vetoCoupon,
         startRps,
@@ -213,7 +212,6 @@ function renderUI() {
         saveCustomCoupon
     };
 }
-
 
 /**
  * Vykreslí pohled Obchodu s kartami kupónů.
@@ -229,9 +227,11 @@ function renderShopView(myCoins, partnerName) {
     }
 
     const categories = {
-        pampering: { name: "💆 Hýčkání & Masáže", desc: "Zasloužený relax a péče pro partnera", color: "text-indigo-400", bgGlow: "rgba(129,140,248,0.03)" },
-        compromises: { name: "🧼 Domácí úlevy & Kompromisy", desc: "Když chceš vzít práci na svá bedra", color: "text-emerald-400", bgGlow: "rgba(52,211,153,0.03)" },
-        surprises: { name: "🧁 Drobné radosti", desc: "Sladkosti a nečekaná milá gesta", color: "text-rose-400", bgGlow: "rgba(244,63,94,0.03)" }
+        pampering: { name: "💆 Hýčkání & Doteky", desc: "Zasloužený relax, uvolnění a masáže", color: "text-indigo-400" },
+        dates: { name: "🍷 Rande & Společné zážitky", desc: "Romantické chvíle a nezapomenutelný čas spolu", color: "text-purple-400" },
+        compromises: { name: "🧼 Domácí pohoda & Free Pasy", desc: "Když chceš mít klid a volbu bez kompromisů", color: "text-emerald-400" },
+        surprises: { name: "🧁 Drobné radosti & Mlsání", desc: "Sladkosti, dobroty a milá překvapení", color: "text-rose-400" },
+        emergency: { name: "🚨 Záchranné & Roztomilé", desc: "Okamžitá láska, objetí a první pomoc při stresu", color: "text-amber-400" }
     };
 
     let html = `<div class="flex flex-col gap-10">`;
@@ -290,9 +290,9 @@ function renderShopView(myCoins, partnerName) {
                             <i class="fas fa-coins text-yellow-500"></i>
                         </div>
                         
-                        <button onclick="${canAfford ? `window.LoveShop.buyCoupon('${item.id}')` : ''}" 
+                        <button onclick="${canAfford ? `window.LoveShop.openBuyModal('${item.id}')` : ''}" 
                             class="px-4 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all flex items-center gap-1.5 ${btnClass}">
-                            <i class="fas fa-paper-plane text-[9px]"></i> <span>Darovat</span>
+                            <i class="fas fa-gift text-[9px]"></i> <span>Darovat</span>
                         </button>
                     </div>
                 </div>
@@ -313,8 +313,8 @@ function renderShopView(myCoins, partnerName) {
  * Vykreslí pohled Moje Spížka (Inventory).
  */
 function renderInventoryView(partnerName) {
-    const unredeemed = state.inventory.filter(c => !c.is_redeemed);
-    const redeemed = state.inventory.filter(c => c.is_redeemed);
+    const unredeemed = (state.inventory || []).filter(c => !c.is_redeemed);
+    const redeemed = (state.inventory || []).filter(c => c.is_redeemed);
 
     if (unredeemed.length === 0 && redeemed.length === 0) {
         return `
@@ -324,7 +324,7 @@ function renderInventoryView(partnerName) {
                 </div>
                 <div class="flex flex-col gap-1 max-w-sm">
                     <h3 class="text-white font-extrabold text-sm uppercase tracking-wider">Tvoje spížka je prázdná</h3>
-                    <p class="text-gray-400 text-xs leading-relaxed font-medium">Až ti ${partnerName} koupí nějaký kupón za své našetřené mince, objeví se právě tady. Pracujte společně na zdravých návycích!</p>
+                    <p class="text-gray-400 text-xs leading-relaxed font-medium">Až ti ${partnerName} koupí nějaký kupón za své našetřené mince, objeví se právě tady. Těš se na milá překvapení!</p>
                 </div>
             </div>
         `;
@@ -337,7 +337,7 @@ function renderInventoryView(partnerName) {
         html += `
             <div>
                 <h3 class="text-xs font-black text-white uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <span class="text-yellow-400 flex items-center gap-1"><i class="fas fa-ticket-alt text-[10px]"></i> Aktivní Kupóny</span>
+                    <span class="text-yellow-400 flex items-center gap-1"><i class="fas fa-ticket-alt text-[10px]"></i> Připravené Kupóny</span>
                     <span class="bg-[#18191c] text-gray-400 text-[9px] font-black px-2 py-0.5 rounded-full border border-gray-700/50">${unredeemed.length}</span>
                 </h3>
                 
@@ -345,17 +345,17 @@ function renderInventoryView(partnerName) {
         `;
 
         unredeemed.forEach(coupon => {
-            const item = coupon.love_shop_items;
-            const cleanedTitle = cleanTitle(item.title);
+            const item = coupon.love_shop_items || {};
+            const cleanedTitle = cleanTitle(item.title || 'Kupón');
             const design = getItemDesign(item.title);
             const starClass = coupon.has_star ? 'coupon-star' : 'border-gray-700/40';
             
             html += `
-                <div class="glow-card rounded-2xl p-5 border flex flex-col justify-between gap-5 transition-all relative ${starClass} coupon-gifted shadow-lg"
+                <div class="glow-card rounded-2xl p-5 border flex flex-col justify-between gap-4 transition-all relative ${starClass} coupon-gifted shadow-lg"
                      style="background-color: rgba(32, 34, 37, 0.45);">
                     
                     ${coupon.has_star ? `
-                        <div class="absolute right-4 top-4 text-[#faa61a] text-md animate-pulse" title="Vetovaný kupón s úrokem!">
+                        <div class="absolute right-4 top-4 text-[#faa61a] text-md animate-pulse" title="Vetovaný kupón s prioritním úrokem!">
                             <i class="fas fa-star drop-shadow-[0_0_8px_rgba(250,166,26,0.5)]"></i>
                         </div>
                     ` : ''}
@@ -370,14 +370,25 @@ function renderInventoryView(partnerName) {
                                 <span>${cleanedTitle}</span>
                             </h4>
                             <p class="text-gray-400 text-[11px] font-medium mt-1 leading-relaxed">${item.description || ''}</p>
-                            <span class="text-[9px] text-gray-500 font-bold block mt-3 uppercase tracking-wider"><i class="fas fa-calendar-alt text-[8px] mr-1"></i> Od: ${new Date(coupon.created_at).toLocaleDateString('cs-CZ')}</span>
+                            
+                            <!-- OSOBNÍ VZKAZ / VĚNOVÁNÍ -->
+                            ${coupon.note ? `
+                                <div class="mt-3 p-2.5 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-300 text-[11px] font-medium flex items-start gap-2 shadow-inner">
+                                    <i class="fas fa-heart text-[10px] text-pink-400 mt-0.5 flex-shrink-0"></i>
+                                    <span class="italic leading-snug">„${coupon.note}“</span>
+                                </div>
+                            ` : ''}
+                            
+                            <span class="text-[9px] text-gray-500 font-bold block mt-2.5 uppercase tracking-wider">
+                                <i class="fas fa-calendar-alt text-[8px] mr-1"></i> Darováno: ${new Date(coupon.created_at).toLocaleDateString('cs-CZ')}
+                            </span>
                         </div>
                     </div>
                     
                     <div class="flex justify-end gap-2.5 border-t border-gray-700/40 pt-3 relative z-10">
                         <button onclick="window.LoveShop.vetoCoupon('${coupon.id}')" 
                             class="px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 hover:bg-gray-800/30 active:scale-95 transition-all flex items-center gap-1.5"
-                            title="Tlačítko Veto uplatníte, pokud partner nemůže zrovna vyhovět. Kupón se vrátí s prioritní hvězdou.">
+                            title="Tlačítko Veto použijete, pokud partner zrovna nemůže vyhovět. Kupón se vrátí s prioritní hvězdou úroku.">
                             <i class="fas fa-star-half-alt text-[9px]"></i> <span>Veto</span>
                         </button>
                         <button onclick="window.LoveShop.redeemCoupon('${coupon.id}')" 
@@ -400,16 +411,16 @@ function renderInventoryView(partnerName) {
         html += `
             <div>
                 <h3 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <span><i class="fas fa-history text-[10px]"></i> Historie spotřebovaných</span>
+                    <span><i class="fas fa-history text-[10px]"></i> Historie využitých</span>
                     <span class="bg-[#18191c] text-gray-600 text-[9px] font-black px-2 py-0.5 rounded-full border border-gray-800/60">${redeemed.length}</span>
                 </h3>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 opacity-55 hover:opacity-85 transition-opacity">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 opacity-60 hover:opacity-90 transition-opacity">
         `;
 
         redeemed.forEach(coupon => {
-            const item = coupon.love_shop_items;
-            const cleanedTitle = cleanTitle(item.title);
+            const item = coupon.love_shop_items || {};
+            const cleanedTitle = cleanTitle(item.title || 'Kupón');
             const design = getItemDesign(item.title);
             
             html += `
@@ -436,9 +447,6 @@ function renderInventoryView(partnerName) {
     return html;
 }
 
-/**
- * Přepne záložku obchodu.
- */
 function switchTab(tab) {
     activeTab = tab;
     triggerHaptic('light');
@@ -446,9 +454,102 @@ function switchTab(tab) {
 }
 
 /**
+ * Otevře nákupní dialog s možností připsat osobní věnování.
+ */
+export function openBuyModal(itemId) {
+    triggerHaptic('light');
+
+    const item = (state.shopItems || []).find(i => i.id === itemId);
+    if (!item) return;
+
+    const isMeJose = state.currentUser?.id === state.user_ids?.jose;
+    const partnerName = isMeJose ? "Klárce" : "Jožkovi";
+    const myCoins = isMeJose ? (state.loveCoins?.jose || 0) : (state.loveCoins?.klarka || 0);
+
+    const suggestNotes = [
+        "Za to, jak jsi to dneska skvěle zvládla/zvládl! ❤️",
+        "Kdykoliv budeš mít chuť na relax a péči ✨",
+        "Z čisté lásky pro mého mývala 🦝",
+        "Zasloužený odpočinek jen pro tebe 💖"
+    ];
+
+    const contentHtml = `
+        <div class="space-y-4 text-left">
+            <div class="bg-[#202225] p-4 rounded-2xl border border-gray-700/50 flex items-center justify-between">
+                <div>
+                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider block">Kupón k darování</span>
+                    <h4 class="text-sm font-black text-white">${cleanTitle(item.title)}</h4>
+                </div>
+                <div class="text-right">
+                    <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider block">Cena</span>
+                    <span class="text-sm font-black text-yellow-400 flex items-center justify-end gap-1">${item.cost} <i class="fas fa-coins text-xs"></i></span>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1.5 ml-1">
+                    💌 Osobní vzkaz / Věnování pro ${partnerName} (nepovinné)
+                </label>
+                <textarea id="buy-coupon-note" rows="2" 
+                          placeholder="Připiš milý vzkaz k dárku..." 
+                          class="w-full bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2] transition resize-none"></textarea>
+            </div>
+
+            <div>
+                <span class="text-[9px] text-gray-500 font-bold uppercase tracking-wider block mb-1.5 ml-1">Rychlé nápady:</span>
+                <div class="flex flex-wrap gap-1.5">
+                    ${suggestNotes.map(n => `
+                        <button type="button" onclick="document.getElementById('buy-coupon-note').value = '${n.replace(/'/g, "\\'")}'"
+                                class="text-[9px] bg-white/5 hover:bg-white/10 text-gray-300 px-2.5 py-1 rounded-lg border border-white/5 transition">
+                            ${n}
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+
+    const actionsHtml = `
+        <div class="flex justify-end gap-2.5 w-full">
+            <button onclick="document.getElementById('buy-coupon-modal').remove()" 
+                    class="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 font-bold text-xs uppercase tracking-wider transition">
+                Zrušit
+            </button>
+            <button onclick="window.LoveShop.confirmBuyCoupon('${item.id}')" 
+                    class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-400 hover:to-yellow-500 text-white font-black text-xs uppercase tracking-wider transition shadow-lg shadow-amber-500/20 flex items-center gap-1.5">
+                <i class="fas fa-gift text-xs"></i> <span>Darovat za ${item.cost} coinů</span>
+            </button>
+        </div>
+    `;
+
+    document.getElementById('buy-coupon-modal')?.remove();
+
+    document.body.insertAdjacentHTML('beforeend', renderModal({
+        id: 'buy-coupon-modal',
+        title: `Darovat kupón ${partnerName}`,
+        subtitle: 'Kupón se objeví přímo v partnerově Spížce 🎁',
+        content: contentHtml,
+        actions: actionsHtml,
+        onClose: "document.getElementById('buy-coupon-modal').remove()"
+    }));
+
+    document.getElementById('buy-coupon-modal')?.classList.remove('hidden');
+    document.getElementById('buy-coupon-modal')?.classList.add('flex');
+}
+
+/**
+ * Potvrzení nákupu kupónu s osobním věnováním.
+ */
+export async function confirmBuyCoupon(itemId) {
+    const note = document.getElementById('buy-coupon-note')?.value.trim() || '';
+    document.getElementById('buy-coupon-modal')?.remove();
+    await buyCoupon(itemId, note);
+}
+
+/**
  * Logika nákupu kupónu (Gift-Only).
  */
-async function buyCoupon(itemId) {
+async function buyCoupon(itemId, note = '') {
     triggerHaptic('medium');
     const isMeJose = state.currentUser?.id === state.user_ids?.jose;
     const myId = state.currentUser?.id;
@@ -459,7 +560,7 @@ async function buyCoupon(itemId) {
         return;
     }
 
-    const item = state.shopItems.find(i => i.id === itemId);
+    const item = (state.shopItems || []).find(i => i.id === itemId);
     if (!item) return;
 
     try {
@@ -468,7 +569,7 @@ async function buyCoupon(itemId) {
         const currentCoins = isMeJose ? state.loveCoins.jose : state.loveCoins.klarka;
         const newCoins = currentCoins - item.cost;
         if (newCoins < 0) {
-            alert("Nedostatek coinů!");
+            alert("Nedostatek Love Coinů!");
             return;
         }
 
@@ -484,17 +585,21 @@ async function buyCoupon(itemId) {
             .insert({
                 shop_item_id: item.id,
                 owner_id: partnerId,
-                creator_id: myId
+                creator_id: myId,
+                note: note || null
             });
 
         if (couponError) throw couponError;
+
+        // Odešleme push notifikaci i realtime broadcast partnerovi
+        notifyPartnerCouponGifted(cleanTitle(item.title), note).catch(e => console.warn("[Push] Error:", e));
 
         import('../core/sound.js').then(m => m.playCoinsSound?.()).catch(() => {});
         triggerConfetti();
 
         if (typeof window.showNotification === 'function') {
             const partnerName = isMeJose ? "Klárce" : "Jožkovi";
-            window.showNotification(`🎁 Úspěšně jsi zakoupil a daroval kupón "${cleanTitle(item.title)}" ${partnerName}!`, "success");
+            window.showNotification(`🎁 Úspěšně jsi zakoupil/a a daroval/a kupón "${cleanTitle(item.title)}" ${partnerName}!`, "success");
         }
 
         await ensureLoveShopData(true);
@@ -518,6 +623,9 @@ async function redeemCoupon(couponId) {
     try {
         console.log(`[LoveShop] Redeeming coupon ${couponId}...`);
 
+        const coupon = (state.inventory || []).find(c => c.id === couponId);
+        const title = coupon?.love_shop_items?.title || 'Kupón';
+
         const { error } = await supabase
             .from('user_coupons')
             .update({ 
@@ -527,6 +635,9 @@ async function redeemCoupon(couponId) {
             .eq('id', couponId);
 
         if (error) throw error;
+
+        // Odeslat Web Push a broadcast partnerovi
+        notifyPartnerCouponRedeemed(cleanTitle(title)).catch(e => console.warn("[Push] Error:", e));
 
         if (typeof window.showNotification === 'function') {
             window.showNotification("Kupón uplatněn! Partner obdržel notifikaci! 🎉", "success");
@@ -545,7 +656,7 @@ async function redeemCoupon(couponId) {
  */
 async function vetoCoupon(couponId) {
     triggerHaptic('warning');
-    const coupon = state.inventory.find(c => c.id === couponId);
+    const coupon = (state.inventory || []).find(c => c.id === couponId);
     if (!coupon) return;
 
     const newStarState = !coupon.has_star;
@@ -616,9 +727,6 @@ function cleanupRpsChannel() {
     }
 }
 
-/**
- * Spustí rozstřel (Broadcast start event partnerovi).
- */
 async function startRps() {
     triggerHaptic('medium');
     rpsState.active = true;
@@ -637,9 +745,6 @@ async function startRps() {
     }
 }
 
-/**
- * Provede volbu zbraně.
- */
 async function makeRpsChoice(choice) {
     triggerHaptic('light');
     rpsState.myChoice = choice;
@@ -661,9 +766,6 @@ async function makeRpsChoice(choice) {
     }
 }
 
-/**
- * Vyhodnotí výsledek hry Kámen-nůžky-papír.
- */
 function evaluateRps() {
     rpsState.countdown = "3... 2... 1... 🔥";
     renderUI();
@@ -745,7 +847,6 @@ function renderRpsGame() {
         `;
     }
 
-    // Výběr zbraně
     return `
         <div class="text-center arcade-console rounded-2xl border-gray-700/50 p-6">
             <p class="text-gray-400 text-xs font-bold mb-5 tracking-wide uppercase">
@@ -775,75 +876,73 @@ function renderRpsGame() {
     `;
 }
 
-function handleRpsEvent(e) {
-    //
-}
+function handleRpsEvent() {}
 
 export function openCreateCustomCouponModal() {
     triggerHaptic('light');
 
-    import('../core/ui.js').then(ui => {
-        const contentHtml = `
-            <div class="space-y-4 text-left">
-                ${ui.renderInputGroup({
-                    label: 'Název vlastního kupónu',
-                    id: 'custom-coupon-title',
-                    placeholder: 'např. Snídaně v posteli s kávou, Zádová masáž 30min...'
+    const contentHtml = `
+        <div class="space-y-4 text-left">
+            ${renderInputGroup({
+                label: 'Název vlastního kupónu',
+                id: 'custom-coupon-title',
+                placeholder: 'např. Snídaně v posteli s kávou, Zádová masáž 30min...'
+            })}
+
+            ${renderInputGroup({
+                label: 'Popis kupónu',
+                id: 'custom-coupon-desc',
+                placeholder: 'Co přesně tento kupón garantuje...'
+            })}
+
+            <div class="grid grid-cols-2 gap-3">
+                ${renderInputGroup({
+                    label: 'Cena v mincích (Love Coins)',
+                    id: 'custom-coupon-cost',
+                    type: 'number',
+                    value: '10'
                 })}
 
-                ${ui.renderInputGroup({
-                    label: 'Popis kupónu',
-                    id: 'custom-coupon-desc',
-                    placeholder: 'Co přesně tento kupón garantuje...'
-                })}
-
-                <div class="grid grid-cols-2 gap-3">
-                    ${ui.renderInputGroup({
-                        label: 'Cena v mincích (Love Coins)',
-                        id: 'custom-coupon-cost',
-                        type: 'number',
-                        value: '50'
-                    })}
-
-                    <div class="space-y-1">
-                        <label class="block text-[10px] text-gray-500 font-bold uppercase tracking-widest">Kategorie</label>
-                        <select id="custom-coupon-cat" class="w-full bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2]/50 transition-all">
-                            <option value="pampering">💆 Hýčkání & Masáže</option>
-                            <option value="compromises">🧼 Domácí úlevy & Kompromisy</option>
-                            <option value="surprises">🧁 Drobné radosti</option>
-                        </select>
-                    </div>
+                <div class="space-y-1">
+                    <label class="block text-[10px] text-gray-500 font-bold uppercase tracking-widest">Kategorie</label>
+                    <select id="custom-coupon-cat" class="w-full bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2]/50 transition-all">
+                        <option value="pampering">💆 Hýčkání & Wellness</option>
+                        <option value="compromises">🧼 Domácí úlevy & Free Pasy</option>
+                        <option value="dates">🍷 Rande & Zážitky</option>
+                        <option value="surprises">🧁 Drobné radosti</option>
+                        <option value="emergency">🚨 Roztomilé & Emergency</option>
+                    </select>
                 </div>
             </div>
-        `;
+        </div>
+    `;
 
-        const actionsHtml = `
-            <div class="flex justify-end gap-2 w-full">
-                <button onclick="document.getElementById('custom-coupon-modal').remove()" 
-                        class="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 font-bold text-[10px] uppercase tracking-wider transition">
-                    Zrušit
-                </button>
-                <button onclick="window.LoveShop.saveCustomCoupon()" 
-                        class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-[10px] uppercase tracking-wider transition shadow-lg shadow-emerald-500/20">
-                    Vytvořit a Přidat do Obchůdku
-                </button>
-            </div>
-        `;
+    const actionsHtml = `
+        <div class="flex justify-end gap-2 w-full">
+            <button onclick="document.getElementById('custom-coupon-modal').remove()" 
+                    class="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 font-bold text-[10px] uppercase tracking-wider transition">
+                Zrušit
+            </button>
+            <button onclick="window.LoveShop.saveCustomCoupon()" 
+                    class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-[10px] uppercase tracking-wider transition shadow-lg shadow-emerald-500/20">
+                Vytvořit a Přidat do Obchůdku
+            </button>
+        </div>
+    `;
 
-        document.getElementById('custom-coupon-modal')?.remove();
+    document.getElementById('custom-coupon-modal')?.remove();
 
-        document.body.insertAdjacentHTML('beforeend', ui.renderModal({
-            id: 'custom-coupon-modal',
-            title: 'Vytvořit Vlastní Kupón',
-            subtitle: 'Přidej nový zážitek nebo poukázku do Mývalí Tržnice 🎁',
-            content: contentHtml,
-            actions: actionsHtml,
-            onClose: "document.getElementById('custom-coupon-modal').remove()"
-        }));
+    document.body.insertAdjacentHTML('beforeend', renderModal({
+        id: 'custom-coupon-modal',
+        title: 'Vytvořit Vlastní Kupón',
+        subtitle: 'Přidej nový zážitek nebo poukázku do Mývalí Tržnice 🎁',
+        content: contentHtml,
+        actions: actionsHtml,
+        onClose: "document.getElementById('custom-coupon-modal').remove()"
+    }));
 
-        document.getElementById('custom-coupon-modal').classList.remove('hidden');
-        document.getElementById('custom-coupon-modal').classList.add('flex');
-    });
+    document.getElementById('custom-coupon-modal')?.classList.remove('hidden');
+    document.getElementById('custom-coupon-modal')?.classList.add('flex');
 }
 
 export async function saveCustomCoupon() {
@@ -851,7 +950,7 @@ export async function saveCustomCoupon() {
 
     const title = document.getElementById('custom-coupon-title')?.value.trim();
     const description = document.getElementById('custom-coupon-desc')?.value.trim();
-    const cost = parseInt(document.getElementById('custom-coupon-cost')?.value) || 50;
+    const cost = parseInt(document.getElementById('custom-coupon-cost')?.value) || 10;
     const category = document.getElementById('custom-coupon-cat')?.value || 'surprises';
 
     if (!title) {
@@ -868,7 +967,8 @@ export async function saveCustomCoupon() {
                 title,
                 description,
                 cost,
-                category
+                category,
+                icon: '🎁'
             });
 
         if (error) throw error;
@@ -888,4 +988,3 @@ export async function saveCustomCoupon() {
         }
     }
 }
-

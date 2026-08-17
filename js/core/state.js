@@ -88,17 +88,19 @@ const state = {
             channelCategoryMap: {}
         },
         dashboardWidgets: {
+            loveShop: true,
             health: true,
             supplements: true,
-            scheduleWidget: true,
-            studyPlannerWidget: true,
-            tetris: true,
-            quests: true,
-            funfacts: true,
-            memoryBoard: true,
-            alpskaHlidka: true,
-            austrianWord: true,
-            dailyQuestion: true
+            schoolDorm: true,
+            dailyQuestion: true,
+            scheduleWidget: false,
+            studyPlannerWidget: false,
+            tetris: false,
+            quests: false,
+            funfacts: false,
+            memoryBoard: false,
+            alpskaHlidka: false,
+            austrianWord: false
         },
 
         notifications: {
@@ -513,10 +515,55 @@ async function initializeState() {
     resetLazyLoaders
 } from './loaders.js';
 
+/**
+ * Awards Love Coins to the current user, plays sound, updates state and shows toast.
+ */
+export async function awardLoveCoinsToCurrentUser(amount, reason = '') {
+    try {
+        const myId = state.currentUser?.id;
+        if (!myId) return;
+
+        const isMeJose = myId === state.user_ids?.jose;
+        const currentCoins = isMeJose ? (state.loveCoins?.jose || 0) : (state.loveCoins?.klarka || 0);
+        const newCoins = Math.max(0, currentCoins + amount);
+
+        if (isMeJose) {
+            state.loveCoins.jose = newCoins;
+        } else {
+            state.loveCoins.klarka = newCoins;
+        }
+
+        saveStateToCache();
+
+        const { supabase } = await import('./supabase.js');
+        const { error } = await supabase
+            .from('profiles')
+            .update({ love_coins: newCoins })
+            .eq('id', myId);
+
+        if (error) {
+            console.warn("[Coins] Error updating profile coins:", error);
+        }
+
+        import('./sound.js').then(m => m.playCoinsSound?.()).catch(() => {});
+        
+        if (typeof window.showNotification === 'function') {
+            const prefix = amount > 0 ? `+${amount}` : `${amount}`;
+            window.showNotification(`${prefix} Love Coinů za: ${reason || 'aktivitu'}! 🪙✨`, 'success');
+        }
+
+        window.dispatchEvent(new CustomEvent('love-shop-updated'));
+        import('../modules/levels.js').then(m => m.renderLevelUI?.()).catch(() => {});
+    } catch (e) {
+        console.warn("[Coins] Failed to award love coins:", e);
+    }
+}
+
 export {
     state,
     stateEvents,
     saveStateToCache,
     initializeState
 };
+
 
