@@ -1,7 +1,7 @@
 import { supabase } from '../core/supabase.js';
 import { state } from '../core/state.js';
 import { triggerHaptic, triggerConfetti } from '../core/utils.js';
-import { showNotification } from '../core/theme.js';
+import { showNotification, showConfirmDialog } from '../core/theme.js';
 import { renderModal, renderInputGroup } from '../core/ui.js';
 import { FIT_PRESET_SUBJECTS } from './schedule.js';
 
@@ -24,9 +24,9 @@ export async function renderStudyPlanner() {
     }).length;
 
     container.innerHTML = `
-        <div class="h-full bg-[#18191c] flex flex-col font-sans animate-fade-in relative overflow-hidden select-none">
+        <div class="h-full bg-[var(--bg-app)] flex flex-col font-sans animate-fade-in relative overflow-hidden select-none">
             <!-- Header bar -->
-            <div class="bg-[#202225] shadow-md z-10 flex-shrink-0 border-b border-gray-800/80 p-4 lg:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="bg-[var(--bg-secondary)] shadow-md z-10 flex-shrink-0 border-b border-[var(--border-subtle)] p-4 lg:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500/25 to-teal-600/10 flex items-center justify-center text-xl text-emerald-400 border border-emerald-500/30 shadow-inner">
                         🎯
@@ -664,7 +664,8 @@ export async function updateSubjectPoints(id) {
 }
 
 export async function deleteSubjectItem(id) {
-    if (!confirm('Opravdu smazat tento předmět?')) return;
+    const confirmed = await showConfirmDialog('Opravdu chceš smazat tento předmět ze studijního plánu?');
+    if (!confirmed) return;
     triggerHaptic('light');
 
     try {

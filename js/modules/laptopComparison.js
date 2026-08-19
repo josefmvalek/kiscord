@@ -137,30 +137,30 @@ export async function renderLaptopComparison() {
     if (!container) return;
 
     container.innerHTML = `
-        <div class="h-full bg-[#36393f] flex flex-col font-sans animate-fade-in relative overflow-hidden select-none">
+        <div class="h-full bg-[var(--bg-app)] flex flex-col font-sans animate-fade-in relative overflow-hidden select-none">
             <!-- Header Bar -->
-            <div class="bg-[#2f3136] shadow-md z-10 flex-shrink-0 border-b border-[#202225] p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="bg-[var(--bg-secondary)] shadow-md z-10 flex-shrink-0 border-b border-[var(--border-subtle)] p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center text-xl text-amber-400 border border-amber-500/20">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center text-xl text-amber-400 border border-amber-500/20 shadow-inner">
                         💻
                     </div>
                     <div>
-                        <h1 class="text-base font-black text-white uppercase tracking-tight leading-none">Výběr Notebooku na VUT FIT pro Klárku 🎓</h1>
-                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Srovnání nejlepších možností bez bolesti hlavy ✨</p>
+                        <h1 class="text-base font-black text-[var(--text-header)] uppercase tracking-tight leading-none">Výběr Notebooku na VUT FIT pro Klárku 🎓</h1>
+                        <p class="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-wider mt-1">Srovnání nejlepších možností bez bolesti hlavy ✨</p>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <button onclick="window.switchLaptopTab('top3')" id="tab-btn-top3" class="px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition ${activeCategory === 'top3' ? 'bg-[#5865F2] text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}">
+                    <button onclick="window.switchLaptopTab('top3')" id="tab-btn-top3" class="px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition ${activeCategory === 'top3' ? 'bg-[var(--blurple)] text-white shadow-lg' : 'bg-white/5 text-[var(--text-muted)] hover:text-[var(--text-header)]'}">
                         ⭐ 3 Favoriti
                     </button>
-                    <button onclick="window.switchLaptopTab('midrange')" id="tab-btn-midrange" class="px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition ${activeCategory === 'midrange' ? 'bg-[#5865F2] text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}">
+                    <button onclick="window.switchLaptopTab('midrange')" id="tab-btn-midrange" class="px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition ${activeCategory === 'midrange' ? 'bg-[var(--blurple)] text-white shadow-lg' : 'bg-white/5 text-[var(--text-muted)] hover:text-[var(--text-header)]'}">
                         💰 15k–18k Kč
                     </button>
-                    <button onclick="window.switchLaptopTab('premium')" id="tab-btn-premium" class="px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition ${activeCategory === 'premium' ? 'bg-[#5865F2] text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}">
+                    <button onclick="window.switchLaptopTab('premium')" id="tab-btn-premium" class="px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition ${activeCategory === 'premium' ? 'bg-[var(--blurple)] text-white shadow-lg' : 'bg-white/5 text-[var(--text-muted)] hover:text-[var(--text-header)]'}">
                         👑 Premium
                     </button>
-                    <button onclick="window.switchLaptopTab('convertible')" id="tab-btn-convertible" class="px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition ${activeCategory === 'convertible' ? 'bg-[#5865F2] text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:text-white'}">
+                    <button onclick="window.switchLaptopTab('convertible')" id="tab-btn-convertible" class="px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition ${activeCategory === 'convertible' ? 'bg-[var(--blurple)] text-white shadow-lg' : 'bg-white/5 text-[var(--text-muted)] hover:text-[var(--text-header)]'}">
                         🔄 2in1 Tablet
                     </button>
                 </div>

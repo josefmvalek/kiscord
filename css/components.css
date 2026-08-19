@@ -386,12 +386,12 @@ input[type="range"]::-moz-range-track { width: 100%; height: 8px; cursor: pointe
 #tetris-tracker-container > div:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(88, 101, 242, 0.1); }
 
 /* --- PUZZLE --- */
-.puzzle-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; padding: 15px; }
-.puzzle-card { aspect-ratio: 1/1; border-radius: 12px; overflow: hidden; border: 2px solid transparent; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: #202225; }
-.puzzle-card:hover { transform: scale(1.05); border-color: #ff69b4; box-shadow: 0 0 15px rgba(255, 105, 180, 0.4); }
-.puzzle-card.active { border-color: #ff69b4; box-shadow: 0 0 0 4px rgba(255, 105, 180, 0.2); }
-.upload-zone { border: 2px dashed rgba(255, 255, 255, 0.1); transition: all 0.3s; }
-.upload-zone:hover { background: rgba(255, 105, 180, 0.05); border-color: #ff69b4; }
+.puzzle-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 14px; padding: 15px; }
+.puzzle-card { aspect-ratio: 1/1; border-radius: 16px; overflow: hidden; border: 2px solid var(--border-subtle); transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: var(--bg-tertiary); }
+.puzzle-card:hover { transform: scale(1.04); border-color: var(--blurple); box-shadow: 0 0 16px var(--blurple); }
+.puzzle-card.active { border-color: var(--blurple); box-shadow: 0 0 0 4px var(--bg-modifier-selected); }
+.upload-zone { border: 2px dashed var(--border-subtle); transition: all 0.3s; }
+.upload-zone:hover { background: var(--bg-modifier-hover); border-color: var(--blurple); }
 #puzzle-gallery-modal { z-index: 2000; }
 
 /* --- TIER LIST SORTABLE --- */

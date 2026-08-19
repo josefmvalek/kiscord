@@ -1,11 +1,10 @@
 import { state, stateEvents, ensureRegeneraceData } from '../core/state.js';
 import { triggerHaptic } from '../core/utils.js';
 import { supabase } from '../core/supabase.js';
+import { showConfirmDialog, showNotification } from '../core/theme.js';
 import { DEFAULT_CONTENT, SUPPLEMENT_THEMES, REGENERACE_START_DATE } from './regenerace/data.js';
 import { renderSupplementCard, renderManualItem, renderTimelineCard, renderScienceSection, renderDidYouKnowCard, renderHolisticAnalysis, parseMarkdown, formatTimelineCard } from './regenerace/components.js';
 import { renderEditor, syncEditorState, saveRegeneraceContent, setActiveEditorTab } from './regenerace/editor.js';
-
-
 
 let isEditMode = false;
 let isHeroCollapsed = true;
@@ -16,17 +15,15 @@ let isDidYouKnowCollapsed = true;
 let collapsedScienceSections = {}; // Track by index or supplementId
 let collapsedAnalysisChapters = [true, true, true, true];
 
-
-
 function renderView(container, content) {
     const html = `
-        <div class="h-full overflow-y-auto no-scrollbar bg-[#36393f] relative pb-12">
+        <div class="h-full overflow-y-auto no-scrollbar bg-[var(--bg-app)] relative pb-12">
             
             <!-- Hero Header -->
-            <div class="sticky top-0 z-50 bg-[#36393f]/90 backdrop-blur-md pb-4 pt-6 px-6 border-b border-white/5 shadow-lg">
+            <div class="sticky top-0 z-50 bg-[var(--bg-secondary)]/90 backdrop-blur-md pb-4 pt-6 px-6 border-b border-[var(--border-subtle)] shadow-lg">
                 <div class="flex justify-between items-center w-full max-w-2xl mx-auto">
                     <div>
-                        <h2 class="text-2xl font-black text-white uppercase tracking-tighter leading-tight flex items-center gap-2">
+                        <h2 class="text-2xl font-black text-[var(--text-header)] uppercase tracking-tighter leading-tight flex items-center gap-2">
                            <i class="fas fa-leaf text-[#3ba55c]"></i> Regenerace
                         </h2>
                     </div>
@@ -174,17 +171,14 @@ function renderView(container, content) {
 }
 
 export async function renderRegenerace() {
-    window.renderRegenerace = renderRegenerace; // For compatibility
+    window.renderRegenerace = renderRegenerace;
     const container = document.getElementById("messages-container");
     if (!container) return;
 
-    // Load data if not already loaded
     await ensureRegeneraceData();
-    // Merge stored data with DEFAULT_CONTENT to ensure new fields (like scienceSections) are present
     const content = state.regeneraceContent ? {
         ...DEFAULT_CONTENT,
         ...state.regeneraceContent,
-        // Upgrade legacy scienceStudies (object) to scienceSections (array)
         scienceSections: (state.regeneraceContent.scienceSections && state.regeneraceContent.scienceSections.length > 0)
             ? state.regeneraceContent.scienceSections
             : (state.regeneraceContent.scienceStudies ? [state.regeneraceContent.scienceStudies] : DEFAULT_CONTENT.scienceSections)
@@ -204,21 +198,16 @@ export async function renderRegenerace() {
     }
 }
 
-
-
 // Global Interactivity
 window.toggleRegeneraceEdit = () => {
-    if (isEditMode) {
-        // Leaving edit mode, maybe sync one last time
-        syncEditorState();
-    }
+    if (isEditMode) syncEditorState();
     isEditMode = !isEditMode;
     renderRegenerace();
 };
 
 window.switchEditorTab = (tab) => {
-    triggerHaptic('light'); // Added feedback for better UX
-    syncEditorState(); // Capture unsaved changes before switching
+    triggerHaptic('light');
+    syncEditorState();
     setActiveEditorTab(tab);
     renderRegenerace();
 };
@@ -239,29 +228,21 @@ window.addAnalysisChapter = () => {
     renderRegenerace();
 };
 
-window.removeAnalysisChapter = (idx) => {
-    if (!confirm('Opravdu smazat tuto kapitolu rozboru?')) return;
+window.removeAnalysisChapter = async (idx) => {
+    const ok = await showConfirmDialog('Opravdu smazat tuto kapitolu rozboru?');
+    if (!ok) return;
     syncEditorState();
     state.regeneraceContent.analysis.chapters.splice(idx, 1);
-    
-    // Optional: Re-number titles if they follow the "N. Title" pattern
     state.regeneraceContent.analysis.chapters.forEach((chap, i) => {
         const match = chap.title.match(/^(\d+)\.\s(.*)/);
-        if (match) {
-            chap.title = `${i + 1}. ${match[2]}`;
-        }
+        if (match) chap.title = `${i + 1}. ${match[2]}`;
     });
-    
     renderRegenerace();
 };
 
 window.addManualItem = () => {
     syncEditorState();
-    state.regeneraceContent.manual.push({
-        time: 'KDYKOLIV',
-        title: 'Nový krok',
-        detail: ''
-    });
+    state.regeneraceContent.manual.push({ time: 'KDYKOLIV', title: 'Nový krok', detail: '' });
     renderRegenerace();
 };
 
@@ -274,49 +255,63 @@ window.removeManualItem = (idx) => {
 window.addScienceItem = (sIdx) => {
     syncEditorState();
     const section = state.regeneraceContent.scienceSections[sIdx];
-    section.items.push({
-        id: section.items.length + 1,
-        title: 'Nová studie',
-        text: '',
-        result: '',
-        source: '(Zdroj: )'
-    });
-    // Re-index to be sure
+    section.items.push({ id: section.items.length + 1, title: 'Nová studie', text: '', result: '', source: '(Zdroj: )' });
     section.items.forEach((item, idx) => item.id = idx + 1);
     renderRegenerace();
 };
 
-window.removeScienceItem = (sIdx, iIdx) => {
-    if (!confirm('Opravdu smazat tuto studii?')) return;
+window.removeScienceItem = async (sIdx, iIdx) => {
+    const ok = await showConfirmDialog('Opravdu smazat tuto studii?');
+    if (!ok) return;
     syncEditorState();
     state.regeneraceContent.scienceSections[sIdx].items.splice(iIdx, 1);
-    // Re-index remaining items
-    state.regeneraceContent.scienceSections[sIdx].items.forEach((item, idx) => {
-        item.id = idx + 1;
-    });
+    state.regeneraceContent.scienceSections[sIdx].items.forEach((item, idx) => item.id = idx + 1);
     renderRegenerace();
 };
 
 window.addTimelineItem = () => {
     syncEditorState();
-    state.regeneraceContent.timeline.push({
-        period: 'PO X DNECH',
-        text: '**Nová proměna**\nPopis...'
-    });
+    state.regeneraceContent.timeline.push({ period: 'PO X DNECH', text: '**Nová proměna**\nPopis...' });
     renderRegenerace();
 };
 
-window.removeTimelineItem = (idx) => {
-    if (!confirm('Opravdu smazat tento milník z časové osy?')) return;
+window.removeTimelineItem = async (idx) => {
+    const ok = await showConfirmDialog('Opravdu smazat tento milník z časové osy?');
+    if (!ok) return;
     syncEditorState();
     state.regeneraceContent.timeline.splice(idx, 1);
     renderRegenerace();
 };
 
+window.addDidYouKnowSection = () => {
+    syncEditorState();
+    if (!state.regeneraceContent.didYouKnow) state.regeneraceContent.didYouKnow = JSON.parse(JSON.stringify(DEFAULT_CONTENT.didYouKnow));
+    state.regeneraceContent.didYouKnow.sections.push({ icon: '🔬', title: 'NOVÁ SEKCE', items: [{ title: 'Nové faktum', text: 'Text faktu...' }] });
+    renderRegenerace();
+};
+
+window.removeDidYouKnowSection = async (sIdx) => {
+    const ok = await showConfirmDialog('Opravdu smazat celou tuto sekci faktů?');
+    if (!ok) return;
+    syncEditorState();
+    state.regeneraceContent.didYouKnow.sections.splice(sIdx, 1);
+    renderRegenerace();
+};
+
+window.addDidYouKnowItem = (sIdx) => {
+    syncEditorState();
+    state.regeneraceContent.didYouKnow.sections[sIdx].items.push({ title: 'Nové faktum', text: 'Text faktu...' });
+    renderRegenerace();
+};
+
+window.removeDidYouKnowItem = (sIdx, iIdx) => {
+    syncEditorState();
+    state.regeneraceContent.didYouKnow.sections[sIdx].items.splice(iIdx, 1);
+    renderRegenerace();
+};
+
 window.toggleRegeneraceHero = () => {
     isHeroCollapsed = !isHeroCollapsed;
-    
-    // Direct DOM manipulation to prevent scroll jump
     const content = document.getElementById('reg-hero-content');
     const chevron = document.getElementById('reg-hero-chevron');
     if (content && chevron) {
@@ -377,7 +372,6 @@ window.toggleRegeneraceSection = (section, id = null) => {
         maxH = 'max-h-[5000px]';
     }
 
-    // Direct DOM manipulation
     const content = document.getElementById(targetId);
     const chevron = document.getElementById(chevronId);
     if (content && chevron) {
@@ -393,54 +387,11 @@ window.toggleRegeneraceSection = (section, id = null) => {
     }
 };
 
-window.scrollToRegeneraceSection = (sectionId) => {
-    triggerHaptic('medium');
-    
-    // 1. Ensure the section is expanded
-    if (sectionId === 'analysis' && isAnalysisCollapsed) window.toggleRegeneraceSection('analysis');
-    if (sectionId === 'manual' && isManualCollapsed) window.toggleRegeneraceSection('manual');
-    if (sectionId === 'timeline' && isTimelineCollapsed) window.toggleRegeneraceSection('timeline');
-    if (sectionId === 'didyouknow' && isDidYouKnowCollapsed) window.toggleRegeneraceSection('didYouKnow');
-    
-    // Note: 'supps' and 'science' are containers for multiple items, so we just scroll there
-    
-    const target = document.getElementById(`reg-section-${sectionId}`);
-    if (target) {
-        // Find the scrollable container (the one with overflow-y-auto)
-        const scrollContainer = target.closest('.overflow-y-auto');
-        
-        if (scrollContainer) {
-            const headerOffset = 140; // Height of the sticky header + nav chips
-            
-            // Calculate position of target relative to the scroll container
-            const containerRect = scrollContainer.getBoundingClientRect();
-            const targetRect = target.getBoundingClientRect();
-            const relativeTop = targetRect.top - containerRect.top + scrollContainer.scrollTop;
-            
-            scrollContainer.scrollTo({
-                top: relativeTop - headerOffset,
-                behavior: "smooth"
-            });
-
-            // 2. Visual Feedback (Glow)
-            target.classList.remove('reg-section-highlight');
-            void target.offsetWidth; // Trigger reflow
-            target.classList.add('reg-section-highlight');
-        } else {
-            // Fallback to basic scroll into view if container not found
-            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }
-};
-
-
 window.toggleAnalysisChapter = (idx) => {
     triggerHaptic('light');
     collapsedAnalysisChapters[idx] = !collapsedAnalysisChapters[idx];
-    
     const content = document.getElementById(`analysis-chapter-content-${idx}`);
     const chevron = document.getElementById(`analysis-chapter-chevron-${idx}`);
-    
     if (content && chevron) {
         if (collapsedAnalysisChapters[idx]) {
             content.classList.add('max-h-0', 'opacity-0');
@@ -459,14 +410,9 @@ window.toggleSupplementDetail = (id) => {
     const detail = document.getElementById(`detail-${id}`);
     const arrow = document.getElementById(`arrow-${id}`);
     const card = document.getElementById(`supp-${id}`);
-
     if (!detail || !arrow || !card) return;
 
-    // Is it currently open? (since we use transition, we check max-height or opacity)
     const isClosed = detail.classList.contains('max-h-0');
-
-
-    // Toggle current
     if (isClosed) {
         detail.classList.remove('max-h-0', 'opacity-0');
         detail.classList.add('max-h-[9999px]', 'opacity-100');
@@ -480,45 +426,32 @@ window.toggleSupplementDetail = (id) => {
     }
 };
 
-// --- EDITOR SHORTCUTS ---
 window.saveRegeneraceContent = async () => {
     isEditMode = false;
     await saveRegeneraceContent(renderRegenerace);
 };
 
-// --- DID YOU KNOW EDITING HELPERS ---
-window.addDidYouKnowSection = () => {
-    syncEditorState();
-    if (!state.regeneraceContent.didYouKnow) {
-        state.regeneraceContent.didYouKnow = JSON.parse(JSON.stringify(DEFAULT_CONTENT.didYouKnow));
+window.scrollToRegeneraceSection = (sectionId) => {
+    triggerHaptic('medium');
+    if (sectionId === 'analysis' && isAnalysisCollapsed) window.toggleRegeneraceSection('analysis');
+    if (sectionId === 'manual' && isManualCollapsed) window.toggleRegeneraceSection('manual');
+    if (sectionId === 'timeline' && isTimelineCollapsed) window.toggleRegeneraceSection('timeline');
+    if (sectionId === 'didyouknow' && isDidYouKnowCollapsed) window.toggleRegeneraceSection('didYouKnow');
+    
+    const target = document.getElementById(`reg-section-${sectionId}`);
+    if (target) {
+        const scrollContainer = target.closest('.overflow-y-auto');
+        if (scrollContainer) {
+            const headerOffset = 140;
+            const containerRect = scrollContainer.getBoundingClientRect();
+            const targetRect = target.getBoundingClientRect();
+            const relativeTop = targetRect.top - containerRect.top + scrollContainer.scrollTop;
+            scrollContainer.scrollTo({ top: relativeTop - headerOffset, behavior: "smooth" });
+            target.classList.remove('reg-section-highlight');
+            void target.offsetWidth;
+            target.classList.add('reg-section-highlight');
+        } else {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
-    state.regeneraceContent.didYouKnow.sections.push({
-        icon: '🔬',
-        title: 'NOVÁ SEKCE',
-        items: [{ title: 'Nové faktum', text: 'Text faktu...' }]
-    });
-    renderRegenerace();
 };
-
-window.removeDidYouKnowSection = (sIdx) => {
-    if (!confirm('Opravdu smazat celou tuto sekci faktů?')) return;
-    syncEditorState();
-    state.regeneraceContent.didYouKnow.sections.splice(sIdx, 1);
-    renderRegenerace();
-};
-
-window.addDidYouKnowItem = (sIdx) => {
-    syncEditorState();
-    state.regeneraceContent.didYouKnow.sections[sIdx].items.push({
-        title: 'Nové faktum',
-        text: 'Text faktu...'
-    });
-    renderRegenerace();
-};
-
-window.removeDidYouKnowItem = (sIdx, iIdx) => {
-    syncEditorState();
-    state.regeneraceContent.didYouKnow.sections[sIdx].items.splice(iIdx, 1);
-    renderRegenerace();
-};
-

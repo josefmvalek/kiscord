@@ -62,19 +62,19 @@ export function generateFitAndDormDashboardWidget() {
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
     return `
-        <div class="bg-[#2b2d31] border border-[#202225] rounded-2xl p-5 shadow-sm space-y-3.5 select-none">
-            <div class="flex justify-between items-center pb-2 border-b border-[#202225]">
-                <h3 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5 leading-none">
+        <div class="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl p-5 shadow-sm space-y-3.5 select-none">
+            <div class="flex justify-between items-center pb-2 border-b border-[var(--border-subtle)]">
+                <h3 class="text-xs font-black text-[var(--text-header)] uppercase tracking-wider flex items-center gap-1.5 leading-none">
                     🎓 VUT FIT & Koleje Brno
                 </h3>
 
                 <div class="flex items-center gap-1.5">
                     <button onclick="window.switchChannel('schedule')" 
-                            class="px-2.5 py-1 bg-[#1e1f22] hover:bg-[#35373c] text-[#dbdee1] hover:text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition border border-[#36393f] flex items-center gap-1">
-                        Rozvrh <i class="fas fa-chevron-right text-[8px] text-[#5865F2]"></i>
+                            class="px-2.5 py-1 bg-[var(--bg-tertiary)] hover:bg-[var(--bg-modifier-hover)] text-[var(--text-normal)] hover:text-[var(--text-header)] rounded-lg text-[10px] font-black uppercase tracking-wider transition border border-[var(--border-subtle)] flex items-center gap-1">
+                        Rozvrh <i class="fas fa-chevron-right text-[8px] text-[var(--blurple)]"></i>
                     </button>
                     <button onclick="window.switchChannel('dorm-hub')" 
-                            class="px-2.5 py-1 bg-[#1e1f22] hover:bg-[#35373c] text-[#faa61a] hover:text-amber-300 rounded-lg text-[10px] font-black uppercase tracking-wider transition border border-[#36393f] flex items-center gap-1">
+                            class="px-2.5 py-1 bg-[var(--bg-tertiary)] hover:bg-[var(--bg-modifier-hover)] text-[var(--yellow)] hover:text-amber-300 rounded-lg text-[10px] font-black uppercase tracking-wider transition border border-[var(--border-subtle)] flex items-center gap-1">
                         Koleje <i class="fas fa-building text-[8px]"></i>
                     </button>
                 </div>
@@ -82,25 +82,25 @@ export function generateFitAndDormDashboardWidget() {
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <!-- 1. Dnešní výuka -->
-                <div class="bg-[#1e1f22] hover:bg-[#232428] p-3 rounded-xl border border-[#36393f] flex items-center gap-3 transition cursor-pointer" onclick="window.switchChannel('schedule')">
-                    <div class="w-9 h-9 rounded-lg bg-[#2b2d31] flex items-center justify-center text-base text-emerald-400 flex-shrink-0">
+                <div class="bg-[var(--bg-tertiary)] hover:bg-[var(--bg-modifier-hover)] p-3 rounded-xl border border-[var(--border-subtle)] flex items-center gap-3 transition cursor-pointer" onclick="window.switchChannel('schedule')">
+                    <div class="w-9 h-9 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center text-base text-emerald-400 flex-shrink-0">
                         ${isWeekend ? '🌴' : '💻'}
                     </div>
                     <div class="min-w-0">
-                        <span class="text-[9px] font-black text-[#949ba4] uppercase tracking-widest block">Výuka dnes</span>
-                        <p class="text-xs font-bold text-white truncate">
+                        <span class="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest block">Výuka dnes</span>
+                        <p class="text-xs font-bold text-[var(--text-header)] truncate">
                             ${isWeekend ? 'Víkendové volno 🎉' : 'Otevřít dnešní rozvrh hodin'}
                         </p>
                     </div>
                 </div>
 
                 <!-- 2. Společná okénka -->
-                <div class="bg-[#1e1f22] hover:bg-[#232428] p-3 rounded-xl border border-[#36393f] flex items-center gap-3 transition cursor-pointer" onclick="window.switchChannel('schedule')">
-                    <div class="w-9 h-9 rounded-lg bg-[#2b2d31] flex items-center justify-center text-base text-amber-400 flex-shrink-0">
+                <div class="bg-[var(--bg-tertiary)] hover:bg-[var(--bg-modifier-hover)] p-3 rounded-xl border border-[var(--border-subtle)] flex items-center gap-3 transition cursor-pointer" onclick="window.switchChannel('schedule')">
+                    <div class="w-9 h-9 rounded-lg bg-[var(--bg-secondary)] flex items-center justify-center text-base text-amber-400 flex-shrink-0">
                         ☕
                     </div>
                     <div class="min-w-0">
-                        <span class="text-[9px] font-black text-[#949ba4] uppercase tracking-widest block">Společný čas</span>
+                        <span class="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest block">Společný čas</span>
                         <p class="text-xs font-bold text-amber-400 truncate">
                             Volná okénka na oběd & relax
                         </p>
@@ -123,39 +123,39 @@ export function generateLoveAndLevelsWidget() {
     const unredeemedCount = unredeemedCoupons.length;
 
     return `
-        <div class="bg-[#2b2d31] border border-[#202225] rounded-2xl p-5 shadow-sm space-y-3.5 select-none relative overflow-hidden">
+        <div class="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl p-5 shadow-sm space-y-3.5 select-none relative overflow-hidden">
             <!-- Horní lišta -->
-            <div class="flex justify-between items-center pb-2 border-b border-[#202225]">
+            <div class="flex justify-between items-center pb-2 border-b border-[var(--border-subtle)]">
                 <div class="flex items-center gap-2">
-                    <h3 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5 leading-none">
+                    <h3 class="text-xs font-black text-[var(--text-header)] uppercase tracking-wider flex items-center gap-1.5 leading-none">
                         ❤️ Vztahový Rituál & Tržnice
                     </h3>
-                    <span class="text-[9px] bg-[#1e1f22] text-amber-400 font-bold px-2 py-0.5 rounded-md border border-[#36393f]">Level ${levelInfo.level}</span>
+                    <span class="text-[9px] bg-[var(--bg-tertiary)] text-amber-400 font-bold px-2 py-0.5 rounded-md border border-[var(--border-subtle)]">Level ${levelInfo.level}</span>
                 </div>
 
                 <div class="flex items-center gap-1.5">
                     <button onclick="window.openRelationshipMilestonesModal()" 
-                            class="px-2.5 py-1 bg-[#1e1f22] hover:bg-[#35373c] text-amber-400 rounded-lg text-[10px] font-black uppercase tracking-wider transition border border-[#36393f] flex items-center gap-1">
+                            class="px-2.5 py-1 bg-[var(--bg-tertiary)] hover:bg-[var(--bg-modifier-hover)] text-amber-400 rounded-lg text-[10px] font-black uppercase tracking-wider transition border border-[var(--border-subtle)] flex items-center gap-1">
                         <i class="fas fa-trophy text-[9px]"></i> Milníky
                     </button>
                     <button onclick="window.switchChannel('love-shop')" 
-                            class="px-2.5 py-1 bg-[#1e1f22] hover:bg-[#35373c] text-[#5865F2] hover:text-white rounded-lg text-[10px] font-black uppercase tracking-wider transition border border-[#36393f] flex items-center gap-1">
+                            class="px-2.5 py-1 bg-[var(--bg-tertiary)] hover:bg-[var(--bg-modifier-hover)] text-[var(--blurple)] hover:text-[var(--text-header)] rounded-lg text-[10px] font-black uppercase tracking-wider transition border border-[var(--border-subtle)] flex items-center gap-1">
                         <i class="fas fa-store text-[9px]"></i> Obchůdek
                     </button>
                 </div>
             </div>
 
             <!-- Střední část: Progress bar do dalšího levelu -->
-            <div class="bg-[#1e1f22] p-3 rounded-xl border border-[#36393f] cursor-pointer hover:border-amber-500/30 transition-all"
+            <div class="bg-[var(--bg-tertiary)] p-3 rounded-xl border border-[var(--border-subtle)] cursor-pointer hover:border-amber-500/30 transition-all"
                  onclick="window.openRelationshipMilestonesModal()" title="Klikni pro zobrazení Stromu milníků">
                 <div class="flex justify-between items-center text-[10px] font-bold mb-1.5">
-                    <span class="text-[#dbdee1] flex items-center gap-1.5">
+                    <span class="text-[var(--text-normal)] flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full bg-amber-400"></span>
                         Postup do Levelu ${levelInfo.level + 1}
                     </span>
                     <span class="text-amber-400 font-black">${levelInfo.currentXP} / ${levelInfo.nextXP} XP (${levelInfo.progressPercentage}%)</span>
                 </div>
-                <div class="w-full h-2 bg-[#2b2d31] rounded-full overflow-hidden p-[1px] border border-[#36393f]">
+                <div class="w-full h-2 bg-[var(--bg-secondary)] rounded-full overflow-hidden p-[1px] border border-[var(--border-subtle)]">
                     <div class="h-full rounded-full bg-gradient-to-r ${levelInfo.color} transition-all duration-700" style="width: ${levelInfo.progressPercentage}%"></div>
                 </div>
             </div>
@@ -163,27 +163,27 @@ export function generateLoveAndLevelsWidget() {
             <!-- Spodní část: Peněženky a Spížka -->
             <div class="grid grid-cols-2 gap-3">
                 <!-- Peněženka -->
-                <div class="bg-[#1e1f22] p-3 rounded-xl border border-[#36393f] flex items-center justify-between">
+                <div class="bg-[var(--bg-tertiary)] p-3 rounded-xl border border-[var(--border-subtle)] flex items-center justify-between">
                     <div>
-                        <span class="text-[9px] text-[#949ba4] font-black uppercase tracking-widest block">Tvoje konto</span>
+                        <span class="text-[9px] text-[var(--text-muted)] font-black uppercase tracking-widest block">Tvoje konto</span>
                         <span class="text-sm font-black text-yellow-400 flex items-center gap-1">${myCoins} <i class="fas fa-coins text-[10px] text-yellow-500"></i></span>
                     </div>
                     <div class="text-right">
-                        <span class="text-[9px] text-[#949ba4] font-black uppercase tracking-widest block">${partnerName}</span>
-                        <span class="text-sm font-black text-[#dbdee1] flex items-center justify-end gap-1">${partnerCoins} <i class="fas fa-coins text-[10px] text-gray-400"></i></span>
+                        <span class="text-[9px] text-[var(--text-muted)] font-black uppercase tracking-widest block">${partnerName}</span>
+                        <span class="text-sm font-black text-[var(--text-normal)] flex items-center justify-end gap-1">${partnerCoins} <i class="fas fa-coins text-[10px] text-gray-400"></i></span>
                     </div>
                 </div>
 
                 <!-- Spížka rychlý status -->
-                <div class="bg-[#1e1f22] hover:bg-[#232428] p-3 rounded-xl border border-[#36393f] flex items-center justify-between cursor-pointer transition"
+                <div class="bg-[var(--bg-tertiary)] hover:bg-[var(--bg-modifier-hover)] p-3 rounded-xl border border-[var(--border-subtle)] flex items-center justify-between cursor-pointer transition"
                      onclick="window.switchChannel('love-shop')">
                     <div class="min-w-0 pr-2">
-                        <span class="text-[9px] text-[#949ba4] font-black uppercase tracking-widest block">Moje Spížka</span>
-                        <span class="text-xs font-bold ${unredeemedCount > 0 ? 'text-[#eb459e]' : 'text-[#dbdee1]'} truncate block">
+                        <span class="text-[9px] text-[var(--text-muted)] font-black uppercase tracking-widest block">Moje Spížka</span>
+                        <span class="text-xs font-bold ${unredeemedCount > 0 ? 'text-[#eb459e]' : 'text-[var(--text-normal)]'} truncate block">
                             ${unredeemedCount > 0 ? `🎁 ${unredeemedCount} kupón${unredeemedCount > 1 ? (unredeemedCount < 5 ? 'y' : 'ů') : ''}` : 'Prázdná'}
                         </span>
                     </div>
-                    <i class="fas fa-chevron-right text-[#949ba4] text-[10px]"></i>
+                    <i class="fas fa-chevron-right text-[var(--text-muted)] text-[10px]"></i>
                 </div>
             </div>
         </div>
@@ -199,33 +199,33 @@ function generateDailyQuestionCard() {
     const isRevealed = !!(myAnswer && partnerAnswer);
 
     let content = `
-        <div class="bg-[#2b2d31] border border-[#202225] rounded-2xl p-5 shadow-sm select-none">
-            <div class="flex justify-between items-start mb-3 pb-2 border-b border-[#202225]">
-                <h3 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2 leading-none">
+        <div class="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl p-5 shadow-sm select-none">
+            <div class="flex justify-between items-start mb-3 pb-2 border-b border-[var(--border-subtle)]">
+                <h3 class="text-xs font-black text-[var(--text-header)] uppercase tracking-wider flex items-center gap-2 leading-none">
                     <i class="fas fa-comment-dots text-[#faa61a]"></i> Dnešní otázka pro nás dva
                 </h3>
                 <button onclick="window.switchChannel('daily-questions')" 
-                        class="text-[10px] text-[#949ba4] hover:text-white transition font-bold uppercase tracking-wider flex items-center gap-1">
-                    archiv <i class="fas fa-chevron-right text-[8px] text-[#5865F2]"></i>
+                        class="text-[10px] text-[var(--text-muted)] hover:text-[var(--text-header)] transition font-bold uppercase tracking-wider flex items-center gap-1">
+                    archiv <i class="fas fa-chevron-right text-[8px] text-[var(--blurple)]"></i>
                 </button>
             </div>
 
             <div class="mb-4">
-                <h2 class="text-sm sm:text-base font-bold text-white leading-relaxed">"${state.dailyQuestion.text}"</h2>
+                <h2 class="text-sm sm:text-base font-bold text-[var(--text-header)] leading-relaxed">"${state.dailyQuestion.text}"</h2>
             </div>
     `;
 
     if (!myAnswer) {
         content += `
             <div class="space-y-3">
-                <div class="bg-[#1e1f22] rounded-xl p-3 border border-[#36393f] focus-within:border-[#5865F2] transition-colors">
+                <div class="bg-[var(--bg-tertiary)] rounded-xl p-3 border border-[var(--border-subtle)] focus-within:border-[var(--blurple)] transition-colors">
                     <textarea id="dashboard-daily-answer-input" 
                               placeholder="Tvoje upřímná odpověď..." 
-                              class="w-full bg-transparent text-[#dbdee1] text-xs sm:text-sm outline-none resize-none min-h-[65px] placeholder-[#72767d] font-medium leading-relaxed custom-scrollbar"></textarea>
+                              class="w-full bg-transparent text-[var(--text-normal)] text-xs sm:text-sm outline-none resize-none min-h-[65px] placeholder-[var(--text-muted)] font-medium leading-relaxed custom-scrollbar"></textarea>
                 </div>
                 <button id="dashboard-btn-submit-answer"
                         onclick="window.submitDailyAnswerFromDashboard()" 
-                        class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-2.5 px-4 rounded-xl font-bold transition shadow active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[44px]">
+                        class="w-full bg-[var(--blurple)] hover:bg-[var(--blurple-hover)] text-white py-2.5 px-4 rounded-xl font-bold transition shadow active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[44px]">
                     <i class="fas fa-paper-plane text-[10px]"></i> <span class="text-xs uppercase font-black tracking-wider">Odeslat moji odpověď</span>
                 </button>
             </div>
@@ -233,21 +233,21 @@ function generateDailyQuestionCard() {
     } else if (!isRevealed) {
         content += `
             <div class="grid grid-cols-2 gap-3">
-                <div class="bg-[#1e1f22] p-3 rounded-xl border border-emerald-500/30 flex flex-col justify-between min-h-[85px]">
-                    <span class="text-[9px] uppercase font-black text-[#949ba4] block">Tvoje odpověď</span>
-                    <p class="text-xs text-[#dbdee1] italic line-clamp-3 my-1 leading-snug">${myAnswer.answer_text}</p>
+                <div class="bg-[var(--bg-tertiary)] p-3 rounded-xl border border-emerald-500/30 flex flex-col justify-between min-h-[85px]">
+                    <span class="text-[9px] uppercase font-black text-[var(--text-muted)] block">Tvoje odpověď</span>
+                    <p class="text-xs text-[var(--text-normal)] italic line-clamp-3 my-1 leading-snug">${myAnswer.answer_text}</p>
                     <span class="text-[8px] text-emerald-400 font-black uppercase self-end">Odesláno ✅</span>
                 </div>
-                <div class="bg-[#1e1f22] p-3 rounded-xl border border-dashed border-[#36393f] flex flex-col items-center justify-center text-center min-h-[85px]">
+                <div class="bg-[var(--bg-tertiary)] p-3 rounded-xl border border-dashed border-[var(--border-subtle)] flex flex-col items-center justify-center text-center min-h-[85px]">
                     ${partnerAnswer ? `
                         <div class="flex flex-col items-center">
                             <i class="fas fa-lock text-amber-400 text-base mb-1"></i>
-                            <p class="text-[10px] text-white font-bold leading-none">Dostupná!</p>
-                            <p class="text-[8px] text-[#949ba4] uppercase font-black mt-0.5">Čeká na odemčení</p>
+                            <p class="text-[10px] text-[var(--text-header)] font-bold leading-none">Dostupná!</p>
+                            <p class="text-[8px] text-[var(--text-muted)] uppercase font-black mt-0.5">Čeká na odemčení</p>
                         </div>
                     ` : `
-                        <i class="fas fa-clock text-[#72767d] text-base mb-1"></i>
-                        <p class="text-[10px] text-[#949ba4] font-bold uppercase">Partner ještě nepíše</p>
+                        <i class="fas fa-clock text-[var(--text-muted)] text-base mb-1"></i>
+                        <p class="text-[10px] text-[var(--text-muted)] font-bold uppercase">Partner ještě nepíše</p>
                     `}
                 </div>
             </div>
@@ -258,13 +258,13 @@ function generateDailyQuestionCard() {
 
         content += `
             <div class="space-y-2.5">
-                <div class="bg-[#1e1f22] p-3 rounded-xl border-l-[3px] border-[#5865F2]">
-                    <span class="text-[9px] font-black uppercase text-[#5865F2] block mb-1">Já</span>
-                    <p class="text-xs text-[#dbdee1] leading-relaxed font-medium">${myAnswer.answer_text}</p>
+                <div class="bg-[var(--bg-tertiary)] p-3 rounded-xl border-l-[3px] border-[var(--blurple)]">
+                    <span class="text-[9px] font-black uppercase text-[var(--blurple)] block mb-1">Já</span>
+                    <p class="text-xs text-[var(--text-normal)] leading-relaxed font-medium">${myAnswer.answer_text}</p>
                 </div>
-                <div class="bg-[#1e1f22] p-3 rounded-xl border-l-[3px] border-[#eb459e]">
+                <div class="bg-[var(--bg-tertiary)] p-3 rounded-xl border-l-[3px] border-[#eb459e]">
                     <span class="text-[9px] font-black uppercase text-[#eb459e] block mb-1">${partnerName}</span>
-                    <p class="text-xs text-[#dbdee1] leading-relaxed font-medium">${partnerAnswer.answer_text}</p>
+                    <p class="text-xs text-[var(--text-normal)] leading-relaxed font-medium">${partnerAnswer.answer_text}</p>
                 </div>
                 <div class="text-center pt-1">
                     <span class="text-[9px] bg-amber-400/15 text-amber-300 px-3 py-1 rounded-full font-black uppercase tracking-wider">
@@ -329,14 +329,14 @@ async function actuallyRenderDashboard(forceRefresh = false) {
     startDashboardTimer(nextDate);
 
     container.innerHTML = `
-        <div class="flex-1 overflow-y-auto no-scrollbar bg-[#313338] relative w-full h-full pb-24 select-none font-sans">
+        <div class="flex-1 overflow-y-auto no-scrollbar bg-[var(--bg-primary)] relative w-full h-full pb-24 select-none font-sans">
             <!-- DISCORD HERO BANNER -->
-            <div class="relative shadow-md overflow-hidden flex-shrink-0 pt-4 pb-0 bg-gradient-to-b from-[#1e1f22] via-[#23272a] to-[#2b2d31] border-b border-[#202225]">
+            <div class="relative shadow-md overflow-hidden flex-shrink-0 pt-4 pb-0 bg-gradient-to-b from-[var(--bg-tertiary)] via-[var(--bg-secondary)] to-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
                 
                 <div class="relative z-10 px-5 max-w-4xl mx-auto flex justify-between items-end min-h-[120px] pb-5">
                     <div class="pb-1">
-                        <p class="text-[11px] font-bold uppercase tracking-wider text-[#949ba4] mb-0.5">${niceDate}</p>
-                        <h1 class="text-xl sm:text-2xl font-black text-white leading-tight flex items-center gap-3">
+                        <p class="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-0.5">${niceDate}</p>
+                        <h1 class="text-xl sm:text-2xl font-black text-[var(--text-header)] leading-tight flex items-center gap-3">
                             <span>${isKlarkaNameDay 
                                 ? `Všechno nejlepší k svátku, <br>${state.currentUser?.name === 'Klárka' ? 'Klárko! 👑🌸' : 'pro Klárku! 🎉🌸'}` 
                                 : `${greeting}, <br>${getInflectedName(state.currentUser?.name, 5)} 🌞`}</span>
@@ -346,13 +346,13 @@ async function actuallyRenderDashboard(forceRefresh = false) {
                         </h1>
 
                         <div class="flex items-center gap-2 mt-3">
-                            <div class="bg-[#1e1f22] px-3 py-1.5 rounded-xl text-center border border-[#36393f] cursor-pointer active:scale-95 transition" 
+                            <div class="bg-[var(--bg-secondary)] px-3 py-1.5 rounded-xl text-center border border-[var(--border-subtle)] cursor-pointer active:scale-95 transition" 
                                  onclick="window.handleEasterEggClick()">
-                                <span class="block text-[8px] uppercase font-bold text-[#949ba4] leading-none mb-0.5">Spolu</span>
-                                <span class="block text-xs font-black text-white leading-none">${daysTogether} dní ❤️</span>
+                                <span class="block text-[8px] uppercase font-bold text-[var(--text-muted)] leading-none mb-0.5">Spolu</span>
+                                <span class="block text-xs font-black text-[var(--text-header)] leading-none">${daysTogether} dní ❤️</span>
                             </div>
                             <button onclick="window.sendSunlight()" 
-                                    class="sun-send-btn w-8 h-8 bg-[#1e1f22] hover:bg-[#35373c] rounded-xl border border-[#36393f] flex items-center justify-center text-base shadow transition-all active:scale-90"
+                                    class="sun-send-btn w-8 h-8 bg-[var(--bg-secondary)] hover:bg-[var(--bg-modifier-hover)] rounded-xl border border-[var(--border-subtle)] flex items-center justify-center text-base shadow transition-all active:scale-90"
                                     title="Poslat sluneční paprsek">
                                 <span>☀️</span>
                             </button>
@@ -364,18 +364,18 @@ async function actuallyRenderDashboard(forceRefresh = false) {
                         <div id="sunflower-me-container" class="flex flex-col items-center w-16 relative group cursor-pointer" 
                              onclick="window.inspectPartnerSunflower(false)" title="Klikni pro detaily">
                             ${generateSunflowerSVG(data, false)}
-                            <span class="absolute -bottom-4 left-0 w-full text-center text-[10px] font-black text-[#dbdee1] uppercase tracking-wider">${state.currentUser?.name}</span>
+                            <span class="absolute -bottom-4 left-0 w-full text-center text-[10px] font-black text-[var(--text-muted)] uppercase tracking-wider">${state.currentUser?.name}</span>
                         </div>
                         <div id="sunflower-partner-container" class="flex flex-col items-center w-16 relative group cursor-pointer" 
                              onclick="window.inspectPartnerSunflower(true)" title="Klikni pro detaily partnera">
                             ${generateSunflowerSVG(state.partnerHealthData || null, true)}
-                            <span class="absolute -bottom-4 left-0 w-full text-center text-[10px] font-black text-[#dbdee1] uppercase tracking-wider">${state.currentUser?.name === 'Jožka' ? 'Klárka' : 'Jožka'}</span>
+                            <span class="absolute -bottom-4 left-0 w-full text-center text-[10px] font-black text-[var(--text-muted)] uppercase tracking-wider">${state.currentUser?.name === 'Jožka' ? 'Klárka' : 'Jožka'}</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Plánovací lišta v záhlaví -->
-                <div id="dashboard-planning-area" class="bg-[#1e1f22]/90 border-t border-[#202225] px-5 py-2.5 flex items-center justify-between cursor-pointer">
+                <div id="dashboard-planning-area" class="bg-[var(--bg-secondary)]/90 border-t border-[var(--border-subtle)] px-5 py-2.5 flex items-center justify-between cursor-pointer">
                     <div class="max-w-4xl mx-auto w-full">
                         ${renderTopPlanningSnippet(nextDate, todayStr)}
                     </div>
@@ -389,17 +389,17 @@ async function actuallyRenderDashboard(forceRefresh = false) {
                 ${state.settings.dashboardWidgets.health !== false ? `
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Spánek -->
-                        <div class="bg-[#2b2d31] border border-[#202225] rounded-2xl p-5 shadow-sm space-y-2">
-                            <h3 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
-                                <i class="fas fa-moon text-[#5865F2]"></i> Jak ses vyspal/a?
+                        <div class="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl p-5 shadow-sm space-y-2">
+                            <h3 class="text-xs font-black text-[var(--text-header)] uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fas fa-moon text-[var(--blurple)]"></i> Jak ses vyspal/a?
                             </h3>
                             <div id="sleep-container">${generateSleepSlider(data)}</div>
                         </div>
 
                         <!-- Voda -->
-                        <div class="bg-[#2b2d31] border border-[#202225] rounded-2xl p-5 shadow-sm space-y-2 flex flex-col justify-between">
+                        <div class="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl p-5 shadow-sm space-y-2 flex flex-col justify-between">
                             <div class="flex justify-between items-center">
-                                <h3 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                                <h3 class="text-xs font-black text-[var(--text-header)] uppercase tracking-wider flex items-center gap-1.5">
                                     <i class="fas fa-tint text-[#00aff4]"></i> Pitný režim
                                 </h3>
                                 <span class="text-[11px] font-black text-sky-400" id="water-count">${data.water || 0} / 8 sklenic</span>
@@ -411,8 +411,8 @@ async function actuallyRenderDashboard(forceRefresh = false) {
                     <!-- 2. ŘADA: NÁLADA & POHYB/LÉKY (2 Sloupce) -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Nálada -->
-                        <div class="bg-[#2b2d31] border border-[#202225] rounded-2xl p-5 shadow-sm space-y-2">
-                            <h3 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <div class="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl p-5 shadow-sm space-y-2">
+                            <h3 class="text-xs font-black text-[var(--text-header)] uppercase tracking-wider flex items-center gap-1.5">
                                 <i class="fas fa-smile text-[#faa61a]"></i> Jak se dnes cítíš?
                             </h3>
                             <div id="mood-container">${generateMoodSlider(data.mood)}</div>
@@ -420,14 +420,14 @@ async function actuallyRenderDashboard(forceRefresh = false) {
 
                         <!-- Pohyb & Léky -->
                         <div class="grid grid-cols-2 gap-3">
-                            <div class="bg-[#2b2d31] border border-[#202225] rounded-2xl p-4 shadow-sm space-y-2">
-                                <h3 class="text-[11px] font-black text-white uppercase tracking-wider flex items-center gap-1">
+                            <div class="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl p-4 shadow-sm space-y-2">
+                                <h3 class="text-[11px] font-black text-[var(--text-header)] uppercase tracking-wider flex items-center gap-1">
                                     <i class="fas fa-running text-[#3ba55c]"></i> Pohyb
                                 </h3>
                                 <div class="flex flex-col gap-2 pt-1" id="movement-container">${generateMovementChips(data.movement)}</div>
                             </div>
-                            <div class="bg-[#2b2d31] border border-[#202225] rounded-2xl p-4 shadow-sm space-y-2">
-                                <h3 class="text-[11px] font-black text-white uppercase tracking-wider flex items-center gap-1">
+                            <div class="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl p-4 shadow-sm space-y-2">
+                                <h3 class="text-[11px] font-black text-[var(--text-header)] uppercase tracking-wider flex items-center gap-1">
                                     <i class="fas fa-pills text-[#eb459e]"></i> Léky
                                 </h3>
                                 <div class="pt-1" id="pills-container">${generatePillsChip(data.pills, getPillsStreak())}</div>
@@ -438,8 +438,8 @@ async function actuallyRenderDashboard(forceRefresh = false) {
 
                 <!-- 3. SUPLEMENTY & REGENERACE -->
                 ${state.settings.dashboardWidgets.supplements !== false ? `
-                    <div class="bg-[#2b2d31] border border-[#202225] rounded-2xl p-5 shadow-sm space-y-3">
-                        <h3 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <div class="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl p-5 shadow-sm space-y-3">
+                        <h3 class="text-xs font-black text-[var(--text-header)] uppercase tracking-wider flex items-center gap-1.5">
                             <i class="fas fa-shield-alt text-[#3ba55c]"></i> Regenerace & Suplementy
                         </h3>
                         <div class="flex gap-3" id="supplements-container">${generateSupplementsChips(data.supplements)}</div>

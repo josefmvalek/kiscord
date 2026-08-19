@@ -1,154 +1,323 @@
-/* Kiscord UI Kit — Standardized premium components */
+/* ==========================================================
+   UI_KIT.CSS — Kiscord 2.0 Standardized Component System
+   All core reusable classes for cards, buttons, inputs,
+   modals, badges, sliders, and micro-animations live here.
+   ========================================================== */
 
-:root {
-    --glass-bg: rgba(47, 49, 54, 0.6);
-    --glass-border: rgba(255, 255, 255, 0.05);
-    --premium-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-    --premium-glow-pink: 0 0 15px rgba(235, 69, 158, 0.3);
-    --premium-glow-blue: 0 0 15px rgba(88, 101, 242, 0.3);
-}
-
-/* Glassmorphism Cards */
-.glass-card {
+/* --- 1. GLASSMORPHISM & CARDS --- */
+.glass-card,
+.kiscord-card {
     background: var(--glass-bg);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--premium-shadow);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(var(--glass-blur, 12px));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--border-radius-lg, 16px);
+    box-shadow: var(--card-shadow);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.25s ease,
+                background-color 0.25s ease;
 }
 
-.glass-card:hover {
-    background: rgba(47, 49, 54, 0.8);
-    border-color: rgba(255, 255, 255, 0.1);
+.glass-card:hover,
+.kiscord-card-hover:hover {
+    background: var(--bg-modifier-hover, rgba(255, 255, 255, 0.08));
+    border-color: var(--border-default);
     transform: translateY(-2px);
+    box-shadow: 0 14px 30px -4px rgba(0, 0, 0, 0.4);
 }
 
-/* Premium Buttons */
+.kiscord-card-interactive {
+    cursor: pointer;
+}
+.kiscord-card-interactive:active {
+    transform: scale(0.985);
+}
+
+/* --- 2. STANDARDIZED BUTTONS --- */
+.kiscord-btn,
 .btn-premium {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: var(--border-radius-md, 12px);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    user-select: none;
     position: relative;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border: 1px solid transparent;
 }
 
+/* Premium shimmer light-sweep */
+.kiscord-btn::after,
 .btn-premium::after {
     content: '';
     position: absolute;
     top: -50%;
-    left: -50%;
+    left: -60%;
     width: 200%;
     height: 200%;
-    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.12), transparent);
     transform: rotate(45deg);
-    transition: 0.5s;
+    transition: 0.6s ease;
     pointer-events: none;
 }
 
+.kiscord-btn:hover::after,
 .btn-premium:hover::after {
     left: 120%;
 }
 
-/* Status Badges */
+.kiscord-btn:active,
+.btn-premium:active {
+    transform: scale(0.96);
+}
+
+/* Button Variants */
+.kiscord-btn-primary {
+    background-color: var(--blurple);
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+.kiscord-btn-primary:hover {
+    background-color: var(--blurple-hover);
+    box-shadow: 0 6px 20px rgba(88, 101, 242, 0.4);
+}
+
+.kiscord-btn-secondary {
+    background-color: var(--bg-modifier-hover, rgba(255, 255, 255, 0.08));
+    color: var(--text-normal) !important;
+    border-color: var(--border-default);
+}
+.kiscord-btn-secondary:hover {
+    background-color: var(--bg-modifier-active, rgba(255, 255, 255, 0.14));
+    color: #ffffff !important;
+    border-color: var(--border-strong);
+}
+
+.kiscord-btn-accent {
+    background: linear-gradient(135deg, var(--pink) 0%, #ff1493 100%);
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+.kiscord-btn-accent:hover {
+    box-shadow: 0 6px 20px rgba(235, 69, 158, 0.4);
+    filter: brightness(1.05);
+}
+
+.kiscord-btn-success {
+    background-color: var(--green);
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+.kiscord-btn-success:hover {
+    background-color: var(--green-hover);
+    box-shadow: 0 6px 20px rgba(59, 165, 92, 0.4);
+}
+
+.kiscord-btn-danger {
+    background-color: var(--red);
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+.kiscord-btn-danger:hover {
+    background-color: var(--red-hover);
+    box-shadow: 0 6px 20px rgba(237, 66, 69, 0.4);
+}
+
+.kiscord-btn-warning {
+    background-color: var(--yellow);
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+.kiscord-btn-warning:hover {
+    background-color: var(--yellow-hover);
+    box-shadow: 0 6px 20px rgba(250, 166, 26, 0.4);
+}
+
+.kiscord-btn-ghost {
+    background-color: transparent;
+    color: var(--text-muted) !important;
+    border-color: transparent;
+    box-shadow: none;
+}
+.kiscord-btn-ghost:hover {
+    background-color: var(--bg-modifier-hover);
+    color: var(--text-header) !important;
+}
+
+.kiscord-btn-sm {
+    padding: 6px 12px;
+    font-size: 11px;
+    border-radius: var(--border-radius-sm, 8px);
+}
+
+.kiscord-btn-lg {
+    padding: 14px 26px;
+    font-size: 15px;
+    border-radius: var(--border-radius-lg, 16px);
+}
+
+.kiscord-btn-icon {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: var(--border-radius-md, 12px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* --- 3. STANDARDIZED FORM CONTROLS --- */
+.kiscord-input,
+.kiscord-select,
+.kiscord-textarea {
+    width: 100%;
+    background-color: var(--bg-tertiary);
+    color: var(--text-header);
+    border: 1px solid var(--border-default);
+    border-radius: var(--border-radius-md, 12px);
+    padding: 10px 14px;
+    font-size: 12.5px;
+    font-family: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    outline: none;
+}
+
+.kiscord-input:focus,
+.kiscord-select:focus,
+.kiscord-textarea:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.18);
+    background-color: var(--bg-floating);
+}
+
+.kiscord-input::placeholder,
+.kiscord-textarea::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+.kiscord-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+/* --- 4. STANDARDIZED BADGES & CHIPS --- */
+.kiscord-badge,
 .status-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 12px;
-    border-radius: 9999px;
+    padding: 4px 10px;
+    border-radius: var(--border-radius-full, 9999px);
     font-size: 10px;
-    font-weight: 900;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    line-height: 1;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border-subtle);
     backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    color: var(--text-normal);
 }
 
-/* Micro-animations */
-.hover-glow-pink:hover {
-    box-shadow: var(--premium-glow-pink);
+.kiscord-badge-primary {
+    background: rgba(88, 101, 242, 0.15);
+    border-color: rgba(88, 101, 242, 0.3);
+    color: var(--blurple);
 }
 
-.hover-glow-blue:hover {
-    box-shadow: var(--premium-glow-blue);
+.kiscord-badge-accent {
+    background: rgba(235, 69, 158, 0.15);
+    border-color: rgba(235, 69, 158, 0.3);
+    color: var(--pink);
 }
 
-/* Input Styling */
-.kiscord-input {
-    background: #202225;
-    border: 1px solid #2f3136;
-    border-radius: 12px;
-    padding: 12px 16px;
-    color: white;
-    font-size: 12px;
-    transition: all 0.2s ease;
+.kiscord-badge-success {
+    background: rgba(59, 165, 92, 0.15);
+    border-color: rgba(59, 165, 92, 0.3);
+    color: var(--green);
 }
 
-.kiscord-input:focus {
-    border-color: rgba(88, 101, 242, 0.5);
-    box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.1);
-    outline: none;
+.kiscord-badge-warning {
+    background: rgba(250, 166, 26, 0.15);
+    border-color: rgba(250, 166, 26, 0.3);
+    color: var(--yellow);
 }
 
-/* Premium Slider styling */
+.kiscord-badge-danger {
+    background: rgba(237, 66, 69, 0.15);
+    border-color: rgba(237, 66, 69, 0.3);
+    color: var(--red);
+}
+
+/* --- 5. STANDARDIZED SLIDERS --- */
 input[type=range].kiscord-slider {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: 4px;
-    border-radius: 2px;
+    height: 6px;
+    border-radius: 9999px;
+    background: var(--bg-tertiary);
     outline: none;
+    cursor: pointer;
     transition: background 0.2s ease;
 }
 
 input[type=range].kiscord-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
-    background: #853ee6;
+    background: var(--blurple);
     cursor: pointer;
-    border: 2px solid white;
-    box-shadow: 0 0 10px rgba(133, 62, 230, 0.4);
-    margin-top: 0px;
-    /* Visual centering adjustment */
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 10px rgba(88, 101, 242, 0.5);
     transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 input[type=range].kiscord-slider::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
-    box-shadow: 0 0 15px rgba(133, 62, 230, 0.6);
+    transform: scale(1.25);
+    box-shadow: 0 0 15px rgba(88, 101, 242, 0.8);
 }
 
-/* Water Theme Slider */
-input[type=range].water-slider::-webkit-slider-thumb {
-    background: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(4px);
-    border: 2px solid rgba(255, 255, 255, 0.9);
-    box-shadow: 0 0 15px rgba(0, 210, 255, 0.6), inset 0 0 5px rgba(255, 255, 255, 0.5);
-    width: 16px;
-    height: 16px;
-    margin-top: 0px;
-    /* Visual centering adjustment for 16px bubble */
+/* --- 6. GLOW UTILITIES --- */
+.hover-glow-pink:hover {
+    box-shadow: 0 0 20px rgba(235, 69, 158, 0.4);
+}
+.hover-glow-blue:hover {
+    box-shadow: 0 0 20px rgba(88, 101, 242, 0.4);
+}
+.hover-glow-green:hover {
+    box-shadow: 0 0 20px rgba(59, 165, 92, 0.4);
 }
 
-input[type=range].water-slider::-webkit-slider-thumb:hover {
-    box-shadow: 0 0 20px rgba(0, 210, 255, 0.8), inset 0 0 8px rgba(255, 255, 255, 0.7);
-    transform: scale(1.1);
-}
-
-/* --- ULTRAPRIEMIUM NOTIFICATION CARDS (v3.2) --- */
-
+/* --- 7. ULTRAPREMIUM NOTIFICATION CARDS (v3.2) --- */
 .notif-card {
     position: relative;
     overflow: hidden;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), var(--premium-shadow);
-    background: #2f3136;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), var(--card-shadow);
+    background: var(--bg-secondary);
 }
 
-/* Glossy highlight effect */
 .notif-card::after {
     content: '';
     position: absolute;
@@ -171,9 +340,7 @@ input[type=range].water-slider::-webkit-slider-thumb:hover {
     100% { box-shadow: 0 0 0 0 rgba(133, 62, 230, 0), inset 0 1px 1px rgba(255, 255, 255, 0.1); }
 }
 
-/* THEMED BACKGROUNDS */
-
-/* 1. Bedtime / Nocturnal */
+/* THEMED NOTIFICATION BACKGROUNDS */
 .notif-theme-bedtime {
     background: linear-gradient(135deg, #0f0c29 0%, #201d4a 50%, #171730 100%) !important;
     border-color: rgba(133, 62, 230, 0.2) !important;
@@ -190,7 +357,6 @@ input[type=range].water-slider::-webkit-slider-thumb:hover {
     opacity: 0.3;
 }
 
-/* 2. Water / Liquid Ocean */
 .notif-theme-water {
     background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%) !important;
     border-color: rgba(0, 210, 255, 0.2) !important;
@@ -202,7 +368,6 @@ input[type=range].water-slider::-webkit-slider-thumb:hover {
     background: radial-gradient(circle at 50% 120%, rgba(0, 210, 255, 0.15) 0%, transparent 70%);
 }
 
-/* 3. Pills / Serum Emerald */
 .notif-theme-pills {
     background: linear-gradient(135deg, #0d2a2a 0%, #134e5e 100%) !important;
     border-color: rgba(56, 239, 125, 0.2) !important;
@@ -214,7 +379,6 @@ input[type=range].water-slider::-webkit-slider-thumb:hover {
     background-image: radial-gradient(circle at 10% 10%, rgba(56, 239, 125, 0.05) 0%, transparent 50%);
 }
 
-/* 4. Sunlight / Lighter Ember (v3.2) */
 .notif-theme-sunlight {
     background: linear-gradient(135deg, #513512 0%, #b27622 50%, #7d4f11 100%) !important;
     border-color: rgba(242, 201, 76, 0.3) !important;
@@ -226,7 +390,6 @@ input[type=range].water-slider::-webkit-slider-thumb:hover {
     background: radial-gradient(circle at center, rgba(252, 196, 25, 0.1) 0%, transparent 70%);
 }
 
-/* 5. Questions / Orange Ignite (v3.2) */
 .notif-theme-dailyQuestions {
     background: linear-gradient(135deg, #4d1d00 0%, #8c4200 50%, #b35900 100%) !important;
     border-color: rgba(255, 144, 0, 0.3) !important;
@@ -242,7 +405,6 @@ input[type=range].water-slider::-webkit-slider-thumb:hover {
     opacity: 0.5;
 }
 
-/* 6. Letters / Deeper Crimson Rose (v3.2) */
 .notif-theme-letters {
     background: linear-gradient(135deg, #5c0f0f 0%, #9c1c1c 100%) !important;
     border-color: rgba(255, 60, 60, 0.2) !important;
@@ -258,7 +420,6 @@ input[type=range].water-slider::-webkit-slider-thumb:hover {
     pointer-events: none;
 }
 
-/* 7. Iron / Hematite Deep (v3.2) */
 .notif-theme-iron {
     background: linear-gradient(135deg, #4d0b0b 0%, #7d1515 100%) !important;
     border-color: rgba(248, 113, 113, 0.2) !important;
@@ -273,7 +434,6 @@ input[type=range].water-slider::-webkit-slider-thumb:hover {
     opacity: 0.6;
 }
 
-/* 8. Zinc / Golden Ember (v3.2) */
 .notif-theme-zinc {
     background: linear-gradient(135deg, #4d3d00 0%, #b38f00 100%) !important;
     border-color: rgba(250, 204, 21, 0.2) !important;
@@ -285,7 +445,6 @@ input[type=range].water-slider::-webkit-slider-thumb:hover {
     background: radial-gradient(circle at 80% 20%, rgba(250, 204, 21, 0.1) 0%, transparent 60%);
 }
 
-/* 9. Magnesium / Amethyst Aura (v3.2) */
 .notif-theme-magnesium {
     background: linear-gradient(135deg, #1d0f36 0%, #4c2c8f 100%) !important;
     border-color: rgba(192, 132, 252, 0.2) !important;
@@ -297,7 +456,6 @@ input[type=range].water-slider::-webkit-slider-thumb:hover {
     background: radial-gradient(circle at 50% 120%, rgba(133, 62, 230, 0.15) 0%, transparent 70%);
 }
 
-/* 10. Planning / Rose Date (v3.2) */
 .notif-theme-planning {
     background: linear-gradient(135deg, #4d1d3b 0%, #9c3b6c 100%) !important;
     border-color: rgba(235, 69, 158, 0.2) !important;
@@ -309,7 +467,6 @@ input[type=range].water-slider::-webkit-slider-thumb:hover {
     background: radial-gradient(circle at 70% 30%, rgba(235, 69, 158, 0.1) 0%, transparent 60%);
 }
 
-/* 11. Mood / Deep Heart (v3.2) */
 .notif-theme-mood {
     background: linear-gradient(135deg, #5c0f2a 0%, #9c1c46 100%) !important;
     border-color: rgba(255, 60, 60, 0.2) !important;
@@ -324,7 +481,6 @@ input[type=range].water-slider::-webkit-slider-thumb:hover {
     opacity: 0.4;
 }
 
-/* 12. Sleep / Midnight Indigo (v3.2) */
 .notif-theme-sleep {
     background: linear-gradient(135deg, #13142e 0%, #2e357d 100%) !important;
     border-color: rgba(88, 101, 242, 0.2) !important;
@@ -339,40 +495,29 @@ input[type=range].water-slider::-webkit-slider-thumb:hover {
     opacity: 0.2;
 }
 
-/* Unified Glasmorphism for internal elements */
+/* Internal elements */
 .notif-card .notif-controls {
-    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-}
-
-.notif-card .kiscord-btn-icon {
-    background: rgba(0, 0, 0, 0.2) !important;
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid var(--border-subtle) !important;
 }
 
 .notif-card h3, .notif-card p {
-    color: white !important;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    color: #ffffff !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* --- SYSTEM BUTTONS --- */
 .test-notif-btn {
-    opacity: 0.7;
-    color: rgba(255,255,255,0.8) !important;
+    opacity: 0.75;
+    color: rgba(255, 255, 255, 0.85) !important;
     background: rgba(0, 0, 0, 0.2) !important;
     backdrop-filter: blur(4px);
     transition: all 0.2s ease;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
 }
 
 .test-notif-btn:hover {
     opacity: 1;
     background: rgba(255, 255, 255, 0.15) !important;
-    color: #fff !important;
-    transform: scale(1.05);
-    border-color: rgba(255, 255, 255, 0.2);
-}
-
-.test-notif-btn:active {
-    transform: scale(0.95);
+    color: #ffffff !important;
+    transform: scale(1.04);
+    border-color: var(--border-default);
 }

@@ -3,6 +3,7 @@ import { state, ensureLoveShopData } from '../core/state.js';
 import { triggerHaptic, triggerConfetti } from '../core/utils.js';
 import { notifyPartnerCouponGifted, notifyPartnerCouponRedeemed } from '../core/sync.js';
 import { renderModal, renderInputGroup } from '../core/ui.js';
+import { showNotification, showConfirmDialog } from '../core/theme.js';
 
 let activeTab = 'shop'; // 'shop' nebo 'inventory'
 let rpsState = {
@@ -569,7 +570,7 @@ async function buyCoupon(itemId, note = '') {
         const currentCoins = isMeJose ? state.loveCoins.jose : state.loveCoins.klarka;
         const newCoins = currentCoins - item.cost;
         if (newCoins < 0) {
-            alert("Nedostatek Love Coinů!");
+            showNotification("Nedostatek Love Coinů pro nákup této odměny! 🪙", "warning");
             return;
         }
 

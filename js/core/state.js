@@ -60,6 +60,7 @@ const state = {
     gymTemplates: [],
     gymLogs: [],
     gymPRs: [],
+    gymBodyMeasurements: [],
     loveCoins: { jose: 0, klarka: 0 },
     inventory: [],
     shopItems: [],

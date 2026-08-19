@@ -1,11 +1,15 @@
 export {
     renderGym,
     switchTab,
-    gymCleanup
+    gymCleanup,
+    openCalendarView,
+    viewInCalendar,
+    attachWindowGym
 } from './main.js';
 
 export {
     startWorkout,
+    startFreeWorkout,
     renderActiveWorkoutView,
     adjustVal,
     toggleSetComplete,
@@ -15,6 +19,8 @@ export {
     resetRestTimer,
     cancelWorkout,
     finishWorkout,
+    openFinishWorkoutModal,
+    commitFinishWorkout,
     minimizeWorkout,
     restoreWorkout,
     onSetInputChange,
@@ -22,7 +28,29 @@ export {
     renderMinimizedBanner,
     cycleSetType,
     openAddExerciseToActiveWorkoutModal,
-    addExerciseToActiveWorkout
+    addExerciseToActiveWorkout,
+    toggleTimerSound,
+    filterExByCat,
+    applyWeightSuggestion,
+    incrementWorkoutRound,
+    decrementWorkoutRound,
+    toggleExerciseSuperset,
+    openRestModeOverlay,
+    adjustRestTime,
+    skipRestTimer,
+    handleWorkoutPhotoSelected,
+    clearWorkoutPhoto,
+    openPhotoLightbox,
+    toggleWorkoutChecklistItem,
+    moveExerciseUp,
+    moveExerciseDown,
+    removeExerciseFromActiveWorkout,
+    openSwapExerciseModal,
+    swapExercise,
+    openExerciseNotesModal,
+    saveExerciseNotes,
+    fillSetsFromLastHistory,
+    cycleSetRir
 } from './activeWorkout.js';
 
 export {
@@ -35,19 +63,36 @@ export {
     checkAndSeed,
     refreshExercisesConfig,
     openManualLogModal,
-    saveManualLog
+    saveManualLog,
+    openScheduleTemplateModal,
+    saveScheduledTemplate,
+    addManualSet,
+    removeManualSet,
+    openEditGymLogModal,
+    saveEditGymLog,
+    onTemplateModeChange
 } from './templates.js';
 
 export {
     renderFeedTab,
     cheerWorkout,
-    deleteLog
+    deleteLog,
+    openLogDetailModal
 } from './feed.js';
+
+export {
+    isSyncWorkoutDay,
+    getAllSyncDays,
+    calculateCoupleStreak,
+    renderCoupleGymBannerHtml
+} from './coupleGym.js';
+
 
 export {
     renderPRsTab,
     openExerciseAnalyticsModal,
-    renderAnalyticsChart
+    renderAnalyticsChart,
+    setAnalyticsUser
 } from './prs.js';
 
 export {
@@ -58,10 +103,68 @@ export {
     saveExercise,
     openEditExerciseModal,
     saveEditedExercise,
-    deleteExercise
+    deleteExercise,
+    openExerciseGuideModal,
+    getExerciseThumbnailHtml,
+    getCategoryEmoji,
+    applyExercisePreset
 } from './exercises.js';
 
 export {
     updateGlobalWorkoutBadge,
-    cleanupRealtime
+    cleanupRealtime,
+    POPULAR_EXERCISE_PRESETS,
+    getMyName,
+    getPartnerName,
+    getMyEmoji,
+    getPartnerEmoji
 } from './shared.js';
+
+
+export {
+    calculate1RM,
+    get1RMPercentages,
+    calculatePlates,
+    renderPlateBarbellVisual,
+    openPlateCalculatorModal,
+    generateWarmupSets,
+    openWarmupModal,
+    getExerciseTargetSuggestion,
+    STANDARD_PLATES,
+    BAR_TYPES
+} from './tools.js';
+
+export {
+    calculateWeeklyVolume,
+    calculateMuscleBalance,
+    getExerciseProgression,
+    cloneTemplate,
+    getLastExerciseHistory,
+    MUSCLE_CATEGORIES
+} from './analytics.js';
+
+export {
+    renderBodyTrackerTab,
+    openLogMeasurementModal,
+    saveBodyMeasurement,
+    deleteBodyMeasurement,
+    openTransformationSliderModal
+} from './bodyTracker.js';
+
+export {
+    renderMuscleHeatMapCard,
+    setHeatmapTimeframe,
+    selectMuscleGroup,
+    calculateMuscleHeatmap
+} from './muscleMap.js';
+
+export {
+    createWorkoutShareCanvas,
+    openShareCardModal
+} from './gymShare.js';
+
+export {
+    calculateFitnessWrapped,
+    openFitnessWrappedModal
+} from './annualWrapped.js';
+

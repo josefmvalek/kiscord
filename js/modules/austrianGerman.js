@@ -1,7 +1,7 @@
 import { triggerHaptic } from '../core/utils.js';
 import { openAustrianGermanFlashcards } from './flashcards.js';
 import { supabase } from '../core/supabase.js';
-import { showNotification } from '../core/theme.js';
+import { showNotification, showConfirmDialog } from '../core/theme.js';
 import { renderModal, renderInputGroup } from '../core/ui.js';
 
 // Austrian German static default glossary database
@@ -393,7 +393,8 @@ window.saveCustomVocab = async () => {
 window.deleteCustomVocab = async (id, event) => {
     if (event) event.stopPropagation();
     
-    if (!confirm('Opravdu chceš smazat toto slovíčko pro vás oba?')) return;
+    const confirmed = await showConfirmDialog('Opravdu chceš smazat toto slovíčko pro vás oba?');
+    if (!confirmed) return;
     
     triggerHaptic('medium');
     

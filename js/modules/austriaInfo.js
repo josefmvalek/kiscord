@@ -1,5 +1,5 @@
 import { triggerHaptic } from '../core/utils.js';
-import { showNotification } from '../core/theme.js';
+import { showNotification, showConfirmDialog } from '../core/theme.js';
 
 // Default packing list database
 const DEFAULT_PACKING_LIST = [
@@ -953,8 +953,9 @@ function toggleCategoryCollapse(categoryId) {
 }
 
 // Full reset of packed items
-function resetPackingList() {
-    if (!confirm("Opravdu chceš resetovat celého sbaleného průvodce a začít znova? 🎒")) return;
+async function resetPackingList() {
+    const confirmed = await showConfirmDialog("Opravdu chceš resetovat celého sbaleného průvodce a začít znova? 🎒");
+    if (!confirmed) return;
     
     triggerHaptic('heavy');
     localStorage.removeItem(STORAGE_KEY);

@@ -151,6 +151,54 @@ export function renderTetrisTracker() {
 
 // --- PUZZLE GAME ---
 
+export function getPuzzleImageList() {
+    const images = [];
+    const seen = new Set();
+
+    // 1. Add user uploaded photos from Database
+    if (state.dbPuzzleImages && Array.isArray(state.dbPuzzleImages)) {
+        state.dbPuzzleImages.forEach(dbImg => {
+            if (dbImg.src && !seen.has(dbImg.src)) {
+                seen.add(dbImg.src);
+                images.push({
+                    id: dbImg.id,
+                    src: dbImg.src,
+                    name: dbImg.name || "Vlastní fotka",
+                    isDeletable: true
+                });
+            }
+        });
+    }
+
+    // 2. Add user photos from Timeline
+    if (state.timelineEvents && Array.isArray(state.timelineEvents)) {
+        state.timelineEvents.forEach(event => {
+            if (event.images && Array.isArray(event.images)) {
+                event.images.forEach((img, idx) => {
+                    if (img && !seen.has(img)) {
+                        seen.add(img);
+                        images.push({
+                            src: img,
+                            name: event.title || `Vzpomínka ${idx + 1}`,
+                            isTimeline: true
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    // 3. If no timeline/DB photos exist, provide default application banner
+    if (images.length === 0) {
+        images.push({
+            src: getAssetUrl('banner_vanoce'),
+            name: "Výchozí vzpomínka"
+        });
+    }
+
+    return images;
+}
+
 export function renderPuzzleGame(selectedImage = null) {
     if (state.puzzleInstance && typeof state.puzzleInstance.destroy === 'function') {
         state.puzzleInstance.destroy();
@@ -160,108 +208,58 @@ export function renderPuzzleGame(selectedImage = null) {
     const container = document.getElementById("messages-container");
     if (!container) return;
 
-    let puzzleImages = [
-        { src: getAssetUrl('puzzle_original'), name: "Sova & Mýval (Originál)" },
-        { src: getAssetUrl('puzzle_drawing'), name: "Žabák & Kamarádi (Kreslené)" },
-        { src: getAssetUrl('puzzle_fight'), name: "Crazy Fight" },
-        { src: getAssetUrl('puzzle_ai'), name: "AI Art: Mýval & Žába" },
-        { src: getAssetUrl('puzzle_trio'), name: "Trio: Mýval, Žába, Medvídek" }
-    ];
-
-    // Add user photos from timeline
-    if (state.timelineEvents) {
-        state.timelineEvents.forEach(event => {
-            if (event.images && event.images.length > 0) {
-                event.images.forEach(img => {
-                    if (!puzzleImages.find(p => p.src === img)) {
-                        puzzleImages.push({ src: img, name: event.title, isTimeline: true });
-                    }
-                });
-            }
-        });
-    }
-
-    // Add images from Database
-    if (state.dbPuzzleImages) {
-        state.dbPuzzleImages.forEach(dbImg => {
-            const existingIndex = puzzleImages.findIndex(p => p.src === dbImg.src);
-            if (existingIndex !== -1) {
-                // If it's already there (e.g. hardcoded), but we have it in DB, 
-                // we mark it as deletable if it's the same DB entry.
-                puzzleImages[existingIndex].id = dbImg.id;
-                puzzleImages[existingIndex].isDeletable = true;
-            } else {
-                puzzleImages.push(dbImg);
-            }
-        });
-    }
-
-    const currentImageSrc = selectedImage || (puzzleImages.length > 0 ? puzzleImages[0].src : getAssetUrl('puzzle_original'));
-
-    const galleryHtml = puzzleImages.map(img =>
-        `<div onclick="window.loadModule('games').then(m => m.renderPuzzleGame('${img.src}'))" 
-            class="flex-shrink-0 cursor-pointer border-2 ${img.src === currentImageSrc ? 'border-[#ff69b4]' : 'border-transparent'} rounded overflow-hidden hover:scale-105 transition w-16 h-16 bg-black/20">
-          <img src="${img.src}" class="w-full h-full object-cover opacity-80 hover:opacity-100" onerror="this.parentElement.style.display='none'">
-       </div>`
-    ).join('');
+    const puzzleImages = getPuzzleImageList();
+    const currentImageSrc = selectedImage || puzzleImages[0].src;
 
     container.innerHTML = `
-      <div class="flex flex-col h-full bg-[#202225] p-4 items-center justify-center overflow-hidden relative">
-          <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/hearts.png')] opacity-10 pointer-events-none"></div>
-          
+      <div class="flex flex-col h-full bg-[var(--bg-primary)] p-4 items-center justify-center overflow-hidden relative">
           <div class="z-10 text-center mb-6">
-              <h1 class="text-3xl font-black text-[#ff69b4] drop-shadow-lg" style="font-family: 'Comic Sans MS', cursive">Puzzle 🧩</h1>
-              <p class="text-[#fab1c6] text-sm font-bold">Vyber si vzpomínku a poskládej ji!</p>
+              <h1 class="text-3xl font-black text-[var(--text-header)] drop-shadow-lg flex items-center justify-center gap-2">
+                  <span>Puzzle</span> <span class="text-2xl">🧩</span>
+              </h1>
+              <p class="text-[var(--text-muted)] text-sm font-bold mt-1">Vyber si vzpomínku a poskládej ji!</p>
           </div>
 
-          <div id="puzzle-container" class="relative bg-black/50 p-2 rounded-xl shadow-2xl border-4 border-[#ff69b4] mb-6"></div>
+          <div id="puzzle-container" class="relative bg-[var(--bg-tertiary)] p-2 rounded-2xl shadow-2xl border-4 border-[var(--blurple)] mb-6 max-w-[90vw]"></div>
 
-          <div class="flex gap-8 text-white font-mono text-xl bg-black/30 p-4 rounded-xl backdrop-blur-sm border border-[#ff69b4]/30">
+          <div class="flex gap-8 text-[var(--text-header)] font-mono text-xl bg-[var(--bg-secondary)] px-6 py-3 rounded-2xl shadow-md border border-[var(--border-subtle)]">
               <div class="flex flex-col items-center">
-                  <span class="text-xs text-[#ff69b4] uppercase font-bold">Čas</span>
-                  <span id="puzzle-timer">0:00</span>
+                  <span class="text-xs text-[var(--text-muted)] uppercase font-black tracking-wider">Čas</span>
+                  <span id="puzzle-timer" class="font-bold">0:00</span>
               </div>
               <div class="flex flex-col items-center">
-                  <span class="text-xs text-[#ff69b4] uppercase font-bold">tahy</span>
-                  <span id="puzzle-moves">0</span>
+                  <span class="text-xs text-[var(--text-muted)] uppercase font-black tracking-wider">Tahy</span>
+                  <span id="puzzle-moves" class="font-bold">0</span>
               </div>
           </div>
           
-          <div class="mt-6 flex flex-wrap gap-4 justify-center">
-             <button onclick="window.loadModule('games').then(m => m.renderPuzzleGame('${currentImageSrc}'))" class="bg-[#ff1493] hover:bg-[#ff0080] text-white px-6 py-2.5 rounded-full font-bold shadow-lg transition transform hover:scale-105 flex items-center gap-2">
+          <div class="mt-6 flex flex-wrap gap-3 justify-center">
+             <button onclick="window.loadModule('games').then(m => m.renderPuzzleGame('${currentImageSrc}'))" class="bg-[var(--blurple)] hover:bg-[var(--blurple-hover)] text-white px-5 py-2.5 rounded-xl font-bold shadow-lg transition transform active:scale-95 flex items-center gap-2">
                  <i class="fas fa-undo"></i> Restart
              </button>
-             <button onclick="window.loadModule('games').then(m => m.showPuzzleGallery())" class="bg-[#ff69b4] hover:bg-[#ff1493] text-white px-6 py-2.5 rounded-full font-bold shadow-lg transition transform hover:scale-105 flex items-center gap-2">
-                 <i class="fas fa-images"></i> Galerie
+             <button onclick="window.loadModule('games').then(m => m.showPuzzleGallery())" class="bg-[var(--bg-secondary)] hover:bg-[var(--bg-modifier-hover)] text-[var(--text-header)] px-5 py-2.5 rounded-xl font-bold shadow-lg border border-[var(--border-subtle)] transition transform active:scale-95 flex items-center gap-2">
+                 <i class="fas fa-images text-[var(--blurple)]"></i> Galerie
              </button>
-             <button onclick="document.getElementById('puzzle-upload-input').click()" class="bg-white/10 hover:bg-white/20 text-white px-6 py-2.5 rounded-full font-bold border border-white/20 transition flex items-center gap-2">
-                 <i class="fas fa-upload"></i> Nahrát
+             <button onclick="document.getElementById('puzzle-upload-input').click()" class="bg-[var(--bg-secondary)] hover:bg-[var(--bg-modifier-hover)] text-[var(--text-header)] px-5 py-2.5 rounded-xl font-bold border border-[var(--border-subtle)] transition flex items-center gap-2 active:scale-95">
+                 <i class="fas fa-upload text-[var(--yellow)]"></i> Nahrát
              </button>
              <input type="file" id="puzzle-upload-input" class="hidden" accept="image/*" onchange="window.loadModule('games').then(m => m.uploadPuzzleImage(this.files[0]))">
-             <button onclick="window.switchChannel('dashboard')" class="bg-transparent hover:text-white text-gray-400 px-4 py-2.5 rounded-full font-bold transition">
+             <button onclick="window.switchChannel('dashboard')" class="bg-transparent hover:text-[var(--text-header)] text-[var(--text-muted)] px-4 py-2.5 rounded-xl font-bold transition">
                  Zpět
              </button>
           </div>
       </div>
   `;
 
-    // Dynamic Load of Puzzle Engine
-    const initPuzzle = () => {
-        // Double check instance cleanup
+    // Dynamic Load of Puzzle Engine via proper ES Module Import
+    import('./puzzle.js').then(({ PuzzleGame }) => {
         if (state.puzzleInstance && typeof state.puzzleInstance.destroy === 'function') {
             state.puzzleInstance.destroy();
         }
         state.puzzleInstance = new PuzzleGame('puzzle-container', currentImageSrc, 3);
-    };
-
-    if (typeof PuzzleGame === 'undefined') {
-        const script = document.createElement('script');
-        script.src = 'js/modules/puzzle.js';
-        script.onload = initPuzzle;
-        document.body.appendChild(script);
-    } else {
-        initPuzzle();
-    }
+    }).catch(err => {
+        console.error("Failed to load PuzzleGame:", err);
+    });
 
     // Fetch extra images from DB if not already done recently
     if (!state.puzzleImagesFetched) {
@@ -276,67 +274,47 @@ export function renderPuzzleGame(selectedImage = null) {
     }
 }
 
-export async function showPuzzleGallery() {
-    let puzzleImages = [
-        { src: getAssetUrl('puzzle_original'), name: "Sova & Mýval (Originál)" },
-        { src: getAssetUrl('puzzle_drawing'), name: "Žabák & Kamarádi (Kreslené)" },
-        { src: getAssetUrl('puzzle_fight'), name: "Crazy Fight" },
-        { src: getAssetUrl('puzzle_ai'), name: "AI Art: Mýval & Žába" },
-        { src: getAssetUrl('puzzle_trio'), name: "Trio: Mýval, Žába, Medvídek" }
-    ];
-
-    if (state.timelineEvents) {
-        state.timelineEvents.forEach(event => {
-            if (event.images && event.images.length > 0) {
-                event.images.forEach(img => {
-                    puzzleImages.push({ src: img, name: event.title });
-                });
-            }
-        });
-    }
-
-    if (state.dbPuzzleImages) {
-        puzzleImages = [...puzzleImages, ...state.dbPuzzleImages];
-    }
+export function showPuzzleGallery() {
+    const puzzleImages = getPuzzleImageList();
 
     const modalHtml = `
-        <div id="puzzle-gallery-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-            <div class="bg-[#2f3136] rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl border border-white/10 relative">
-                <div class="p-6 border-b border-white/5 flex justify-between items-center bg-black/20">
-                    <h2 class="text-xl font-black text-white flex items-center gap-3">
-                        <i class="fas fa-images text-[#ff69b4]"></i> Galerie Vzpomínek
+        <div id="puzzle-gallery-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in z-50">
+            <div class="bg-[var(--bg-secondary)] rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl border border-[var(--border-subtle)] relative">
+                <div class="p-6 border-b border-[var(--border-subtle)] flex justify-between items-center bg-[var(--bg-tertiary)]">
+                    <h2 class="text-xl font-black text-[var(--text-header)] flex items-center gap-3">
+                        <i class="fas fa-images text-[var(--blurple)]"></i> Galerie Vzpomínek
                     </h2>
-                    <button onclick="this.closest('#puzzle-gallery-modal').remove()" class="text-gray-400 hover:text-white text-2xl">
+                    <button onclick="this.closest('#puzzle-gallery-modal').remove()" class="text-[var(--text-muted)] hover:text-[var(--text-header)] text-2xl transition">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 
-                <div class="flex-1 overflow-y-auto custom-scrollbar puzzle-gallery-grid">
+                <div class="flex-1 overflow-y-auto custom-scrollbar puzzle-gallery-grid p-6 gap-4">
                     ${puzzleImages.map(img => `
-                        <div class="puzzle-card relative cursor-pointer group" 
+                        <div class="puzzle-card relative cursor-pointer group rounded-2xl overflow-hidden border border-[var(--border-subtle)] hover:border-[var(--blurple)] transition-all" 
                              onclick="window.loadModule('games').then(m => { m.renderPuzzleGame('${img.src}'); document.getElementById('puzzle-gallery-modal').remove(); })">
                              <img src="${img.src}" class="w-full h-full object-cover" onerror="this.parentElement.style.display='none'">
-                             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2 pointer-events-none">
-                                <span class="text-[10px] text-white font-bold truncate">${img.name || 'Vzpomínka'}</span>
+                             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2.5 pointer-events-none">
+                                <span class="text-xs text-white font-bold truncate">${img.name || 'Vzpomínka'}</span>
                              </div>
                              ${img.isDeletable ? `
                                 <button onclick="event.stopPropagation(); window.loadModule('games').then(m => m.deletePuzzleImage('${img.id}', '${img.src}'))" 
-                                        class="absolute top-1 right-1 w-6 h-6 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center shadow-lg transition-all transform hover:scale-110 z-20" title="Smazat">
-                                    <i class="fas fa-trash-alt text-[10px]"></i>
+                                        class="absolute top-2 right-2 w-7 h-7 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center shadow-lg transition-all transform hover:scale-110 z-20" title="Smazat">
+                                    <i class="fas fa-trash-alt text-xs"></i>
                                 </button>
                             ` : ''}
                         </div>
                     `).join('')}
                     
                     <div onclick="document.getElementById('puzzle-upload-input').click()" 
-                         class="puzzle-card border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-2 text-gray-500 hover:text-[#ff69b4] hover:border-[#ff69b4] transition bg-white/5 cursor-pointer">
+                         class="puzzle-card border-2 border-dashed border-[var(--border-subtle)] rounded-2xl flex flex-col items-center justify-center gap-2 text-[var(--text-muted)] hover:text-[var(--blurple)] hover:border-[var(--blurple)] transition bg-[var(--bg-tertiary)] cursor-pointer min-h-[120px]">
                         <i class="fas fa-plus text-2xl"></i>
-                        <span class="text-[10px] font-bold uppercase tracking-wider">Přidat</span>
+                        <span class="text-xs font-bold uppercase tracking-wider">Přidat</span>
                     </div>
                 </div>
 
-                <div class="p-4 bg-black/10 border-t border-white/5 text-center">
-                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Kliknutím na obrázek začneš hru</p>
+                <div class="p-4 bg-[var(--bg-tertiary)] border-t border-[var(--border-subtle)] text-center">
+                    <p class="text-xs text-[var(--text-muted)] font-bold uppercase tracking-widest">Kliknutím na obrázek začneš hru</p>
                 </div>
             </div>
         </div>

@@ -1,8 +1,9 @@
 
 import { state } from '../core/state.js';
 import { supabase } from '../core/supabase.js';
-import { triggerHaptic } from '../core/utils.js';
+import { triggerHaptic, triggerConfetti } from '../core/utils.js';
 import { safeUpsert, safeInsert, safeDelete } from '../core/offline.js';
+import { showNotification } from '../core/theme.js';
 
 const CATEGORIES = [
     { id: 'bookmarks', title: 'Moje Oblíbené', icon: '💖', desc: 'Tvé nejoblíbenější moudrosti uložené na potom.', color: '#eb459e' },
@@ -602,13 +603,13 @@ export function showAddFactModal() {
 }
 
 export async function saveNewFact() {
-    const text = document.getElementById('nf-text').value.trim();
-    const sub1 = document.getElementById('nf-sub1').value.trim();
-    const sub2 = document.getElementById('nf-sub2').value.trim();
+    const text = document.getElementById('nf-text')?.value.trim();
+    const sub1 = document.getElementById('nf-sub1')?.value.trim();
+    const sub2 = document.getElementById('nf-sub2')?.value.trim();
     const catId = window.selectedFactCatId;
 
     if (!text || !catId) {
-        alert("Vyber kategorii a napiš text!");
+        showNotification("Vyber kategorii a napiš text faktu!", "warning");
         return;
     }
 
@@ -620,7 +621,7 @@ export async function saveNewFact() {
             subcategory: sub1 || '',
             subcategory_level2: sub2 || '',
             text: text,
-            user_id: state.currentUser.id // Assuming user_id is required for new facts
+            user_id: state.currentUser.id
         }]);
 
         if (error) throw error;
@@ -629,21 +630,21 @@ export async function saveNewFact() {
         if (!state.factsLibrary[catId]) state.factsLibrary[catId] = [];
         state.factsLibrary[catId].push({
             id: newItems[0].id,
-            icon: newItems[0].icon, // Assuming icon might be returned or default
+            icon: newItems[0].icon,
             text: newItems[0].text,
             subcategory: newItems[0].subcategory || '',
             subcategory_level2: newItems[0].subcategory_level2 || ''
         });
 
-        if (window.showNotification) window.showNotification("Archivy byly obohaceny o novou znalost! 🐙", "success");
-        if (typeof window.triggerConfetti === 'function') window.triggerConfetti();
+        showNotification("Archivy byly obohaceny o novou znalost! 🐙", "success");
+        triggerConfetti();
 
         document.getElementById('fact-add-modal')?.remove();
         renderFunFacts();
 
     } catch (err) {
         console.error("Save Fact Error:", err);
-        alert("Chyba při ukládání: " + err.message);
+        showNotification("Chyba při ukládání: " + err.message, "error");
     }
 }
 

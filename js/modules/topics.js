@@ -1,8 +1,8 @@
 import { state } from '../core/state.js';
-// import { conversationTopics } from '../data.js'; // Smazáno, nyní ze state
 import { safeUpsert } from '../core/offline.js';
-import { triggerHaptic } from '../core/utils.js';
+import { triggerHaptic, triggerConfetti } from '../core/utils.js';
 import { supabase } from '../core/supabase.js';
+import { showNotification, showConfirmDialog } from '../core/theme.js';
 
 // --- STATE ---
 let selectedTopicId = null;
@@ -625,11 +625,11 @@ export function showAddTopicQuestionModal() {
 }
 
 export async function saveNewTopicQuestion() {
-    const text = document.getElementById('nt-text').value.trim();
+    const text = document.getElementById('nt-text')?.value.trim();
     const topicId = selectedTopicId;
     
     if (!text || !topicId) {
-        alert("Vyber kategorii a napiš text!");
+        showNotification("Vyber kategorii a napiš text otázky!", "warning");
         return;
     }
     
@@ -649,8 +649,8 @@ export async function saveNewTopicQuestion() {
         topic.questions = updatedQuestions;
         
         // Notification
-        if (window.showNotification) window.showNotification(`Otázka přidána do kategorie ${topic.title}! ✨`, "success");
-        if (typeof window.triggerConfetti === 'function') window.triggerConfetti();
+        showNotification(`Otázka přidána do kategorie ${topic.title}! ✨`, "success");
+        triggerConfetti();
         
         // Close modal
         document.getElementById('topic-add-modal')?.remove();
@@ -660,7 +660,7 @@ export async function saveNewTopicQuestion() {
         
     } catch (err) {
         console.error("Save Topic Question Error:", err);
-        alert("Chyba při ukládání: " + err.message);
+        showNotification("Chyba při ukládání: " + err.message, "error");
     }
 }
 export async function exportTopicsToTxt() {
@@ -668,7 +668,7 @@ export async function exportTopicsToTxt() {
     const topics = state.conversationTopics;
     
     if (!topics || topics.length === 0) {
-        if (window.showNotification) window.showNotification("Žádná témata k exportu nebyla nalezena.", "error");
+        showNotification("Žádná témata k exportu nebyla nalezena.", "error");
         return;
     }
 
@@ -697,15 +697,16 @@ export async function exportTopicsToTxt() {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
-        if (window.showNotification) window.showNotification("Seznam otázek byl úspěšně vyexportován. 📄", "success");
+        showNotification("Seznam otázek byl úspěšně vyexportován. 📄", "success");
     } catch (err) {
         console.error("Export Topics Error:", err);
-        if (window.showNotification) window.showNotification("Chyba při exportu souboru.", "error");
+        showNotification("Chyba při exportu souboru.", "error");
     }
 }
 
 export async function clearOldTopicQuestions() {
-    if (!confirm("Opravdu chceš vymazat VŠECHNY OTÁZKY v původních kategoriích? (Kategorie samotné zůstanou prázdné a připravené na tvoje nové otázky).")) return;
+    const confirmed = await showConfirmDialog("Opravdu chceš vymazat VŠECHNY OTÁZKY v původních kategoriích? (Kategorie samotné zůstanou prázdné a připravené na tvoje nové otázky).");
+    if (!confirmed) return;
     
     triggerHaptic('medium');
     const oldTitles = [
@@ -742,12 +743,12 @@ export async function clearOldTopicQuestions() {
                 .in('topic_id', topicIds);
         }
 
-        if (window.showNotification) window.showNotification("Otázky v původních kategoriích vymazány! 🧹", "success");
+        showNotification("Otázky v původních kategoriích vymazány! 🧹", "success");
         
         // Refresh UI
         setTimeout(() => location.reload(), 1000);
     } catch (err) {
         console.error("Clear Questions Error:", err);
-        alert("Chyba při mazání: " + err.message);
+        showNotification("Chyba při mazání: " + err.message, "error");
     }
 }

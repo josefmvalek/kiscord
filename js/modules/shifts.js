@@ -1,7 +1,7 @@
 import { state, ensureShiftsData } from '../core/state.js';
 import { triggerHaptic } from '../core/utils.js';
 import { safeUpsert } from '../core/offline.js';
-import { showNotification } from '../core/theme.js';
+import { showNotification, showConfirmDialog } from '../core/theme.js';
 
 let weekOffset = 0;
 let isSaving = false;
@@ -384,7 +384,8 @@ window.deleteShift = async () => {
         return;
     }
 
-    if (!confirm('Opravdu chceš smazat tuto směnu?')) return;
+    const confirmed = await showConfirmDialog('Opravdu chceš smazat tuto směnu?');
+    if (!confirmed) return;
     isSaving = true;
     triggerHaptic('medium');
 

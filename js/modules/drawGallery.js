@@ -1,6 +1,6 @@
 import { supabase } from '../core/supabase.js';
 import { state } from '../core/state.js';
-import { showNotification } from '../core/theme.js';
+import { showNotification, showConfirmDialog } from '../core/theme.js';
 import { triggerHaptic } from '../core/utils.js';
 
 export async function renderGallery() {
@@ -119,7 +119,8 @@ export function viewFullImage(src, title) {
 }
 
 export async function deleteDrawing(id) {
-    if (!confirm("Opravdu chceš tento výkres smazat z Lednice?")) return;
+    const confirmed = await showConfirmDialog("Opravdu chceš tento výkres smazat z Lednice?");
+    if (!confirmed) return;
 
     try {
         const { error } = await supabase.from('drawings').delete().eq('id', id);

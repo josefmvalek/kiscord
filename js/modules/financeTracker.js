@@ -1,7 +1,7 @@
 import { supabase } from '../core/supabase.js';
 import { state } from '../core/state.js';
 import { triggerHaptic } from '../core/utils.js';
-import { showNotification } from '../core/theme.js';
+import { showNotification, showConfirmDialog } from '../core/theme.js';
 import { renderModal, renderInputGroup } from '../core/ui.js';
 
 let financesData = [];
@@ -249,7 +249,8 @@ export async function saveTransactionItem() {
 }
 
 export async function deleteTransactionItem(id) {
-    if (!confirm('Opravdu smazat tuto transakci?')) return;
+    const confirmed = await showConfirmDialog('Opravdu chceš smazat tuto transakci?');
+    if (!confirmed) return;
 
     triggerHaptic('medium');
 

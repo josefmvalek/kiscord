@@ -55,35 +55,35 @@ export function showQuickPlanModal(step = 1) {
             content = `
                 <div class="grid grid-cols-1 gap-2.5">
                     <button onclick="window.selectQuickPlanCategory('date')" 
-                            class="bg-[#2b2d31] hover:bg-[#35373c] p-4 rounded-2xl border border-[#202225] hover:border-[#eb459e]/50 transition-all flex items-center gap-4 text-left group cursor-pointer active:scale-98">
+                            class="bg-[var(--bg-secondary)] hover:bg-[var(--bg-modifier-hover)] p-4 rounded-2xl border border-[var(--border-subtle)] hover:border-[#eb459e]/50 transition-all flex items-center gap-4 text-left group cursor-pointer active:scale-98">
                         <div class="text-3xl bg-[#eb459e]/15 p-3 rounded-xl group-hover:scale-110 transition">🥂</div>
                         <div>
-                            <div class="font-black text-white uppercase text-xs tracking-wider flex items-center gap-1.5">
+                            <div class="font-black text-[var(--text-header)] uppercase text-xs tracking-wider flex items-center gap-1.5">
                                 Rande / Dobrodružství <span class="text-[10px] text-[#eb459e]">❤️</span>
                             </div>
-                            <p class="text-xs text-[#949ba4] mt-0.5">Večeře, procházka, piknik nebo společný výlet.</p>
+                            <p class="text-xs text-[var(--text-muted)] mt-0.5">Večeře, procházka, piknik nebo společný výlet.</p>
                         </div>
                     </button>
 
                     <button onclick="window.selectQuickPlanCategory('discord')" 
-                            class="bg-[#2b2d31] hover:bg-[#35373c] p-4 rounded-2xl border border-[#202225] hover:border-[#5865F2]/50 transition-all flex items-center gap-4 text-left group cursor-pointer active:scale-98">
-                        <div class="text-3xl bg-[#5865F2]/15 p-3 rounded-xl group-hover:scale-110 transition">🎧</div>
+                            class="bg-[var(--bg-secondary)] hover:bg-[var(--bg-modifier-hover)] p-4 rounded-2xl border border-[var(--border-subtle)] hover:border-[var(--blurple)]/50 transition-all flex items-center gap-4 text-left group cursor-pointer active:scale-98">
+                        <div class="text-3xl bg-[var(--blurple)]/15 p-3 rounded-xl group-hover:scale-110 transition">🎧</div>
                         <div>
-                            <div class="font-black text-white uppercase text-xs tracking-wider flex items-center gap-1.5">
-                                Discord Call / Gamesky <span class="text-[10px] text-[#5865F2]">🎮</span>
+                            <div class="font-black text-[var(--text-header)] uppercase text-xs tracking-wider flex items-center gap-1.5">
+                                Discord Call / Gamesky <span class="text-[10px] text-[var(--blurple)]">🎮</span>
                             </div>
-                            <p class="text-xs text-[#949ba4] mt-0.5">Pokec, streamování nebo hraní her.</p>
+                            <p class="text-xs text-[var(--text-muted)] mt-0.5">Pokec, streamování nebo hraní her.</p>
                         </div>
                     </button>
 
                     <button onclick="window.selectQuickPlanCategory('movie')" 
-                            class="bg-[#2b2d31] hover:bg-[#35373c] p-4 rounded-2xl border border-[#202225] hover:border-[#faa61a]/50 transition-all flex items-center gap-4 text-left group cursor-pointer active:scale-98">
+                            class="bg-[var(--bg-secondary)] hover:bg-[var(--bg-modifier-hover)] p-4 rounded-2xl border border-[var(--border-subtle)] hover:border-[#faa61a]/50 transition-all flex items-center gap-4 text-left group cursor-pointer active:scale-98">
                         <div class="text-3xl bg-[#faa61a]/15 p-3 rounded-xl group-hover:scale-110 transition">🎬</div>
                         <div>
-                            <div class="font-black text-white uppercase text-xs tracking-wider flex items-center gap-1.5">
+                            <div class="font-black text-[var(--text-header)] uppercase text-xs tracking-wider flex items-center gap-1.5">
                                 Film / Seriál <span class="text-[10px] text-[#faa61a]">🍿</span>
                             </div>
-                            <p class="text-xs text-[#949ba4] mt-0.5">Společné koukání na film v posteli nebo v kině.</p>
+                            <p class="text-xs text-[var(--text-muted)] mt-0.5">Společné koukání na film v posteli nebo v kině.</p>
                         </div>
                     </button>
                 </div>
@@ -99,34 +99,34 @@ export function showQuickPlanModal(step = 1) {
             content = `
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-[11px] font-black text-[#949ba4] uppercase tracking-wider mb-2">Co přesně budeme dělat?</label>
-                        <div class="bg-[#1e1f22] p-3 rounded-xl border border-[#36393f] focus-within:border-[#5865F2] transition-colors">
+                        <label class="block text-[11px] font-black text-[var(--text-muted)] uppercase tracking-wider mb-2">Co přesně budeme dělat?</label>
+                        <div class="bg-[var(--bg-tertiary)] p-3 rounded-xl border border-[var(--border-subtle)] focus-within:border-[var(--blurple)] transition-colors">
                             <input type="text" id="qp-name" 
                                    placeholder="${catInfo.placeholder}"
                                    value="${quickPlanData.name || ''}"
-                                   class="w-full bg-transparent text-white text-sm outline-none placeholder-[#72767d]">
+                                   class="w-full bg-transparent text-[var(--text-header)] text-sm outline-none placeholder-[var(--text-muted)]">
                         </div>
                     </div>
                     
                     <div>
-                        <label class="block text-[11px] font-black text-[#949ba4] uppercase tracking-wider mb-2">V kolik hodin?</label>
+                        <label class="block text-[11px] font-black text-[var(--text-muted)] uppercase tracking-wider mb-2">V kolik hodin?</label>
                         <div class="flex gap-2 items-center">
                              <input type="time" id="qp-time" value="${quickPlanData.time || '19:00'}" 
-                                    class="bg-[#1e1f22] text-white text-sm p-3 rounded-xl border border-[#36393f] outline-none flex-1 font-mono font-bold">
+                                    class="bg-[var(--bg-tertiary)] text-[var(--text-header)] text-sm p-3 rounded-xl border border-[var(--border-subtle)] outline-none flex-1 font-mono font-bold">
                              <div class="flex gap-1">
-                                <button type="button" onclick="document.getElementById('qp-time').value = '18:00'" class="bg-[#1e1f22] hover:bg-[#35373c] px-3 py-2 rounded-xl text-xs font-bold text-[#dbdee1] border border-[#36393f]">18:00</button>
-                                <button type="button" onclick="document.getElementById('qp-time').value = '20:00'" class="bg-[#1e1f22] hover:bg-[#35373c] px-3 py-2 rounded-xl text-xs font-bold text-[#dbdee1] border border-[#36393f]">20:00</button>
+                                <button type="button" onclick="document.getElementById('qp-time').value = '18:00'" class="bg-[var(--bg-tertiary)] hover:bg-[var(--bg-modifier-hover)] px-3 py-2 rounded-xl text-xs font-bold text-[var(--text-normal)] border border-[var(--border-subtle)]">18:00</button>
+                                <button type="button" onclick="document.getElementById('qp-time').value = '20:00'" class="bg-[var(--bg-tertiary)] hover:bg-[var(--bg-modifier-hover)] px-3 py-2 rounded-xl text-xs font-bold text-[var(--text-normal)] border border-[var(--border-subtle)]">20:00</button>
                              </div>
                         </div>
                     </div>
 
                     <div class="pt-2 space-y-2">
                         <button type="button" onclick="window.submitQuickPlan()" 
-                                class="w-full bg-[#5865F2] hover:bg-[#4752c4] text-white py-3.5 rounded-xl font-black uppercase tracking-wider text-xs transition active:scale-95 shadow-lg flex items-center justify-center gap-2 cursor-pointer min-h-[44px]">
+                                class="w-full bg-[var(--blurple)] hover:bg-[var(--blurple-hover)] text-white py-3.5 rounded-xl font-black uppercase tracking-wider text-xs transition active:scale-95 shadow-lg flex items-center justify-center gap-2 cursor-pointer min-h-[44px]">
                             <i class="fas fa-paper-plane text-xs"></i> Odeslat pozvánku partnerovi
                         </button>
                         <button type="button" onclick="window.showQuickPlanModal(1)" 
-                                class="w-full py-2 text-[#949ba4] hover:text-white text-xs font-bold uppercase transition">
+                                class="w-full py-2 text-[var(--text-muted)] hover:text-[var(--text-header)] text-xs font-bold uppercase transition">
                             <i class="fas fa-arrow-left mr-1"></i> Zpět na výběr typu
                         </button>
                     </div>

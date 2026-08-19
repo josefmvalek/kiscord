@@ -162,19 +162,21 @@ export function renderChannels() {
     // Special Top Items (Dashboard and Calendar) - render at top only if not moved to a category
     console.log('[DEBUG] dashboard top rendering check:', !hidden.includes('dashboard'), !catMap['dashboard']);
     if (!hidden.includes('dashboard') && !catMap['dashboard']) {
+        const isActive = state.currentChannel === 'dashboard';
         html += `
-            <div class="channel-link group flex items-center px-2 py-1 mx-2 rounded cursor-pointer transition-colors hover:bg-[var(--background-modifier-hover)] hover:text-gray-100 text-gray-400 mb-0.5 mt-2" data-channel="dashboard">
+            <div class="channel-link group flex items-center px-2 py-1.5 mx-2 rounded-lg cursor-pointer transition-colors hover:bg-[var(--bg-modifier-hover)] text-[var(--text-muted)] hover:text-[var(--text-header)] mb-0.5 mt-2 ${isActive ? 'active bg-[var(--bg-modifier-selected)] text-[var(--text-header)] font-bold' : ''}" data-channel="dashboard">
                 <div class="w-5 text-center mr-2 text-lg text-[#eb459e]"><i class="fas fa-heart"></i></div>
-                <div class="flex-1 font-bold text-gray-200">Můj Den</div>
+                <div class="flex-1 font-bold text-[var(--text-header)]">Můj Den</div>
             </div>
         `;
     }
     console.log('[DEBUG] calendar top rendering check:', !hidden.includes('calendar'), !catMap['calendar']);
     if (!hidden.includes('calendar') && !catMap['calendar']) {
+        const isActive = state.currentChannel === 'calendar';
         html += `
-            <div class="channel-link group flex items-center px-2 py-1 mx-2 rounded cursor-pointer transition-colors hover:bg-[var(--background-modifier-hover)] hover:text-gray-100 text-gray-400 mb-4" data-channel="calendar">
+            <div class="channel-link group flex items-center px-2 py-1.5 mx-2 rounded-lg cursor-pointer transition-colors hover:bg-[var(--bg-modifier-hover)] text-[var(--text-muted)] hover:text-[var(--text-header)] mb-4 ${isActive ? 'active bg-[var(--bg-modifier-selected)] text-[var(--text-header)] font-bold' : ''}" data-channel="calendar">
                 <div class="w-5 text-center mr-2 text-lg text-[#5865F2]"><i class="fas fa-calendar-alt"></i></div>
-                <div class="flex-1 font-bold text-gray-200">Kalendář</div>
+                <div class="flex-1 font-bold text-[var(--text-header)]">Kalendář</div>
             </div>
         `;
     }
@@ -240,16 +242,17 @@ export function renderChannels() {
         });
 
         html += `
-            <h3 class="px-4 mt-4 mb-1 text-xs font-bold text-[#8e9297] uppercase hover:text-gray-300 transition-colors cursor-default select-none">${cat.name}</h3>
+            <h3 class="px-4 mt-4 mb-1 text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider hover:text-[var(--text-normal)] transition-colors cursor-default select-none">${cat.name}</h3>
         `;
 
         visibleItems.forEach(channel => {
             const iconColor = channel.color ? `style="color: ${channel.color}"` : '';
+            const isActive = state.currentChannel === channel.id;
 
             html += `
-                <div class="channel-link group flex items-center px-2 py-1 mx-2 rounded cursor-pointer transition-colors hover:bg-[var(--background-modifier-hover)] hover:text-gray-100 text-gray-400 mb-0.5 opacity-90 hover:opacity-100" data-channel="${channel.id}">
+                <div class="channel-link group flex items-center px-2 py-1.5 mx-2 rounded-lg cursor-pointer transition-colors hover:bg-[var(--bg-modifier-hover)] text-[var(--text-muted)] hover:text-[var(--text-header)] mb-0.5 ${isActive ? 'active bg-[var(--bg-modifier-selected)] text-[var(--text-header)] font-bold' : ''}" data-channel="${channel.id}">
                     <div class="mr-2 w-5 text-center text-lg" ${iconColor}>${channel.icon}</div>
-                    <div class="flex-1 font-medium truncate group-hover:text-gray-200 transition-colors">${channel.name}</div>
+                    <div class="flex-1 font-medium truncate group-hover:text-[var(--text-normal)] transition-colors">${channel.name}</div>
                 </div>
             `;
         });
@@ -374,12 +377,11 @@ export function switchChannel(channelId, push = true) {
 
     // Update Sidebar UI
     document.querySelectorAll('.channel-link').forEach(l => {
-        l.classList.remove('active', 'bg-[#36393f]', 'text-white');
-        l.classList.add('text-[#b9bbbe]');
-        if (l.getAttribute('data-channel') === channelId) {
-            l.classList.add('active', 'bg-[#36393f]', 'text-white');
-            l.classList.remove('text-[#b9bbbe]');
-        }
+        const isCurrent = l.getAttribute('data-channel') === channelId;
+        l.classList.toggle('active', isCurrent);
+        l.classList.toggle('bg-[var(--bg-modifier-selected)]', isCurrent);
+        l.classList.toggle('text-[var(--text-header)]', isCurrent);
+        l.classList.toggle('font-bold', isCurrent);
     });
 
     // Icons/Header

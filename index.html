@@ -97,12 +97,12 @@
     <div id="sidebar-wrapper"
       class="fixed inset-y-0 left-0 z-50 flex h-full transition-transform duration-300 transform -translate-x-full md:relative md:translate-x-0 shadow-2xl md:shadow-none">
       <div
-        class="bg-[var(--bg-tertiary)] w-[72px] flex flex-col items-center py-3 gap-2 flex-shrink-0 border-r border-[var(--bg-tertiary)]">
+        class="bg-[var(--bg-tertiary)] w-[72px] flex flex-col items-center py-3 gap-2 flex-shrink-0 border-r border-[var(--border-subtle)]">
         <div
           class="w-12 h-12 bg-[var(--bg-primary)] rounded-full hover:rounded-2xl hover:bg-[var(--blurple)] transition-all cursor-pointer flex items-center justify-center text-[var(--text-normal)] hover:text-white mb-2">
           <i class="fab fa-discord text-xl"></i>
         </div>
-        <div class="w-8 h-[2px] bg-[var(--bg-primary)] rounded mb-2"></div>
+        <div class="w-8 h-[2px] bg-[var(--border-subtle)] rounded mb-2"></div>
         <div
           class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl cursor-pointer flex items-center justify-center overflow-hidden">
           <div
@@ -112,9 +112,9 @@
         </div>
       </div>
 
-      <div class="bg-[var(--bg-secondary)] w-60 flex flex-col flex-shrink-0 border-r border-[var(--bg-tertiary)]">
+      <div class="bg-[var(--bg-secondary)] w-60 flex flex-col flex-shrink-0 border-r border-[var(--border-subtle)]">
         <div
-          class="h-12 border-b border-[var(--bg-tertiary)] flex items-center justify-between px-4 font-bold text-[var(--text-header)] hover:bg-[#34373c] cursor-pointer transition">
+          class="h-12 border-b border-[var(--border-subtle)] flex items-center justify-between px-4 font-bold text-[var(--text-header)] hover:bg-[var(--bg-modifier-hover)] cursor-pointer transition">
           <span class="truncate">Kiscord 🦝🤍🦉</span>
           <button onclick="toggleValentineMode()" class="text-xs hover:text-[#eb459e] transition p-1"
             title="Přepnout Valentýnský Theme">
@@ -125,22 +125,22 @@
           <div id="channels-container"></div>
         </div>
         <div
-          class="h-[52px] bg-[var(--bg-tertiary)] flex items-center px-2 w-full cursor-pointer hover:bg-[#34373c] transition select-none"
+          class="h-[52px] bg-[var(--bg-tertiary)] flex items-center px-2 w-full cursor-pointer hover:bg-[var(--bg-modifier-hover)] transition select-none border-t border-[var(--border-subtle)]"
           onclick="toggleUserPopout()">
           <div class="relative w-8 h-8 mr-2 group">
             <img id="sidebar-user-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%235865F2'/%3E%3Ctext x='50' y='65' font-size='45' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E🦝%3C/text%3E%3C/svg%3E" alt="Avatar"
               class="w-8 h-8 rounded-full object-cover" loading="lazy" />
             <div
-              class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--green)] rounded-full border-2 border-[#292b2f]">
+              class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--green)] rounded-full border-2 border-[var(--bg-tertiary)]">
             </div>
           </div>
           <div class="flex-1 overflow-hidden">
             <div id="sidebar-user-name" class="text-[var(--text-header)] text-xs font-bold truncate">&nbsp;</div>
-            <div class="text-[var(--interactive-normal)] text-[10px] truncate">
+            <div class="text-[var(--text-muted)] text-[10px] truncate">
               #1337 • <span id="user-status">Online</span>
             </div>
           </div>
-          <button onclick="event.stopPropagation(); window.switchChannel('settings')" class="w-8 h-8 flex flex-shrink-0 items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all" title="Otevřít Nastavení">
+          <button onclick="event.stopPropagation(); window.switchChannel('settings')" class="w-8 h-8 flex flex-shrink-0 items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-header)] hover:bg-[var(--bg-modifier-hover)] rounded-lg transition-all" title="Otevřít Nastavení">
             <i class="fas fa-cog text-sm hover:rotate-90 transition-transform duration-300"></i>
           </button>
         </div>
@@ -155,69 +155,69 @@
     <div class="bg-[var(--bg-primary)] flex-1 flex flex-col min-w-0 relative z-10 overflow-hidden h-screen">
 
       <div
-        class="h-12 border-b border-[var(--bg-tertiary)] flex items-center px-4 shadow-sm z-20 bg-[var(--bg-primary)] flex-shrink-0">
+        class="h-12 border-b border-[var(--border-subtle)] flex items-center px-4 shadow-sm z-20 bg-[var(--bg-primary)] flex-shrink-0">
         <button onclick="toggleMobileMenu()"
-          class="md:hidden mr-4 text-[var(--interactive-normal)] hover:text-white focus:outline-none">
+          class="md:hidden mr-4 text-[var(--text-muted)] hover:text-[var(--text-header)] focus:outline-none">
           <i class="fas fa-bars text-xl"></i>
         </button>
 
-        <i id="channel-icon" class="fas fa-hashtag text-gray-500 text-xl mr-2"></i>
+        <i id="channel-icon" class="fas fa-hashtag text-[var(--text-muted)] text-xl mr-2"></i>
         <span id="channel-name" class="font-bold text-[var(--text-header)] mr-4 truncate">&nbsp;</span>
-        <span id="channel-desc" class="text-xs text-[var(--interactive-normal)] truncate hidden md:block">&nbsp;</span>
-        <div class="ml-auto flex items-center gap-4 text-[var(--interactive-normal)]">
-          <div class="bg-[var(--bg-tertiary)] px-2 py-1 rounded text-xs flex items-center gap-2 w-32 md:w-48">
-            <input type="text" placeholder="Hledat..." class="bg-transparent text-white focus:outline-none w-full"
+        <span id="channel-desc" class="text-xs text-[var(--text-muted)] truncate hidden md:block">&nbsp;</span>
+        <div class="ml-auto flex items-center gap-4 text-[var(--text-muted)]">
+          <div class="bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] px-2.5 py-1 rounded-xl text-xs flex items-center gap-2 w-32 md:w-48">
+            <input type="text" placeholder="Hledat..." class="bg-transparent text-[var(--text-header)] placeholder-[var(--text-muted)] focus:outline-none w-full"
               id="search-input" />
-            <i class="fas fa-search text-xs"></i>
+            <i class="fas fa-search text-xs text-[var(--text-muted)]"></i>
           </div>
         </div>
       </div>
 
       <!-- Content Container -->
       <div id="messages-container"
-        class="flex-1 overflow-y-auto min-h-0 px-0 py-0 custom-scrollbar flex flex-col bg-[#36393f] relative"></div>
+        class="flex-1 overflow-y-auto min-h-0 px-0 py-0 custom-scrollbar flex flex-col bg-[var(--bg-primary)] relative"></div>
     </div>
 
 
     <!-- MEMBER LIST -->
     <div
-      class="w-60 bg-[var(--bg-secondary)] hidden lg:flex flex-col p-3 flex-shrink-0 border-l border-[var(--bg-tertiary)] z-20">
-      <h3 class="text-xs font-bold text-[#8e9297] uppercase mb-2 px-2">
+      class="w-60 bg-[var(--bg-secondary)] hidden lg:flex flex-col p-3 flex-shrink-0 border-l border-[var(--border-subtle)] z-20">
+      <h3 class="text-xs font-bold text-[var(--text-muted)] uppercase mb-2 px-2">
         ONLINE — 2
       </h3>
-      <div class="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-[var(--bg-primary)] cursor-pointer group">
+      <div class="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-[var(--bg-modifier-hover)] cursor-pointer group">
         <div class="relative">
           <img id="online-avatar-jozka" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%235865F2'/%3E%3Ctext x='50' y='65' font-size='45' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E🦝%3C/text%3E%3C/svg%3E" alt="Jožka" class="w-8 h-8 rounded-full object-cover"
             loading="lazy" />
           <div
-            class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--green)] rounded-full border-2 border-[#2f3136]">
+            class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--green)] rounded-full border-2 border-[var(--bg-secondary)]">
           </div>
         </div>
         <div>
-          <div class="font-bold text-gray-200 text-sm">Jožka</div>
-          <div class="text-xs text-gray-400">
+          <div class="font-bold text-[var(--text-header)] text-sm">Jožka</div>
+          <div class="text-xs text-[var(--text-muted)]">
             Hraje Tetris <span class="text-[var(--pink)]">🧩</span>
           </div>
         </div>
       </div>
-      <div class="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-[var(--bg-primary)] cursor-pointer group mt-1">
+      <div class="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-[var(--bg-modifier-hover)] cursor-pointer group mt-1">
         <div class="relative">
           <img id="online-avatar-klarka" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23eb459e'/%3E%3Ctext x='50' y='65' font-size='45' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E🦉%3C/text%3E%3C/svg%3E" alt="Klárka" class="w-8 h-8 rounded-full object-cover" />
           <div
-            class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--green)] rounded-full border-2 border-[#2f3136]">
+            class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--green)] rounded-full border-2 border-[var(--bg-secondary)]">
           </div>
         </div>
         <div>
-          <div class="font-bold text-gray-200 text-sm">Klárka</div>
-          <div class="text-xs text-gray-400">Vrchní Fact-Checker</div>
+          <div class="font-bold text-[var(--text-header)] text-sm">Klárka</div>
+          <div class="text-xs text-[var(--text-muted)]">Vrchní Fact-Checker</div>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Floating Settings Quick Button -->
-  <button onclick="window.switchChannel('settings')"
-    class="fixed bottom-5 right-5 z-40 w-11 h-11 bg-[#2f3136] hover:bg-[#5865F2] text-gray-400 hover:text-white rounded-2xl border border-white/10 shadow-2xl flex items-center justify-center text-base transition-all duration-300 hover:scale-110 active:scale-95 group"
+  <button id="floating-settings-btn" onclick="window.switchChannel('settings')"
+    class="fixed bottom-5 right-5 z-40 w-11 h-11 bg-[var(--bg-secondary)] hover:bg-[var(--blurple)] text-[var(--text-normal)] hover:text-white rounded-2xl border border-[var(--border-subtle)] shadow-2xl flex items-center justify-center text-base transition-all duration-300 hover:scale-110 active:scale-95 group"
     title="Otevřít Nastavení">
     <i class="fas fa-cog group-hover:rotate-90 transition-transform duration-500"></i>
   </button>

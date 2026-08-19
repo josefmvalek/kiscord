@@ -30,25 +30,25 @@ export async function renderDormHub() {
     const partnerName = isMeJose ? "Klárka" : "Jožka";
 
     container.innerHTML = `
-        <div class="h-full bg-[#18191c] flex flex-col font-sans animate-fade-in relative overflow-hidden select-none">
+        <div class="h-full bg-[var(--bg-app)] flex flex-col font-sans animate-fade-in relative overflow-hidden select-none">
             <!-- Header bar -->
-            <div class="bg-[#202225] shadow-md z-10 flex-shrink-0 border-b border-gray-800/80 p-4 lg:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="bg-[var(--bg-secondary)] shadow-md z-10 flex-shrink-0 border-b border-[var(--border-subtle)] p-4 lg:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-500/25 to-orange-600/10 flex items-center justify-center text-xl text-amber-400 border border-amber-500/30 shadow-inner">
                         🏢
                     </div>
                     <div>
-                        <h1 class="text-base font-black text-white uppercase tracking-tight flex items-center gap-2">
+                        <h1 class="text-base font-black text-[var(--text-header)] uppercase tracking-tight flex items-center gap-2">
                             <span>Koleje & Brno Hub</span>
                             <span class="bg-amber-500/20 text-amber-400 text-[8px] font-black px-2 py-0.5 rounded-full border border-amber-500/30">Studentský Život</span>
                         </h1>
-                        <p class="text-[10px] text-gray-400 font-medium">Prádelník, nákupy na kolej, menzy & rychlý kampus rozcestník</p>
+                        <p class="text-[10px] text-[var(--text-muted)] font-medium">Prádelník, nákupy na kolej, menzy & rychlý kampus rozcestník</p>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-2">
                     <button onclick="window.pickRandomFood()" 
-                            class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-black text-[10px] uppercase tracking-wider transition flex items-center gap-1.5 shadow-lg shadow-amber-500/20 active:scale-95">
+                            class="kiscord-btn kiscord-btn-warning kiscord-btn-sm text-[10px] uppercase font-black tracking-wider">
                         <i class="fas fa-dice text-xs"></i> <span>Kam dnes na oběd?</span>
                     </button>
                 </div>

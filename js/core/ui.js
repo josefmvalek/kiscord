@@ -1,48 +1,95 @@
 /**
- * UI Utilities for Kiscord
+ * UI Utilities for Kiscord 2.0
  * Provides standardized components to ensure visual consistency and reduce HTML repetition.
  */
 
+// Global Escape Key Listener for Modals
+if (typeof window !== 'undefined' && !window.__kiscordEscapeListenerAttached) {
+    window.__kiscordEscapeListenerAttached = true;
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            // Find the topmost visible modal
+            const openModals = Array.from(document.querySelectorAll('.kiscord-modal-backdrop, .modal-backdrop'))
+                .filter(m => m.style.display !== 'none' && !m.classList.contains('hidden'));
+            
+            if (openModals.length > 0) {
+                const topModal = openModals[openModals.length - 1];
+                const closeBtn = topModal.querySelector('[data-modal-close]') || topModal.querySelector('.modal-close-btn');
+                if (closeBtn) {
+                    closeBtn.click();
+                } else if (topModal.id && typeof window.closeModal === 'function') {
+                    window.closeModal(topModal.id);
+                } else {
+                    topModal.style.display = 'none';
+                    topModal.remove();
+                }
+            }
+        }
+    });
+}
+
 /**
  * Renders a standardized modal.
- * @param {Object} config - { id, title, subtitle, content, actions, onClose, size }
+ * @param {Object} config - { id, title, subtitle, icon, content, actions, onClose, size, extraHeader }
  * @returns {string} HTML string for the modal
  */
-export function renderModal({ id, title, subtitle, content, actions = '', onClose = "closeDayModal()", size = 'md' }) {
+export function renderModal({
+    id,
+    title,
+    subtitle = '',
+    icon = '',
+    content = '',
+    actions = '',
+    onClose = '',
+    size = 'md',
+    extraHeader = ''
+}) {
     const sizeClasses = {
+        'sm': 'max-w-sm',
         'md': 'max-w-md',
         'lg': 'max-w-2xl',
         'xl': 'max-w-4xl',
         '6xl': 'max-w-6xl',
-        'full': 'max-w-[95vw] w-full h-[95vh]'
+        'full': 'max-w-[95vw] w-full h-[92vh]'
     };
     const sizeClass = sizeClasses[size] || sizeClasses.md;
+    const closeHandler = onClose || `window.closeModal('${id}')`;
 
     return `
-        <div id="${id}" class="fixed inset-0 z-[100] hidden modal-backdrop items-center justify-center p-4">
-            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full ${sizeClass} border border-white/10 overflow-hidden animate-fade-in flex flex-col ${size === 'full' ? '' : 'max-h-[90vh]'}">
+        <div id="${id}" 
+             class="kiscord-modal-backdrop modal-backdrop fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in"
+             onclick="if (event.target === this) { ${closeHandler}; }">
+            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full ${sizeClass} border border-[var(--border-default)] overflow-hidden flex flex-col ${size === 'full' ? '' : 'max-h-[90vh]'} animate-scale-in"
+                 onclick="event.stopPropagation()">
+                
                 <!-- Modal Header -->
-                <div class="bg-black/10 p-5 border-b border-white/5 flex justify-between items-center backdrop-blur-md">
-                    <div>
-                        <h3 class="font-bold text-[var(--text-header)] text-lg leading-tight drop-shadow-sm">${title}</h3>
-                        ${subtitle ? `<p class="text-[10px] text-[var(--text-muted)] uppercase font-black tracking-widest mt-0.5 opacity-80">${subtitle}</p>` : ''}
+                <div class="bg-[var(--bg-tertiary)]/80 px-5 py-4 border-b border-[var(--border-subtle)] flex justify-between items-center backdrop-blur-md flex-shrink-0">
+                    <div class="flex items-center gap-3 min-w-0">
+                        ${icon ? `
+                        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[var(--blurple)]/20 to-transparent border border-[var(--border-default)] flex items-center justify-center text-lg flex-shrink-0 shadow-inner">
+                            ${icon}
+                        </div>` : ''}
+                        <div class="truncate">
+                            <h3 class="font-black text-[var(--text-header)] text-base leading-tight drop-shadow-sm truncate">${title}</h3>
+                            ${subtitle ? `<p class="text-[9px] text-[var(--text-muted)] uppercase font-black tracking-widest mt-0.5 opacity-90 truncate">${subtitle}</p>` : ''}
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <div id="${id}-header-extra"></div>
-                        <button onclick="${onClose}" class="text-[var(--interactive-normal)] hover:text-[var(--text-header)] transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10">
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        ${extraHeader ? `<div id="${id}-header-extra">${extraHeader}</div>` : `<div id="${id}-header-extra"></div>`}
+                        <button data-modal-close onclick="${closeHandler}" class="modal-close-btn text-[var(--interactive-normal)] hover:text-[var(--text-header)] transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10" title="Zavřít (Esc)">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
                 </div>
                 
                 <!-- Modal Body -->
-                <div class="p-6 overflow-y-auto custom-scrollbar space-y-6 ${size === 'full' ? 'flex-1 flex flex-col !p-0' : ''}">
+                <div class="p-5 md:p-6 overflow-y-auto custom-scrollbar space-y-5 ${size === 'full' ? 'flex-1 flex flex-col !p-4' : ''}">
                     ${content}
                 </div>
 
-                <!-- Modal Actions -->
+                <!-- Modal Actions / Footer -->
                 ${actions ? `
-                <div class="p-4 bg-black/10 border-t border-white/5 flex gap-2">
+                <div class="px-5 py-3.5 bg-[var(--bg-tertiary)]/90 border-t border-[var(--border-subtle)] flex items-center justify-end gap-2.5 flex-shrink-0">
                     ${actions}
                 </div>` : ''}
             </div>
@@ -51,25 +98,47 @@ export function renderModal({ id, title, subtitle, content, actions = '', onClos
 }
 
 /**
- * Generates a standardized button.
- * @param {Object} config - { text, icon, variant, onclick, className }
+ * Generates a standardized button HTML.
+ * @param {Object} config - { text, icon, variant, size, onclick, className, type, id, disabled }
  */
-export function renderButton({ text, icon = '', variant = 'primary', onclick = '', className = '' }) {
-    const variants = {
-        primary: 'bg-[#5865F2] hover:bg-[#4752c4] text-white',
-        secondary: 'bg-[#4f545c] hover:bg-[#5d6269] text-white',
-        success: 'bg-[#3ba55c] hover:bg-[#2d7d46] text-white',
-        danger: 'bg-[#ed4245] hover:bg-[#c03537] text-white',
-        warning: 'bg-[#faa61a] hover:bg-[#c88515] text-white'
+export function renderButton({
+    text,
+    icon = '',
+    variant = 'primary',
+    size = 'md',
+    onclick = '',
+    className = '',
+    type = 'button',
+    id = '',
+    disabled = false
+}) {
+    const variantMap = {
+        primary: 'kiscord-btn-primary',
+        secondary: 'kiscord-btn-secondary',
+        accent: 'kiscord-btn-accent',
+        success: 'kiscord-btn-success',
+        danger: 'kiscord-btn-danger',
+        warning: 'kiscord-btn-warning',
+        ghost: 'kiscord-btn-ghost',
+        icon: 'kiscord-btn-icon'
     };
 
-    const baseClass = 'px-4 py-2 rounded-xl font-bold transition shadow-lg active:scale-95 flex items-center justify-center gap-2';
-    const variantClass = variants[variant] || variants.primary;
+    const sizeMap = {
+        sm: 'kiscord-btn-sm',
+        md: '',
+        lg: 'kiscord-btn-lg'
+    };
+
+    const variantClass = variantMap[variant] || 'kiscord-btn-primary';
+    const sizeClass = sizeMap[size] || '';
+    const clickAttr = onclick ? `onclick="window.triggerHaptic ? window.triggerHaptic('light') : null; ${onclick}"` : '';
+    const idAttr = id ? `id="${id}"` : '';
+    const disabledAttr = disabled ? 'disabled' : '';
 
     return `
-        <button onclick="${onclick}" class="${baseClass} ${variantClass} ${className}">
+        <button type="${type}" ${idAttr} ${clickAttr} ${disabledAttr} class="kiscord-btn ${variantClass} ${sizeClass} ${className}">
             ${icon ? `<i class="${icon}"></i>` : ''}
-            <span>${text}</span>
+            ${text ? `<span>${text}</span>` : ''}
         </button>
     `;
 }
@@ -77,59 +146,164 @@ export function renderButton({ text, icon = '', variant = 'primary', onclick = '
 /**
  * Generates a standardized input group.
  */
-/**
- * Renders a standardized card.
- */
-export function renderCard({ content, className = '', onclick = '' }) {
+export function renderInputGroup({
+    label,
+    id,
+    type = 'text',
+    placeholder = '',
+    value = '',
+    attr = '',
+    hint = ''
+}) {
     return `
-        <div ${onclick ? `onclick="${onclick}"` : ''} 
-            class="bg-[var(--bg-secondary)] rounded-2xl border border-white/5 shadow-xl transition-all duration-300 ${onclick ? 'cursor-pointer hover:bg-white/5 active:scale-[0.98]' : ''} ${className}">
+        <div class="space-y-1.5 w-full">
+            ${label ? `<label for="${id}" class="kiscord-label">${label}</label>` : ''}
+            <input type="${type}" id="${id}" placeholder="${placeholder}" value="${value}" ${attr} class="kiscord-input">
+            ${hint ? `<p class="text-[10px] text-[var(--text-muted)] italic">${hint}</p>` : ''}
+        </div>
+    `;
+}
+
+/**
+ * Generates a standardized select group.
+ */
+export function renderSelectGroup({
+    label,
+    id,
+    options = [], // [{ value, label, selected }]
+    attr = '',
+    hint = ''
+}) {
+    const optionsHtml = options.map(opt => `
+        <option value="${opt.value}" ${opt.selected ? 'selected' : ''}>${opt.label}</option>
+    `).join('');
+
+    return `
+        <div class="space-y-1.5 w-full">
+            ${label ? `<label for="${id}" class="kiscord-label">${label}</label>` : ''}
+            <select id="${id}" ${attr} class="kiscord-select">
+                ${optionsHtml}
+            </select>
+            ${hint ? `<p class="text-[10px] text-[var(--text-muted)] italic">${hint}</p>` : ''}
+        </div>
+    `;
+}
+
+/**
+ * Generates a standardized textarea group.
+ */
+export function renderTextareaGroup({
+    label,
+    id,
+    placeholder = '',
+    value = '',
+    rows = 3,
+    attr = '',
+    hint = ''
+}) {
+    return `
+        <div class="space-y-1.5 w-full">
+            ${label ? `<label for="${id}" class="kiscord-label">${label}</label>` : ''}
+            <textarea id="${id}" rows="${rows}" placeholder="${placeholder}" ${attr} class="kiscord-textarea">${value}</textarea>
+            ${hint ? `<p class="text-[10px] text-[var(--text-muted)] italic">${hint}</p>` : ''}
+        </div>
+    `;
+}
+
+/**
+ * Renders a standardized card container.
+ */
+export function renderCard({ content, className = '', onclick = '', interactive = false }) {
+    const clickAttr = onclick ? `onclick="${onclick}"` : '';
+    const interactiveClass = (onclick || interactive) ? 'kiscord-card-interactive kiscord-card-hover' : '';
+
+    return `
+        <div ${clickAttr} class="glass-card p-5 ${interactiveClass} ${className}">
             ${content}
         </div>
     `;
 }
 
 /**
- * Standardized status/category badge.
+ * Standardized badge component.
  */
-export function renderBadge({ text, icon = '', color = '#5865F2', className = '' }) {
+export function renderBadge({ text, icon = '', variant = 'default', className = '' }) {
+    const variantClass = variant !== 'default' ? `kiscord-badge-${variant}` : '';
     return `
-        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/20 border border-white/5 ${className}">
-            ${icon ? `<span class="text-xs">${icon}</span>` : ''}
-            <span class="text-[9px] font-black uppercase tracking-wider" style="color: ${color}">${text}</span>
+        <div class="kiscord-badge ${variantClass} ${className}">
+            ${icon ? `<span>${icon}</span>` : ''}
+            <span>${text}</span>
         </div>
     `;
 }
 
 /**
- * Specifically for status badges (e.g. Bucket List or Planner)
+ * Status badge with custom label/color/icon map.
  */
 export function renderStatusBadge({ status, config }) {
-    const s = config[status] || { label: status, color: '#b9bbbe', icon: '❓' };
+    const s = config[status] || { label: status, color: 'var(--text-muted)', icon: '❓' };
     return `
-        <div class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-black/20 border border-white/5 backdrop-blur-sm">
+        <div class="kiscord-badge" style="border-color: ${s.color}40; background: ${s.color}15; color: ${s.color};">
             <span class="text-[10px] drop-shadow-sm">${s.icon}</span>
-            <span class="text-[9px] font-black uppercase tracking-widest leading-none outline-none" style="color: ${s.color}">${s.label}</span>
-        </div>
-    `;
-}
-
-export function renderInputGroup({ label, id, type = 'text', placeholder = '', value = '', attr = '' }) {
-    return `
-        <div class="space-y-1">
-            <label class="block text-[10px] text-gray-500 font-bold uppercase tracking-widest">${label}</label>
-            <input type="${type}" id="${id}" placeholder="${placeholder}" value="${value}" ${attr}
-                class="w-full bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2]/50 transition-all">
+            <span class="font-black">${s.label}</span>
         </div>
     `;
 }
 
 /**
- * Renders a standardized error state with a retry button.
- * @param {Object} config - { message, onRetry, containerId }
+ * Standardized module/channel header banner.
  */
-export function renderErrorState({ message = 'Něco se nepovedlo...', onRetry = '', containerId = '' }) {
-    const retryIcon = 'fas fa-redo-alt';
+export function renderModuleHeader({ title, subtitle = '', icon = '✨', badge = '', actions = '' }) {
+    return `
+        <div class="bg-[var(--bg-secondary)] border-b border-[var(--border-subtle)] p-4 lg:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-[var(--blurple)]/20 to-transparent flex items-center justify-center text-2xl border border-[var(--border-default)] shadow-inner">
+                    ${icon}
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-base md:text-lg font-black text-[var(--text-header)] uppercase tracking-tight">${title}</h1>
+                        ${badge ? `<span class="bg-[var(--blurple)]/20 text-[var(--blurple)] text-[8px] font-black px-2 py-0.5 rounded-full border border-[var(--blurple)]/30 uppercase tracking-widest">${badge}</span>` : ''}
+                    </div>
+                    ${subtitle ? `<p class="text-xs text-[var(--text-muted)] font-medium mt-0.5">${subtitle}</p>` : ''}
+                </div>
+            </div>
+            ${actions ? `<div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-start sm:justify-end">${actions}</div>` : ''}
+        </div>
+    `;
+}
+
+/**
+ * Standardized Empty State.
+ */
+export function renderEmptyState({
+    icon = '🦝',
+    title = 'Tady je zatím prázdno',
+    description = 'Zatím tu nic není, ale brzy sem něco společně přidáme!',
+    actionText = '',
+    onAction = ''
+}) {
+    return `
+        <div class="flex flex-col items-center justify-center py-16 px-6 text-center animate-fade-in w-full">
+            <div class="w-16 h-16 rounded-3xl bg-[var(--bg-secondary)] border border-[var(--border-default)] flex items-center justify-center text-3xl mb-4 shadow-xl shadow-black/20">
+                ${icon}
+            </div>
+            <h3 class="text-base font-bold text-[var(--text-header)] mb-1">${title}</h3>
+            <p class="text-xs text-[var(--text-muted)] max-w-sm mb-6 leading-relaxed">${description}</p>
+            ${actionText ? `
+                <button onclick="${onAction}" class="kiscord-btn kiscord-btn-primary kiscord-btn-sm">
+                    <i class="fas fa-plus"></i>
+                    <span>${actionText}</span>
+                </button>
+            ` : ''}
+        </div>
+    `;
+}
+
+/**
+ * Standardized error state with a retry button.
+ */
+export function renderErrorState({ message = 'Něco se nepovedlo...', onRetry = '' }) {
     const retryOnClick = onRetry ? `window.loadModule('utils').then(u => { u.triggerHaptic('light'); ${onRetry} })` : '';
 
     return `
@@ -138,11 +312,11 @@ export function renderErrorState({ message = 'Něco se nepovedlo...', onRetry = 
                 <div class="text-7xl filter grayscale group-hover:grayscale-0 transition-all duration-500 scale-100 group-hover:scale-110">🦝</div>
                 <div class="absolute -right-2 -bottom-2 text-3xl animate-bounce-slow">💤</div>
             </div>
-            <h3 class="text-xl font-bold text-white mb-2">Mýval usnul v serverovně...</h3>
-            <p class="text-gray-400 max-w-xs mb-8 text-sm leading-relaxed">${message}</p>
+            <h3 class="text-xl font-bold text-[var(--text-header)] mb-2">Mýval usnul v serverovně...</h3>
+            <p class="text-[var(--text-muted)] max-w-xs mb-8 text-sm leading-relaxed">${message}</p>
             ${onRetry ? `
-                <button onclick="${retryOnClick}" class="bg-[#4f545c] hover:bg-[#5d6269] text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95 flex items-center gap-2 border border-white/5">
-                    <i class="${retryIcon} text-xs"></i>
+                <button onclick="${retryOnClick}" class="kiscord-btn kiscord-btn-secondary">
+                    <i class="fas fa-redo-alt text-xs"></i>
                     <span>Zkusit znovu</span>
                 </button>
             ` : ''}

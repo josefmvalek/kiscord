@@ -1,141 +1,348 @@
 /* ==========================================================
-   TOKENS.CSS — Design Tokens & Themes
+   TOKENS.CSS — Design Tokens & Themes (Kiscord 2.0)
    All CSS custom properties and theme overrides live here.
    ========================================================== */
 
 :root {
-  /* --- DESIGN TOKENS (Discord Defaults) --- */
+  /* --- DESIGN TOKENS (Discord / Kiscord Defaults) --- */
+  --bg-app: #18191c;
   --bg-tertiary: #202225;
   --bg-secondary: #2f3136;
   --bg-primary: #36393f;
-  --bg-modifier-hover: rgba(79, 84, 92, 0.16);
-  --bg-modifier-active: rgba(79, 84, 92, 0.24);
-  --bg-modifier-selected: rgba(79, 84, 92, 0.32);
-  
+  --bg-floating: #18191c;
+  --bg-modal: #2f3136;
+
+  --bg-modifier-hover: rgba(255, 255, 255, 0.05);
+  --bg-modifier-active: rgba(255, 255, 255, 0.08);
+  --bg-modifier-selected: rgba(88, 101, 242, 0.15);
+
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --border-focus: rgba(88, 101, 242, 0.6);
+
   --text-normal: #dcddde;
-  --text-muted: #72767d;
+  --text-muted: #8e9297;
   --text-header: #ffffff;
   --text-link: #00aff4;
-  
+
   --interactive-normal: #b9bbbe;
   --interactive-hover: #dcddde;
   --interactive-active: #ffffff;
   --interactive-muted: #4f545c;
-  
+
   --blurple: #5865f2;
   --blurple-hover: #4752c4;
   --green: #3ba55c;
+  --green-hover: #2d7d46;
   --red: #ed4245;
+  --red-hover: #c03537;
   --yellow: #faa61a;
+  --yellow-hover: #d48b13;
   --pink: #eb459e;
-  
+  --pink-hover: #d83a8f;
+  --purple: #853ee6;
+  --purple-hover: #712cd1;
+  --teal: #14b8a6;
+  --cyan: #06b6d4;
+
   --font-main: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-display: "Inter", sans-serif;
-  
-  --card-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  --modal-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-  --border-radius-sm: 4px;
-  --border-radius-md: 8px;
-  --border-radius-lg: 12px;
+
+  --card-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.3);
+  --modal-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.7);
+
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 16px;
+  --border-radius-xl: 20px;
+  --border-radius-full: 9999px;
 
   /* --- GLASSMORPHISM DEFAULTS --- */
-  --glass-blur: 10px;
-  --glass-opacity: 0.1;
+  --glass-blur: 12px;
+  --glass-opacity: 0.12;
+  --glass-bg: rgba(47, 49, 54, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.08);
 }
 
 /* --- VALENTINE'S THEME --- */
 .theme-valentines {
-  --bg-tertiary: #2d0a12;
-  --bg-secondary: #4a101e;
-  --bg-primary: #6d2232;
-  --bg-modifier-hover: rgba(255, 105, 180, 0.1);
-  --bg-modifier-active: rgba(255, 105, 180, 0.2);
+  --bg-app: #18040b;
+  --bg-tertiary: #240711;
+  --bg-secondary: #380b1b;
+  --bg-primary: #4d0e25;
+  --bg-floating: #240711;
+  --bg-modal: #380b1b;
+
+  --bg-modifier-hover: rgba(255, 105, 180, 0.12);
+  --bg-modifier-active: rgba(255, 105, 180, 0.22);
+  --bg-modifier-selected: rgba(255, 105, 180, 0.3);
+
+  --border-subtle: rgba(255, 105, 180, 0.15);
+  --border-default: rgba(255, 105, 180, 0.25);
+  --border-strong: rgba(255, 105, 180, 0.4);
+  --border-focus: rgba(255, 20, 147, 0.7);
+
   --text-normal: #ffd1dc;
   --text-muted: #fab1c6;
   --text-header: #fff0f5;
   --text-link: #ff69b4;
+
   --interactive-normal: #fab1c6;
   --interactive-hover: #ffffff;
+  --interactive-active: #ffffff;
+
   --blurple: #ff69b4;
   --blurple-hover: #ff1493;
-  --green: #00ff00;
-  --red: #ff0000;
-  --yellow: #ffff00;
+  --green: #48bb78;
+  --red: #f56565;
+  --yellow: #ecc94b;
   --pink: #ff1493;
+
+  --glass-bg: rgba(74, 16, 30, 0.7);
+  --glass-border: rgba(255, 105, 180, 0.15);
+
   --font-main: "Comic Sans MS", "Chalkboard SE", "Comic Neue", cursive;
   --font-display: "Indie Flower", cursive;
 }
 
 /* --- CHRISTMAS THEME --- */
 .theme-christmas {
-  --bg-tertiary: #420d0d;
-  --bg-secondary: #5c1414;
-  --bg-primary: #240a0a;
-  --bg-modifier-hover: rgba(255, 215, 0, 0.1);
+  --bg-app: #140505;
+  --bg-tertiary: #1f0707;
+  --bg-secondary: #2e0b0b;
+  --bg-primary: #3e0e0e;
+  --bg-floating: #1f0707;
+  --bg-modal: #2e0b0b;
+
+  --bg-modifier-hover: rgba(255, 215, 0, 0.12);
+  --bg-modifier-active: rgba(255, 215, 0, 0.2);
+  --bg-modifier-selected: rgba(255, 215, 0, 0.28);
+
+  --border-subtle: rgba(255, 215, 0, 0.12);
+  --border-default: rgba(255, 215, 0, 0.22);
+  --border-strong: rgba(255, 215, 0, 0.38);
+
   --blurple: #c92a2a;
-  --green: #ffd700;
-  --text-normal: #f0f0f0;
+  --blurple-hover: #b02525;
+  --green: #2f9e44;
+  --yellow: #ffd700;
+  --text-normal: #f7e6e6;
+  --text-muted: #d9adad;
+  --text-header: #ffffff;
   --interactive-normal: #e8e8e8;
+
+  --glass-bg: rgba(62, 14, 14, 0.75);
+  --glass-border: rgba(255, 215, 0, 0.15);
 }
 
 /* --- TETRIS THEME --- */
 .theme-tetris {
-  --bg-tertiary: #0d0e15;
-  --bg-secondary: #151620;
-  --bg-primary: #1c1d29;
+  --bg-app: #06070b;
+  --bg-tertiary: #0c0e16;
+  --bg-secondary: #141724;
+  --bg-primary: #1c2033;
+  --bg-floating: #0c0e16;
+  --bg-modal: #141724;
+
+  --bg-modifier-hover: rgba(0, 229, 255, 0.12);
+  --bg-modifier-active: rgba(0, 229, 255, 0.22);
+  --bg-modifier-selected: rgba(0, 229, 255, 0.3);
+
+  --border-subtle: rgba(0, 229, 255, 0.15);
+  --border-default: rgba(0, 229, 255, 0.28);
+  --border-strong: rgba(0, 229, 255, 0.45);
+
   --blurple: #00e5ff;
+  --blurple-hover: #00b4d8;
   --green: #69f0ae;
   --red: #ff5252;
   --yellow: #ffd740;
   --pink: #e040fb;
-  --text-normal: #33ff00;
-  --interactive-normal: #33ff00;
+
+  --text-normal: #39ff14;
+  --text-muted: #00e5ff;
+  --text-header: #ffffff;
+  --interactive-normal: #39ff14;
+
+  --glass-bg: rgba(20, 23, 36, 0.85);
+  --glass-border: rgba(0, 229, 255, 0.2);
+
   --font-main: "Press Start 2P", cursive;
+  font-size: 0.82rem;
 }
 
 /* --- FOREST THEME --- */
 .theme-forest {
-  --bg-tertiary: #1a2a1a;
-  --bg-secondary: #243a24;
-  --bg-primary: #2d4a2d;
+  --bg-app: #0e170e;
+  --bg-tertiary: #142214;
+  --bg-secondary: #1d321d;
+  --bg-primary: #284428;
+  --bg-floating: #142214;
+  --bg-modal: #1d321d;
+
+  --bg-modifier-hover: rgba(142, 191, 142, 0.12);
+  --bg-modifier-active: rgba(142, 191, 142, 0.22);
+  --bg-modifier-selected: rgba(142, 191, 142, 0.3);
+
+  --border-subtle: rgba(142, 191, 142, 0.12);
+  --border-default: rgba(142, 191, 142, 0.22);
+  --border-strong: rgba(142, 191, 142, 0.38);
+
   --blurple: #5a8a5a;
+  --blurple-hover: #487348;
   --green: #8ebf8e;
-  --text-normal: #d1e0d1;
-  --interactive-normal: #94a894;
+  --yellow: #e6c229;
+  --pink: #e27d60;
+
+  --text-normal: #d8edd8;
+  --text-muted: #8ebf8e;
+  --text-header: #ffffff;
+  --interactive-normal: #8ebf8e;
+
+  --glass-bg: rgba(29, 50, 29, 0.75);
+  --glass-border: rgba(142, 191, 142, 0.15);
 }
 
 /* --- GOLD THEME --- */
 .theme-gold {
-  --bg-tertiary: #1a160d;
-  --bg-secondary: #2f2814;
-  --bg-primary: #42381c;
+  --bg-app: #120f08;
+  --bg-tertiary: #19140a;
+  --bg-secondary: #27200f;
+  --bg-primary: #342a14;
+  --bg-floating: #19140a;
+  --bg-modal: #27200f;
+
+  --bg-modifier-hover: rgba(212, 175, 55, 0.12);
+  --bg-modifier-active: rgba(212, 175, 55, 0.22);
+  --bg-modifier-selected: rgba(212, 175, 55, 0.3);
+
+  --border-subtle: rgba(212, 175, 55, 0.15);
+  --border-default: rgba(212, 175, 55, 0.28);
+  --border-strong: rgba(212, 175, 55, 0.45);
+
   --blurple: #d4af37;
-  --green: #ffd700;
-  --text-normal: #f1e5ac;
+  --blurple-hover: #b89628;
+  --green: #90be6d;
+  --red: #f94144;
+  --yellow: #ffd700;
+
+  --text-normal: #f3e9ca;
+  --text-muted: #c9b47e;
+  --text-header: #fffbf0;
   --interactive-normal: #d4af37;
+
+  --glass-bg: rgba(39, 32, 15, 0.8);
+  --glass-border: rgba(212, 175, 55, 0.2);
 }
 
 /* --- LIGHT THEME --- */
 .theme-light {
+  --bg-app: #e3e5e8;
   --bg-tertiary: #ebedef;
   --bg-secondary: #f2f3f5;
   --bg-primary: #ffffff;
+  --bg-floating: #ffffff;
+  --bg-modal: #ffffff;
+
   --bg-modifier-hover: rgba(181, 186, 193, 0.2);
   --bg-modifier-active: rgba(181, 186, 193, 0.3);
-  --bg-modifier-selected: rgba(181, 186, 193, 0.4);
-  
+  --bg-modifier-selected: rgba(88, 101, 242, 0.15);
+
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-default: rgba(0, 0, 0, 0.12);
+  --border-strong: rgba(0, 0, 0, 0.2);
+  --border-focus: rgba(88, 101, 242, 0.7);
+
   --text-normal: #2e3338;
-  --text-muted: #747f8d;
+  --text-muted: #5f6772;
   --text-header: #060607;
   --text-link: #0067e0;
-  
+
   --interactive-normal: #4f5660;
   --interactive-hover: #2e3338;
   --interactive-active: #060607;
-  --interactive-muted: #c7ccd1;
-  
-  --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  --modal-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  --interactive-muted: #99aab5;
+
+  --blurple: #5865f2;
+  --blurple-hover: #4752c4;
+  --green: #2d7d46;
+  --red: #d83a3e;
+  --yellow: #d48b13;
+  --pink: #d83a8f;
+
+  --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  --modal-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.08);
 }
 
-.theme-tetris { font-size: 0.8rem; }
+/* ==========================================================================
+   GLOBAL THEME HARMONIZATION BRIDGE FOR TAILWIND HEX UTILITIES
+   Ensures seamless theme switching across all 7 themes for all legacy modules
+   ========================================================================== */
+.bg-\[\#18191c\], [class*="bg-[#18191c]"] { background-color: var(--bg-app) !important; }
+.bg-\[\#202225\], [class*="bg-[#202225]"],
+.bg-\[\#1e1f22\], [class*="bg-[#1e1f22]"],
+.bg-\[\#0d0e15\], [class*="bg-[#0d0e15]"] { background-color: var(--bg-tertiary) !important; }
+.bg-\[\#2f3136\], [class*="bg-[#2f3136]"],
+.bg-\[\#2b2d31\], [class*="bg-[#2b2d31]"],
+.bg-\[\#232428\], [class*="bg-[#232428]"],
+.bg-\[\#35373c\], [class*="bg-[#35373c]"],
+.bg-\[\#404249\], [class*="bg-[#404249]"],
+.bg-\[\#23272a\], [class*="bg-[#23272a]"] { background-color: var(--bg-secondary) !important; }
+.bg-\[\#36393f\], [class*="bg-[#36393f]"],
+.bg-\[\#313338\], [class*="bg-[#313338]"] { background-color: var(--bg-primary) !important; }
+
+.border-\[\#202225\], [class*="border-[#202225]"] { border-color: var(--border-subtle) !important; }
+.border-\[\#2f3136\], [class*="border-[#2f3136]"],
+.border-\[\#36393f\], [class*="border-[#36393f]"] { border-color: var(--border-default) !important; }
+
+/* Universal Text Token Mapping for Non-Default Themes */
+.theme-light, .theme-valentines, .theme-christmas, .theme-tetris, .theme-forest, .theme-gold {
+  color: var(--text-normal);
+}
+
+.theme-light .text-white,
+.theme-valentines .text-white,
+.theme-christmas .text-white,
+.theme-tetris .text-white,
+.theme-forest .text-white,
+.theme-gold .text-white {
+  color: var(--text-header) !important;
+}
+
+.theme-light .text-gray-100, .theme-light .text-gray-200, .theme-light .text-gray-300, .theme-light .text-gray-400, .theme-light .text-\[\#dbdee1\],
+.theme-valentines .text-gray-100, .theme-valentines .text-gray-200, .theme-valentines .text-gray-300, .theme-valentines .text-gray-400, .theme-valentines .text-\[\#dbdee1\],
+.theme-christmas .text-gray-100, .theme-christmas .text-gray-200, .theme-christmas .text-gray-300, .theme-christmas .text-gray-400, .theme-christmas .text-\[\#dbdee1\],
+.theme-tetris .text-gray-100, .theme-tetris .text-gray-200, .theme-tetris .text-gray-300, .theme-tetris .text-gray-400, .theme-tetris .text-\[\#dbdee1\],
+.theme-forest .text-gray-100, .theme-forest .text-gray-200, .theme-forest .text-gray-300, .theme-forest .text-gray-400, .theme-forest .text-\[\#dbdee1\],
+.theme-gold .text-gray-100, .theme-gold .text-gray-200, .theme-gold .text-gray-300, .theme-gold .text-gray-400, .theme-gold .text-\[\#dbdee1\] {
+  color: var(--text-normal) !important;
+}
+
+.theme-light .text-gray-500, .theme-light .text-gray-600, .theme-light .text-\[\#8e9297\], .theme-light .text-\[\#b9bbbe\], .theme-light .text-\[\#99aab5\], .theme-light .text-\[\#949ba4\], .theme-light .text-\[\#72767d\],
+.theme-valentines .text-gray-500, .theme-valentines .text-gray-600, .theme-valentines .text-\[\#8e9297\], .theme-valentines .text-\[\#b9bbbe\], .theme-valentines .text-\[\#99aab5\], .theme-valentines .text-\[\#949ba4\], .theme-valentines .text-\[\#72767d\],
+.theme-christmas .text-gray-500, .theme-christmas .text-gray-600, .theme-christmas .text-\[\#8e9297\], .theme-christmas .text-\[\#b9bbbe\], .theme-christmas .text-\[\#99aab5\], .theme-christmas .text-\[\#949ba4\], .theme-christmas .text-\[\#72767d\],
+.theme-tetris .text-gray-500, .theme-tetris .text-gray-600, .theme-tetris .text-\[\#8e9297\], .theme-tetris .text-\[\#b9bbbe\], .theme-tetris .text-\[\#99aab5\], .theme-tetris .text-\[\#949ba4\], .theme-tetris .text-\[\#72767d\],
+.theme-forest .text-gray-500, .theme-forest .text-gray-600, .theme-forest .text-\[\#8e9297\], .theme-forest .text-\[\#b9bbbe\], .theme-forest .text-\[\#99aab5\], .theme-forest .text-\[\#949ba4\], .theme-forest .text-\[\#72767d\],
+.theme-gold .text-gray-500, .theme-gold .text-gray-600, .theme-gold .text-\[\#8e9297\], .theme-gold .text-\[\#b9bbbe\], .theme-gold .text-\[\#99aab5\], .theme-gold .text-\[\#949ba4\], .theme-gold .text-\[\#72767d\] {
+  color: var(--text-muted) !important;
+}
+
+/* Sidebar Channels & Interaction Overrides */
+.channel-link {
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+}
+.channel-link:hover {
+  background-color: var(--bg-modifier-hover) !important;
+  color: var(--text-header) !important;
+}
+.channel-link.active {
+  background-color: var(--bg-modifier-selected) !important;
+  color: var(--text-header) !important;
+  font-weight: 700;
+}
+

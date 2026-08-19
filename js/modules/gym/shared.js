@@ -1,7 +1,7 @@
 import { supabase } from '../../core/supabase.js';
 import { state, ensureGymData } from '../../core/state.js';
 import { triggerHaptic } from '../../core/utils.js';
-import { playChime } from '../../core/sound.js';
+import { playChime, playBeep } from '../../core/sound.js';
 import { showNotification } from '../../core/theme.js';
 
 // --- ACTIVE WORKOUT STATE ---
@@ -25,23 +25,253 @@ export function setRestTimeRemaining(val) { restTimeRemaining = val; }
 export function setRestTimeDuration(val) { restTimeDuration = val; }
 export function setIsRestTimerRunning(val) { isRestTimerRunning = val; }
 
+// --- USER / PARTNER IDENTITY HELPERS ---
+// Use these everywhere instead of hardcoded name comparisons
+
+export function getMyName() {
+    return state.currentUser?.name || 'Já';
+}
+
+export function getPartnerName() {
+    const me = state.currentUser?.name;
+    if (me === 'Jožka') return 'Klárka';
+    if (me === 'Klárka') return 'Jožka';
+    return 'Partner';
+}
+
+export function getMyEmoji() {
+    return state.currentUser?.name === 'Klárka' ? '👸' : '🦝';
+}
+
+export function getPartnerEmoji() {
+    return state.currentUser?.name === 'Klárka' ? '🦝' : '👸';
+}
+
 // --- DEFAULT DATABASE SEED DATA ---
 export const defaultExercises = [
-    { id: "bench_press", name: "Bench Press", category: "Hrudník", is_default: true },
-    { id: "dumbbell_flys", name: "Rozpažování s Jednoručkami", category: "Hrudník", is_default: true },
-    { id: "shoulder_press", name: "Tlaky na ramena s JČ", category: "Ramena", is_default: true },
-    { id: "lateral_raises", name: "Upažování (Lateral Raise)", category: "Ramena", is_default: true },
-    { id: "squat", name: "Dřep s Velkou Činkou", category: "Nohy", is_default: true },
-    { id: "leg_press", name: "Leg Press", category: "Nohy", is_default: true },
-    { id: "leg_extensions", name: "Předkopávání v sedě", category: "Nohy", is_default: true },
-    { id: "deadlift", name: "Mrtvý Tah", category: "Záda", is_default: true },
-    { id: "pull_ups", name: "Shyby na Hrazdě", category: "Záda", is_default: true },
-    { id: "lat_pulldown", name: "Stahování Horní Kladky", category: "Záda", is_default: true },
-    { id: "barbell_rows", name: "Přítahy VČ v předklonu", category: "Záda", is_default: true },
-    { id: "bicep_curls", name: "Bicepsový zdvih s JČ", category: "Ruce", is_default: true },
-    { id: "tricep_pushdowns", name: "Stahování kladky na triceps", category: "Ruce", is_default: true },
-    { id: "plank", name: "Plank (Výdrž)", category: "Břicho", is_default: true },
-    { id: "leg_raises", name: "Přednožování ve visu", category: "Břicho", is_default: true }
+    {
+        id: "bench_press",
+        name: "Bench Press",
+        category: "Hrudník",
+        secondary_muscles: ["Triceps", "Přední ramena"],
+        instructions: "Lehněte si na lavici, lopatky stáhněte k sobě a dolů. Osu spusťte pod kontrolou ke spodní části hrudníku a s výdechem vytlačte nahoru.",
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0025-EIeI8Vf.gif",
+        is_default: true
+    },
+    {
+        id: "dumbbell_flys",
+        name: "Rozpažování s Jednoručkami",
+        category: "Hrudník",
+        secondary_muscles: ["Přední ramena"],
+        instructions: "S mírně pokrčenými lokty spouštějte jednoručky do stran, dokud neucítíte protažení prsních svalů, poté plynule stáhněte zpět k sobě.",
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0308-3w39sPq.gif",
+        is_default: true
+    },
+    {
+        id: "shoulder_press",
+        name: "Tlaky na ramena s JČ",
+        category: "Ramena",
+        secondary_muscles: ["Triceps", "Horní hrudník"],
+        instructions: "Sedněte si s oporou zad. Činky držte ve výšce uší a s výdechem je vytlačte nad hlavu bez propínání loktů.",
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0405-b0Q3lT9.gif",
+        is_default: true
+    },
+    {
+        id: "lateral_raises",
+        name: "Upažování (Lateral Raise)",
+        category: "Ramena",
+        secondary_muscles: ["Trapézy"],
+        instructions: "Mírný předklon v bocích, lokty lehce pokrčené. Zvedejte paže do stran do výšky ramen, malíčky mírně nahoru.",
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0334-DsgkuIt.gif",
+        is_default: true
+    },
+    {
+        id: "squat",
+        name: "Dřep s Velkou Činkou",
+        category: "Nohy",
+        secondary_muscles: ["Hýždě", "Hamstringy", "Spodní záda"],
+        instructions: "Nohy na šířku ramen, špičky mírně ven. Držte rovná záda a klesejte hýžděmi dolů alespoň do úrovně kolen (paralela).",
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0043-qXTaZnJ.gif",
+        is_default: true
+    },
+    {
+        id: "leg_press",
+        name: "Leg Press",
+        category: "Nohy",
+        secondary_muscles: ["Hýždě", "Kvadricepsy"],
+        instructions: "Chodidla umístěte na střed desky. Spouštějte závaží do úhlu 90 stupňů v kolenou a plynule vytlačte přes paty bez zvedání pánve.",
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0740-4K42N6m.gif",
+        is_default: true
+    },
+    {
+        id: "leg_extensions",
+        name: "Předkopávání v sedě",
+        category: "Nohy",
+        secondary_muscles: ["Kvadricepsy"],
+        instructions: "Zadní část kolen opřená o hranu sedáku. S výdechem propněte nohy v kolenou a v horní fázi na 1 sekundu zatněte kvadricepsy.",
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0585-6p98r5D.gif",
+        is_default: true
+    },
+    {
+        id: "deadlift",
+        name: "Mrtvý Tah",
+        category: "Záda",
+        secondary_muscles: ["Hýždě", "Hamstringy", "Trapézy", "Střed těla"],
+        instructions: "Osa nad středem chodidel. Chytněte osu, zatáhněte ramena dozadu, zpevněte břicho a zvedejte činku s rovnými zády pomocí tahu nohou a boků.",
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0032-ila4NZS.gif",
+        is_default: true
+    },
+    {
+        id: "pull_ups",
+        name: "Shyby na Hrazdě",
+        category: "Záda",
+        secondary_muscles: ["Biceps", "Předloktí"],
+        instructions: "Úchop na šířku ramen nebo širší nadhmatem. Z plného visutého protažení táhněte hrudník k hrazdě, lokty směřují k pasu.",
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0652-lBDjFxJ.gif",
+        is_default: true
+    },
+    {
+        id: "lat_pulldown",
+        name: "Stahování Horní Kladky",
+        category: "Záda",
+        secondary_muscles: ["Biceps", "Zadní ramena"],
+        instructions: "Mírný záklon, hrudník vypnutý. Tyč stahujte k horní části hrudníku a v dolní pozici zatněte zádové svaly (křídla).",
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0198-1Y9t9vH.gif",
+        is_default: true
+    },
+    {
+        id: "barbell_rows",
+        name: "Přítahy VČ v předklonu",
+        category: "Záda",
+        secondary_muscles: ["Biceps", "Trapézy", "Zadní ramena"],
+        instructions: "Předklon v trupu cca 45 stupňů s rovnými zády. Přitahujte osu k pupku, lokty držte blízko těla.",
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0027-5g3t9Pz.gif",
+        is_default: true
+    },
+    {
+        id: "bicep_curls",
+        name: "Bicepsový zdvih s JČ",
+        category: "Ruce",
+        secondary_muscles: ["Předloktí"],
+        instructions: "Lokty zafixované u těla. S výdechem zvedejte činky k ramenům se supinací (vytáčením dlaní nahoru) a v horní fázi zatněte biceps.",
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0294-NbVPDMW.gif",
+        is_default: true
+    },
+    {
+        id: "tricep_pushdowns",
+        name: "Stahování kladky na triceps",
+        category: "Ruce",
+        secondary_muscles: ["Triceps"],
+        instructions: "Stůjte vzpřímeně, lokty u těla. Tlačte lano/tyč dolů do úplného propnutí paží a na vteřinu zatněte triceps.",
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0241-1vP8p8Y.gif",
+        is_default: true
+    },
+    {
+        id: "plank",
+        name: "Plank (Výdrž)",
+        category: "Břicho",
+        secondary_muscles: ["Ramena", "Hýždě", "Střed těla"],
+        instructions: "Opřete se o předloktí a špičky nohou. Tělo tvoří přímku od hlavy k patám, zpevněte břicho i hýždě a nezvedejte zadek.",
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0644-3g10p7Y.gif",
+        is_default: true
+    },
+    {
+        id: "leg_raises",
+        name: "Přednožování ve visu",
+        category: "Břicho",
+        secondary_muscles: ["Ohybače kyčlí"],
+        instructions: "Zavěste se na hrazdu. Bez švihu a kontrolovaně zvedejte nohy nebo pokrčená kolena k hrudníku se stahováním spodního břicha.",
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0472-8m9p7Y1.gif",
+        is_default: true
+    }
+];
+
+// --- POPULAR EXERCISE PRESET TEMPLATES (1-click quick add) ---
+export const POPULAR_EXERCISE_PRESETS = [
+    {
+        name: "Tlaky na šikmé lavici s JČ",
+        category: "Hrudník",
+        secondary_muscles: ["Přední ramena", "Triceps"],
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0314-rXN2Y8D.gif",
+        instructions: "Lavici nastavte na úhel 30–45 stupňů. Činky vytlačujte nahoru nad horní část prsou s plynulým nádechem při spouštění."
+    },
+    {
+        name: "Tlaky na šikmé lavici s VČ",
+        category: "Hrudník",
+        secondary_muscles: ["Přední ramena", "Triceps"],
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0047-jK5nU5o.gif",
+        instructions: "Spouštějte osu ke klíčním kostem / horní části hrudníku a vytlačte nahoru bez propnutí loktů."
+    },
+    {
+        name: "Kliky na bradlech (Dips)",
+        category: "Hrudník",
+        secondary_muscles: ["Triceps", "Přední ramena"],
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0251-lP98vKm.gif",
+        instructions: "Pro zacílení prsou se mírně předkloňte a lokty držte mírně od těla. Klesejte do úhlu 90 stupňů v loktech."
+    },
+    {
+        name: "Face Pulls na kladce",
+        category: "Ramena",
+        secondary_muscles: ["Zadní ramena", "Trapézy", "Rotátorová manžeta"],
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0168-3e4b7vA.gif",
+        instructions: "Lano táhněte k očím/čelu s roztažením loktů a vnější rotací ramen pro posílení zadních ramen a zdraví ramen."
+    },
+    {
+        name: "Upažování na spodní kladce",
+        category: "Ramena",
+        secondary_muscles: ["Trapézy"],
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0190-bO8nK4m.gif",
+        instructions: "Táhněte lanko křížem do strany do výšky ramen. Kladka udržuje konstantní napětí po celé dráze pohybu."
+    },
+    {
+        name: "Zakopávání v leže (Leg Curl)",
+        category: "Nohy",
+        secondary_muscles: ["Lýtka"],
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0599-49Vw7iE.gif",
+        instructions: "Pevně držte madla a tlačte pánev do podložky. Plynule přitahujte válec k hýždím a zatněte hamstringy."
+    },
+    {
+        name: "Výpony na lýtka ve stoje",
+        category: "Nohy",
+        secondary_muscles: ["Lýtka"],
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0147-3gYp8mK.gif",
+        instructions: "Z plného protažení paty zvedejte tělo na špičky a nahoře na vteřinu podržte maximální kontrakci."
+    },
+    {
+        name: "Přítahy spodní kladky v sedě",
+        category: "Záda",
+        secondary_muscles: ["Biceps", "Zadní ramena"],
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0239-0p19G9w.gif",
+        instructions: "Rovná záda, hrudník dopředu. Táhněte adaptér k pupku a stáhněte lopatky k sobě."
+    },
+    {
+        name: "Kladivové zdvihy (Hammer Curl)",
+        category: "Ruce",
+        secondary_muscles: ["Hluboký sval pažní", "Předloktí"],
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0313-vB92p1Y.gif",
+        instructions: "Dlaně směřují k sobě po celou dobu pohybu. Skvělý cvik na šířku paže a sílu úchopu."
+    },
+    {
+        name: "Bicepsový zdvih s EZ osou",
+        category: "Ruce",
+        secondary_muscles: ["Předloktí"],
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0447-b89vK2a.gif",
+        instructions: "EZ osa šetří zápěstí. Lokty držte pevně u těla a zvedejte osu plynulým tahem bicepsů."
+    },
+    {
+        name: "Francouzský tlak s EZ činkou",
+        category: "Ruce",
+        secondary_muscles: ["Triceps"],
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0443-4m87P8w.gif",
+        instructions: "Lehněte si na lavici, lokty směřují ke stropu. Spouštějte činku k čelu a silou tricepsů vytlačte zpět."
+    },
+    {
+        name: "Zkracovačky na podložce (Crunches)",
+        category: "Břicho",
+        secondary_muscles: ["Přímý sval břišní"],
+        image_url: "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/videos/0274-1mP7vK2.gif",
+        instructions: "Nezvedejte celá záda ze země, pouze stahujte žebra k pánvi se silným výdechem a zatnutím břicha."
+    }
 ];
 
 export const defaultTemplates = [
@@ -156,6 +386,20 @@ export function tickRestTimer(renderGymFn) {
         if (countdownEl) {
             countdownEl.textContent = `${String(restMinutes).padStart(2, '0')}:${String(restSeconds).padStart(2, '0')}`;
         }
+
+        const fsCountdownEl = document.getElementById('fs-rest-countdown');
+        if (fsCountdownEl) {
+            fsCountdownEl.textContent = `${String(restMinutes).padStart(2, '0')}:${String(restSeconds).padStart(2, '0')}`;
+        }
+        
+        // 3... 2... 1... countdown audio beeps and haptics
+        if (restTimeRemaining === 3 || restTimeRemaining === 2) {
+            playBeep(659.25, 0.07);
+            triggerHaptic('light');
+        } else if (restTimeRemaining === 1) {
+            playBeep(880.00, 0.1);
+            triggerHaptic('medium');
+        }
         
         const ringEl = document.getElementById('rest-svg-ring');
         if (ringEl && restTimeDuration > 0) {
@@ -177,11 +421,25 @@ export function tickRestTimer(renderGymFn) {
                 }
             }
         }
+
+        const fsRingEl = document.getElementById('fs-rest-svg-ring');
+        if (fsRingEl && restTimeDuration > 0) {
+            const fsOffset = 565.48 * (1 - restTimeRemaining / restTimeDuration);
+            fsRingEl.setAttribute('stroke-dashoffset', fsOffset);
+            if (restTimeRemaining <= 10) {
+                fsRingEl.setAttribute('stroke', '#faa61a');
+            } else {
+                fsRingEl.setAttribute('stroke', '#3ba55c');
+            }
+        }
     } else {
         // Timer finished!
         clearInterval(restTimerInterval);
         restTimerInterval = null;
         isRestTimerRunning = false;
+
+        // Dismiss fullscreen rest overlay if open
+        document.getElementById('fullscreen-rest-overlay')?.remove();
         
         // Acoustic feedback!
         playChime();
@@ -320,14 +578,24 @@ export function getTypeBadgeHTML(exIdx, setIdx, s) {
     return `
         <button onclick="window.Gym.cycleSetType(${exIdx}, ${setIdx})" 
                 ${s.completed ? 'disabled' : ''} 
-                class="px-2 py-0.5 rounded-lg text-[9px] font-black tracking-wider uppercase transition-all duration-150 flex items-center justify-center select-none ${bgClass}" 
+                class="set-type-badge px-2 py-0.5 rounded-lg text-[9px] font-black tracking-wider uppercase transition-all duration-150 flex items-center justify-center select-none ${bgClass}" 
                 title="${title}">
             ${label}
         </button>
     `;
 }
 
-// --- REALTIME SUBSCRIPTION ---
+// --- REALTIME SUBSCRIPTION (DEBOUNCED) ---
+
+let realtimeRenderTimer = null;
+function debouncedRenderGym(renderGymFn, delay = 250) {
+    if (realtimeRenderTimer) clearTimeout(realtimeRenderTimer);
+    realtimeRenderTimer = setTimeout(() => {
+        if (state.currentChannel === 'gym-tracker' && !activeWorkout && typeof renderGymFn === 'function') {
+            renderGymFn();
+        }
+    }, delay);
+}
 
 export function setupRealtime(renderGymFn) {
     if (subscription) return;
@@ -341,9 +609,7 @@ export function setupRealtime(renderGymFn) {
                 const { data } = await supabase.from('gym_logs').select('*').order('logged_at', { ascending: false });
                 if (data) {
                     state.gymLogs = data;
-                    if (state.currentChannel === 'gym-tracker' && !activeWorkout) {
-                        renderGymFn();
-                    }
+                    debouncedRenderGym(renderGymFn);
                 }
             }
         )
@@ -354,9 +620,7 @@ export function setupRealtime(renderGymFn) {
                 const { data } = await supabase.from('gym_prs').select('*');
                 if (data) {
                     state.gymPRs = data;
-                    if (state.currentChannel === 'gym-tracker' && !activeWorkout) {
-                        renderGymFn();
-                    }
+                    debouncedRenderGym(renderGymFn);
                 }
             }
         )
@@ -367,9 +631,7 @@ export function setupRealtime(renderGymFn) {
                 const { data } = await supabase.from('gym_exercises').select('*').order('name');
                 if (data) {
                     state.gymExercises = data;
-                    if (state.currentChannel === 'gym-tracker' && !activeWorkout) {
-                        renderGymFn();
-                    }
+                    debouncedRenderGym(renderGymFn);
                 }
             }
         )
@@ -380,18 +642,67 @@ export function setupRealtime(renderGymFn) {
                 const { data } = await supabase.from('gym_templates').select('*').order('created_at', { ascending: false });
                 if (data) {
                     state.gymTemplates = data;
-                    if (state.currentChannel === 'gym-tracker' && !activeWorkout) {
-                        renderGymFn();
-                    }
+                    debouncedRenderGym(renderGymFn);
                 }
             }
         )
         .subscribe();
 }
 
+
 export function cleanupRealtime() {
     if (subscription) {
         supabase.removeChannel(subscription);
         subscription = null;
+    }
+}
+
+let isSyncingMedia = false;
+
+/**
+ * Automatically backfills and synchronizes default GymVisual GIFs and instructions
+ * to state and Supabase for all default exercises that are missing image_url.
+ */
+export async function syncDefaultExercisesMedia(renderGymFn) {
+    if (isSyncingMedia || !state.gymExercises || state.gymExercises.length === 0) return;
+
+    const missingMedia = defaultExercises.filter(defEx => {
+        const current = state.gymExercises.find(ge => ge.id === defEx.id);
+        return current && !current.image_url;
+    });
+
+    if (missingMedia.length === 0) return;
+
+    isSyncingMedia = true;
+    let didUpdateLocal = false;
+
+    for (const defEx of missingMedia) {
+        const current = state.gymExercises.find(ge => ge.id === defEx.id);
+        if (current) {
+            current.image_url = defEx.image_url;
+            if (!current.instructions) current.instructions = defEx.instructions;
+            if (!current.secondary_muscles || current.secondary_muscles.length === 0) {
+                current.secondary_muscles = defEx.secondary_muscles;
+            }
+            didUpdateLocal = true;
+        }
+    }
+
+    if (didUpdateLocal && renderGymFn && state.currentChannel === 'gym-tracker' && !activeWorkout) {
+        renderGymFn();
+    }
+
+    try {
+        for (const defEx of missingMedia) {
+            await supabase.from('gym_exercises').update({
+                image_url: defEx.image_url,
+                instructions: defEx.instructions,
+                secondary_muscles: defEx.secondary_muscles
+            }).eq('id', defEx.id);
+        }
+    } catch (e) {
+        console.warn("[Gym] Default exercises media sync error:", e);
+    } finally {
+        isSyncingMedia = false;
     }
 }

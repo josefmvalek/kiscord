@@ -83,8 +83,15 @@ export function exposeGlobals() {
 
     // Modals & form
     window.closeModal = (id) => {
-        const modal = document.getElementById(id);
-        if (modal) modal.style.display = 'none';
+        const modal = typeof id === 'string' ? document.getElementById(id) : id;
+        if (!modal) return;
+        modal.classList.add('opacity-0');
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        // If it was dynamically appended with remove-on-close pattern
+        if (modal.dataset && modal.dataset.dynamicModal === 'true') {
+            setTimeout(() => modal.remove(), 250);
+        }
         if (id === 'gallery-modal' && window.Timeline && window.Timeline.closeGallery) window.Timeline.closeGallery();
     };
 

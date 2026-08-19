@@ -21,39 +21,52 @@ import {
     deletePlannedDate,
     addCustomPlan,
     cyclePlanStatus,
-    toggleChecklistItem
+    toggleChecklistItem,
+    openGymLog,
+    openGymSchedule,
+    deleteGymLog,
+    deleteGymPlan,
+    openEditGymLog
 } from './calendar/modals.js';
 
 // --- SESSION STATE (Internal to calendar controller) ---
 let currentCalYear = new Date().getFullYear();
 let currentCalMonth = new Date().getMonth();
 
+function attachWindowCalendar() {
+    window.Calendar = { 
+        renderCalendar, setCalendarFilter, setupCalendarSync,
+        addSchoolEvent, deleteSchoolEvent, toggleHealthEdit, saveHealthRecord,
+        showDayDetail, closeDayModal, deletePlannedDate, addCustomPlan,
+        cyclePlanStatus, toggleChecklistItem, openGymLog, openGymSchedule,
+        deleteGymLog, deleteGymPlan, openEditGymLog
+    };
+}
+
+if (typeof window !== 'undefined') {
+    attachWindowCalendar();
+}
+
 /**
  * Main entry point for rendering the calendar.
  * Orchestrates grid generation and event setup.
  */
 export function renderCalendar(year = null, month = null) {
-    // Expose API to window
-    window.Calendar = { 
-        renderCalendar, setCalendarFilter, setupCalendarSync,
-        addSchoolEvent, deleteSchoolEvent, toggleHealthEdit, saveHealthRecord,
-        showDayDetail, closeDayModal, deletePlannedDate, addCustomPlan,
-        cyclePlanStatus, toggleChecklistItem
-    };
-
+    attachWindowCalendar();
     ensureModals();
     setupCalendarSync();
     
-    // Trigger lazy loading of shifts and diary data just in case they aren't loaded yet
+    // Trigger lazy loading of shifts, diary and gym data just in case they aren't loaded yet
     Promise.all([
         import('../core/state.js').then(s => s.ensureShiftsData()),
-        import('../core/state.js').then(s => s.ensureDiaryData())
+        import('../core/state.js').then(s => s.ensureDiaryData()),
+        import('../core/state.js').then(s => s.ensureGymData())
     ]).then(() => {
         if (state.currentChannel === 'calendar') {
             const grid = document.getElementById('calendar-grid');
             if (grid) grid.innerHTML = generateCalendarGrid(currentCalYear, currentCalMonth);
         }
-    }).catch(err => console.error('[Calendar] Error lazy loading shifts or diary:', err));
+    }).catch(err => console.error('[Calendar] Error lazy loading shifts, diary or gym:', err));
     
     const container = document.getElementById("messages-container");
     if (!container) return;
@@ -187,6 +200,17 @@ export function setupCalendarSync() {
         if (state.currentChannel === 'calendar') {
             const grid = document.getElementById('calendar-grid');
             if (grid) grid.innerHTML = generateCalendarGrid(currentCalYear, currentCalMonth);
+        }
+    });
+
+    window.addEventListener('gym-logs-updated', (e) => {
+        if (state.currentChannel === 'calendar') {
+            const grid = document.getElementById('calendar-grid');
+            if (grid) grid.innerHTML = generateCalendarGrid(currentCalYear, currentCalMonth);
+            const targetDateKey = e?.detail?.dateKey || getCurrentModalDateKey();
+            if (targetDateKey) {
+                showDayDetail(targetDateKey);
+            }
         }
     });
 

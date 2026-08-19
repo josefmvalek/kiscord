@@ -57,53 +57,53 @@ export async function renderSchedule() {
     const freeSlotsSummary = calculateWeeklyFreeOverlapsSummary();
 
     container.innerHTML = `
-        <div class="h-full bg-[#18191c] flex flex-col font-sans animate-fade-in relative overflow-hidden select-none">
+        <div class="h-full bg-[var(--bg-app)] flex flex-col font-sans animate-fade-in relative overflow-hidden select-none">
             <!-- Header bar -->
-            <div class="bg-[#202225] shadow-md z-10 flex-shrink-0 border-b border-gray-800/80 p-4 lg:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="bg-[var(--bg-secondary)] shadow-md z-10 flex-shrink-0 border-b border-[var(--border-subtle)] p-4 lg:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#5865F2]/25 to-blue-600/10 flex items-center justify-center text-xl text-[#5865F2] border border-[#5865F2]/30 shadow-inner">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[var(--blurple)]/25 to-blue-600/10 flex items-center justify-center text-xl text-[var(--blurple)] border border-[var(--border-default)] shadow-inner">
                         🎓
                     </div>
                     <div>
-                        <h1 class="text-base font-black text-white uppercase tracking-tight flex items-center gap-2">
+                        <h1 class="text-base font-black text-[var(--text-header)] uppercase tracking-tight flex items-center gap-2">
                             <span>VUT FIT Rozvrh 2.0</span>
-                            <span class="bg-[#5865F2]/20 text-[#5865F2] text-[8px] font-black px-2 py-0.5 rounded-full border border-[#5865F2]/30">Brno • Božetěchova</span>
+                            <span class="bg-[var(--blurple)]/20 text-[var(--blurple)] text-[8px] font-black px-2 py-0.5 rounded-full border border-[var(--blurple)]/30">Brno • Božetěchova</span>
                         </h1>
-                        <p class="text-[10px] text-gray-400 font-medium">Interaktivní rozvrh, společná volná okénka & učebny</p>
+                        <p class="text-[10px] text-[var(--text-muted)] font-medium">Interaktivní rozvrh, společná volná okénka & učebny</p>
                     </div>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
                     <!-- Přepínač Grid / Agenda -->
-                    <div class="flex bg-black/40 border border-gray-800 rounded-xl p-1 text-xs font-bold">
+                    <div class="flex bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-xl p-1 text-xs font-bold">
                         <button onclick="window.setScheduleViewMode('grid')" 
-                                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${activeViewMode === 'grid' ? 'bg-[#5865F2] text-white shadow-md' : 'text-gray-400 hover:text-white'}">
+                                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${activeViewMode === 'grid' ? 'bg-[var(--blurple)] text-white shadow-md' : 'text-[var(--text-muted)] hover:text-[var(--text-header)]'}">
                             <i class="fas fa-th text-[10px]"></i> <span class="text-[10px] uppercase font-black">Mřížka</span>
                         </button>
                         <button onclick="window.setScheduleViewMode('agenda')" 
-                                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${activeViewMode === 'agenda' ? 'bg-[#5865F2] text-white shadow-md' : 'text-gray-400 hover:text-white'}">
+                                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${activeViewMode === 'agenda' ? 'bg-[var(--blurple)] text-white shadow-md' : 'text-[var(--text-muted)] hover:text-[var(--text-header)]'}">
                             <i class="fas fa-list text-[10px]"></i> <span class="text-[10px] uppercase font-black">Agenda</span>
                         </button>
                     </div>
 
                     <!-- Filtr Uživatelů -->
-                    <div class="flex bg-black/40 border border-gray-800 rounded-xl p-1 text-xs font-bold">
+                    <div class="flex bg-[var(--bg-tertiary)] border border-[var(--border-default)] rounded-xl p-1 text-xs font-bold">
                         <button onclick="window.setScheduleUserFilter('all')" 
-                                class="px-2.5 py-1.5 rounded-lg transition-all text-[10px] uppercase font-black ${activeUserFilter === 'all' ? 'bg-white/15 text-white shadow-sm' : 'text-gray-400 hover:text-white'}">
+                                class="px-2.5 py-1.5 rounded-lg transition-all text-[10px] uppercase font-black ${activeUserFilter === 'all' ? 'bg-white/15 text-[var(--text-header)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-header)]'}">
                             Oba 🤝
                         </button>
                         <button onclick="window.setScheduleUserFilter('jose')" 
-                                class="px-2.5 py-1.5 rounded-lg transition-all text-[10px] uppercase font-black ${activeUserFilter === 'jose' ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-400 hover:text-white'}">
+                                class="px-2.5 py-1.5 rounded-lg transition-all text-[10px] uppercase font-black ${activeUserFilter === 'jose' ? 'bg-[var(--blurple)] text-white shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-header)]'}">
                             Jožka 🔵
                         </button>
                         <button onclick="window.setScheduleUserFilter('klarka')" 
-                                class="px-2.5 py-1.5 rounded-lg transition-all text-[10px] uppercase font-black ${activeUserFilter === 'klarka' ? 'bg-pink-600 text-white shadow-sm' : 'text-gray-400 hover:text-white'}">
+                                class="px-2.5 py-1.5 rounded-lg transition-all text-[10px] uppercase font-black ${activeUserFilter === 'klarka' ? 'bg-[var(--pink)] text-white shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-header)]'}">
                             Klárka 🔴
                         </button>
                     </div>
 
                     <button onclick="window.openAddSubjectModal()" 
-                            class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-black text-[10px] uppercase tracking-wider transition flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 active:scale-95">
+                            class="kiscord-btn kiscord-btn-success kiscord-btn-sm text-[10px] uppercase font-black tracking-wider">
                         <i class="fas fa-plus text-xs"></i> <span>Přidat hodinu</span>
                     </button>
                 </div>

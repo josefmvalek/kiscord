@@ -1,4 +1,6 @@
-class PuzzleGame {
+import { showNotification } from '../core/theme.js';
+
+export class PuzzleGame {
     constructor(containerId, imageSrc, difficulty = 3) {
         this.container = document.getElementById(containerId);
         // Clean up previous canvas if any (though container usually cleared by render)
@@ -293,11 +295,7 @@ class PuzzleGame {
         const randomFact = funFacts[Math.floor(Math.random() * funFacts.length)];
 
         setTimeout(() => {
-            if (typeof showNotification === 'function') {
-                showNotification(`🏆 ODMĚNA: ${randomFact}`, "success", 8000);
-            } else {
-                alert(`🏆 ODMĚNA:\n${randomFact}`);
-            }
+            showNotification(`🏆 ODMĚNA: ${randomFact}`, "success");
         }, 500);
     }
 
@@ -399,3 +397,9 @@ class PuzzleGame {
         if (el) el.innerText = this.moves;
     }
 }
+
+if (typeof window !== 'undefined') {
+    window.PuzzleGame = PuzzleGame;
+}
+
+export default PuzzleGame;

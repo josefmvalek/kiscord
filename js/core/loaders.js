@@ -510,16 +510,18 @@ export async function ensureDiaryData(force = false) {
 export async function ensureGymData(force = false) {
     if (state._loaded.gym && !force && !isStale('gym')) return;
     try {
-        const [exercises, templates, logs, prs] = await Promise.all([
+        const [exercises, templates, logs, prs, measurements] = await Promise.all([
             supabase.from('gym_exercises').select('*').order('name'),
             supabase.from('gym_templates').select('*').order('created_at', { ascending: false }),
             supabase.from('gym_logs').select('*').order('logged_at', { ascending: false }),
-            supabase.from('gym_prs').select('*')
+            supabase.from('gym_prs').select('*'),
+            supabase.from('gym_body_measurements').select('*').order('date_key', { ascending: false })
         ]);
         if (exercises.data) state.gymExercises = exercises.data;
         if (templates.data) state.gymTemplates = templates.data;
         if (logs.data) state.gymLogs = logs.data;
         if (prs.data) state.gymPRs = prs.data;
+        if (measurements.data) state.gymBodyMeasurements = measurements.data;
         markLoaded('gym');
         stateEvents.emit('gym');
     } catch (e) {

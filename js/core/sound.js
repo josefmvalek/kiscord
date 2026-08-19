@@ -157,6 +157,37 @@ export function playArcade() {
     }
 }
 
+/**
+ * Plays a short crisp countdown beep
+ * @param {number} freq - Frequency in Hz (e.g. 880 for standard, 1760 for final)
+ * @param {number} duration - Duration in seconds
+ */
+export function playBeep(freq = 880, duration = 0.08) {
+    if (!isSoundEnabled()) return;
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+
+        gainNode.gain.setValueAtTime(0.001, now);
+        gainNode.gain.linearRampToValueAtTime(0.15, now + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+        osc.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + duration + 0.02);
+    } catch (e) {
+        console.warn("[Sound] Failed to play beep:", e);
+    }
+}
+
 // Global window event listener to resume AudioContext upon first interaction
 if (typeof window !== 'undefined') {
     const resumeContext = () => {

@@ -3,18 +3,21 @@ import { triggerHaptic } from './utils.js';
 
 export function changeTheme(theme) {
     const root = document.documentElement;
+    const body = document.body;
 
     // List of all managed theme classes
     const themeClasses = ['theme-christmas', 'theme-tetris', 'theme-valentines', 'theme-forest', 'theme-gold', 'theme-light'];
     
-    // Remove all existing theme classes
+    // Remove all existing theme classes from both html and body
     root.classList.remove(...themeClasses);
+    if (body) body.classList.remove(...themeClasses);
 
     console.log(`[Theme] Switching to: ${theme}`);
 
     // Add the new theme class if it's not default
     if (theme !== 'default' && themeClasses.includes(`theme-${theme}`)) {
         root.classList.add(`theme-${theme}`);
+        if (body) body.classList.add(`theme-${theme}`);
     }
 
     localStorage.setItem('klarka_theme', theme);
@@ -28,7 +31,7 @@ export function initTheme() {
 export function toggleTheme() {
     triggerHaptic('medium');
     const current = localStorage.getItem('klarka_theme') || 'default';
-    const themes = ['default', 'light', 'christmas', 'tetris', 'valentines'];
+    const themes = ['default', 'light', 'valentines', 'christmas', 'tetris', 'forest', 'gold'];
     const nextIndex = (themes.indexOf(current) + 1) % themes.length;
     const newTheme = themes[nextIndex];
     changeTheme(newTheme);
@@ -69,20 +72,23 @@ export function showNotification(message, type = 'info') {
 
     // Create notification element
     const notif = document.createElement('div');
-    notif.className = `p-4 rounded-lg shadow-lg text-white transform transition-all duration-300 translate-x-10 opacity-0 pointer-events-auto flex items-center gap-3 min-w-[300px] border-l-4 ${type === 'success' ? 'bg-[#202225] border-green-500' :
-            type === 'error' ? 'bg-[#202225] border-red-500' :
-                'bg-[#202225] border-blue-500'
-        }`;
+    const borderAccent = type === 'success' ? 'var(--green)' :
+                         type === 'error' ? 'var(--red)' :
+                         type === 'warning' ? 'var(--yellow)' : 'var(--blurple)';
+
+    notif.className = `p-4 rounded-xl shadow-2xl text-[var(--text-header)] bg-[var(--bg-secondary)] border border-[var(--border-default)] transform transition-all duration-300 translate-x-10 opacity-0 pointer-events-auto flex items-center gap-3 min-w-[280px] max-w-sm backdrop-blur-md`;
+    notif.style.borderLeft = `4px solid ${borderAccent}`;
 
     // Icon
-    const icon = type === 'success' ? 'fa-check-circle text-green-500' :
-        type === 'error' ? 'fa-exclamation-circle text-red-500' :
-            'fa-info-circle text-blue-500';
+    const iconClass = type === 'success' ? 'fa-check-circle text-[var(--green)]' :
+                      type === 'error' ? 'fa-exclamation-circle text-[var(--red)]' :
+                      type === 'warning' ? 'fa-triangle-exclamation text-[var(--yellow)]' :
+                      'fa-info-circle text-[var(--blurple)]';
 
     notif.innerHTML = `
-        <i class="fas ${icon} text-xl"></i>
-        <div class="flex-1">
-            <p class="font-bold text-sm">${message}</p>
+        <i class="fas ${iconClass} text-xl flex-shrink-0"></i>
+        <div class="flex-1 min-w-0">
+            <p class="font-bold text-xs leading-snug break-words">${message}</p>
         </div>
     `;
 
@@ -97,7 +103,7 @@ export function showNotification(message, type = 'info') {
     setTimeout(() => {
         notif.classList.add('translate-x-10', 'opacity-0');
         setTimeout(() => notif.remove(), 300);
-    }, 3000);
+    }, 3200);
 
     triggerHaptic('light');
 }
@@ -109,7 +115,7 @@ window.showNotification = showNotification;
  * showConfirmDialog – replaces native browser confirm().
  * Returns a Promise<boolean>.
  */
-export function showConfirmDialog(message, confirmLabel = 'Ano', cancelLabel = 'Zrušit') {
+export function showConfirmDialog(message, confirmLabel = 'Ano', cancelLabel = 'Zrušit', isDanger = true) {
     return new Promise((resolve) => {
         // Remove any existing confirm dialog
         const existing = document.getElementById('app-confirm-dialog');
@@ -119,22 +125,38 @@ export function showConfirmDialog(message, confirmLabel = 'Ano', cancelLabel = '
 
         const overlay = document.createElement('div');
         overlay.id = 'app-confirm-dialog';
-        overlay.className = 'fixed inset-0 z-[99999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in';
+        overlay.className = 'fixed inset-0 z-[99999] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in';
         overlay.innerHTML = `
-            <div class="bg-[#36393f] rounded-2xl shadow-2xl border border-[#202225] max-w-sm w-full p-6 animate-scale-in">
-                <p class="text-white font-bold text-lg text-center mb-6 leading-snug">${message}</p>
-                <div class="flex gap-3">
-                    <button id="confirm-cancel" class="flex-1 py-3 rounded-xl border border-[#40444b] text-gray-400 hover:text-white hover:bg-[#40444b] font-bold transition">${cancelLabel}</button>
-                    <button id="confirm-ok" class="flex-1 py-3 rounded-xl bg-[#ed4245] hover:bg-[#c03537] text-white font-black transition transform hover:scale-105 active:scale-95">${confirmLabel}</button>
+            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl border border-[var(--border-default)] max-w-sm w-full p-6 animate-scale-in flex flex-col items-center text-center">
+                <div class="w-12 h-12 rounded-2xl ${isDanger ? 'bg-[var(--red)]/15 text-[var(--red)] border border-[var(--red)]/30' : 'bg-[var(--blurple)]/15 text-[var(--blurple)] border border-[var(--blurple)]/30'} flex items-center justify-center text-2xl mb-4 shadow-inner">
+                    <i class="fas ${isDanger ? 'fa-trash-alt' : 'fa-question'}"></i>
+                </div>
+                <p class="text-[var(--text-header)] font-bold text-base mb-6 leading-snug">${message}</p>
+                <div class="flex gap-3 w-full">
+                    <button id="confirm-cancel" class="kiscord-btn kiscord-btn-secondary flex-1">${cancelLabel}</button>
+                    <button id="confirm-ok" class="kiscord-btn ${isDanger ? 'kiscord-btn-danger' : 'kiscord-btn-primary'} flex-1">${confirmLabel}</button>
                 </div>
             </div>
         `;
 
         document.body.appendChild(overlay);
 
-        overlay.querySelector('#confirm-ok').onclick = () => { overlay.remove(); resolve(true); };
-        overlay.querySelector('#confirm-cancel').onclick = () => { overlay.remove(); resolve(false); };
-        overlay.onclick = (e) => { if (e.target === overlay) { overlay.remove(); resolve(false); } };
+        const closeWith = (val) => {
+            document.removeEventListener('keydown', handleKey);
+            overlay.classList.add('opacity-0');
+            setTimeout(() => overlay.remove(), 200);
+            resolve(val);
+        };
+
+        const handleKey = (e) => {
+            if (e.key === 'Escape') closeWith(false);
+            if (e.key === 'Enter') closeWith(true);
+        };
+        document.addEventListener('keydown', handleKey);
+
+        overlay.querySelector('#confirm-ok').onclick = () => closeWith(true);
+        overlay.querySelector('#confirm-cancel').onclick = () => closeWith(false);
+        overlay.onclick = (e) => { if (e.target === overlay) closeWith(false); };
     });
 }
 window.showConfirmDialog = showConfirmDialog;
@@ -153,15 +175,14 @@ export function showPromptDialog(message, defaultValue = '', okLabel = 'OK', can
 
         const overlay = document.createElement('div');
         overlay.id = 'app-prompt-dialog';
-        overlay.className = 'fixed inset-0 z-[99999] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in';
+        overlay.className = 'fixed inset-0 z-[99999] bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in';
         overlay.innerHTML = `
-            <div class="bg-[#36393f] rounded-2xl shadow-2xl border border-[#202225] max-w-sm w-full p-6 animate-scale-in">
-                <p class="text-white font-bold text-lg text-center mb-4 leading-snug">${message}</p>
-                <input type="text" id="prompt-input" value="${defaultValue}" 
-                    class="w-full bg-[#202225] text-white p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2]/50 transition-all mb-6 text-sm">
+            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl border border-[var(--border-default)] max-w-sm w-full p-6 animate-scale-in">
+                <p class="text-[var(--text-header)] font-bold text-base text-center mb-4 leading-snug">${message}</p>
+                <input type="text" id="prompt-input" value="${defaultValue}" class="kiscord-input mb-6 text-sm">
                 <div class="flex gap-3">
-                    <button id="prompt-cancel" class="flex-1 py-3 rounded-xl border border-[#40444b] text-gray-400 hover:text-white hover:bg-[#40444b] font-bold transition">${cancelLabel}</button>
-                    <button id="prompt-ok" class="flex-1 py-3 rounded-xl bg-[#5865F2] hover:bg-[#4752c4] text-white font-black transition transform hover:scale-105 active:scale-95">${okLabel}</button>
+                    <button id="prompt-cancel" class="kiscord-btn kiscord-btn-secondary flex-1">${cancelLabel}</button>
+                    <button id="prompt-ok" class="kiscord-btn kiscord-btn-primary flex-1">${okLabel}</button>
                 </div>
             </div>
         `;
@@ -172,15 +193,21 @@ export function showPromptDialog(message, defaultValue = '', okLabel = 'OK', can
         input.focus();
         input.select();
 
-        const finish = (val) => { overlay.remove(); resolve(val); };
+        const finish = (val) => {
+            document.removeEventListener('keydown', handleKey);
+            overlay.remove();
+            resolve(val);
+        };
+
+        const handleKey = (e) => {
+            if (e.key === 'Escape') finish(null);
+            if (e.key === 'Enter') finish(input.value);
+        };
+        document.addEventListener('keydown', handleKey);
 
         overlay.querySelector('#prompt-ok').onclick = () => finish(input.value);
         overlay.querySelector('#prompt-cancel').onclick = () => finish(null);
         overlay.onclick = (e) => { if (e.target === overlay) finish(null); };
-        input.onkeydown = (e) => {
-            if (e.key === 'Enter') finish(input.value);
-            if (e.key === 'Escape') finish(null);
-        };
     });
 }
 window.showPromptDialog = showPromptDialog;

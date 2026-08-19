@@ -23,6 +23,7 @@ export function getMoodColor(val) {
 export function generateFilterButtons() {
     const views = [
         { id: "all", label: "", icon: "fa-calendar-alt", color: "bg-[#5865F2]" },
+        { id: "gym", label: "Posilovna", icon: "fa-dumbbell", color: "bg-[#faa61a]" },
         { id: "sleep", label: "Spánek", icon: "fa-bed", color: "bg-[#9b59b6]" },
         { id: "water", label: "Voda", icon: "fa-tint", color: "bg-[#00e5ff]" },
         { id: "health", label: "Zdraví", icon: "fa-heart", color: "bg-[#ed4245]" },
@@ -71,6 +72,12 @@ export function generateCalendarGrid(year, month) {
         diaryMap.get(e.date_key).push(e);
     });
 
+    const gymMap = new Map();
+    (state.gymLogs || []).forEach(l => {
+        if (!gymMap.has(l.date_key)) gymMap.set(l.date_key, []);
+        gymMap.get(l.date_key).push(l);
+    });
+
     const libraryMap = new Map();
     if (state.library) {
         (state.library.movies || []).forEach(m => libraryMap.set(m.id, m));
@@ -93,6 +100,7 @@ export function generateCalendarGrid(year, month) {
         const movieHistory = (state.movieHistory || {})[dateKey];
         const timelineEvent = timelineEventMap.get(dateKey);
         const dayDiaryEntries = diaryMap.get(dateKey) || [];
+        const dayGymLogs = gymMap.get(dateKey) || [];
 
         const isToday = dateKey === getTodayKey();
         const isAnniversary = d === anniversaryDay;
@@ -160,6 +168,12 @@ export function generateCalendarGrid(year, month) {
 
             let iconsHtml = "";
 
+            if (dayGymLogs.length > 0) {
+                const totalLogs = dayGymLogs.length;
+                const tooltip = dayGymLogs.map(l => `${l.name} (${Math.round((l.duration_seconds || 0)/60)}m)`).join(', ');
+                iconsHtml += `<span class="text-[10px]" title="Posilovna: ${tooltip}">🏋️‍♂️${totalLogs > 1 ? `<span class="text-[8px] font-black text-amber-400">${totalLogs}</span>` : ''}</span>`;
+            }
+
             if (schoolEvent) {
                 cellContent += `<div class="absolute top-0 right-0 w-2 h-2 bg-[#faa61a] rounded-bl-lg"></div>`;
                 iconsHtml += `<span class="text-[10px]">📚</span>`;
@@ -189,7 +203,7 @@ export function generateCalendarGrid(year, month) {
             if (plannedDate) {
                 bgStyle = "bg-[#5865F2]/20";
                 borderStyle = "border-[#5865F2]/50";
-                const iconsMap = { food: "🍔", view: "🔭", walk: "🌲", fun: "⚡", movie: "🎬", game: "🎮", discord: "🎧", date: "📍" };
+                const iconsMap = { food: "🍔", view: "🔭", walk: "🌲", fun: "⚡", movie: "🎬", game: "🎮", discord: "🎧", date: "📍", gym: "🏋️‍♂️" };
                 const icon = iconsMap[plannedDate.cat] || "📍";
                 cellContent += `
              <div class="w-full h-full flex flex-col items-center justify-center pt-2">
@@ -205,6 +219,43 @@ export function generateCalendarGrid(year, month) {
                 cellContent += `<div class="absolute bottom-1 right-1 flex gap-0.5">${iconsHtml}</div>`;
             } else {
                 cellContent += `<div class="flex items-center justify-center gap-0.5 w-full pb-0.5 mt-auto">${iconsHtml}</div>`;
+            }
+        } else if (state.calendarFilter === "gym") {
+            if (dayGymLogs.length > 0) {
+                bgStyle = "bg-[#faa61a]/15";
+                borderStyle = isToday 
+                    ? "border-[#faa61a] border-2 shadow-[0_0_12px_rgba(250,166,26,0.35)] z-10" 
+                    : "border-[#faa61a]/50 shadow-[inset_0_0_10px_rgba(250,166,26,0.12)]";
+                textStyle = "text-[#faa61a] font-extrabold md:text-sm";
+
+                const firstLog = dayGymLogs[0];
+                const totalMin = Math.round(dayGymLogs.reduce((acc, l) => acc + (l.duration_seconds || 0), 0) / 60);
+                const totalSets = dayGymLogs.reduce((acc, l) => {
+                    return acc + (l.exercises || []).reduce((sAcc, ex) => sAcc + ((ex.sets || []).filter(s => s.completed).length || 0), 0);
+                }, 0);
+                const isBoth = dayGymLogs.some(l => l.user_id === state.currentUser?.id) && dayGymLogs.some(l => l.user_id !== state.currentUser?.id);
+
+                cellContent += `
+                    <div class="w-full h-full flex flex-col items-center justify-center pt-2 text-center">
+                        <div class="text-base drop-shadow-sm transform group-hover:scale-110 transition">🏋️‍♂️</div>
+                        <div class="text-[7px] text-amber-300 font-bold leading-tight truncate w-full px-0.5 mt-0.5">${firstLog.name}</div>
+                        <div class="text-[6.5px] text-gray-300 font-mono leading-none mt-0.5">${totalMin > 0 ? `${totalMin}m` : ''}${totalMin > 0 && totalSets > 0 ? ' • ' : ''}${totalSets > 0 ? `${totalSets}s` : ''}</div>
+                        ${isBoth ? `<div class="absolute top-1 right-1 text-[7px] font-black text-amber-300 bg-amber-500/30 border border-amber-500/40 px-1 rounded-sm">2x👥</div>` : ''}
+                    </div>
+                `;
+            } else if (plannedDate && (plannedDate.cat === 'gym' || (plannedDate.name || '').toLowerCase().includes('posilov') || (plannedDate.name || '').toLowerCase().includes('trénink') || (plannedDate.name || '').toLowerCase().includes('fitko'))) {
+                bgStyle = "bg-[#faa61a]/5";
+                borderStyle = "border-[#faa61a]/40 border-dashed";
+                textStyle = "text-amber-400/70 font-semibold";
+                cellContent += `
+                    <div class="w-full h-full flex flex-col items-center justify-center pt-2 text-center">
+                        <div class="text-base drop-shadow-sm">📅</div>
+                        <div class="text-[7px] text-amber-400 font-semibold leading-tight truncate w-full px-0.5 mt-0.5">${plannedDate.name}</div>
+                        <div class="text-[6.5px] text-gray-400 font-mono">Plán</div>
+                    </div>
+                `;
+            } else {
+                cellContent += `<div class="w-full h-full flex items-center justify-center text-gray-600 text-[10px] font-medium">-</div>`;
             }
         } else if (state.calendarFilter === "sleep") {
             if (dayData.sleep) {
@@ -275,9 +326,10 @@ export function generateCalendarGrid(year, month) {
             }
             // Sdružení spodních ikon (pohyb, léky, suplementy) pro lepší vycentrování
             let bottomIcons = [];
-            if (dayData.movement && dayData.movement.length > 0) {
+            if (dayGymLogs.length > 0 || (dayData.movement && dayData.movement.length > 0)) {
                 const moveIconMap = { gym: "💪", walk: "🌲", run: "🏃‍♀️", yoga: "🧘‍♀️", sex: "🔥", clean: "🧹" };
-                bottomIcons.push(moveIconMap[dayData.movement[0]] || "👟");
+                const moveKey = (dayData.movement && dayData.movement[0]) || (dayGymLogs.length > 0 ? 'gym' : null);
+                if (moveKey) bottomIcons.push(moveIconMap[moveKey] || "👟");
             }
             if (dayData.pills) bottomIcons.push('💊');
             if (dayData.supplements && Object.values(dayData.supplements).some(v => v)) bottomIcons.push('🌿');

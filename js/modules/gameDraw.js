@@ -1,7 +1,7 @@
 import { state } from '../core/state.js';
 import { supabase } from '../core/supabase.js';
 import { safeInsert, safeUpsert } from '../core/offline.js';
-import { showNotification } from '../core/theme.js';
+import { showNotification, showConfirmDialog } from '../core/theme.js';
 import { triggerHaptic } from '../core/utils.js';
 
 let canvas, ctx;
@@ -774,14 +774,15 @@ export function showPromptManagementModal() {
 }
 
 export async function deletePrompt(id) {
-    if (!confirm('Opravdu smazat toto téma?')) return;
+    const confirmed = await showConfirmDialog('Opravdu smazat toto téma pro kreslení?');
+    if (!confirmed) return;
 
     try {
         const { error } = await supabase.from('game_prompts').delete().eq('id', id);
         if (error) throw error;
 
         state.gamePrompts = state.gamePrompts.filter(p => p.id !== id);
-        if (window.showNotification) window.showNotification("Téma smazáno.", "info");
+        showNotification("Téma smazáno.", "info");
         
         // Refresh management modal if open
         const modal = document.querySelector('.z-\\[110\\]');

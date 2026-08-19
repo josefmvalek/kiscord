@@ -2,7 +2,7 @@ import { supabase } from '../core/supabase.js';
 import { state } from '../core/state.js';
 import { safeUpsert, safeInsert } from '../core/offline.js';
 import { triggerHaptic, getTodayKey, triggerConfetti } from '../core/utils.js';
-import { showNotification } from '../core/theme.js';
+import { showNotification, showConfirmDialog } from '../core/theme.js';
 import { uploadFile } from '../core/storage.js';
 import { playChime } from '../core/sound.js';
 import { loadLeaflet } from '../core/loader.js'; // Fallback or imported
@@ -979,15 +979,15 @@ export function showAddLocationModal() {
 }
 
 export async function saveNewLocation() {
-    const name = document.getElementById('nl-name').value.trim();
-    const desc = document.getElementById('nl-desc').value.trim();
-    const icon = document.getElementById('nl-icon').value.trim() || '📍';
-    const lat = parseFloat(document.getElementById('nl-lat').value);
-    const lng = parseFloat(document.getElementById('nl-lng').value);
+    const name = document.getElementById('nl-name')?.value.trim();
+    const desc = document.getElementById('nl-desc')?.value.trim();
+    const icon = document.getElementById('nl-icon')?.value.trim() || '📍';
+    const lat = parseFloat(document.getElementById('nl-lat')?.value);
+    const lng = parseFloat(document.getElementById('nl-lng')?.value);
     const cat = selectedLocCat;
     
     if (!name || isNaN(lat) || isNaN(lng) || !cat) {
-        alert("Vyplň název, kategorii a souřadnice!");
+        showNotification("Vyplň název, kategorii a souřadnice!", "warning");
         return;
     }
     
@@ -1032,8 +1032,8 @@ export async function saveNewLocation() {
         });
         
         // Notification
-        if (window.showNotification) window.showNotification(`Místo "${name}" bylo přidáno do mapy! 🎈`, "success");
-        if (typeof window.triggerConfetti === 'function') window.triggerConfetti();
+        showNotification(`Místo "${name}" bylo přidáno do mapy! 🎈`, "success");
+        triggerConfetti();
         
         // Close modal
         document.getElementById('location-add-modal')?.remove();
@@ -1043,7 +1043,7 @@ export async function saveNewLocation() {
         
     } catch (err) {
         console.error("Save Location Error:", err);
-        alert("Chyba při ukládání: " + err.message);
+        showNotification("Chyba při ukládání: " + err.message, "error");
     }
 }
 
@@ -1265,15 +1265,15 @@ export function editLocation(id) {
 }
 
 export async function saveEditedLocation(id) {
-    const name = document.getElementById('el-name').value.trim();
-    const desc = document.getElementById('el-desc').value.trim();
-    const icon = document.getElementById('el-icon').value.trim() || '📍';
-    const lat = parseFloat(document.getElementById('el-lat').value);
-    const lng = parseFloat(document.getElementById('el-lng').value);
+    const name = document.getElementById('el-name')?.value.trim();
+    const desc = document.getElementById('el-desc')?.value.trim();
+    const icon = document.getElementById('el-icon')?.value.trim() || '📍';
+    const lat = parseFloat(document.getElementById('el-lat')?.value);
+    const lng = parseFloat(document.getElementById('el-lng')?.value);
     const cat = selectedLocCat;
     
     if (!name || isNaN(lat) || isNaN(lng) || !cat) {
-        alert("Vyplň název, kategorii a souřadnice!");
+        showNotification("Vyplň název, kategorii a souřadnice!", "warning");
         return;
     }
     
@@ -1314,7 +1314,7 @@ export async function saveEditedLocation(id) {
             }
         }
         
-        if (window.showNotification) window.showNotification("Místo bylo úspěšně upraveno! ✏️", "success");
+        showNotification("Místo bylo úspěšně upraveno! ✏️", "success");
         
         // Close modal
         document.getElementById('location-edit-modal')?.remove();
@@ -1325,18 +1325,13 @@ export async function saveEditedLocation(id) {
         
     } catch (err) {
         console.error("Save Edited Location Error:", err);
-        alert("Chyba při ukládání: " + err.message);
+        showNotification("Chyba při ukládání: " + err.message, "error");
     }
 }
 
 export async function deleteLocation(id) {
-    if (typeof window.showConfirmDialog === 'function') {
-        const ok = await window.showConfirmDialog('Opravdu chceš toto místo smazat z mapy? 🥺', 'Smazat', 'Zrušit');
-        if (!ok) return;
-    } else {
-        const ok = confirm('Opravdu chceš toto místo smazat z mapy?');
-        if (!ok) return;
-    }
+    const ok = await showConfirmDialog('Opravdu chceš toto místo smazat z mapy? 🥺', 'Smazat', 'Zrušit');
+    if (!ok) return;
     
     try {
         // Delete from Supabase
@@ -1346,7 +1341,7 @@ export async function deleteLocation(id) {
         // Remove from local state
         state.dateLocations = state.dateLocations.filter(l => String(l.id) !== String(id));
         
-        if (window.showNotification) window.showNotification("Místo bylo smazáno z mapy. 🗑️", "info");
+        showNotification("Místo bylo smazáno z mapy. 🗑️", "info");
         
         // Close detail panel
         closeLocationDetail();

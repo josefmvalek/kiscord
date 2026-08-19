@@ -49,15 +49,15 @@ export function generateMoodSlider(currentMood) {
         <!-- Live náhled fotky Czippela & popisek nálady -->
         <div class="flex items-center justify-between pb-1">
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-2xl bg-[#1e1f22] border-2 border-[#faa61a]/60 shadow-md overflow-hidden relative group flex-shrink-0">
+                <div class="w-12 h-12 rounded-2xl bg-[var(--bg-tertiary)] border-2 border-[#faa61a]/60 shadow-md overflow-hidden relative group flex-shrink-0">
                     <img src="${bubbleImage}" id="mood-preview-avatar" alt="Mood" class="w-full h-full object-cover transition-transform duration-200" onerror="this.src='${getAssetUrl('app_kytka')}'">
                 </div>
                 <div>
-                    <span class="text-[9px] font-black text-[#949ba4] uppercase tracking-widest block">Moje nálada dnes</span>
-                    <span class="text-xs sm:text-sm font-black text-white" id="mood-descriptor-text">${descriptor}</span>
+                    <span class="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest block">Moje nálada dnes</span>
+                    <span class="text-xs sm:text-sm font-black text-[var(--text-header)]" id="mood-descriptor-text">${descriptor}</span>
                 </div>
             </div>
-            <div class="px-2.5 py-1 bg-[#1e1f22] rounded-xl border border-[#36393f] text-center">
+            <div class="px-2.5 py-1 bg-[var(--bg-tertiary)] rounded-xl border border-[var(--border-subtle)] text-center">
                 <span class="text-xs font-black text-[#faa61a]" id="mood-badge-value">${value} / 10</span>
             </div>
         </div>
@@ -72,14 +72,14 @@ export function generateMoodSlider(currentMood) {
             
             <!-- Vyskakovací bublina s velkou fotkou -->
             <div class="mood-bubble-wrapper" id="mood-bubble">
-                <div class="mood-bubble bg-[#2b2d31] border-2 border-[#faa61a] shadow-2xl">
+                <div class="mood-bubble bg-[var(--bg-secondary)] border-2 border-[#faa61a] shadow-2xl">
                     <img src="${bubbleImage}" id="mood-bubble-img" alt="Mood" onerror="this.src='${getAssetUrl('app_kytka')}'">
                 </div>
-                <div class="mood-rating-value text-white font-black" id="mood-bubble-value">${value}/10</div>
+                <div class="mood-rating-value text-[var(--text-header)] font-black" id="mood-bubble-value">${value}/10</div>
             </div>
 
             <!-- Identický slider track jako u spánku -->
-            <div class="relative w-full h-5 rounded-full bg-[#1e1f22] p-1 border border-[#36393f] flex items-center">
+            <div class="relative w-full h-5 rounded-full bg-[var(--bg-tertiary)] p-1 border border-[var(--border-subtle)] flex items-center">
                  <input type="range" min="1" max="10" step="1" value="${value}" 
                     oninput="window.updateMoodVisuals(this.value, true)" 
                     onchange="window.loadModule('health').then(m => m.updateHealth('mood', parseInt(this.value)))"
@@ -104,7 +104,7 @@ export function generateMoodSlider(currentMood) {
             <div class="flex justify-between w-full px-1 pt-2 select-none">
                 ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n =>
                     `<button type="button" 
-                           class="text-[11px] font-black cursor-pointer transition-all p-1 ${n === value ? 'text-white scale-125 font-black drop-shadow' : 'text-[#72767d] hover:text-[#dcddde]'}" 
+                           class="text-[11px] font-black cursor-pointer transition-all p-1 ${n === value ? 'text-[var(--text-header)] scale-125 font-black drop-shadow' : 'text-[var(--text-muted)] hover:text-[var(--text-normal)]'}" 
                            id="mood-num-${n}" 
                            onclick="window.updateMoodVisuals(${n}); document.getElementById('mood-range-input').value=${n}; window.loadModule('health').then(m => m.updateHealth('mood', ${n}))">
                         ${n}
@@ -204,7 +204,7 @@ export function generateWaterIcons(count) {
         const isFull = i <= count;
         const colorClass = isFull 
             ? "text-[#00aff4] bg-[#00aff4]/15 border border-[#00aff4]/50 shadow-sm" 
-            : "text-[#72767d] bg-[#202225] border border-[#36393f] hover:text-[#00aff4] hover:bg-[#35373c]";
+            : "text-[var(--text-muted)] bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] hover:text-[#00aff4] hover:bg-[var(--bg-modifier-hover)]";
 
         html += `
             <button type="button"
@@ -239,7 +239,7 @@ export function generateMovementChips(movement = []) {
         const isActive = movement.includes(act.id);
         const activeClass = isActive
             ? `${act.bg} ${act.color} ${act.border} font-black shadow-sm`
-            : "bg-[#202225] text-[#b9bbbe] border-[#36393f] hover:bg-[#35373c] hover:text-white";
+            : "bg-[var(--bg-tertiary)] text-[var(--text-muted)] border-[var(--border-subtle)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-header)]";
 
         return `
           <button type="button"
@@ -266,7 +266,7 @@ export function generateSupplementsChips(supplements = { iron: false, zinc: fals
     if (!supplements) supplements = { iron: false, zinc: false, magnesium: false };
     
     const activities = [
-        { id: 'magnesium', icon: '🌙', label: 'Hořčík', activeClass: 'text-[#5865F2] bg-[#5865F2]/15 border-[#5865F2]/50 shadow-sm' },
+        { id: 'magnesium', icon: '🌙', label: 'Hořčík', activeClass: 'text-[var(--blurple)] bg-[var(--blurple)]/15 border-[var(--blurple)]/50 shadow-sm' },
         { id: 'zinc', icon: '✨', label: 'Zinek', activeClass: 'text-[#faa61a] bg-[#faa61a]/15 border-[#faa61a]/50 shadow-sm' },
         { id: 'iron', icon: '🩸', label: 'Železo', activeClass: 'text-[#ed4245] bg-[#ed4245]/15 border-[#ed4245]/50 shadow-sm' }
     ];
@@ -275,7 +275,7 @@ export function generateSupplementsChips(supplements = { iron: false, zinc: fals
         const isActive = supplements[act.id];
         const currentClass = isActive
             ? act.activeClass
-            : "bg-[#202225] text-[#b9bbbe] border-[#36393f] hover:bg-[#35373c] hover:text-white";
+            : "bg-[var(--bg-tertiary)] text-[var(--text-muted)] border-[var(--border-subtle)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-header)]";
 
         return `
           <button type="button"
@@ -301,9 +301,9 @@ export function updatePillsVisuals() {
 export function generatePillsChip(isTaken = false, streak = 0) {
     const activeClass = isTaken
         ? "bg-[#3ba55c]/15 text-[#3ba55c] border-[#3ba55c]/50 font-black shadow-sm"
-        : "bg-[#202225] text-[#b9bbbe] border-[#36393f] hover:bg-[#35373c] hover:text-white";
+        : "bg-[var(--bg-tertiary)] text-[var(--text-muted)] border-[var(--border-subtle)] hover:bg-[var(--bg-modifier-hover)] hover:text-[var(--text-header)]";
 
-    const streakColor = isTaken ? 'text-amber-400' : 'text-[#72767d]';
+    const streakColor = isTaken ? 'text-amber-400' : 'text-[var(--text-muted)]';
     const streakHtml = `
         <div class="flex items-center justify-center gap-1.5 mt-2 ${streakColor} text-[10px] font-black uppercase tracking-wider">
             <span>Streak:</span>
@@ -331,11 +331,15 @@ export function generatePillsChip(isTaken = false, streak = 0) {
 
 export function getSleepInfo(hours) {
     const num = parseFloat(hours) || 0;
-    if (num <= 0) return { class: "text-[#72767d]", hex: "#72767d", label: "Nezadáno 😴", pill: "bg-[#1e1f22] text-[#949ba4]" };
+    if (num <= 0) return { class: "text-[var(--text-muted)]", hex: "#72767d", label: "Nezadáno 😴", pill: "bg-[var(--bg-tertiary)] text-[var(--text-muted)]" };
     if (num < 5) return { class: "text-[#ed4245]", hex: "#ed4245", label: "Zombie 🧟‍♀️ (Málo spánku)", pill: "bg-[#ed4245]/15 text-[#ed4245] border border-[#ed4245]/30" };
     if (num < 7) return { class: "text-[#faa61a]", hex: "#faa61a", label: "Ujde to 😐 (Chce to kafe ☕)", pill: "bg-[#faa61a]/15 text-[#faa61a] border border-[#faa61a]/30" };
     if (num < 9) return { class: "text-[#3ba55c]", hex: "#3ba55c", label: "Ideál ✨ (Krásně vyspaná)", pill: "bg-[#3ba55c]/15 text-[#3ba55c] border border-[#3ba55c]/30" };
     return { class: "text-[#eb459e]", hex: "#eb459e", label: "Růženka 👸 (Královský relax)", pill: "bg-[#eb459e]/15 text-[#eb459e] border border-[#eb459e]/30" };
+}
+
+export function getSleepColor(hours) {
+    return getSleepInfo(hours);
 }
 
 export function generateSleepSlider(data) {
@@ -353,7 +357,7 @@ export function generateSleepSlider(data) {
             <div class="flex justify-between items-center">
                 <div class="flex items-baseline gap-1.5" id="sleep-value-wrapper">
                     <span class="font-black text-3xl ${sleepInfo.class} font-mono leading-none" id="sleep-value-text">${sleepValue}</span>
-                    <span class="text-xs font-bold text-[#949ba4] uppercase">hodin</span>
+                    <span class="text-xs font-bold text-[var(--text-muted)] uppercase">hodin</span>
                 </div>
                 <div id="sleep-quality-badge" class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${sleepInfo.pill}">
                     ${sleepInfo.label}
@@ -361,7 +365,7 @@ export function generateSleepSlider(data) {
             </div>
 
             <!-- Interaktivní slider s plynulým barevným přechodem -->
-            <div class="relative w-full h-5 rounded-full bg-[#1e1f22] p-1 border border-[#36393f] ${disabledClass} flex items-center">
+            <div class="relative w-full h-5 rounded-full bg-[var(--bg-tertiary)] p-1 border border-[var(--border-subtle)] ${disabledClass} flex items-center">
                  <input type="range" min="0" max="10" step="0.5" value="${sleepValue}" 
                     oninput="window.updateSleep(this.value)" 
                     onchange="window.loadModule('health').then(m => m.updateHealth('sleep', parseFloat(this.value)))"
@@ -386,14 +390,14 @@ export function generateSleepSlider(data) {
                     ${[5, 6, 7, 8, 9].map(h => `
                         <button type="button" 
                                 onclick="window.updateSleep(${h}); window.loadModule('health').then(m => m.updateHealth('sleep', ${h}))"
-                                class="flex-1 py-1 text-[11px] font-black rounded-lg transition-all ${Math.round(sleepValue) === h ? 'bg-[#5865F2] text-white shadow-sm' : 'bg-[#1e1f22] hover:bg-[#35373c] text-[#949ba4] hover:text-white border border-[#36393f]'}">
+                                class="flex-1 py-1 text-[11px] font-black rounded-lg transition-all ${Math.round(sleepValue) === h ? 'bg-[var(--blurple)] text-white shadow-sm' : 'bg-[var(--bg-tertiary)] hover:bg-[var(--bg-modifier-hover)] text-[var(--text-muted)] hover:text-[var(--text-header)] border border-[var(--border-subtle)]'}">
                             ${h}h
                         </button>
                     `).join('')}
                 </div>
 
                 <!-- Usínání a noční režim -->
-                <div id="sleep-controls-container" class="flex gap-1.5 items-center bg-[#1e1f22] px-2.5 py-1 rounded-xl border border-[#36393f]">
+                <div id="sleep-controls-container" class="flex gap-1.5 items-center bg-[var(--bg-tertiary)] px-2.5 py-1 rounded-xl border border-[var(--border-subtle)]">
                     ${generateSleepControls(data)}
                 </div>
             </div>
@@ -417,9 +421,9 @@ export function generateSleepControls(data) {
         `;
     } else {
         return `
-            <span class="text-[10px] text-[#949ba4] font-bold uppercase">Usínání:</span>
-            <input type="time" value="${data.bedtime || ""}" onchange="window.loadModule('health').then(m => m.updateBedtime(this.value))" class="bg-transparent text-white text-xs p-0.5 rounded focus:bg-[#35373c] outline-none h-6 w-14 text-center font-mono font-bold">
-            <button onclick="window.loadModule('health').then(m => m.startSleep())" class="bg-[#35373c] hover:bg-[#5865F2] text-gray-300 hover:text-white w-6 h-6 rounded-lg border border-[#36393f] transition flex items-center justify-center shadow-sm active:scale-95" title="Zahájit spánek">
+            <span class="text-[10px] text-[var(--text-muted)] font-bold uppercase">Usínání:</span>
+            <input type="time" value="${data.bedtime || ""}" onchange="window.loadModule('health').then(m => m.updateBedtime(this.value))" class="bg-transparent text-[var(--text-header)] text-xs p-0.5 rounded focus:bg-[var(--bg-modifier-hover)] outline-none h-6 w-14 text-center font-mono font-bold">
+            <button onclick="window.loadModule('health').then(m => m.startSleep())" class="bg-[var(--bg-tertiary)] hover:bg-[var(--blurple)] text-[var(--text-muted)] hover:text-white w-6 h-6 rounded-lg border border-[var(--border-subtle)] transition flex items-center justify-center shadow-sm active:scale-95" title="Zahájit spánek">
                  <i class="fas fa-moon text-[10px]"></i>
             </button>
         `;

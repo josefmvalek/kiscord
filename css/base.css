@@ -16,18 +16,6 @@
 .far, .fa-regular { font-family: "Font Awesome 6 Free", sans-serif !important; font-weight: 400 !important; }
 .fab, .fa-brands { font-family: "Font Awesome 6 Brands", sans-serif !important; font-weight: 400 !important; }
 
-/* Valentine theme color overrides for Tailwind classes */
-body.theme-valentines .text-white { color: var(--text-header) !important; }
-body.theme-valentines .text-gray-300,
-body.theme-valentines .text-gray-400 { color: var(--text-normal) !important; }
-body.theme-valentines .text-gray-500 { color: var(--text-muted) !important; }
-body.theme-valentines .bg-\[\#36393f\] { background-color: var(--bg-primary) !important; }
-body.theme-valentines .bg-\[\#2f3136\] { background-color: var(--bg-secondary) !important; }
-body.theme-valentines .bg-\[\#202225\] { background-color: var(--bg-tertiary) !important; }
-body.theme-valentines .bg-\[\#5865F2\] { background-color: var(--blurple) !important; }
-body.theme-valentines .hover\:bg-\[\#4752c4\]:hover { background-color: var(--blurple-hover) !important; }
-body.theme-valentines .border-\[\#202225\] { border-color: var(--bg-tertiary) !important; }
-
 /* Global Focus Styles */
 :focus { outline: none; }
 :focus-visible {

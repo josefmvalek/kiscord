@@ -1,7 +1,7 @@
 import { supabase } from '../core/supabase.js';
 import { state, ensureLoveShopData } from '../core/state.js';
 import { triggerHaptic, triggerConfetti, getTodayKey } from '../core/utils.js';
-import { showNotification } from '../core/theme.js';
+import { showNotification, showConfirmDialog } from '../core/theme.js';
 import { renderModal, renderInputGroup } from '../core/ui.js';
 
 let habitsData = [];
@@ -369,7 +369,8 @@ export async function toggleHabitToday(habitId) {
 }
 
 export async function deleteHabitItem(id) {
-    if (!confirm('Opravdu smazat tento návyk?')) return;
+    const confirmed = await showConfirmDialog('Opravdu chceš smazat tento návyk?');
+    if (!confirmed) return;
 
     triggerHaptic('medium');
 

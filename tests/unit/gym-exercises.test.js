@@ -44,6 +44,7 @@ vi.mock('../../js/core/state.js', () => ({
 
 vi.mock('../../js/core/theme.js', () => ({
   showNotification: vi.fn(),
+  showConfirmDialog: vi.fn(() => Promise.resolve(true)),
 }));
 
 vi.mock('../../js/core/ui.js', () => ({
@@ -63,6 +64,7 @@ vi.mock('../../js/core/ui.js', () => ({
 }));
 
 import { state } from '../../js/core/state.js';
+import { showConfirmDialog } from '../../js/core/theme.js';
 import { filterTabExercises, openEditExerciseModal, deleteExercise, startWorkout, onSetInputChange, updateGlobalWorkoutBadge } from '../../js/modules/gym.js';
 
 describe('Gym Exercises Management', () => {
@@ -70,7 +72,6 @@ describe('Gym Exercises Management', () => {
     vi.clearAllMocks();
     
     // Set up mock window.confirm and window.switchChannel
-    global.confirm = vi.fn(() => true);
     window.switchChannel = vi.fn();
 
     // Setup a mock DOM for testing Cviky Tab
@@ -93,34 +94,37 @@ describe('Gym Exercises Management', () => {
   });
 
   describe('filterTabExercises', () => {
-    it('should filter items by name and hide empty categories', () => {
-      filterTabExercises('dřep');
+    it('should show only matching exercises and categories based on search query', () => {
+      filterTabExercises('biceps');
 
-      const benchItem = document.querySelector('[data-name="bench press"]');
-      const squatItem = document.querySelector('[data-name="dřep s činkou"]');
-      const curlItem = document.querySelector('[data-name="záhadný biceps"]');
+      const items = document.querySelectorAll('.exercise-tab-item');
+      expect(items[0].style.display).toBe('none'); // Bench press
+      expect(items[1].style.display).toBe('none'); // Dřep
+      expect(items[2].style.display).toBe('flex'); // Biceps
 
-      const chestSection = document.querySelector('[data-cat="hrudník"]');
-      const legsSection = document.querySelector('[data-cat="nohy"]');
-      const armsSection = document.querySelector('[data-cat="ruce"]');
+      const sections = document.querySelectorAll('.exercise-cat-section');
+      expect(sections[0].style.display).toBe('none'); // Hrudník
+      expect(sections[1].style.display).toBe('none'); // Nohy
+      expect(sections[2].style.display).toBe('block'); // Ruce
+    });
 
-      expect(benchItem.style.display).toBe('none');
-      expect(squatItem.style.display).toBe('flex');
-      expect(curlItem.style.display).toBe('none');
+    it('should show all items if query is empty or spaces', () => {
+      filterTabExercises('   ');
 
-      expect(chestSection.style.display).toBe('none');
-      expect(legsSection.style.display).toBe('block');
-      expect(armsSection.style.display).toBe('none');
+      const items = document.querySelectorAll('.exercise-tab-item');
+      items.forEach(item => expect(item.style.display).toBe('flex'));
+
+      const sections = document.querySelectorAll('.exercise-cat-section');
+      sections.forEach(sec => expect(sec.style.display).toBe('block'));
     });
   });
 
   describe('openEditExerciseModal', () => {
-    it('should open the edit exercise modal with prefilled data', () => {
+    it('should render modal with existing exercise name and category prefilled', () => {
       openEditExerciseModal('custom_curl');
 
       const modal = document.getElementById('edit-exercise-modal');
-      expect(modal).toBeTruthy();
-      expect(modal.innerHTML).toContain('Upravit Cvik');
+      expect(modal).not.toBeNull();
 
       const nameInput = document.getElementById('edit-ex-name');
       expect(nameInput.value).toBe('Záhadný Biceps');
@@ -134,7 +138,7 @@ describe('Gym Exercises Management', () => {
     it('should prompt confirmation and delete custom exercise not in templates directly', async () => {
       await deleteExercise('custom_curl');
 
-      expect(global.confirm).toHaveBeenCalled();
+      expect(showConfirmDialog).toHaveBeenCalled();
       // Should target gym_exercises
       expect(mockDelete).toHaveBeenCalled();
       expect(mockEq).toHaveBeenCalledWith('id', 'custom_curl');
@@ -144,7 +148,7 @@ describe('Gym Exercises Management', () => {
       // Deleting bench_press which is in template temp-1
       await deleteExercise('bench_press');
 
-      expect(global.confirm).toHaveBeenCalled();
+      expect(showConfirmDialog).toHaveBeenCalled();
       // 1. Should update template temp-1 to empty exercises list
       expect(mockUpdate).toHaveBeenCalled();
       expect(mockEq).toHaveBeenCalledWith('id', 'temp-1');
@@ -257,4 +261,382 @@ describe('Gym Exercises Management', () => {
       expect(cached.exercises[1].sets.length).toBe(3); // Default 3 sets for ad-hoc with no history
     });
   });
+
+  describe('Vizuální prvky cviků & Průvodce technikou', () => {
+    it('should generate image thumbnail when image_url exists and emoji fallback when absent', async () => {
+      const { getExerciseThumbnailHtml, getCategoryEmoji } = await import('../../js/modules/gym.js');
+
+      expect(getCategoryEmoji('Hrudník')).toBe('🦍');
+      expect(getCategoryEmoji('Záda')).toBe('🦅');
+      expect(getCategoryEmoji('Neznámá')).toBe('🏋️‍♂️');
+
+      const exWithImg = { id: 'ex-img', name: 'Bench', category: 'Hrudník', image_url: 'https://example.com/bench.png' };
+      const htmlImg = getExerciseThumbnailHtml(exWithImg);
+      expect(htmlImg).toContain('img src="https://example.com/bench.png"');
+
+      const exNoImg = { id: 'ex-no-img', name: 'Dřep', category: 'Nohy', image_url: null };
+      const htmlNoImg = getExerciseThumbnailHtml(exNoImg);
+      expect(htmlNoImg).toContain('🦵');
+    });
+
+    it('should render technique guide modal with instructions and personal record', async () => {
+      const { openExerciseGuideModal } = await import('../../js/modules/gym.js');
+
+      state.gymExercises.push({
+        id: 'guide_ex',
+        name: 'Rozpažky na kladce',
+        category: 'Hrudník',
+        secondary_muscles: ['Přední ramena'],
+        instructions: 'Udržujte hrudník nahoře a lokty v mírném úhlu.',
+        image_url: 'https://example.com/fly.gif'
+      });
+
+      state.gymPRs.push({
+        user_id: 'user-1',
+        exercise_id: 'guide_ex',
+        weight: 25,
+        reps: 12
+      });
+
+      openExerciseGuideModal('guide_ex');
+
+      const modal = document.getElementById('exercise-guide-modal');
+      expect(modal).not.toBeNull();
+      expect(modal.innerHTML).toContain('Rozpažky na kladce');
+      expect(modal.innerHTML).toContain('Udržujte hrudník nahoře');
+      expect(modal.innerHTML).toContain('Přední ramena');
+      expect(modal.innerHTML).toContain('25 kg × 12 op.');
+    });
+
+    it('should prefill create exercise form inputs from preset template', async () => {
+      const { applyExercisePreset, POPULAR_EXERCISE_PRESETS } = await import('../../js/modules/gym.js');
+
+      expect(POPULAR_EXERCISE_PRESETS.length).toBeGreaterThan(5);
+
+      document.body.innerHTML = `
+        <input id="new-ex-name" value="">
+        <select id="new-ex-cat"><option value="Hrudník">Hrudník</option><option value="Ramena">Ramena</option></select>
+        <input id="new-ex-secondary" value="">
+        <input id="new-ex-image-url" value="">
+        <textarea id="new-ex-instructions"></textarea>
+      `;
+
+      applyExercisePreset(0);
+
+      const nameInput = document.getElementById('new-ex-name');
+      const imgInput = document.getElementById('new-ex-image-url');
+      const preset0 = POPULAR_EXERCISE_PRESETS[0];
+
+      expect(nameInput.value).toBe(preset0.name);
+      expect(imgInput.value).toBe(preset0.image_url);
+    });
+  });
+
+  describe('Phase 3: Couple Challenges & Advanced Workout Modes', () => {
+    it('correctly detects sync workout day when both users trained', async () => {
+      const { isSyncWorkoutDay, getAllSyncDays } = await import('../../js/modules/gym/coupleGym.js');
+      state.currentUser = { id: 'user-1' };
+      state.gymLogs = [
+        { id: 'log-1', user_id: 'user-1', date_key: '2026-08-19' },
+        { id: 'log-2', user_id: 'user-2', date_key: '2026-08-19' }
+      ];
+
+      expect(isSyncWorkoutDay('2026-08-19')).toBe(true);
+      expect(getAllSyncDays()).toContain('2026-08-19');
+    });
+
+    it('returns false for sync day if only one user trained', async () => {
+      const { isSyncWorkoutDay, getAllSyncDays } = await import('../../js/modules/gym/coupleGym.js');
+      state.currentUser = { id: 'user-1' };
+      state.gymLogs = [
+        { id: 'log-1', user_id: 'user-1', date_key: '2026-08-19' }
+      ];
+
+      expect(isSyncWorkoutDay('2026-08-19')).toBe(false);
+      expect(getAllSyncDays()).toHaveLength(0);
+    });
+
+    it('calculates couple weekly streak correctly', async () => {
+      const { calculateCoupleStreak } = await import('../../js/modules/gym/coupleGym.js');
+      state.currentUser = { id: 'user-1' };
+      state.gymLogs = [
+        { id: 'log-1', user_id: 'user-1', date_key: '2026-08-19', logged_at: '2026-08-19T10:00:00Z' },
+        { id: 'log-2', user_id: 'user-2', date_key: '2026-08-19', logged_at: '2026-08-19T11:00:00Z' }
+      ];
+
+      const streak = calculateCoupleStreak();
+      expect(streak.currentStreakWeeks).toBeGreaterThanOrEqual(1);
+      expect(streak.thisWeekCompleted).toBe(true);
+    });
+
+    it('initializes Circuit mode with rounds count and supports round increments', async () => {
+      const { incrementWorkoutRound, getActiveWorkout } = await import('../../js/modules/gym/activeWorkout.js');
+      state.currentUser = { id: 'user-1' };
+      state.gymTemplates = [
+        {
+          id: 'tmpl-circuit-1',
+          name: 'Kruhový Fullbody',
+          mode: 'circuit',
+          circuit_rounds: 4,
+          exercises: [
+            { exercise_id: 'bench_press', sets: 3, reps: 10, weight: 50, superset_group: 'A' },
+            { exercise_id: 'squat', sets: 3, reps: 10, weight: 20, superset_group: 'A' }
+          ]
+        }
+      ];
+
+      startWorkout('tmpl-circuit-1');
+      const active = getActiveWorkout();
+      expect(active).not.toBeNull();
+      expect(active.mode).toBe('circuit');
+      expect(active.circuitRounds).toBe(4);
+      expect(active.currentRound).toBe(1);
+
+      incrementWorkoutRound();
+      expect(active.currentRound).toBe(2);
+    });
+
+    it('initializes AMRAP mode and supports round counting', async () => {
+      const { incrementWorkoutRound, decrementWorkoutRound, getActiveWorkout } = await import('../../js/modules/gym/activeWorkout.js');
+      state.currentUser = { id: 'user-1' };
+      state.gymTemplates = [
+        {
+          id: 'tmpl-amrap-1',
+          name: 'AMRAP Blast',
+          mode: 'amrap',
+          amrap_minutes: 25,
+          exercises: [
+            { exercise_id: 'bench_press', sets: 4, reps: 12, weight: 40 }
+          ]
+        }
+      ];
+
+      startWorkout('tmpl-amrap-1');
+      const active = getActiveWorkout();
+      expect(active).not.toBeNull();
+      expect(active.mode).toBe('amrap');
+      expect(active.amrapMinutes).toBe(25);
+      expect(active.amrapRoundsCompleted).toBe(0);
+
+      incrementWorkoutRound();
+      expect(active.amrapRoundsCompleted).toBe(1);
+
+      decrementWorkoutRound();
+      expect(active.amrapRoundsCompleted).toBe(0);
+    });
+
+    it('preserves superset_group from template and allows cycling', async () => {
+      const { toggleExerciseSuperset, getActiveWorkout } = await import('../../js/modules/gym/activeWorkout.js');
+      state.currentUser = { id: 'user-1' };
+      state.gymTemplates = [
+        {
+          id: 'tmpl-circuit-1',
+          name: 'Kruhový Fullbody',
+          mode: 'circuit',
+          circuit_rounds: 4,
+          exercises: [
+            { exercise_id: 'bench_press', sets: 3, reps: 10, weight: 50, superset_group: 'A' }
+          ]
+        }
+      ];
+
+      startWorkout('tmpl-circuit-1');
+      const active = getActiveWorkout();
+      expect(active.exercises[0].superset_group).toBe('A');
+
+      toggleExerciseSuperset(0);
+      expect(active.exercises[0].superset_group).toBe('B');
+
+      toggleExerciseSuperset(0);
+      expect(active.exercises[0].superset_group).toBeNull();
+
+      toggleExerciseSuperset(0);
+      expect(active.exercises[0].superset_group).toBe('A');
+    });
+  });
+
+  describe('Phase 4: Muscle Heat Map, REST MODE, Share Card & Wrapped', () => {
+    it('calculates muscle heatmap sets and volume by muscle groups', async () => {
+      const { calculateMuscleHeatmap, renderMuscleHeatMapCard } = await import('../../js/modules/gym/muscleMap.js');
+      state.currentUser = { id: 'user-1' };
+      state.gymLogs = [
+        {
+          id: 'log-1',
+          user_id: 'user-1',
+          date_key: '2026-08-19',
+          logged_at: '2026-08-19T10:00:00Z',
+          exercises: [
+            {
+              exercise_name: 'Bench Press',
+              category: 'Hrudník',
+              sets: [
+                { completed: true, weight: 80, reps: 8, type: 'N' },
+                { completed: true, weight: 80, reps: 8, type: 'N' }
+              ]
+            },
+            {
+              exercise_name: 'Biceps Curls',
+              category: 'Ruce',
+              sets: [
+                { completed: true, weight: 15, reps: 10, type: 'N' }
+              ]
+            }
+          ]
+        }
+      ];
+
+      const heatmap = calculateMuscleHeatmap('user-1', 30);
+      expect(heatmap.totalSets).toBe(3);
+      expect(heatmap.muscles.chest.sets).toBe(2);
+      expect(heatmap.muscles.chest.volumeKg).toBe(1280);
+      expect(heatmap.muscles.biceps.sets).toBe(1);
+
+      const html = renderMuscleHeatMapCard('user-1');
+      expect(html).toContain('Svalová Heat Mapa');
+      expect(html).toContain('svg');
+    });
+
+    it('calculates fitness wrapped statistics with comparisons', async () => {
+      const { calculateFitnessWrapped } = await import('../../js/modules/gym/annualWrapped.js');
+      state.currentUser = { id: 'user-1' };
+      state.gymLogs = [
+        {
+          id: 'log-1',
+          user_id: 'user-1',
+          duration_seconds: 3600,
+          date_key: '2026-08-19',
+          exercises: [
+            {
+              exercise_name: 'Bench Press',
+              sets: [
+                { completed: true, weight: 100, reps: 10, type: 'N' }, // 1000 kg = 1 t
+                { completed: true, weight: 100, reps: 10, type: 'N' }  // 1000 kg = 1 t
+              ]
+            }
+          ]
+        }
+      ];
+      state.gymPRs = [
+        { id: 'pr-1', user_id: 'user-1', exercise_id: 'bench_press', weight: 100 }
+      ];
+
+      const wrapped = calculateFitnessWrapped('user-1');
+      expect(wrapped.workoutsCount).toBe(1);
+      expect(wrapped.totalHours).toBe(1);
+      expect(wrapped.totalVolumeKg).toBe(2000);
+      expect(wrapped.totalTons).toBe('2.0');
+      expect(wrapped.topExercise.name).toBe('Bench Press');
+      expect(wrapped.prsCount).toBe(1);
+    });
+
+    it('supports fullscreen rest mode controls and adjustment', async () => {
+      const { openRestModeOverlay, adjustRestTime, skipRestTimer } = await import('../../js/modules/gym/activeWorkout.js');
+      state.currentUser = { id: 'user-1' };
+      
+      openRestModeOverlay();
+      const overlay = document.getElementById('fullscreen-rest-overlay');
+      expect(overlay).not.toBeNull();
+      expect(overlay.textContent).toContain('REST MODE');
+
+      adjustRestTime(15);
+      expect(overlay).not.toBeNull();
+
+      skipRestTimer();
+      expect(document.getElementById('fullscreen-rest-overlay')).toBeNull();
+    });
+
+    it('finds last exercise history for ghost performance data (Phase 5.1)', async () => {
+      const { getLastExerciseHistory } = await import('../../js/modules/gym/analytics.js');
+      state.currentUser = { id: 'user-1' };
+      state.gymLogs = [
+        {
+          id: 'log-1',
+          user_id: 'user-1',
+          date_key: '2026-08-10',
+          exercises: [
+            {
+              exercise_id: 'bench_press',
+              sets: [
+                { completed: true, weight: 80, reps: 8, type: 'N' },
+                { completed: true, weight: 85, reps: 6, type: 'N' }
+              ]
+            }
+          ]
+        }
+      ];
+
+      const history = getLastExerciseHistory('bench_press', 'user-1');
+      expect(history).not.toBeNull();
+      expect(history.dateKey).toBe('2026-08-10');
+      expect(history.sets.length).toBe(2);
+      expect(history.sets[0].weight).toBe(80);
+      expect(history.sets[0].reps).toBe(8);
+    });
+
+    it('supports free workout start without template (Phase 5.1)', async () => {
+      const { startFreeWorkout, getActiveWorkout } = await import('../../js/modules/gym/activeWorkout.js');
+      startFreeWorkout();
+      const active = getActiveWorkout();
+      expect(active).not.toBeNull();
+      expect(active.name).toContain('Volný trénink');
+      expect(active.templateId).toBeNull();
+      expect(active.exercises.length).toBe(0);
+      expect(active.checklist.creatine).toBe(false);
+    });
+
+    it('supports exercise reordering up and down (Phase 5.2)', async () => {
+      const { startFreeWorkout, addExerciseToActiveWorkout, moveExerciseUp, moveExerciseDown, getActiveWorkout } = await import('../../js/modules/gym/activeWorkout.js');
+      startFreeWorkout();
+      addExerciseToActiveWorkout('bench_press');
+      addExerciseToActiveWorkout('squat');
+
+      const active = getActiveWorkout();
+      expect(active.exercises[0].exercise_id).toBe('bench_press');
+      expect(active.exercises[1].exercise_id).toBe('squat');
+
+      moveExerciseDown(0);
+      expect(active.exercises[0].exercise_id).toBe('squat');
+      expect(active.exercises[1].exercise_id).toBe('bench_press');
+
+      moveExerciseUp(1);
+      expect(active.exercises[0].exercise_id).toBe('bench_press');
+      expect(active.exercises[1].exercise_id).toBe('squat');
+    });
+
+    it('supports swapping exercise alternative and saving machine notes (Phase 5.2)', async () => {
+      const { startFreeWorkout, addExerciseToActiveWorkout, swapExercise, saveExerciseNotes, getActiveWorkout } = await import('../../js/modules/gym/activeWorkout.js');
+      startFreeWorkout();
+      addExerciseToActiveWorkout('bench_press');
+
+      const active = getActiveWorkout();
+      expect(active.exercises[0].exercise_id).toBe('bench_press');
+
+      swapExercise(0, 'custom_curl');
+      expect(active.exercises[0].exercise_id).toBe('custom_curl');
+      expect(active.exercises[0].name).toBe('Záhadný Biceps');
+
+      saveExerciseNotes(0, 'Sedák č. 4, kolík 10');
+      expect(active.exercises[0].user_notes).toBe('Sedák č. 4, kolík 10');
+    });
+
+    it('supports cycling RIR and toggling checklist items (Phase 5.5)', async () => {
+      const { startFreeWorkout, addExerciseToActiveWorkout, cycleSetRir, toggleWorkoutChecklistItem, getActiveWorkout } = await import('../../js/modules/gym/activeWorkout.js');
+      startFreeWorkout();
+      addExerciseToActiveWorkout('bench_press');
+
+      const active = getActiveWorkout();
+      expect(active.checklist.water).toBe(false);
+      toggleWorkoutChecklistItem('water');
+      expect(active.checklist.water).toBe(true);
+
+      // Cycle RIR on set 0
+      cycleSetRir(0, 0);
+      expect(active.exercises[0].sets[0].rir).toBe(2);
+      cycleSetRir(0, 0);
+      expect(active.exercises[0].sets[0].rir).toBe(1);
+    });
+  });
 });
+
+
+
