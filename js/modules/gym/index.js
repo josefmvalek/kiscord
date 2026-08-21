@@ -12,6 +12,7 @@ export {
     startFreeWorkout,
     renderActiveWorkoutView,
     adjustVal,
+    adjustActiveExerciseWeight,
     toggleSetComplete,
     setRestDuration,
     startRestTimer,

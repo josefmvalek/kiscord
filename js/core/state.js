@@ -577,7 +577,7 @@ export async function awardLoveCoinsToCurrentUser(amount, reason = '') {
         
         if (typeof window.showNotification === 'function') {
             const prefix = amount > 0 ? `+${amount}` : `${amount}`;
-            window.showNotification(`${prefix} Love Coinů za: ${reason || 'aktivitu'}! 🪙✨`, 'success');
+            window.showNotification(`${prefix} Love Coinů za: ${reason || 'aktivitu'}! 🪙✨`, 'coin');
         }
 
         window.dispatchEvent(new CustomEvent('love-shop-updated'));

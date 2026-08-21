@@ -521,3 +521,167 @@ input[type=range].kiscord-slider::-webkit-slider-thumb:hover {
     transform: scale(1.04);
     border-color: var(--border-default);
 }
+
+/* ==========================================================
+   8. SKELETON LOADERS (Standardized UI Kit Zero-CLS)
+   ========================================================== */
+.kiscord-skeleton {
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-md, 12px);
+    overflow: hidden;
+    position: relative;
+    pointer-events: none;
+    user-select: none;
+}
+
+.kiscord-skeleton-shimmer {
+    background: linear-gradient(
+        90deg,
+        var(--bg-secondary) 0%,
+        var(--bg-modifier-active) 35%,
+        var(--bg-modifier-hover) 50%,
+        var(--bg-modifier-active) 65%,
+        var(--bg-secondary) 100%
+    );
+    background-size: 250% 100%;
+    animation: shimmer-wave 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.kiscord-skeleton-card {
+    background: var(--glass-bg, rgba(47, 49, 54, 0.65));
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--border-radius-lg, 16px);
+    padding: var(--space-5, 20px);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3, 12px);
+}
+
+.kiscord-skeleton-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--border-radius-full, 9999px);
+    background: var(--bg-modifier-active);
+}
+
+.kiscord-skeleton-line {
+    height: 12px;
+    border-radius: var(--border-radius-xs, 4px);
+    background: var(--bg-modifier-active);
+}
+
+.kiscord-skeleton-btn {
+    height: 38px;
+    border-radius: var(--border-radius-md, 12px);
+    background: var(--bg-modifier-active);
+}
+
+/* ==========================================================
+   9. BENTO GRID & ADVANCED METRIC CARDS
+   ========================================================== */
+.kiscord-bento-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-4, 16px);
+    container-type: inline-size;
+}
+
+.kiscord-bento-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur, 12px));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--border-radius-xl, 20px);
+    padding: var(--space-5, 20px);
+    box-shadow: var(--card-shadow);
+    transition: transform 0.25s var(--ease-spring-snappy),
+                box-shadow 0.25s ease,
+                border-color 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+}
+
+.kiscord-bento-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--border-strong);
+}
+
+.kiscord-bento-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    pointer-events: none;
+}
+
+/* ==========================================================
+   10. MOBILE SWIPEABLE LIST ITEMS & BOTTOM SHEETS (Phase M1)
+   ========================================================== */
+
+/* Swipeable list container */
+.kiscord-swipeable-container {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--border-radius-lg, 16px);
+    touch-action: pan-y;
+}
+
+.kiscord-swipe-action-left,
+.kiscord-swipe-action-right {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    font-size: 11px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    user-select: none;
+    z-index: 1;
+}
+
+.kiscord-swipe-action-left {
+    left: 0;
+    background-color: var(--green, #3ba55c);
+    color: white;
+    justify-content: flex-start;
+}
+
+.kiscord-swipe-action-right {
+    right: 0;
+    background-color: var(--red, #ed4245);
+    color: white;
+    justify-content: flex-end;
+}
+
+.kiscord-swipeable-content {
+    position: relative;
+    z-index: 2;
+    background: var(--bg-secondary);
+    transition: transform 0.22s var(--ease-spring-snappy, cubic-bezier(0.2, 0.9, 0.3, 1.2));
+    will-change: transform;
+}
+
+/* Enhanced Mobile Bottom Sheet Drag Handle */
+.sheet-drag-handle-bar {
+    width: 36px;
+    height: 4.5px;
+    background-color: rgba(255, 255, 255, 0.25);
+    border-radius: 9999px;
+    margin: 8px auto 14px auto;
+    transition: background-color 0.2s, transform 0.2s;
+    cursor: grab;
+}
+.sheet-drag-handle-bar:active {
+    background-color: var(--blurple);
+    transform: scaleX(1.2);
+}

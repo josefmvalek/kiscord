@@ -478,9 +478,15 @@ export function switchChannel(channelId, push = true) {
         window.Gym.updateGlobalWorkoutBadge();
     }
 
-    // Render Content
+    // Render Content with Shimmer Skeleton (Eliminates CLS)
     const container = document.getElementById("messages-container");
-    if (container) container.innerHTML = "";
+    if (container) {
+        if (typeof window.renderSkeletonLoader === 'function') {
+            container.innerHTML = window.renderSkeletonLoader({ type: 'channel', count: 6 });
+        } else {
+            container.innerHTML = "";
+        }
+    }
 
     // Centralized Realtime & Interval Cleanup
     const cleanups = [
@@ -851,9 +857,9 @@ export function updateGlobalWorkoutMiniBar() {
 
                 if (timerEl) {
                     if (active.isRestTimerRunning && restRemaining > 0) {
-                        timerEl.innerHTML = `<span class="text-white font-mono">${timeStr}</span> <span class="px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">☕ ${restRemaining}s</span>`;
+                        timerEl.innerHTML = `<span class="px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">☕ ${restRemaining}s</span>`;
                     } else {
-                        timerEl.innerHTML = `<span class="text-white font-mono">${timeStr}</span>`;
+                        timerEl.textContent = timeStr;
                     }
                 }
 
@@ -868,9 +874,23 @@ export function updateGlobalWorkoutMiniBar() {
                         const setsDone = (currEx.sets || []).filter(set => set.completed).length;
                         const totalSets = (currEx.sets || []).length;
                         const allDone = setsDone === totalSets && totalSets > 0;
-                        subEl.textContent = `${currEx.name} (Série ${setsDone}/${totalSets})${allDone ? ' ✅' : ''}`;
+                        subEl.textContent = `${currEx.name} • Série ${setsDone}/${totalSets}${allDone ? ' ✅' : ''}`;
                     } else {
                         subEl.textContent = 'Trénink probíhá...';
+                    }
+                }
+
+                const btn = document.getElementById('mini-bar-quick-set-btn');
+                const btnText = document.getElementById('mini-bar-btn-text');
+                if (btn && btnText) {
+                    if (active.isRestTimerRunning && restRemaining > 0) {
+                        btnText.textContent = 'Přeskočit ⏭️';
+                        btn.className = "px-2.5 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm flex items-center gap-1 flex-shrink-0";
+                        btn.title = "Přeskočit pauzu a pokračovat v tréninku";
+                    } else {
+                        btnText.textContent = '+ Série';
+                        btn.className = "px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-[11px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 flex items-center gap-1.5 flex-shrink-0";
+                        btn.title = "Označit sérii za hotovou a spustit pauzu";
                     }
                 }
             };
@@ -898,6 +918,58 @@ export function updateGlobalWorkoutMiniBar() {
     }
 }
 
+export function logCurrentMiniBarSet() {
+    try {
+        const raw = localStorage.getItem('kiscord_active_workout');
+        if (!raw) return;
+        const active = JSON.parse(raw);
+        if (!active || !active.exercises || active.exercises.length === 0) return;
+
+        // Check if pause is currently active
+        let isResting = false;
+        if (active.isRestTimerRunning) {
+            const now = Date.now();
+            const restStart = active.restStartedAt ? Number(active.restStartedAt) : 0;
+            if (!isNaN(restStart) && restStart > 0) {
+                const restElapsed = Math.floor((now - restStart) / 1000);
+                const restRemaining = Math.max(0, (active.restTimeDuration || 90) - restElapsed);
+                if (restRemaining > 0) isResting = true;
+            } else if ((active.restTimeRemaining || 0) > 0) {
+                isResting = true;
+            }
+        }
+
+        // If clicking during pause -> Skip pause, DO NOT restart timer or log new set!
+        if (isResting) {
+            active.isRestTimerRunning = false;
+            active.restTimeRemaining = 0;
+            active.restStartedAt = null;
+            localStorage.setItem('kiscord_active_workout', JSON.stringify(active));
+            triggerHaptic('light');
+            updateGlobalWorkoutMiniBar();
+            return;
+        }
+
+        // Normal set logging when not paused
+        let currEx = active.exercises.find(ex => (ex.sets || []).some(set => !set.completed));
+        if (currEx) {
+            const nextSet = currEx.sets.find(set => !set.completed);
+            if (nextSet) {
+                nextSet.completed = true;
+                active.isRestTimerRunning = true;
+                active.restStartedAt = Date.now();
+                active.restTimeDuration = active.restTimeDuration || 90;
+                active.restTimeRemaining = active.restTimeDuration;
+                localStorage.setItem('kiscord_active_workout', JSON.stringify(active));
+                triggerHaptic('success');
+                updateGlobalWorkoutMiniBar();
+            }
+        }
+    } catch(e) {
+        console.error('Failed to log set or skip pause from mini bar:', e);
+    }
+}
+
 // Global window attachments for easy integration & onclick triggers
 window.switchChannel = switchChannel;
 window.renderChannels = renderChannels;
@@ -907,6 +979,8 @@ window.expandAllCategories = expandAllCategories;
 window.toggleMobileCategorySheet = toggleMobileCategorySheet;
 window.openMobileCategorySheet = openMobileCategorySheet;
 window.closeMobileCategorySheet = closeMobileCategorySheet;
+window.logCurrentMiniBarSet = logCurrentMiniBarSet;
+
 window.updateGlobalWorkoutMiniBar = updateGlobalWorkoutMiniBar;
 
 

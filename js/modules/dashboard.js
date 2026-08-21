@@ -504,8 +504,8 @@ async function actuallyRenderDashboard(forceRefresh = false) {
                 </div>
             </div>
 
-            <!-- HLAVNÍ OBSAHOVÁ MŘÍŽKA: DISCORD TRACKING HUB -->
-            <div class="max-w-4xl mx-auto px-4 mt-5 space-y-4">
+            <!-- HLAVNÍ OBSAHOVÁ MŘÍŽKA: BENTO CONTAINER HUB -->
+            <div class="dashboard-container max-w-4xl mx-auto px-4 mt-5 space-y-4">
                 
                 <!-- 1. ŘADA: SPÁNEK & VODA (2 Sloupce na větších zařízeních) -->
                 ${state.settings.dashboardWidgets.health !== false ? `

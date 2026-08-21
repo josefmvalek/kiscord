@@ -3,7 +3,10 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Kiscord</title>
 
   <link rel="stylesheet" href="/css/app.css" />
@@ -171,11 +174,13 @@
           <span id="header-offline-text">Offline</span>
         </div>
 
-        <div class="ml-auto flex items-center gap-4 text-[var(--text-muted)]">
-          <div class="bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] px-2.5 py-1 rounded-xl text-xs flex items-center gap-2 w-32 md:w-48">
-            <input type="text" placeholder="Hledat..." class="bg-transparent text-[var(--text-header)] placeholder-[var(--text-muted)] focus:outline-none w-full"
-              id="search-input" />
-            <i class="fas fa-search text-xs text-[var(--text-muted)]"></i>
+        <div class="ml-auto flex items-center gap-3 text-[var(--text-muted)]">
+          <div onclick="window.openCommandPalette ? window.openCommandPalette() : null" 
+               class="bg-[var(--bg-tertiary)] hover:bg-[var(--bg-modifier-hover)] border border-[var(--border-subtle)] hover:border-[var(--border-strong)] px-3 py-1.5 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition shadow-sm group select-none">
+            <i class="fas fa-search text-xs text-[var(--text-muted)] group-hover:text-[var(--text-header)] transition-colors"></i>
+            <span class="text-xs text-[var(--text-muted)] group-hover:text-[var(--text-normal)] hidden sm:inline transition-colors">Hledat kanál či akci...</span>
+            <span class="text-xs text-[var(--text-muted)] group-hover:text-[var(--text-normal)] sm:hidden transition-colors">Hledat...</span>
+            <kbd class="hidden md:inline-flex items-center text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-muted)] group-hover:text-[var(--text-header)] group-hover:border-[var(--border-strong)] transition-all">Ctrl K</kbd>
           </div>
         </div>
       </div>
@@ -231,26 +236,57 @@
 
   <!-- Persistent Floating Workout Mini-Bar (Dynamic Island Style) -->
   <div id="global-workout-mini-bar" 
-       class="hidden fixed bottom-[72px] md:bottom-5 left-3 right-3 md:left-auto md:right-5 md:w-88 z-40 bg-[#1e1f22]/95 backdrop-blur-2xl border border-amber-500/40 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.6)] p-2.5 items-center justify-between transition-all duration-300 select-none cursor-pointer active:scale-[0.98] group hover:border-amber-400"
+       class="hidden fixed bottom-[76px] md:bottom-5 left-3.5 right-3.5 md:left-auto md:right-5 md:w-96 z-40 bg-[#16171a]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,0.65)] p-2 px-3 items-center justify-between transition-all duration-300 select-none cursor-pointer active:scale-[0.99] group hover:border-amber-500/40"
        onclick="window.switchChannel('gym-tracker')">
     <div class="flex items-center gap-3 min-w-0 flex-1">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/25 to-amber-600/10 border border-amber-500/30 text-amber-400 flex items-center justify-center text-base flex-shrink-0 shadow-inner group-hover:scale-105 transition-transform">
-        <i class="fas fa-dumbbell animate-pulse"></i>
+      <div class="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/25 text-amber-400 flex items-center justify-center text-sm flex-shrink-0 shadow-inner group-hover:scale-105 transition-transform">
+        <i class="fas fa-dumbbell" id="mini-bar-icon"></i>
       </div>
-      <div class="min-w-0 flex-1">
-        <div class="flex items-center gap-2">
-          <span class="text-[10px] font-black uppercase tracking-wider text-amber-400 truncate" id="mini-bar-title">Trénink</span>
-          <span class="w-1 h-1 rounded-full bg-white/30"></span>
-          <span class="text-[11px] text-white font-mono font-black tracking-tight" id="mini-bar-timer">00:00</span>
+      <div class="min-w-0 flex-1 flex flex-col justify-center">
+        <div class="flex items-center gap-1.5 min-w-0">
+          <span class="text-xs font-bold text-white truncate" id="mini-bar-title">Trénink</span>
+          <span class="w-1 h-1 rounded-full bg-white/20 flex-shrink-0"></span>
+          <span class="text-[11px] text-amber-400/90 font-mono font-bold flex-shrink-0" id="mini-bar-timer">00:00</span>
         </div>
-        <p class="text-xs font-bold text-gray-200 truncate mt-0.5" id="mini-bar-subtitle">Probíhá cvičení...</p>
+        <p class="text-[11px] font-medium text-gray-300 truncate mt-0.5" id="mini-bar-subtitle">Probíhá cvičení...</p>
       </div>
     </div>
-    <div class="flex items-center gap-1.5 flex-shrink-0 ml-2">
-      <div class="w-8 h-8 rounded-xl bg-amber-500/15 group-hover:bg-amber-500/25 border border-amber-500/30 flex items-center justify-center text-amber-400 text-xs transition-colors shadow-sm">
-        <i class="fas fa-chevron-right text-[10px] group-hover:translate-x-0.5 transition-transform"></i>
-      </div>
+    <div class="flex items-center gap-2 flex-shrink-0 ml-2.5">
+      <!-- Direct Quick-Set Action directly from Dynamic Island -->
+      <button id="mini-bar-quick-set-btn" 
+              onclick="event.stopPropagation(); window.logCurrentMiniBarSet ? window.logCurrentMiniBarSet() : null;"
+              class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-[11px] font-black uppercase tracking-wider transition-all shadow-md active:scale-95 flex items-center gap-1.5 flex-shrink-0"
+              title="Označit sérii za hotovou a spustit pauzu">
+        <i class="fas fa-check text-[10px]"></i>
+        <span id="mini-bar-btn-text">+ Série</span>
+      </button>
     </div>
+  </div>
+
+  <!-- Floating Action Button (Thumb-Zone FAB) for Mobile -->
+  <div id="mobile-fab-container" class="fixed bottom-[72px] right-3.5 z-40 md:hidden flex flex-col items-end gap-2 select-none">
+    <!-- Speed Dial Sheet -->
+    <div id="mobile-fab-sheet" class="hidden flex-col items-end gap-2 mb-1 animate-scale-spring">
+      <button onclick="window.quickLogWater ? window.quickLogWater() : null; window.toggleMobileFab();" 
+              class="px-3.5 py-2 rounded-2xl bg-[var(--bg-secondary)]/95 backdrop-blur-md border border-[#00aff4]/40 text-sky-400 text-[11px] font-black uppercase tracking-wider shadow-2xl flex items-center gap-2 active-pop">
+        <span>+250ml Vody</span> <i class="fas fa-tint text-sm"></i>
+      </button>
+      <button onclick="window.switchChannel('habits'); window.toggleMobileFab();" 
+              class="px-3.5 py-2 rounded-2xl bg-[var(--bg-secondary)]/95 backdrop-blur-md border border-[#3ba55c]/40 text-emerald-400 text-[11px] font-black uppercase tracking-wider shadow-2xl flex items-center gap-2 active-pop">
+        <span>Návyky</span> <i class="fas fa-check-circle text-sm"></i>
+      </button>
+      <button onclick="window.showQuickPlanModal ? window.showQuickPlanModal(1) : window.switchChannel('dashboard'); window.toggleMobileFab();" 
+              class="px-3.5 py-2 rounded-2xl bg-[var(--bg-secondary)]/95 backdrop-blur-md border border-[#eb459e]/40 text-pink-400 text-[11px] font-black uppercase tracking-wider shadow-2xl flex items-center gap-2 active-pop">
+        <span>Plán / Rande</span> <i class="fas fa-heart text-sm"></i>
+      </button>
+    </div>
+
+    <!-- Main FAB Trigger -->
+    <button id="mobile-fab-main-btn" onclick="window.toggleMobileFab()" 
+            class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[var(--blurple)] to-[var(--pink)] text-white shadow-[0_8px_25px_rgba(88,101,242,0.5)] border border-white/20 flex items-center justify-center text-lg active-pop transition-transform duration-300"
+            title="Rychlé akce">
+      <i id="mobile-fab-icon" class="fas fa-plus transition-transform duration-300"></i>
+    </button>
   </div>
 
   <!-- Mobile Bottom Navigation Bar -->

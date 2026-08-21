@@ -416,7 +416,6 @@ export async function removeWatchlistItem(id) {
             state.watchlist = state.watchlist.filter(w => !(String(w.id) === String(id) && w.user_id === state.currentUser?.id));
         }
 
-        if (window.showNotification) window.showNotification("Odebráno z tvých přání", "info");
         fetchAndRenderWatchlist();
     } catch (err) {
         console.error("Remove watchlist item error:", err);

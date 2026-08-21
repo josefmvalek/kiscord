@@ -161,3 +161,45 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+
+/* ==========================================================
+   DASHBOARD & MODULE CONTAINER QUERIES & SUBGRID
+   ========================================================== */
+
+/* Dashboard Bento Grid Container */
+.dashboard-container {
+    container-type: inline-size;
+    container-name: dashboard-shell;
+}
+
+@container dashboard-shell (min-width: 720px) {
+    .dashboard-bento-layout {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: var(--space-4, 16px);
+    }
+    .col-span-12-desktop { grid-column: span 12; }
+    .col-span-8-desktop { grid-column: span 8; }
+    .col-span-6-desktop { grid-column: span 6; }
+    .col-span-4-desktop { grid-column: span 4; }
+}
+
+/* Subgrid for VUT FIT schedule & matrix comparison */
+.subgrid-aligned {
+    display: grid;
+    grid-template-columns: subgrid;
+}
+
+/* Library & Watchlist Media Card Hover Lift */
+.media-card-hover {
+    transition: transform 0.25s var(--ease-spring-snappy),
+                box-shadow 0.25s ease,
+                border-color 0.25s ease;
+    will-change: transform;
+}
+.media-card-hover:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: var(--shadow-lg), var(--shadow-glow-blurple);
+    border-color: var(--border-strong) !important;
+}
+

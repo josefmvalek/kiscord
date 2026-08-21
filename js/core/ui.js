@@ -326,3 +326,118 @@ export function renderErrorState({ message = 'Něco se nepovedlo...', onRetry = 
         </div>
     `;
 }
+
+/**
+ * Renders high-performance Skeleton Shimmer placeholders (Zero CLS).
+ * @param {Object} config - { type: 'channel' | 'card' | 'grid' | 'list', count: number }
+ */
+export function renderSkeletonLoader({ type = 'channel', count = 3 } = {}) {
+    if (type === 'channel') {
+        return `
+            <div class="p-4 md:p-6 space-y-6 w-full animate-fade-in">
+                <!-- Header skeleton -->
+                <div class="flex items-center justify-between pb-4 border-b border-[var(--border-subtle)]">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                        <div class="space-y-2">
+                            <div class="w-32 h-4 rounded-md kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                            <div class="w-48 h-3 rounded-md kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                        </div>
+                    </div>
+                    <div class="w-24 h-8 rounded-xl kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                </div>
+                <!-- Grid Cards skeleton -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    ${Array.from({ length: count }).map(() => `
+                        <div class="kiscord-skeleton-card">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-xl kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                                <div class="flex-1 space-y-1.5">
+                                    <div class="w-3/4 h-3.5 rounded kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                                    <div class="w-1/2 h-2.5 rounded kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                                </div>
+                            </div>
+                            <div class="w-full h-16 rounded-xl kiscord-skeleton kiscord-skeleton-shimmer mt-2"></div>
+                            <div class="flex justify-between items-center mt-2 pt-2 border-t border-[var(--border-subtle)]">
+                                <div class="w-20 h-3 rounded kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                                <div class="w-12 h-6 rounded-lg kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    if (type === 'list') {
+        return `
+            <div class="p-4 space-y-3 w-full animate-fade-in">
+                ${Array.from({ length: count }).map(() => `
+                    <div class="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-3 min-w-0 flex-1">
+                            <div class="kiscord-skeleton-avatar kiscord-skeleton-shimmer flex-shrink-0"></div>
+                            <div class="space-y-1.5 flex-1 min-w-0">
+                                <div class="w-1/2 h-3.5 rounded kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                                <div class="w-1/3 h-2.5 rounded kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                            </div>
+                        </div>
+                        <div class="w-16 h-7 rounded-xl kiscord-skeleton kiscord-skeleton-shimmer flex-shrink-0"></div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    return `
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4 animate-fade-in">
+            ${Array.from({ length: count }).map(() => `
+                <div class="kiscord-skeleton-card">
+                    <div class="w-full h-32 rounded-xl kiscord-skeleton kiscord-skeleton-shimmer mb-2"></div>
+                    <div class="w-3/4 h-4 rounded kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                    <div class="w-1/2 h-3 rounded kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+/**
+ * Standardized Bento-Grid Metric Card Component.
+ */
+export function renderMetricCard({
+    title,
+    value,
+    unit = '',
+    trend = null,
+    trendLabel = '',
+    icon = '✨',
+    color = 'var(--blurple)',
+    subtitle = '',
+    onclick = '',
+    className = ''
+} = {}) {
+    const clickAttr = onclick ? `onclick="${onclick}" class="kiscord-bento-card cursor-pointer group active-pop ${className}"` : `class="kiscord-bento-card group ${className}"`;
+
+    return `
+        <div ${clickAttr}>
+            <div class="flex justify-between items-start mb-3">
+                <span class="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">${title}</span>
+                <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm shadow-inner group-hover:scale-110 transition-transform" style="background: ${color}20; color: ${color}; border: 1px solid ${color}35;">
+                    ${icon}
+                </div>
+            </div>
+            <div class="flex items-baseline gap-1.5 my-1">
+                <span class="text-2xl md:text-3xl font-black text-[var(--text-header)] tracking-tight">${value}</span>
+                ${unit ? `<span class="text-xs font-bold text-[var(--text-muted)]">${unit}</span>` : ''}
+            </div>
+            ${subtitle ? `<p class="text-[11px] text-[var(--text-muted)] mt-0.5">${subtitle}</p>` : ''}
+            ${trend !== null ? `
+                <div class="flex items-center gap-1.5 mt-3 pt-2.5 border-t border-[var(--border-subtle)] text-[10px] font-black uppercase tracking-wider ${trend >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                    <i class="fas fa-arrow-${trend >= 0 ? 'up' : 'down'} text-[9px]"></i>
+                    <span>${Math.abs(trend)}% ${trendLabel || 'oproti minulu'}</span>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+

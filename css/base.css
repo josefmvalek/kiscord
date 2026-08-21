@@ -108,3 +108,20 @@ input, textarea {
 @media (max-width: 768px) {
   .flex-col-mobile { flex-direction: column; }
 }
+
+/* Edge-to-Edge Mobile Navigation Safe Area */
+#mobile-bottom-nav {
+  padding-bottom: max(6px, var(--sab, 0px));
+}
+
+/* Mobile Thumb-Zone FAB auto-elevation when workout mini-bar is visible */
+#mobile-fab-container {
+  bottom: calc(72px + max(0px, var(--sab, 0px)));
+  transition: bottom 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.25s ease;
+}
+
+#global-workout-mini-bar:not(.hidden) ~ #mobile-fab-container {
+  bottom: calc(76px + 58px + 12px + max(0px, var(--sab, 0px)));
+}
+
+

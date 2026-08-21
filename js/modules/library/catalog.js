@@ -85,7 +85,6 @@ export async function toggleWatchlist(id, currentCategory, refreshFn) {
     if (index === -1) {
         state.watchlist.push({ id, type: itemType, user_id: myId });
         triggerHaptic('success');
-        if (typeof window.showNotification === 'function') window.showNotification('Přidáno do seznamu přání ❤️', 'success');
 
         await safeInsert('library_watchlist', {
             media_id: id,
@@ -95,7 +94,6 @@ export async function toggleWatchlist(id, currentCategory, refreshFn) {
     } else {
         state.watchlist.splice(index, 1);
         triggerHaptic('light');
-        if (typeof window.showNotification === 'function') window.showNotification('Odebráno ze seznamu přání', 'info');
 
         await supabase.from('library_watchlist').delete().match({ 
             media_id: id,

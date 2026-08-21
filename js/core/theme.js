@@ -35,7 +35,6 @@ export function toggleTheme() {
     const nextIndex = (themes.indexOf(current) + 1) % themes.length;
     const newTheme = themes[nextIndex];
     changeTheme(newTheme);
-    showNotification(`Téma: ${newTheme.charAt(0).toUpperCase() + newTheme.slice(1)}`, "success");
 }
 
 export function toggleValentineMode() {
@@ -43,10 +42,8 @@ export function toggleValentineMode() {
     const current = localStorage.getItem('klarka_theme');
     if (current === 'valentines') {
         changeTheme('default');
-        showNotification("Valentýnský mod deaktivován 💔", "info");
     } else {
         changeTheme('valentines');
-        showNotification("Valentýnský mod aktivován 💖", "success");
     }
 }
 
@@ -72,15 +69,20 @@ export function showNotification(message, type = 'info') {
 
     // Create notification element
     const notif = document.createElement('div');
-    const borderAccent = type === 'success' ? 'var(--green)' :
+    const isCoin = type === 'coin' || message.includes('Love Coinů');
+    const borderAccent = isCoin ? '#f59e0b' :
+                         type === 'success' ? 'var(--green)' :
                          type === 'error' ? 'var(--red)' :
                          type === 'warning' ? 'var(--yellow)' : 'var(--blurple)';
 
-    notif.className = `p-4 rounded-xl shadow-2xl text-[var(--text-header)] bg-[var(--bg-secondary)] border border-[var(--border-default)] transform transition-all duration-300 translate-x-10 opacity-0 pointer-events-auto flex items-center gap-3 min-w-[280px] max-w-sm backdrop-blur-md`;
+    const extraBg = isCoin ? 'bg-gradient-to-r from-amber-500/15 via-[var(--bg-secondary)] to-[var(--bg-secondary)] border-amber-500/40 shadow-[0_8px_30px_rgba(245,158,11,0.25)]' : 'bg-[var(--bg-secondary)] border-[var(--border-default)] shadow-2xl';
+
+    notif.className = `p-4 rounded-xl text-[var(--text-header)] ${extraBg} border transform transition-all duration-300 translate-x-10 opacity-0 pointer-events-auto flex items-center gap-3 min-w-[280px] max-w-sm backdrop-blur-md`;
     notif.style.borderLeft = `4px solid ${borderAccent}`;
 
     // Icon
-    const iconClass = type === 'success' ? 'fa-check-circle text-[var(--green)]' :
+    const iconClass = isCoin ? 'fa-coins text-amber-400 animate-bounce' :
+                      type === 'success' ? 'fa-check-circle text-[var(--green)]' :
                       type === 'error' ? 'fa-exclamation-circle text-[var(--red)]' :
                       type === 'warning' ? 'fa-triangle-exclamation text-[var(--yellow)]' :
                       'fa-info-circle text-[var(--blurple)]';
@@ -88,7 +90,7 @@ export function showNotification(message, type = 'info') {
     notif.innerHTML = `
         <i class="fas ${iconClass} text-xl flex-shrink-0"></i>
         <div class="flex-1 min-w-0">
-            <p class="font-bold text-xs leading-snug break-words">${message}</p>
+            <p class="font-bold text-xs leading-snug break-words ${isCoin ? 'text-amber-300' : ''}">${message}</p>
         </div>
     `;
 
@@ -103,9 +105,9 @@ export function showNotification(message, type = 'info') {
     setTimeout(() => {
         notif.classList.add('translate-x-10', 'opacity-0');
         setTimeout(() => notif.remove(), 300);
-    }, 3200);
+    }, isCoin ? 3800 : 3200);
 
-    triggerHaptic('light');
+    triggerHaptic(isCoin ? 'success' : 'light');
 }
 
 // Make it global because many legacy onclick handlers might use it

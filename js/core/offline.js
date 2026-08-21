@@ -92,7 +92,6 @@ export async function processSyncQueue() {
 
     updateHeaderOfflineBadge();
     console.log(`[OFFLINE] Processing ${queue.length} pending operations...`);
-    showNotification(`Synchronizace ${queue.length} změn...`, 'info');
 
     const remainingQueue = [];
     let successCount = 0;
@@ -126,7 +125,6 @@ export async function processSyncQueue() {
     updateHeaderOfflineBadge();
 
     if (successCount > 0) {
-        showNotification(`Synchronizace dokončena (${successCount} změn).`, 'success');
         window.dispatchEvent(new CustomEvent('sync-completed'));
     }
 }

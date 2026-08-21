@@ -4,12 +4,15 @@ import { switchChannel } from './router.js';
 import { toggleUserPopout, toggleMobileMenu } from './app-ui.js';
 import { handleLogin } from './auth-handler.js';
 import { state } from './state.js';
+import { renderSkeletonLoader, renderMetricCard } from './ui.js';
+import { openCommandPalette, closeCommandPalette } from './commandPalette.js';
 
 window.loadModule = (name) => {
     switch(name) {
         // Core
         case 'ai_helper': return import('./ai_helper.js');
         case 'auth': return import('./auth.js');
+        case 'commandPalette': return import('./commandPalette.js');
         case 'loader': return import('./loader.js');
         case 'migration': return import('../migration.js');
         case 'notifications': return import('./notifications.js');
@@ -75,6 +78,10 @@ export function exposeGlobals() {
     window.toggleTheme = toggleTheme;
     window.toggleValentineMode = toggleValentineMode;
     window.showNotification = showNotification;
+    window.renderSkeletonLoader = renderSkeletonLoader;
+    window.renderMetricCard = renderMetricCard;
+    window.openCommandPalette = openCommandPalette;
+    window.closeCommandPalette = closeCommandPalette;
 
     // UI Toggles
     window.toggleUserPopout = toggleUserPopout;

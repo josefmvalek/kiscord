@@ -344,7 +344,7 @@ export function renderLibrary(category = 'movies') {
                     statusBadge = '<span class="absolute top-2 left-2 bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded font-bold shadow-md z-10"><i class="fas fa-play"></i> ROZKOUKÁNO</span>';
 
                 html += `
-                      <div class="library-card-wrapper library-card group relative bg-[#2f3136] rounded-xl overflow-hidden border border-[#202225] hover:border-[#5865F2] transition-all shadow-lg flex flex-col w-full"
+                      <div class="library-card-wrapper library-card media-card-hover group relative bg-[var(--bg-secondary)] rounded-2xl overflow-hidden border border-[var(--border-subtle)] hover:border-[var(--blurple)] transition-all shadow-lg flex flex-col w-full"
                            data-title="${safeTitle}" data-genre="${catName}" data-tags="${cardTags}">
                           ${statusBadge}
                           ${partnerWish ? `<span class="absolute ${statusBadge ? 'top-8' : 'top-2'} left-2 bg-[#eb459e] text-white text-[9px] font-black px-2 py-0.5 rounded-md shadow-lg z-10 flex items-center gap-1 border border-white/20 animate-fade-in"><i class="fas fa-heart text-[8px]"></i> ${isKlarka(state.currentUser) ? 'Jožka chce 🤴' : 'Klárka chce 👸'}</span>` : ''}
@@ -354,8 +354,8 @@ export function renderLibrary(category = 'movies') {
                               <i class="${isBookmarked ? "fas" : "far"} fa-heart"></i>
                           </button>
 
-                          <div class="poster-area w-full aspect-[2/3] h-auto bg-[#202225] flex items-center justify-center text-5xl relative cursor-pointer overflow-hidden shadow-inner" 
-                               onclick="window.loadModule('library').then(m => m.openHistoryModal(${item.id}))">
+                          <div class="poster-area w-full aspect-[2/3] h-auto bg-[var(--bg-tertiary)] flex items-center justify-center text-5xl relative cursor-pointer overflow-hidden shadow-inner" 
+                               onclick="triggerHaptic('light'); if (document.startViewTransition) { document.startViewTransition(() => window.loadModule('library').then(m => m.openHistoryModal(${item.id}))); } else { window.loadModule('library').then(m => m.openHistoryModal(${item.id})); }">
                               ${hasPoster 
                                   ? `<img src="${posterUrl}" alt="${item.title}" class="w-full h-full object-cover block transition-transform duration-500 ease-out group-hover:scale-110">` 
                                   : `<span class="opacity-50 transition-transform duration-500 ease-out group-hover:scale-110">${item.icon}</span>`}

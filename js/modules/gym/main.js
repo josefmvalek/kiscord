@@ -8,7 +8,7 @@ import {
 } from './shared.js';
 import {
     renderActiveWorkoutView, openAddExerciseToActiveWorkoutModal,
-    addExerciseToActiveWorkout, startWorkout, startFreeWorkout, adjustVal,
+    addExerciseToActiveWorkout, startWorkout, startFreeWorkout, adjustVal, adjustActiveExerciseWeight,
     toggleSetComplete, setRestDuration, startRestTimer,
     toggleRestTimer, resetRestTimer, toggleTimerSound, cancelWorkout, finishWorkout,
     openFinishWorkoutModal, commitFinishWorkout,
@@ -225,6 +225,7 @@ export function attachWindowGym() {
         startWorkout: (id) => startWorkout(id, renderGym),
         startFreeWorkout: () => startFreeWorkout(renderGym),
         adjustVal,
+        adjustActiveExerciseWeight,
         toggleSetComplete: (exIdx, setIdx) => toggleSetComplete(exIdx, setIdx, renderGym),
         setRestDuration: (sec) => setRestDuration(sec, renderGym),
         startRestTimer: () => startRestTimer(renderGym),

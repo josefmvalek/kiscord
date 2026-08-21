@@ -49,13 +49,50 @@
   --font-main: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-display: "Inter", sans-serif;
 
-  --card-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.3);
-  --modal-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.7);
+  /* --- SPATIAL SYSTEM (8pt Grid Tokens) --- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
 
+  /* --- FLUID TYPOGRAPHY SCALE (clamp formula) --- */
+  --font-size-xs: clamp(0.70rem, 0.68rem + 0.1vw, 0.75rem);   /* 11-12px */
+  --font-size-sm: clamp(0.80rem, 0.76rem + 0.2vw, 0.875rem);  /* 13-14px */
+  --font-size-base: clamp(0.875rem, 0.83rem + 0.22vw, 1.0rem); /* 14-16px */
+  --font-size-lg: clamp(1.05rem, 0.98rem + 0.35vw, 1.25rem);  /* 17-20px */
+  --font-size-xl: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);    /* 20-24px */
+  --font-size-2xl: clamp(1.5rem, 1.35rem + 0.75vw, 2.0rem);   /* 24-32px */
+  --font-size-3xl: clamp(1.85rem, 1.6rem + 1.25vw, 2.75rem);  /* 30-44px */
+
+  /* --- LAYERED ELEVATION & SHADOWS --- */
+  --card-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.3), 0 2px 6px -1px rgba(0, 0, 0, 0.15);
+  --modal-shadow: 0 20px 60px -10px rgba(0, 0, 0, 0.7), 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.15);
+  --shadow-sm: 0 2px 8px -1px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.3), 0 2px 6px -1px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 20px 40px -8px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.2);
+  --shadow-glow-blurple: 0 0 24px -4px rgba(88, 101, 242, 0.45);
+  --shadow-glow-pink: 0 0 24px -4px rgba(235, 69, 158, 0.45);
+  --shadow-glow-green: 0 0 24px -4px rgba(59, 165, 92, 0.45);
+  --shadow-glow-amber: 0 0 24px -4px rgba(245, 158, 11, 0.45);
+
+  /* --- SPRING ANIMATION EASING --- */
+  --ease-spring-snappy: cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  --ease-spring-smooth: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --border-radius-xs: 4px;
   --border-radius-sm: 8px;
   --border-radius-md: 12px;
   --border-radius-lg: 16px;
   --border-radius-xl: 20px;
+  --border-radius-2xl: 24px;
   --border-radius-full: 9999px;
 
   /* --- GLASSMORPHISM DEFAULTS --- */

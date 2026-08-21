@@ -319,7 +319,7 @@ export function saveActiveWorkoutToStorage() {
         const dataToSave = {
             templateId: activeWorkout.templateId,
             name: activeWorkout.name,
-            startTime: activeWorkout.startTime instanceof Date ? activeWorkout.startTime.toISOString() : activeWorkout.startTime,
+            startTime: activeWorkout.startTime instanceof Date ? (isNaN(activeWorkout.startTime.getTime()) ? new Date().toISOString() : activeWorkout.startTime.toISOString()) : (activeWorkout.startTime || new Date().toISOString()),
             durationSeconds: activeWorkout.durationSeconds,
             exercises: activeWorkout.exercises,
             isMinimized: activeWorkout.isMinimized || false,

@@ -14,13 +14,32 @@ export function triggerHaptic(type = "light") {
     // Haptika funguje jen po interakci a na podporovaných zařízeních
     if (!navigator.vibrate || !hasUserInteracted) return;
 
-    if (type === "light")
-        navigator.vibrate(10); // Zvýšeno z 5ms na 10ms
-    else if (type === "medium")
-        navigator.vibrate(30); // Zvýšeno z 15ms na 30ms
-    else if (type === "heavy")
-        navigator.vibrate(60); // Zvýšeno z 30ms na 60ms
-    else if (type === "success") navigator.vibrate([20, 50, 20]); // Výraznější
+    switch (type) {
+        case "selection":
+            navigator.vibrate(8); // Ultra-jemný tick pro posuvníky a taby
+            break;
+        case "light":
+            navigator.vibrate(15); // Běžný klik na tlačítko
+            break;
+        case "medium":
+            navigator.vibrate(30); // Otevření Bottom Sheetu / přepnutí
+            break;
+        case "heavy":
+            navigator.vibrate(60); // Výrazný bump
+            break;
+        case "success":
+            navigator.vibrate([15, 40, 25]); // Dvojité potvrzení (splněno, uloženo)
+            break;
+        case "pr_record":
+            navigator.vibrate([30, 50, 40, 50, 60]); // Slavnostní fanfára pro rekord v gymu
+            break;
+        case "warning":
+            navigator.vibrate([40, 60, 40]); // Dvojitý varovný puls (smazání)
+            break;
+        default:
+            navigator.vibrate(15);
+            break;
+    }
 }
 
 export function normalizeText(text) {

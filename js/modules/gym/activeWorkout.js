@@ -9,6 +9,7 @@ import { isSyncWorkoutDay } from './coupleGym.js';
 import {
     activeWorkout,
     setActiveWorkout,
+    loadActiveWorkoutFromStorage,
     saveActiveWorkoutToStorage,
     cleanupWorkoutTimers,
     getTypeBadgeHTML,
@@ -507,6 +508,17 @@ export function renderActiveWorkoutView(renderGymFn) {
                                     }).join('')}
                                 </div>
 
+                                <!-- Mobile Touch Quick Weight Chips (Focus Mode) -->
+                                <div class="flex items-center justify-between pt-2 pb-0.5 px-1 mt-1 border-t border-white/5 select-none">
+                                    <span class="text-[8px] font-black uppercase tracking-wider text-gray-500 font-mono">⚡ Rychlá váha:</span>
+                                    <div class="flex items-center gap-1">
+                                        <button type="button" onclick="window.Gym.adjustActiveExerciseWeight(${exIdx}, -2.5)" class="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 active:bg-white/20 text-gray-300 font-mono text-[9px] font-bold transition active-pop">-2.5</button>
+                                        <button type="button" onclick="window.Gym.adjustActiveExerciseWeight(${exIdx}, 1.25)" class="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 active:bg-white/20 text-amber-300 font-mono text-[9px] font-bold transition active-pop">+1.25</button>
+                                        <button type="button" onclick="window.Gym.adjustActiveExerciseWeight(${exIdx}, 2.5)" class="px-2 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 font-mono text-[9px] font-bold transition active-pop">+2.5</button>
+                                        <button type="button" onclick="window.Gym.adjustActiveExerciseWeight(${exIdx}, 5)" class="px-2 py-1 rounded-lg bg-amber-500/25 hover:bg-amber-500/35 border border-amber-500/40 text-amber-300 font-mono text-[9px] font-black transition active-pop">+5kg</button>
+                                    </div>
+                                </div>
+
                             </div>
                         `;
                     }).join('')}
@@ -559,6 +571,23 @@ export function adjustVal(exIdx, setIdx, key, delta) {
     if (inputEl) {
         inputEl.value = setObj[key];
     }
+    saveActiveWorkoutToStorage();
+}
+
+export function adjustActiveExerciseWeight(exIdx, delta) {
+    triggerHaptic('light');
+    if (!activeWorkout) {
+        loadActiveWorkoutFromStorage();
+    }
+    if (!activeWorkout || !activeWorkout.exercises || !activeWorkout.exercises[exIdx]) return;
+    const ex = activeWorkout.exercises[exIdx];
+    ex.sets.forEach((s, sIdx) => {
+        if (!s.completed) {
+            s.weight = Math.max(0, parseFloat((s.weight + delta).toFixed(2)));
+            const inputEl = document.getElementById(`weight-input-${exIdx}-${sIdx}`);
+            if (inputEl) inputEl.value = s.weight;
+        }
+    });
     saveActiveWorkoutToStorage();
 }
 
@@ -745,7 +774,8 @@ export function toggleRestTimer(renderGymFn) {
             setRestTimeRemaining(restTimeDuration);
         }
         setIsRestTimerRunning(true);
-        setRestStartedAt(Date.now());
+        const elapsedSec = Math.max(0, (restTimeDuration || 90) - (restTimeRemaining || 0));
+        setRestStartedAt(Date.now() - (elapsedSec * 1000));
         if (restTimerInterval) clearInterval(restTimerInterval);
         setRestTimerInterval(setInterval(() => tickRestTimer(renderGymFn), 1000));
     }

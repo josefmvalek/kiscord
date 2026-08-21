@@ -314,3 +314,86 @@ button:active i.fa-tint { animation: waterSplash 0.3s ease-out; }
   animation: star-twinkle-countdown 3s ease-in-out infinite;
 }
 
+/* ==========================================================
+   SKELETON SHIMMER & NEXT-LEVEL MICRO-INTERACTIONS
+   ========================================================== */
+
+/* --- SHIMMER ANIMATION (Zero CLS Perceived Performance) --- */
+@keyframes shimmer-wave {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-pulse-shimmer,
+.kiscord-skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 0%,
+    var(--bg-modifier-active) 35%,
+    var(--bg-modifier-hover) 50%,
+    var(--bg-modifier-active) 65%,
+    var(--bg-secondary) 100%
+  ) !important;
+  background-size: 250% 100% !important;
+  animation: shimmer-wave 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+}
+
+/* --- SPRING SCALE IN (Apple-like Snappy Entrance) --- */
+@keyframes scale-spring {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  70% {
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.animate-scale-spring {
+  animation: scale-spring 0.35s var(--ease-spring-snappy, cubic-bezier(0.2, 0.9, 0.3, 1.2)) forwards;
+}
+
+/* --- BOTTOM SHEET SLIDE UP (Mobile Ergonomics) --- */
+@keyframes sheet-slide-up {
+  0% {
+    transform: translateY(100%);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.animate-sheet-slide-up {
+  animation: sheet-slide-up 0.32s var(--ease-spring-smooth, cubic-bezier(0.32, 0.72, 0, 1)) forwards;
+}
+
+/* --- PRESS ACTIVE POP --- */
+.active-pop {
+  transition: transform 0.12s var(--ease-spring-snappy);
+}
+.active-pop:active {
+  transform: scale(0.95);
+}
+
+/* --- GLOW PULSE BLURPLE & PINK --- */
+@keyframes glow-blurple {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(88, 101, 242, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(88, 101, 242, 0.6);
+  }
+}
+.animate-glow-blurple {
+  animation: glow-blurple 2.5s ease-in-out infinite;
+}
+
+

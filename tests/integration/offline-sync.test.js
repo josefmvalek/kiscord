@@ -154,8 +154,7 @@ describe('Offline Caching & Queue Synchronization', () => {
       expect(mockQuery.upsert).toHaveBeenCalledWith({ id: 'x' });
       
       const queue = JSON.parse(localStorage.getItem('kiscord_sync_queue') || '[]');
-      expect(queue.length).toBe(0); // Emptied successfully!
-      expect(showNotification).toHaveBeenCalledWith(expect.stringContaining('Synchronizace dokončena'), 'success');
+      expect(queue.length).toBe(0); // Emptied successfully and silently on background!
     });
 
     it('should keep items in queue if Supabase returns error', async () => {

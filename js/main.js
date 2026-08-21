@@ -14,7 +14,7 @@ import { state, stateEvents } from './core/state.js';
 // Refactored Handlers
 import { initAuthListeners, updateUserProfileUI, updateGlobalAssetsUI } from './core/auth-handler.js';
 import { setupNavigation, renderChannels, setupSearch, switchChannel } from './core/router.js';
-import { setupConnectivityListeners, checkAppUpdate, setupGlobalTouchGestures } from './core/app-ui.js';
+import { setupConnectivityListeners, checkAppUpdate, setupGlobalTouchGestures, setupNativePopovers, setupMobileCollapsibleHeaders } from './core/app-ui.js';
 import { exposeGlobals } from './core/globals.js';
 
 // Extra Module Initialization (Legacy/Dependencies)
@@ -51,6 +51,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupSearch();
     setupConnectivityListeners();
     setupGlobalTouchGestures();
+    setupNativePopovers();
+    setupMobileCollapsibleHeaders();
 
     // 4. Auth & State Handlers
     initAuthListeners();
