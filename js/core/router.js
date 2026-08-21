@@ -869,15 +869,29 @@ export function updateGlobalWorkoutMiniBar() {
                     currEx = active.exercises[active.exercises.length - 1];
                 }
 
-                if (subEl) {
-                    if (currEx) {
-                        const setsDone = (currEx.sets || []).filter(set => set.completed).length;
-                        const totalSets = (currEx.sets || []).length;
-                        const allDone = setsDone === totalSets && totalSets > 0;
-                        subEl.textContent = `${currEx.name} • Série ${setsDone}/${totalSets}${allDone ? ' ✅' : ''}`;
-                    } else {
-                        subEl.textContent = 'Trénink probíhá...';
+                const setBadge = document.getElementById('mini-bar-set-badge');
+                if (currEx) {
+                    const setsDone = (currEx.sets || []).filter(set => set.completed).length;
+                    const totalSets = (currEx.sets || []).length;
+                    const allDone = setsDone === totalSets && totalSets > 0;
+
+                    if (subEl) {
+                        subEl.textContent = currEx.name;
                     }
+                    if (setBadge) {
+                        setBadge.classList.remove('hidden');
+                        if (allDone) {
+                            setBadge.textContent = 'Hotovo ✅';
+                            setBadge.className = 'flex-shrink-0 px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-bold text-[10px] border border-emerald-500/30';
+                        } else {
+                            const currentSetNum = Math.min(totalSets, setsDone + 1);
+                            setBadge.textContent = `S${currentSetNum}/${totalSets}`;
+                            setBadge.className = 'flex-shrink-0 px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-bold text-[10px] border border-amber-500/30';
+                        }
+                    }
+                } else {
+                    if (subEl) subEl.textContent = 'Trénink probíhá...';
+                    if (setBadge) setBadge.classList.add('hidden');
                 }
 
                 const btn = document.getElementById('mini-bar-quick-set-btn');
