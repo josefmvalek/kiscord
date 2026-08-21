@@ -164,6 +164,13 @@
         <i id="channel-icon" class="fas fa-hashtag text-[var(--text-muted)] text-xl mr-2"></i>
         <span id="channel-name" class="font-bold text-[var(--text-header)] mr-4 truncate">&nbsp;</span>
         <span id="channel-desc" class="text-xs text-[var(--text-muted)] truncate hidden md:block">&nbsp;</span>
+        
+        <!-- Offline Status Badge -->
+        <div id="header-offline-badge" class="hidden items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-black uppercase tracking-wider flex-shrink-0 animate-pulse select-none" title="Změny jsou uloženy v zařízení a čekají na odeslání">
+          <i class="fas fa-cloud-upload-alt text-[9px]"></i>
+          <span id="header-offline-text">Offline</span>
+        </div>
+
         <div class="ml-auto flex items-center gap-4 text-[var(--text-muted)]">
           <div class="bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] px-2.5 py-1 rounded-xl text-xs flex items-center gap-2 w-32 md:w-48">
             <input type="text" placeholder="Hledat..." class="bg-transparent text-[var(--text-header)] placeholder-[var(--text-muted)] focus:outline-none w-full"
@@ -175,7 +182,7 @@
 
       <!-- Content Container -->
       <div id="messages-container"
-        class="flex-1 overflow-y-auto min-h-0 px-0 py-0 custom-scrollbar flex flex-col bg-[var(--bg-primary)] relative"></div>
+        class="flex-1 overflow-y-auto min-h-0 px-0 py-0 pb-16 md:pb-0 custom-scrollbar flex flex-col bg-[var(--bg-primary)] relative"></div>
     </div>
 
 
@@ -215,12 +222,83 @@
     </div>
   </div>
 
-  <!-- Floating Settings Quick Button -->
+  <!-- Floating Settings Quick Button (Desktop only) -->
   <button id="floating-settings-btn" onclick="window.switchChannel('settings')"
-    class="fixed bottom-5 right-5 z-40 w-11 h-11 bg-[var(--bg-secondary)] hover:bg-[var(--blurple)] text-[var(--text-normal)] hover:text-white rounded-2xl border border-[var(--border-subtle)] shadow-2xl flex items-center justify-center text-base transition-all duration-300 hover:scale-110 active:scale-95 group"
+    class="hidden md:flex fixed bottom-5 right-5 z-40 w-11 h-11 bg-[var(--bg-secondary)] hover:bg-[var(--blurple)] text-[var(--text-normal)] hover:text-white rounded-2xl border border-[var(--border-subtle)] shadow-2xl items-center justify-center text-base transition-all duration-300 hover:scale-110 active:scale-95 group"
     title="Otevřít Nastavení">
     <i class="fas fa-cog group-hover:rotate-90 transition-transform duration-500"></i>
   </button>
+
+  <!-- Persistent Floating Workout Mini-Bar (Dynamic Island Style) -->
+  <div id="global-workout-mini-bar" 
+       class="hidden fixed bottom-[72px] md:bottom-5 left-3 right-3 md:left-auto md:right-5 md:w-88 z-40 bg-[#1e1f22]/95 backdrop-blur-2xl border border-amber-500/40 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.6)] p-2.5 items-center justify-between transition-all duration-300 select-none cursor-pointer active:scale-[0.98] group hover:border-amber-400"
+       onclick="window.switchChannel('gym-tracker')">
+    <div class="flex items-center gap-3 min-w-0 flex-1">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/25 to-amber-600/10 border border-amber-500/30 text-amber-400 flex items-center justify-center text-base flex-shrink-0 shadow-inner group-hover:scale-105 transition-transform">
+        <i class="fas fa-dumbbell animate-pulse"></i>
+      </div>
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] font-black uppercase tracking-wider text-amber-400 truncate" id="mini-bar-title">Trénink</span>
+          <span class="w-1 h-1 rounded-full bg-white/30"></span>
+          <span class="text-[11px] text-white font-mono font-black tracking-tight" id="mini-bar-timer">00:00</span>
+        </div>
+        <p class="text-xs font-bold text-gray-200 truncate mt-0.5" id="mini-bar-subtitle">Probíhá cvičení...</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-1.5 flex-shrink-0 ml-2">
+      <div class="w-8 h-8 rounded-xl bg-amber-500/15 group-hover:bg-amber-500/25 border border-amber-500/30 flex items-center justify-center text-amber-400 text-xs transition-colors shadow-sm">
+        <i class="fas fa-chevron-right text-[10px] group-hover:translate-x-0.5 transition-transform"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav id="mobile-bottom-nav" class="fixed bottom-0 inset-x-0 z-40 bg-[var(--bg-secondary)]/95 backdrop-blur-xl border-t border-[var(--border-subtle)] flex md:hidden items-center justify-around px-1 py-1.5 transition-transform duration-300 select-none shadow-[0_-8px_25px_rgba(0,0,0,0.4)]">
+    <button class="mobile-nav-btn flex-1 py-1 flex flex-col items-center justify-center text-[var(--text-muted)] transition active:scale-95 group" data-nav-channel="dashboard" onclick="window.switchChannel('dashboard')">
+      <div class="w-8 h-8 rounded-xl flex items-center justify-center text-base text-pink-500 nav-icon-box transition">
+        <i class="fas fa-heart"></i>
+      </div>
+      <span class="text-[9px] font-black uppercase tracking-tight nav-label">Můj Den</span>
+    </button>
+
+    <button class="mobile-nav-btn flex-1 py-1 flex flex-col items-center justify-center text-[var(--text-muted)] transition active:scale-95 group" data-nav-channel="calendar" onclick="window.switchChannel('calendar')">
+      <div class="w-8 h-8 rounded-xl flex items-center justify-center text-base text-[#5865F2] nav-icon-box transition">
+        <i class="fas fa-calendar-alt"></i>
+      </div>
+      <span class="text-[9px] font-black uppercase tracking-tight nav-label">Kalendář</span>
+    </button>
+
+    <button class="mobile-nav-btn flex-1 py-1 flex flex-col items-center justify-center text-[var(--text-muted)] transition active:scale-95 group relative" data-nav-channel="gym-tracker" onclick="window.switchChannel('gym-tracker')">
+      <div class="w-8 h-8 rounded-xl flex items-center justify-center text-base text-amber-400 nav-icon-box transition relative">
+        <i class="fas fa-dumbbell"></i>
+        <span id="mobile-nav-gym-dot" class="hidden absolute top-0.5 right-0.5 w-2 h-2 bg-amber-400 rounded-full animate-ping"></span>
+      </div>
+      <span class="text-[9px] font-black uppercase tracking-tight nav-label">Posilovna</span>
+    </button>
+
+    <button class="mobile-nav-btn flex-1 py-1 flex flex-col items-center justify-center text-[var(--text-muted)] transition active:scale-95 group" data-nav-category="vut" onclick="window.toggleMobileCategorySheet('vut')">
+      <div class="w-8 h-8 rounded-xl flex items-center justify-center text-base text-emerald-400 nav-icon-box transition">
+        <i class="fas fa-graduation-cap"></i>
+      </div>
+      <span class="text-[9px] font-black uppercase tracking-tight nav-label">Kolej & FIT</span>
+    </button>
+
+    <button class="mobile-nav-btn flex-1 py-1 flex flex-col items-center justify-center text-[var(--text-muted)] transition active:scale-95 group" data-nav-category="more" onclick="window.toggleMobileCategorySheet('more')">
+      <div class="w-8 h-8 rounded-xl flex items-center justify-center text-base text-purple-400 nav-icon-box transition">
+        <i class="fas fa-bars"></i>
+      </div>
+      <span class="text-[9px] font-black uppercase tracking-tight nav-label">Více</span>
+    </button>
+  </nav>
+
+  <!-- Mobile Category Bottom Sheet Drawer -->
+  <div id="mobile-sheet-backdrop" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300 md:hidden" onclick="window.closeMobileCategorySheet()">
+    <div id="mobile-sheet-content" class="fixed bottom-0 inset-x-0 bg-[var(--bg-secondary)] border-t border-[var(--border-subtle)] rounded-t-3xl p-5 shadow-2xl transform translate-y-full transition-transform duration-300 max-h-[85vh] overflow-y-auto custom-scrollbar" onclick="event.stopPropagation()">
+      <div class="w-12 h-1 bg-white/20 rounded-full mx-auto mb-4"></div>
+      <div id="mobile-sheet-body"></div>
+    </div>
+  </div>
 
   <!-- ========== MODALS ========== -->
 

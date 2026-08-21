@@ -23,7 +23,8 @@ import {
     stopwatchInterval,
     setStopwatchInterval,
     tickRestTimer,
-    resumeWorkoutIntervals
+    resumeWorkoutIntervals,
+    setRestStartedAt
 } from './shared.js';
 import {
     calculate1RM,
@@ -725,6 +726,7 @@ export function setRestDuration(seconds, renderGymFn) {
 export function startRestTimer(renderGymFn) {
     setRestTimeRemaining(restTimeDuration);
     setIsRestTimerRunning(true);
+    setRestStartedAt(Date.now());
     saveActiveWorkoutToStorage();
 
     if (restTimerInterval) clearInterval(restTimerInterval);
@@ -737,11 +739,13 @@ export function toggleRestTimer(renderGymFn) {
         clearInterval(restTimerInterval);
         setRestTimerInterval(null);
         setIsRestTimerRunning(false);
+        setRestStartedAt(null);
     } else {
         if (restTimeRemaining <= 0) {
             setRestTimeRemaining(restTimeDuration);
         }
         setIsRestTimerRunning(true);
+        setRestStartedAt(Date.now());
         if (restTimerInterval) clearInterval(restTimerInterval);
         setRestTimerInterval(setInterval(() => tickRestTimer(renderGymFn), 1000));
     }
@@ -754,6 +758,7 @@ export function resetRestTimer(renderGymFn) {
     clearInterval(restTimerInterval);
     setRestTimerInterval(null);
     setIsRestTimerRunning(false);
+    setRestStartedAt(null);
     setRestTimeRemaining(restTimeDuration);
     saveActiveWorkoutToStorage();
 
@@ -1098,10 +1103,20 @@ export async function commitFinishWorkout(renderGymFn) {
         triggerConfetti();
         triggerHaptic('success');
 
-        // Award +3 Love Coins
-        await awardLoveCoinsToCurrentUser(3, 'dokončený trénink');
-
         const isSyncToday = isSyncWorkoutDay(todayStr);
+
+        // Award Love Coins: +10 solo workout, +20 synchronized couple workout
+        const coinsToAward = isSyncToday ? 20 : 10;
+        const coinsReason = isSyncToday ? 'Synchronizovaný trénink ve dvou! 🏋️‍♂️❤️' : 'Dokončený trénink v posilovně 🏋️‍♂️';
+        await awardLoveCoinsToCurrentUser(coinsToAward, coinsReason);
+
+        // Automatically mark movement on Health / Dashboard for today if not already marked
+        import('../health.js').then(async h => {
+            const todayHealth = h.getTodayData();
+            if (!todayHealth.movement || !todayHealth.movement.includes('gym')) {
+                await h.updateHealth('movement', 'gym');
+            }
+        }).catch(e => console.warn('[Health] Auto-update movement error:', e));
 
         cleanupWorkoutTimers();
         setActiveWorkout(null);

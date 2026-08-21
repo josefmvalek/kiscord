@@ -82,7 +82,11 @@ export function renderFunFacts() {
                 <div class="text-center mb-10 relative">
                     <h1 class="text-4xl font-black text-white mb-2">Encyklopedie Kiscordu 📚</h1>
                     <p class="text-gray-400 font-medium">Vědomosti, které změní tvůj pohled na svět.</p>
-                    <div class="mt-6 flex justify-center">
+                    <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+                        <button onclick="window.switchChannel('games-hub'); triggerHaptic('light')" 
+                                class="bg-[#202225] hover:bg-[#2f3136] text-gray-300 hover:text-white border border-white/10 px-5 py-3 rounded-2xl font-bold text-xs shadow-lg transition flex items-center gap-2">
+                            <i class="fas fa-arrow-left"></i> Zpět do herny
+                        </button>
                         <button onclick="window.loadModule('funfacts').then(m => m.showAddFactModal())" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-6 py-3 rounded-2xl font-black transition shadow-lg flex items-center gap-3 transform hover:scale-105 active:scale-95 border border-white/10 uppercase tracking-widest text-xs">
                             <i class="fas fa-plus"></i> Přidat moudrost
                         </button>

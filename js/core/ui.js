@@ -57,11 +57,14 @@ export function renderModal({
 
     return `
         <div id="${id}" 
-             class="kiscord-modal-backdrop modal-backdrop fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in"
+             class="kiscord-modal-backdrop modal-backdrop fixed inset-0 z-[100] hidden items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-md animate-fade-in"
              onclick="if (event.target === this) { ${closeHandler}; }">
-            <div class="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full ${sizeClass} border border-[var(--border-default)] overflow-hidden flex flex-col ${size === 'full' ? '' : 'max-h-[90vh]'} animate-scale-in"
+            <div class="bg-[var(--bg-secondary)] rounded-t-3xl sm:rounded-2xl shadow-2xl w-full ${sizeClass} border-t sm:border border-[var(--border-default)] overflow-hidden flex flex-col ${size === 'full' ? 'h-[92vh]' : 'max-h-[85vh] sm:max-h-[90vh]'} animate-slide-up sm:animate-scale-in"
                  onclick="event.stopPropagation()">
                 
+                <!-- Mobile Drag Indicator -->
+                <div class="w-12 h-1 bg-white/20 rounded-full mx-auto mt-2.5 mb-1 sm:hidden flex-shrink-0"></div>
+
                 <!-- Modal Header -->
                 <div class="bg-[var(--bg-tertiary)]/80 px-5 py-4 border-b border-[var(--border-subtle)] flex justify-between items-center backdrop-blur-md flex-shrink-0">
                     <div class="flex items-center gap-3 min-w-0">
@@ -89,7 +92,7 @@ export function renderModal({
 
                 <!-- Modal Actions / Footer -->
                 ${actions ? `
-                <div class="px-5 py-3.5 bg-[var(--bg-tertiary)]/90 border-t border-[var(--border-subtle)] flex items-center justify-end gap-2.5 flex-shrink-0">
+                <div class="px-5 py-3.5 bg-[var(--bg-tertiary)]/90 border-t border-[var(--border-subtle)] flex items-center justify-end gap-2.5 flex-shrink-0 pb-[max(0.875rem,env(safe-area-inset-bottom))]">
                     ${actions}
                 </div>` : ''}
             </div>

@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kiscord Developer Onboarding &amp; Architecture Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
+<link rel="stylesheet" media="(prefers-color-scheme: light)" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css">
+<link rel="stylesheet" media="(prefers-color-scheme: dark)" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+<style>
+:root {
+    --md-bg: #0E1E38;
+    --md-surface: #142B50;
+    --md-border: #1A3868;
+    --md-text: #F7F7F2;
+    --md-text-muted: rgba(247, 247, 242, 0.68);
+    --md-accent: #00D4AA;
+    --md-accent-soft: rgba(0, 212, 170, 0.14);
+    --md-code-bg: #122648;
+    --md-link: #00D4AA;
+    --md-link-hover: #08FECE;
+    --md-success: #10A85C;
+    --md-warn: #C87C10;
+    --md-scale: 1.25;
+    --md-font-heading: 'Inter', system-ui, -apple-system, sans-serif;
+    --md-font-body: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+    margin: 0;
+    padding: 2rem 1.5rem;
+    background: var(--md-bg);
+    color: var(--md-text);
+    font-family: var(--md-font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+main h1, main h2, main h3, main h4, main h5, main h6 {
+    font-family: var(--md-font-heading);
+    color: var(--md-text);
+    line-height: 1.25;
+    margin: 1.5em 0 0.5em;
+    font-weight: 600;
+    scroll-margin-top: 1rem;
+}
+main h1 { font-size: calc(1rem * var(--md-scale) * var(--md-scale) * var(--md-scale) * var(--md-scale)); margin-top: 0; }
+main h2 { font-size: calc(1rem * var(--md-scale) * var(--md-scale) * var(--md-scale)); border-bottom: 1px solid var(--md-border); padding-bottom: 0.3em; }
+main h3 { font-size: calc(1rem * var(--md-scale) * var(--md-scale)); }
+main h4 { font-size: calc(1rem * var(--md-scale)); }
+main h5, main h6 { font-size: 1rem; color: var(--md-text-muted); }
+
+p { margin: 0.5em 0 1em; }
+a { color: var(--md-link); text-decoration: underline; text-underline-offset: 2px; }
+a:hover { color: var(--md-link-hover); }
+
+strong { font-weight: 600; }
+em { font-style: italic; }
+
+code {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: var(--md-code-bg);
+    padding: 0.15em 0.35em;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+pre {
+    background: var(--md-code-bg);
+    border: 1px solid var(--md-border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    margin: 1.5em 0;
+    position: relative;
+}
+pre code { background: transparent; padding: 0; font-size: 1em; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5em 0;
+    font-size: 0.9375rem;
+}
+th, td {
+    border: 1px solid var(--md-border);
+    padding: 0.5em 0.75em;
+    text-align: left;
+}
+th { background: var(--md-surface); font-weight: 600; }
+td.align-center, th.align-center { text-align: center; }
+td.align-right, th.align-right { text-align: right; }
+
+blockquote {
+    border-left: 3px solid var(--md-border);
+    margin: 1.5em 0;
+    padding: 0.5em 0 0.5em 1.25em;
+    color: var(--md-text-muted);
+    font-style: italic;
+}
+
+ul, ol { padding-left: 1.5em; margin: 0.5em 0 1em; }
+li { margin: 0.25em 0; }
+
+hr {
+    border: 0;
+    border-top: 1px solid var(--md-border);
+    margin: 3em 0;
+}
+
+.callout {
+    border-left: 4px solid var(--md-accent);
+    background: var(--md-accent-soft);
+    padding: 0.75rem 1rem 0.75rem 1.25rem;
+    margin: 1.5em 0;
+    border-radius: 0 8px 8px 0;
+}
+.callout .callout-label {
+    font-family: var(--md-font-heading);
+    font-weight: 600;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25em;
+    color: var(--md-accent);
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}
+.callout .callout-icon {
+    display: inline-flex;
+    width: 1.125em;
+    height: 1.125em;
+    align-items: center;
+    justify-content: center;
+}
+.callout-note { border-left-color: var(--md-link); }
+.callout-note .callout-label { color: var(--md-link); }
+.callout-tip { border-left-color: var(--md-success); }
+.callout-tip .callout-label { color: var(--md-success); }
+.callout-important { border-left-color: var(--md-accent); }
+.callout-warning { border-left-color: var(--md-warn); }
+.callout-warning .callout-label { color: var(--md-warn); }
+.callout-caution { border-left-color: var(--md-warn); }
+.callout-caution .callout-label { color: var(--md-warn); }
+.callout p:last-child { margin-bottom: 0; }
+.callout p:first-child { margin-top: 0; }
+
+/* TOC */
+nav.toc { font-size: 0.9375rem; line-height: 1.5; }
+nav.toc ol, nav.toc ul { padding-left: 1.25em; }
+nav.toc a {
+    color: var(--md-text-muted);
+    text-decoration: none;
+    display: block;
+    padding: 0.15em 0.25em;
+    border-radius: 3px;
+}
+nav.toc a:hover { color: var(--md-link); background: var(--md-accent-soft); }
+nav.toc a[aria-current="location"] {
+    color: var(--md-accent);
+    font-weight: 600;
+    background: var(--md-accent-soft);
+}
+
+/* TOC variants */
+body.toc-sticky-sidebar { display: grid; grid-template-columns: 220px 1fr; gap: 2.5rem; max-width: 1200px; }
+body.toc-sticky-sidebar nav.toc {
+    position: sticky;
+    top: 1.5rem;
+    align-self: start;
+    max-height: calc(100vh - 3rem);
+    overflow-y: auto;
+    border-right: 1px solid var(--md-border);
+    padding-right: 1rem;
+}
+@media (max-width: 800px) {
+    body.toc-sticky-sidebar { display: block; }
+    body.toc-sticky-sidebar nav.toc { position: static; border-right: none; max-height: none; margin-bottom: 2rem; }
+}
+
+body.toc-collapsible-top nav.toc {
+    background: var(--md-surface);
+    border: 1px solid var(--md-border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 2rem;
+}
+body.toc-collapsible-top nav.toc summary { cursor: pointer; font-weight: 600; font-family: var(--md-font-heading); }
+
+body.toc-none nav.toc { display: none; }
+
+/* Search */
+.md-search {
+    position: sticky;
+    top: 0;
+    background: var(--md-bg);
+    padding: 0.5rem 0 0.75rem;
+    z-index: 10;
+    border-bottom: 1px solid var(--md-border);
+    margin-bottom: 1rem;
+}
+.md-search input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--md-border);
+    border-radius: 6px;
+    font-size: 0.9375rem;
+    background: var(--md-surface);
+    color: var(--md-text);
+    font-family: inherit;
+}
+.md-search input:focus {
+    outline: 2px solid var(--md-accent);
+    outline-offset: 2px;
+}
+main section[hidden] { display: none; }
+
+/* Code-copy button */
+.code-copy {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: var(--md-surface);
+    color: var(--md-text-muted);
+    border: 1px solid var(--md-border);
+    border-radius: 5px;
+    padding: 0.2em 0.5em;
+    font-size: 0.75rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    font-family: inherit;
+}
+pre:hover .code-copy { opacity: 1; }
+.code-copy:hover { color: var(--md-text); background: var(--md-bg); }
+.code-copy.copied { color: var(--md-success); }
+
+/* Footer */
+footer.md-footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--md-border);
+    color: var(--md-text-muted);
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+footer.md-footer img { max-height: 24px; max-width: 120px; }
+
+@media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+    html { scroll-behavior: auto; }
+}
+
+        body.style-technical { max-width: 960px; line-height: 1.6; }
+        body.style-technical main h2 { font-size: calc(1rem * var(--md-scale) * var(--md-scale)); margin-top: 2.5rem; }
+        body.style-technical pre { font-size: 0.875rem; line-height: 1.5; }
+    </style>
+</head>
+<body class="style-technical toc-sticky-sidebar">
+<nav class="toc" aria-label="Table of contents">
+<ol>
+<li><a href="#1-project-overview-context">1. Project Overview &amp; Context</a></li>
+<ol>
+<li><a href="#core-functional-domains">Core Functional Domains</a></li>
+</ol>
+<li><a href="#2-quick-start-local-setup">2. Quick Start &amp; Local Setup</a></li>
+<ol>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#setup-commands">Setup Commands</a></li>
+<li><a href="#verification-checklist">Verification Checklist</a></li>
+</ol>
+<li><a href="#3-technology-stack-design-decisions">3. Technology Stack &amp; Design Decisions</a></li>
+<li><a href="#4-core-architecture-application-lifecycle">4. Core Architecture &amp; Application Lifecycle</a></li>
+<ol>
+<li><a href="#1-state-management-jscorestatejs">1. State Management (`js/core/state.js`)</a></li>
+<li><a href="#2-navigation-router-jscorerouterjs">2. Navigation &amp; Router (`js/core/router.js`)</a></li>
+<li><a href="#3-synchronization-offline-queue-jscoreofflinejs">3. Synchronization &amp; Offline Queue (`js/core/offline.js`)</a></li>
+</ol>
+<li><a href="#5-channel-catalog-55-channels-across-7-categories">5. Channel Catalog (55+ Channels Across 7 Categories)</a></li>
+<ol>
+<li><a href="#category-1-pinned-always-at-top">Category 1: 📌 Pinned (Always at Top)</a></li>
+<li><a href="#category-2-vut-fit-koleje-university-dorm-life">Category 2: 🎓 VUT FIT &amp; KOLEJE (University &amp; Dorm Life)</a></li>
+<li><a href="#category-3-zdrav-fitness">Category 3: 🌿 ZDRAVÍ &amp; FITNESS</a></li>
+<li><a href="#category-4-n-svt-pbh">Category 4: 💖 NÁŠ SVĚT &amp; PŘÍBĚH</a></li>
+<li><a href="#category-5-zbava-mdia">Category 5: 🎮 ZÁBAVA &amp; MÉDIA</a></li>
+<li><a href="#category-6-archiv-default-collapsed">Category 6: 📦 ARCHIV (Default Collapsed)</a></li>
+<li><a href="#category-7-systm-info-default-collapsed">Category 7: ⚙️ SYSTÉM &amp; INFO (Default Collapsed)</a></li>
+</ol>
+<li><a href="#6-database-schema-security-supabase">6. Database Schema &amp; Security (Supabase)</a></li>
+<ol>
+<li><a href="#security-archetypes">Security Archetypes:</a></li>
+</ol>
+<li><a href="#7-developer-cookbook-common-recipes">7. Developer Cookbook &amp; Common Recipes</a></li>
+<ol>
+<li><a href="#recipe-a-adding-a-new-channel-feature">Recipe A: Adding a New Channel / Feature</a></li>
+<li><a href="#recipe-b-creating-a-database-migration">Recipe B: Creating a Database Migration</a></li>
+<li><a href="#recipe-c-running-tests">Recipe C: Running Tests</a></li>
+</ol>
+<li><a href="#8-troubleshooting-debugging-guide">8. Troubleshooting &amp; Debugging Guide</a></li>
+<li><a href="#9-role-specific-guidance">9. Role-Specific Guidance</a></li>
+</ol>
+</nav>
+<main>
+<div class="md-search"><input type="search" id="md-search-input" placeholder="Filter sections… (Esc to clear)" aria-label="Filter document sections"></div>
+<h1 id="kiscord-developer-onboarding-architecture-guide">Kiscord Developer Onboarding &amp; Architecture Guide</h1>
+<blockquote><strong>Comprehensive engineering guide and onboarding reference for Kiscord (Project-K).</strong>  <br>This interactive document guides engineers, architects, and contributors through local setup, system architecture, Supabase database modeling, and developer workflows.</blockquote>
+<hr>
+<h2 id="1-project-overview-context">1. Project Overview &amp; Context</h2>
+<p>Kiscord is a highly customized, private <strong>Progressive Web App (PWA)</strong> styled after Discord (dark mode, glassmorphism, channel sidebar, notification chimes, and haptics). It is built for two primary users (<strong>Josef &amp; Klárka</strong>) as a central companion application for daily life.</p>
+<h3 id="core-functional-domains">Core Functional Domains</h3>
+<ol><li><strong>Daily Routine &amp; Health</strong>: Hydration tracker (8 droplets), sleep logging with active session timers, mood tracking with reactive SVG sunflowers, and daily notes.</li><li><strong>University Studies (VUT FIT &amp; Dorm Life)</strong>: Timetables with room hints, WIS points tracker, assignment deadlines, floor laundry room machine bookings, room packing checklist, and personal finances.</li><li><strong>Fitness Ecosystem (Gym Tracker)</strong>: 15-module gym tracker featuring a floating active workout HUD, rest timer with sound/haptics, 100+ animated GIF exercises, 1RM progression charts, anatomical muscle volume heatmaps, and body measurement tracking.</li><li><strong>Relationship, Dreams &amp; Memories</strong>: Couple coupon shop redeemable with Love Coins, interactive date map (Leaflet), shared bucket list, photo timeline, and time-locked message capsules.</li><li><strong>Entertainment &amp; Arcade</strong>: Media library with TMDB integration, mutual match discovery (<em>Spolu-seznam</em>), dedicated movie/series/game Tinder Matchers, and two-player Arcade Hub (Draw Duel, Couple Quizzes, Who Is More Likely To?, Photo Puzzle, Tetris War).</li></ol>
+<hr>
+<h2 id="2-quick-start-local-setup">2. Quick Start &amp; Local Setup</h2>
+<p>Setting up a fresh development environment takes under 5 minutes.</p>
+<h3 id="prerequisites">Prerequisites</h3>
+<table><thead><tr><th class="align-left">Tool</th><th class="align-left">Required Version</th><th class="align-left">Purpose</th></tr></thead><tbody><tr><td class="align-left"><strong>Node.js</strong></td><td class="align-left"><code>&gt;= 20.0.0</code> (LTS)</td><td class="align-left">JavaScript runtime environment</td></tr><tr><td class="align-left"><strong>npm</strong></td><td class="align-left"><code>&gt;= 10.0.0</code></td><td class="align-left">Package and script manager</td></tr><tr><td class="align-left"><strong>Python</strong></td><td class="align-left"><code>&gt;= 3.10</code></td><td class="align-left">Documentation and md-document tooling</td></tr><tr><td class="align-left"><strong>Modern Browser</strong></td><td class="align-left">Chrome / Edge / Safari / Firefox</td><td class="align-left">Testing PWA and View Transitions API</td></tr></tbody></table>
+<h3 id="setup-commands">Setup Commands</h3>
+<pre><button class="code-copy" type="button" aria-label="Copy code">Copy</button><code class="language-bash"># 1. Clone the repository
+git clone https://github.com/josefmvalek/project-k.git
+cd project-k
+
+# 2. Install dependencies
+npm install
+
+# 3. Start local development server (Vite)
+npm run dev
+
+## 4. Run test suites &amp; type check
+npm run test:run
+npm run typecheck</code></pre>
+<aside class="callout callout-note" role="note"><div class="callout-label"><span class="callout-icon" aria-hidden="true">i</span>NOTE</div><div class="callout-body">The development server runs on <code>http://localhost:5173</code>. Thanks to Vite Hot Module Replacement (HMR), edits to JavaScript, CSS, and HTML are reflected instantly.</div></aside>
+<h3 id="verification-checklist">Verification Checklist</h3>
+<ul><li>[ ] Dev server is running on <code>http://localhost:5173</code> without terminal or browser console errors.</li><li>[ ] All 19 test suites (131 tests) pass cleanly via <code>npm run test:run</code>.</li><li>[ ] Static type check passes with 0 errors via <code>npm run typecheck</code>.</li><li>[ ] Navigating to the page renders the Discord-themed dashboard and sidebar.</li><li>[ ] DevTools $\rightarrow$ Application confirms the Service Worker is registered and IndexedDB (<code>kiscord_db</code>) holds cached state.</li></ul>
+<hr>
+<h2 id="3-technology-stack-design-decisions">3. Technology Stack &amp; Design Decisions</h2>
+<p>Kiscord intentionally avoids heavy frontend frameworks (React, Angular). Instead, it prioritizes maximum speed, zero runtime overhead, and clean vanilla JavaScript.</p>
+<table><thead><tr><th class="align-left">Layer</th><th class="align-left">Technology</th><th class="align-left">Rationale</th></tr></thead><tbody><tr><td class="align-left"><strong>Core Frontend</strong></td><td class="align-left">Vanilla JavaScript (ES6+ Modules)</td><td class="align-left">Zero framework runtime cost, instant DOM manipulation, complete memory control</td></tr><tr><td class="align-left"><strong>Type Safety</strong></td><td class="align-left">JSDoc + Supabase TypeScript Types</td><td class="align-left">Compile-time validation without bundling step (<code>tsc -p jsconfig.json</code>)</td></tr><tr><td class="align-left"><strong>Styling &amp; Theming</strong></td><td class="align-left">CSS Variables + Tailwind CSS</td><td class="align-left">Authentic Discord Dark theme, 7 switchable themes, glassmorphism blur effects</td></tr><tr><td class="align-left"><strong>Build Tooling</strong></td><td class="align-left">Vite 6</td><td class="align-left">Lightning-fast startup, ES module dynamic code splitting, rapid HMR</td></tr><tr><td class="align-left"><strong>Backend &amp; DB</strong></td><td class="align-left">Supabase (PostgreSQL 15+)</td><td class="align-left">Row Level Security (RLS), Realtime WebSockets, Storage buckets, PL/pgSQL RPCs</td></tr><tr><td class="align-left"><strong>Local Storage</strong></td><td class="align-left">IndexedDB (<code>js/core/idb.js</code>)</td><td class="align-left">Asynchronous, non-blocking, multi-gigabyte capacity for state &amp; binary assets</td></tr><tr><td class="align-left"><strong>PWA &amp; Offline</strong></td><td class="align-left">Service Worker + Cache API</td><td class="align-left">3-tier caching hierarchy, zero-data-loss offline sync queue</td></tr><tr><td class="align-left"><strong>Unit Testing</strong></td><td class="align-left">Vitest + Happy-DOM</td><td class="align-left">High-speed in-memory testing without heavy browser process overhead</td></tr><tr><td class="align-left"><strong>E2E Testing</strong></td><td class="align-left">Playwright</td><td class="align-left">Multi-browser end-to-end automation for critical user journeys</td></tr><tr><td class="align-left"><strong>Hosting &amp; CI/CD</strong></td><td class="align-left">Vercel</td><td class="align-left">Instant deployments and branch previews on every push</td></tr></tbody></table>
+<hr>
+<h2 id="4-core-architecture-application-lifecycle">4. Core Architecture &amp; Application Lifecycle</h2>
+<p>The application operates as a <strong>Single Page Application (SPA)</strong> with dynamic on-demand module loading.</p>
+<pre><button class="code-copy" type="button" aria-label="Copy code">Copy</button><code class="language-text">                    ┌────────────────────────┐
+                    │    index.html Shell    │
+                    └───────────┬────────────┘
+                                │ (Initial Load)
+                                ▼
+                    ┌────────────────────────┐
+                    │     js/app.js Init     │
+                    └───────────┬────────────┘
+                                │
+        ┌───────────────────────┼───────────────────────┐
+        ▼                       ▼                       ▼
+┌───────────────┐       ┌───────────────┐       ┌───────────────┐
+│  js/core/     │       │  js/core/     │       │  js/core/     │
+│  auth.js      │       │  state.js     │       │  router.js    │
+└───────┬───────┘       └───────┬───────┘       └───────┬───────┘
+        │                       │ (IndexedDB Cache)     │
+        │                       ▼                       ▼
+        │               ┌───────────────┐       ┌───────────────┐
+        │               │ js/core/      │       │ Dynamic       │
+        │               │ idb.js        │       │ Module Import │
+        │               └───────────────┘       └───────────────┘
+        │                                               │
+        └───────────────────────┬───────────────────────┘
+                                ▼
+                    ┌────────────────────────┐
+                    │  Render Channel to DOM │
+                    └───────────────┘────────┘</code></pre>
+<h3 id="1-state-management-jscorestatejs">1. State Management (<code>js/core/state.js</code>)</h3>
+<ul><li>Single global reactive container <code>state</code>.</li><li><strong>Pub/Sub Event Bus (<code>stateEvents</code>)</strong>: UI modules register listeners (e.g. <code>stateEvents.on('health', callback)</code>).</li><li><strong>High-Capacity Cache Persistence</strong>: Automatically saves state snapshots asynchronously to <strong>IndexedDB</strong> (<code>kiscord_db</code> $\rightarrow$ <code>keyval</code> store).</li><li><strong>SWR (Stale-While-Revalidate)</strong>: Renders cached data immediately while fetching fresh records in the background (<code>initializeState</code>).</li></ul>
+<h3 id="2-navigation-router-jscorerouterjs">2. Navigation &amp; Router (<code>js/core/router.js</code>)</h3>
+<ul><li><code>switchChannel(channelId)</code> orchestrates:</li></ul>
+<p>1. Invoking cleanup callbacks to terminate open WebSockets and timers. 2. Pushing records to <code>history.pushState</code> for browser navigation. 3. Triggering lazy data fetchers in <code>loaders.js</code>. 4. Dynamically importing module chunks via <code>import()</code>. 5. Rendering UI into <code>#main-content</code> using the <strong>View Transitions API</strong>. 6. Closing the mobile drawer automatically.</p>
+<h3 id="3-synchronization-offline-queue-jscoreofflinejs">3. Synchronization &amp; Offline Queue (<code>js/core/offline.js</code>)</h3>
+<ul><li>Safe mutation wrappers: <code>safeUpsert()</code>, <code>safeInsert()</code>, and <code>safeDelete()</code>.</li><li>If offline, mutations are queued in <code>kiscord_sync_queue</code> (persisted in IndexedDB).</li><li>When <code>window.addEventListener('online')</code> fires, the queue is processed sequentially and pushed to Supabase.</li></ul>
+<hr>
+<h2 id="5-channel-catalog-55-channels-across-7-categories">5. Channel Catalog (55+ Channels Across 7 Categories)</h2>
+<h3 id="category-1-pinned-always-at-top">Category 1: 📌 Pinned (Always at Top)</h3>
+<ul><li><strong><code>#dashboard</code></strong> (<code>dashboard.js</code>): Personal overview, Sunflower mood sync, hydration (8 water droplets), sleep timer and wake tracker, Fact of the Day, and quick notes.</li><li><strong><code>#kalendář</code></strong> (<code>calendar.js</code>): Monthly calendar combining dates, university milestones, and memory highlights with mood heatmap shading.</li></ul>
+<h3 id="category-2-vut-fit-koleje-university-dorm-life">Category 2: 🎓 VUT FIT &amp; KOLEJE (University &amp; Dorm Life)</h3>
+<ul><li><strong><code>#rozvrh</code></strong> (<code>schedule.js</code>): Weekly timetable, campus building room hints, and joint free slot calculator.</li><li><strong><code>#studijní-plán</code></strong> (<code>studyPlanner.js</code>): WIS point tracking, credit requirements, and exam countdowns.</li><li><strong><code>#koleje-brno</code></strong> (<code>dormHub.js</code>): Floor laundry machine booking tracker, dorm packing checklist, and cafeteria menus.</li><li><strong><code>#finance</code></strong> (<code>financeTracker.js</code>): Personal Brno budget + savings goal piggy bank (<em>Kasička</em>).</li><li><strong><code>#počítač</code></strong> (<code>laptopComparison.js</code>): Computer specification comparison guide for CS students.</li></ul>
+<h3 id="category-3-zdrav-fitness">Category 3: 🌿 ZDRAVÍ &amp; FITNESS</h3>
+<ul><li><strong><code>#posilovna</code></strong> (<code>gym/</code>): 15 submodules (active HUD, rest timer, 100+ animated GIF exercises, 1RM progression charts, muscle volume heatmap, couple gym streak, annual wrapped).</li><li><strong><code>#návyky</code></strong> (<code>habits.js</code>): Daily ritual tracking with Love Coins rewards.</li><li><strong><code>#regenerace</code></strong> (<code>regenerace/</code>): Evidence-based supplement guide and recovery science.</li></ul>
+<h3 id="category-4-n-svt-pbh">Category 4: 💖 NÁŠ SVĚT &amp; PŘÍBĚH</h3>
+<ul><li><strong><code>#obchůdek</code></strong> (<code>loveShop.js</code>): Couple coupon shop and redeemed voucher inventory pantry.</li><li><strong><code>#plánovač-rande</code></strong> (<code>map.js</code>): Interactive Leaflet map with pinned favorite date spots and routes.</li><li><strong><code>#bucket-list</code></strong> (<code>bucketlist.js</code>): Shared dream bucket list with priorities and photo uploads.</li><li><strong><code>#společné-questy</code></strong> (<code>quests.js</code>): Cooperative missions and milestones.</li><li><strong><code>#denní-otázky</code></strong> (<code>dailyQuestions.js</code>) &amp; <strong><code>#témata</code></strong> (<code>topics.js</code>): Daily conversational prompts and deep-talk card decks.</li><li><strong><code>#timeline</code></strong> (<code>timeline.js</code>): Photo memory timeline with lightbox gallery.</li><li><strong><code>#dopisy</code></strong> (<code>letters.js</code>): Time-locked message capsules for future anniversaries.</li><li><strong><code>#achievementy</code></strong> (<code>achievements.js</code>): Gamified relationship trophies.</li></ul>
+<h3 id="category-5-zbava-mdia">Category 5: 🎮 ZÁBAVA &amp; MÉDIA</h3>
+<ul><li><strong><code>#knihovna</code></strong> (<code>library.js</code>): Movies, series, and games catalogue with TMDB search, game modes (Staples vs Backlog), and magnet links.</li><li><strong><code>#watchlist</code></strong> (<code>watchlist.js</code>): Mutual matches (<em>Spolu-seznam</em>), personal wishlists, <strong>Tinder Matcher</strong>, and <strong>Dice of Chance</strong>.</li><li><strong><code>#gamesky</code></strong> (<code>gamesHub.js</code>): Central Arcade Hub unifying Draw Duel, Who Is More Likely To?, Couple Quizzes, Photo Puzzle, Tetris War Tracker, Tier Lists, and Fact Encyclopedia.</li><li><strong><code>#music-bot</code></strong> (<code>static.js</code>): Shared playlist and web audio player.</li></ul>
+<h3 id="category-6-archiv-default-collapsed">Category 6: 📦 ARCHIV (Default Collapsed)</h3>
+<ul><li><strong><code>#rakousko-kasička</code></strong> (<code>kasicka.js</code>) &amp; <strong><code>#rakousko-info</code></strong> (<code>austriaInfo.js</code>): Alpine work earnings archive and seasonal work guidelines.</li><li><strong><code>#plánovač-směn</code></strong> (<code>shifts.js</code>) &amp; <strong><code>#rakouská-němčina</code></strong> (<code>austrianGerman.js</code>): Work shift scheduler and dialect phrasebook.</li><li>**<code>#matura-*</code>** (<code>matura.js</code>): High school graduation study tracker and knowledge base (Czech literature, IT systems, Pomodoro timer).</li></ul>
+<h3 id="category-7-systm-info-default-collapsed">Category 7: ⚙️ SYSTÉM &amp; INFO (Default Collapsed)</h3>
+<ul><li><strong><code>#statistiky</code></strong> (<code>stats.js</code>): Relationship data analytics.</li><li><strong><code>#nastavení</code></strong> (<code>settings.js</code>): 7 visual themes switcher (Default Dark, Light, Valentines, Christmas, Tetris, Forest, Gold), audio/haptics, and cache tools.</li><li><strong><code>#changelog</code></strong> (<code>changelog.js</code>): Release version history.</li></ul>
+<hr>
+<h2 id="6-database-schema-security-supabase">6. Database Schema &amp; Security (Supabase)</h2>
+<p>Database operations run on PostgreSQL 15+ in Supabase with strict <strong>Row Level Security (RLS)</strong> enforcement.</p>
+<pre><button class="code-copy" type="button" aria-label="Copy code">Copy</button><code class="language-text">                    ┌─────────────────────────┐
+                    │      auth.users         │
+                    └────────────┬────────────┘
+                                 │
+                                 ▼
+                    ┌─────────────────────────┐
+                    │     public.profiles     │
+                    └────────────┬────────────┘
+                                 │
+        ┌────────────────────────┼────────────────────────┐
+        ▼                        ▼                        ▼
+┌──────────────┐         ┌──────────────┐         ┌──────────────┐
+│ health_data  │         │ gym_workouts │         │app_finances  │
+└──────────────┘         └───────┬──────┘         └──────────────┘
+                                 │
+                                 ▼
+                         ┌──────────────┐
+                         │   gym_sets   │
+                         └──────────────┘</code></pre>
+<h3 id="security-archetypes">Security Archetypes:</h3>
+<ol><li><strong>Private Personal Tables</strong> (<code>app_finances</code>, <code>health_data</code>, <code>gym_body_measurements</code>):</li></ol>
+<p>- Policy: <code>auth.uid() = user_id</code>. User records remain completely isolated.</p>
+<ol><li><strong>Shared Couple Tables</strong> (<code>library_content</code>, <code>timeline_events</code>, <code>planned_dates</code>, <code>dorm_checklist</code>):</li></ol>
+<p>- Policy: <code>authenticated</code> users have full read and write access.</p>
+<hr>
+<h2 id="7-developer-cookbook-common-recipes">7. Developer Cookbook &amp; Common Recipes</h2>
+<h3 id="recipe-a-adding-a-new-channel-feature">Recipe A: Adding a New Channel / Feature</h3>
+<ol><li>Create <code>js/modules/myFeature.js</code>:</li></ol>
+<p>```javascript import { state, stateEvents } from '../core/state.js'; import { safeUpsert } from '../core/offline.js';</p>
+<p>export async function renderMyFeature() { const root = document.getElementById('main-content'); root.innerHTML = <code> &lt;div class="channel-header"&gt; &lt;h2&gt;&lt;i class="fa-solid fa-star text-accent"&gt;&lt;/i&gt; My New Feature&lt;/h2&gt; &lt;/div&gt; &lt;div class="card p-4"&gt;Feature content goes here...&lt;/div&gt; </code>; } ```</p>
+<ol><li>Register in <code>js/core/router.js</code>:</li></ol>
+<p>``<code>javascript export const moduleMap = { // ... existing modules ... 'my-feature': () =&gt; import('../modules/myFeature.js'), }; </code>``</p>
+<ol><li>Add channel definition to <code>channelCategories</code> in <code>js/core/router.js</code>.</li></ol>
+<h3 id="recipe-b-creating-a-database-migration">Recipe B: Creating a Database Migration</h3>
+<ol><li>Create a migration file in <code>supabase/migrations/YYYYMMDD_feature_name.sql</code>:</li></ol>
+<p>```sql CREATE TABLE public.my_custom_table ( id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE, title TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW() );</p>
+<p>ALTER TABLE public.my_custom_table ENABLE ROW LEVEL SECURITY;</p>
+<p>CREATE POLICY "Allow authenticated" ON public.my_custom_table FOR ALL TO authenticated USING (true) WITH CHECK (true); ```</p>
+<h3 id="recipe-c-running-tests">Recipe C: Running Tests</h3>
+<pre><button class="code-copy" type="button" aria-label="Copy code">Copy</button><code class="language-bash"># Run unit and integration tests
+npm run test:run
+
+# Run interactive test watcher
+npm test
+
+# Run Playwright E2E tests
+npm run test:e2e</code></pre>
+<hr>
+<h2 id="8-troubleshooting-debugging-guide">8. Troubleshooting &amp; Debugging Guide</h2>
+<aside class="callout callout-important" role="note"><div class="callout-label"><span class="callout-icon" aria-hidden="true">!</span>IMPORTANT</div><div class="callout-body"><strong>Common developer issues and fixes:</strong></div></aside>
+<ol><li><strong>Client displays stale build after deployment</strong>:</li></ol>
+<p>- Increment <code>CACHE_NAME</code> in <code>public/sw.js</code>. - In the application, open <code>#nastavení</code> and trigger <strong>"Clear Cache and Reload"</strong>.</p>
+<ol><li><strong>Offline queue failed to synchronize</strong>:</li></ol>
+<p>- Inspect <code>localStorage.getItem('kiscord_sync_queue')</code> in DevTools. - Check console logs for database constraint errors.</p>
+<ol><li><strong>RLS permission denied (403)</strong>:</li></ol>
+<p>- Ensure the user is logged in with a valid session via <code>supabase.auth.getSession()</code>. - Verify that an active policy exists on the table for role <code>authenticated</code>.</p>
+<hr>
+<h2 id="9-role-specific-guidance">9. Role-Specific Guidance</h2>
+<ul><li><strong>👶 Junior Developer</strong>: Review <code>tests/unit/</code> to understand module APIs and start with UI component tweaks.</li><li><strong>🧑‍💻 Senior Architect</strong>: Inspect database indexes in <code>supabase/migrations/</code> and enforce cleanup hook discipline in <code>router.js</code>.</li><li><strong>🤝 Contributor</strong>: Always verify that <code>npm run test:run</code> passes before submitting PRs, following conventional commits (<code>feat:</code>, <code>fix:</code>, <code>docs:</code>).</li></ul>
+<hr>
+<p><em>Documentation compiled for project Kiscord.</em></p>
+<footer class="md-footer"><span style="margin-left:auto">Generated by markdown-html</span></footer>
+</main>
+<script defer src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script id="md-document-interactivity-v1">
+(function () {
+  "use strict";
+  var ENABLED = {"search": true,"copycode": true,"smoothscroll": true,"scrollspy": true};
+
+  // ----- Section grouping (used by search) -----
+  // Each H2 + everything until the next H2 forms a "section" for filter purposes.
+  function groupSections(root) {
+    var groups = [];
+    var current = null;
+    Array.prototype.forEach.call(root.children, function (el) {
+      if (el.tagName === "H2") {
+        if (current) groups.push(current);
+        current = { heading: el, elements: [el], text: el.textContent.toLowerCase() };
+      } else if (current) {
+        current.elements.push(el);
+        current.text += " " + (el.textContent || "").toLowerCase();
+      }
+    });
+    if (current) groups.push(current);
+    return groups;
+  }
+
+  // ----- Search -----
+  function wireSearch(root) {
+    var input = document.getElementById("md-search-input");
+    if (!input || !ENABLED.search) return;
+    var groups = groupSections(root);
+    function apply() {
+      var q = input.value.trim().toLowerCase();
+      groups.forEach(function (g) {
+        var visible = !q || g.text.indexOf(q) !== -1;
+        g.elements.forEach(function (el) { el.hidden = !visible; });
+      });
+    }
+    input.addEventListener("input", apply);
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { input.value = ""; apply(); }
+    });
+  }
+
+  // ----- Code-copy -----
+  function wireCopy() {
+    if (!ENABLED.copycode) return;
+    Array.prototype.forEach.call(
+      document.querySelectorAll("pre .code-copy"),
+      function (btn) {
+        btn.addEventListener("click", function () {
+          var pre = btn.parentElement;
+          var code = pre.querySelector("code");
+          if (!code) return;
+          var text = code.textContent;
+          var done = function () {
+            btn.classList.add("copied");
+            var original = btn.textContent;
+            btn.textContent = "Copied";
+            setTimeout(function () {
+              btn.classList.remove("copied");
+              btn.textContent = original === "Copied" ? "Copy" : original;
+            }, 1200);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done, function () {
+              // Fallback to execCommand on older browsers
+              fallbackCopy(text);
+              done();
+            });
+          } else {
+            fallbackCopy(text);
+            done();
+          }
+        });
+      }
+    );
+  }
+
+  function fallbackCopy(text) {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  // ----- Smooth-scroll for TOC links -----
+  function wireSmoothScroll() {
+    if (!ENABLED.smoothscroll) return;
+    Array.prototype.forEach.call(
+      document.querySelectorAll("nav.toc a[href^=\"#\"]"),
+      function (a) {
+        a.addEventListener("click", function (e) {
+          var id = a.getAttribute("href").slice(1);
+          var target = document.getElementById(id);
+          if (!target) return;
+          e.preventDefault();
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+          history.replaceState(null, "", "#" + id);
+        });
+      }
+    );
+  }
+
+  // ----- Scrollspy -----
+  function wireScrollSpy() {
+    if (!ENABLED.scrollspy || !("IntersectionObserver" in window)) return;
+    var tocLinks = {};
+    Array.prototype.forEach.call(
+      document.querySelectorAll("nav.toc a[href^=\"#\"]"),
+      function (a) {
+        var id = a.getAttribute("href").slice(1);
+        tocLinks[id] = a;
+      }
+    );
+    var headings = document.querySelectorAll("main h2[id], main h3[id]");
+    if (!headings.length) return;
+
+    function clearActive() {
+      Object.keys(tocLinks).forEach(function (k) {
+        tocLinks[k].removeAttribute("aria-current");
+      });
+    }
+
+    var observer = new IntersectionObserver(function (entries) {
+      // Pick the topmost entry currently intersecting
+      var visible = entries.filter(function (e) { return e.isIntersecting; });
+      if (visible.length === 0) return;
+      visible.sort(function (a, b) { return a.boundingClientRect.top - b.boundingClientRect.top; });
+      var id = visible[0].target.id;
+      var link = tocLinks[id];
+      if (link) { clearActive(); link.setAttribute("aria-current", "location"); }
+    }, { rootMargin: "-20% 0px -70% 0px", threshold: 0 });
+
+    Array.prototype.forEach.call(headings, function (h) { observer.observe(h); });
+  }
+
+  // ----- Boot -----
+  function init() {
+    var main = document.querySelector("main");
+    if (!main) return;
+    wireSearch(main);
+    wireCopy();
+    wireSmoothScroll();
+    wireScrollSpy();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

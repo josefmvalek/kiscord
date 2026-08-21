@@ -78,31 +78,55 @@ async function fetchQuestProgress() {
         
         console.log(`[Quests] Fetching for prefix: ${monthPrefix}`);
 
-        const [
-            { data: waterData },
-            { data: sleepData },
-            { data: bucketData },
-            { data: movementData },
-            { data: moodData },
-            { data: timelineData },
-            { data: datesData },
-            { data: sunlightData },
-            { data: tetrisData },
-            { data: questionsData },
-            { data: definitionData }
-        ] = await Promise.all([
-            supabase.rpc('get_shared_water_stats', { month_prefix: monthPrefix }),
-            supabase.rpc('get_shared_sleep_sync', { min_hours: 7, month_prefix: monthPrefix }),
-            supabase.from('bucket_list').select('id', { count: 'exact' }).eq('is_completed', true),
-            supabase.rpc('get_shared_movement_stats', { month_prefix: monthPrefix }),
-            supabase.rpc('get_shared_mood_high_stats', { month_prefix: monthPrefix }),
-            supabase.rpc('get_new_timeline_stats', { month_prefix: monthPrefix }),
-            supabase.rpc('get_completed_dates_stats', { month_prefix: monthPrefix }),
-            supabase.rpc('get_sunlight_sent_stats', { month_prefix: monthPrefix }),
-            supabase.rpc('get_tetris_total_score'),
-            supabase.rpc('get_daily_questions_stats', { month_prefix: monthPrefix }),
+        // Fetch all quest statistics and active definitions in parallel (2 requests instead of 11)
+        let stats = null;
+        const [allStatsRes, questsRes] = await Promise.all([
+            supabase.rpc('get_all_quest_stats', { month_prefix: monthPrefix }),
             supabase.from('coop_quests').select('*').eq('is_active', true)
         ]);
+
+        const definitionData = questsRes.data;
+
+        if (allStatsRes.data && !allStatsRes.error) {
+            stats = allStatsRes.data;
+        } else {
+            console.warn('[Quests] Consolidated RPC failed, falling back to individual queries:', allStatsRes?.error);
+            const [
+                { data: waterData },
+                { data: sleepData },
+                { data: bucketData },
+                { data: movementData },
+                { data: moodData },
+                { data: timelineData },
+                { data: datesData },
+                { data: sunlightData },
+                { data: tetrisData },
+                { data: questionsData }
+            ] = await Promise.all([
+                supabase.rpc('get_shared_water_stats', { month_prefix: monthPrefix }),
+                supabase.rpc('get_shared_sleep_sync', { min_hours: 7, month_prefix: monthPrefix }),
+                supabase.from('bucket_list').select('id', { count: 'exact' }).eq('is_completed', true),
+                supabase.rpc('get_shared_movement_stats', { month_prefix: monthPrefix }),
+                supabase.rpc('get_shared_mood_high_stats', { month_prefix: monthPrefix }),
+                supabase.rpc('get_new_timeline_stats', { month_prefix: monthPrefix }),
+                supabase.rpc('get_completed_dates_stats', { month_prefix: monthPrefix }),
+                supabase.rpc('get_sunlight_sent_stats', { month_prefix: monthPrefix }),
+                supabase.rpc('get_tetris_total_score'),
+                supabase.rpc('get_daily_questions_stats', { month_prefix: monthPrefix })
+            ]);
+            stats = {
+                sum_water: parseInt(waterData) || 0,
+                both_sleep: parseInt(sleepData) || 0,
+                count_bucket: bucketData?.count || 0,
+                count_shared_movement: parseInt(movementData) || 0,
+                count_shared_mood_high: parseInt(moodData) || 0,
+                count_new_timeline: parseInt(timelineData) || 0,
+                count_completed_dates: parseInt(datesData) || 0,
+                count_sunlight_sent: parseInt(sunlightData) || 0,
+                sum_tetris_score: parseInt(tetrisData) || 0,
+                count_daily_questions: parseInt(questionsData) || 0
+            };
+        }
 
         const austriaQuests = [
             {
@@ -178,16 +202,16 @@ async function fetchQuestProgress() {
         }
 
         questData = {
-            sum_water: parseInt(waterData) || 0,
-            both_sleep: parseInt(sleepData) || 0,
-            count_bucket: bucketData?.count || 0,
-            count_shared_movement: parseInt(movementData) || 0,
-            count_shared_mood_high: parseInt(moodData) || 0,
-            count_new_timeline: parseInt(timelineData) || 0,
-            count_completed_dates: parseInt(datesData) || 0,
-            count_sunlight_sent: parseInt(sunlightData) || 0,
-            sum_tetris_score: parseInt(tetrisData) || 0,
-            count_daily_questions: parseInt(questionsData) || 0,
+            sum_water: parseInt(stats.sum_water) || 0,
+            both_sleep: parseInt(stats.both_sleep) || 0,
+            count_bucket: parseInt(stats.count_bucket) || 0,
+            count_shared_movement: parseInt(stats.count_shared_movement) || 0,
+            count_shared_mood_high: parseInt(stats.count_shared_mood_high) || 0,
+            count_new_timeline: parseInt(stats.count_new_timeline) || 0,
+            count_completed_dates: parseInt(stats.count_completed_dates) || 0,
+            count_sunlight_sent: parseInt(stats.count_sunlight_sent) || 0,
+            sum_tetris_score: parseInt(stats.sum_tetris_score) || 0,
+            count_daily_questions: parseInt(stats.count_daily_questions) || 0,
             austria_euro: totalShifts * 100,
             austria_km: totalKm,
             austria_deutsch: deutschProgress

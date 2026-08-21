@@ -386,30 +386,23 @@ window.deleteShift = async () => {
 
     const confirmed = await showConfirmDialog('Opravdu chceš smazat tuto směnu?');
     if (!confirmed) return;
-    isSaving = true;
     triggerHaptic('medium');
 
-    try {
-        // Delete shift from Supabase
-        const { error } = await supabase.from('brigade_shifts').delete().eq('id', myShift.id);
-        if (error) throw error;
-
-        // Clean local state
-        if (isMeJose) {
-            delete state.shifts[activeModalDate].jose;
-        } else {
-            delete state.shifts[activeModalDate].klarka;
-        }
-
-        showNotification('Směna byla smazána.', 'success');
-        window.closeShiftModal();
-        renderShifts();
-    } catch (err) {
-        console.error('[Shifts] Delete failed:', err);
-        showNotification('Chyba při mazání směny...', 'error');
-    } finally {
-        isSaving = false;
+    // Optimistic UI state cleanup (0 ms)
+    if (isMeJose) {
+        delete state.shifts[activeModalDate].jose;
+    } else {
+        delete state.shifts[activeModalDate].klarka;
     }
+
+    showNotification('Směna byla smazána.', 'success');
+    window.closeShiftModal();
+    renderShifts();
+
+    // Background cloud delete
+    supabase.from('brigade_shifts').delete().eq('id', myShift.id).catch(err => {
+        console.error('[Shifts] Delete failed in background:', err);
+    });
 };
 
 // Helpers for dates

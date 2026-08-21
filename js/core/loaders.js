@@ -32,7 +32,8 @@ export async function ensureCalendarData(force = false) {
     try {
         await Promise.all([
             ensureTimelineData(force),
-            ensureLibraryData(force)
+            ensureLibraryData(force),
+            ensureStudyData(force)
         ]);
 
         const sixMonthsAgo = getMonthsAgoDateString(6);
@@ -65,7 +66,7 @@ export async function ensureLibraryData(force = false) {
     try {
         const [libData, watchData, ratingData] = await Promise.all([
             supabase.from('library_content').select('*'),
-            supabase.from('library_watchlist').select('*').eq('added_by', state.currentUser?.id),
+            supabase.from('library_watchlist').select('*'),
             supabase.from('library_ratings').select('*')
         ]);
         if (libData.data) {
@@ -113,7 +114,9 @@ export async function ensureTimelineData(force = false) {
     if (state._loaded.timeline && !force && !isStale('timeline')) return;
     try {
         const [{ data: events }, { data: highlights }] = await Promise.all([
-            supabase.from('timeline_events').select('*').order('event_date', { ascending: false, nullsFirst: false }),
+            supabase.from('timeline_events')
+                .select('id, title, event_date, icon, color, description, images, location_id, user_highlights, is_milestone')
+                .order('event_date', { ascending: false, nullsFirst: false }),
             supabase.from('timeline_highlights').select('*')
         ]);
         if (events) state.timelineEvents = events.map(e => ({ id: e.id, title: e.title, event_date: e.event_date, icon: e.icon || "📸", color: e.color, description: e.description || "", images: e.images || [], location_id: e.location_id || null, user_highlights: e.user_highlights || "", is_milestone: e.is_milestone || false }));
@@ -513,7 +516,7 @@ export async function ensureGymData(force = false) {
         const [exercises, templates, logs, prs, measurements] = await Promise.all([
             supabase.from('gym_exercises').select('*').order('name'),
             supabase.from('gym_templates').select('*').order('created_at', { ascending: false }),
-            supabase.from('gym_logs').select('*').order('logged_at', { ascending: false }),
+            supabase.from('gym_logs').select('*').order('logged_at', { ascending: false }).limit(100),
             supabase.from('gym_prs').select('*'),
             supabase.from('gym_body_measurements').select('*').order('date_key', { ascending: false })
         ]);
@@ -600,3 +603,22 @@ export async function ensureLoveShopData(force = false) {
         console.error("Love Shop Load Error:", e);
     }
 }
+
+export async function ensureStudyData(force = false) {
+    if (state._loaded.study && !force && !isStale('study')) return;
+    try {
+        const [deadlines, subjects, scheduleItems] = await Promise.all([
+            supabase.from('school_deadlines').select('*').order('deadline_date', { ascending: true }),
+            supabase.from('school_subjects').select('*').order('code'),
+            supabase.from('schedule_items').select('*').order('time_start', { ascending: true })
+        ]);
+        if (deadlines.data) state.schoolDeadlines = deadlines.data;
+        if (subjects.data) state.schoolSubjects = subjects.data;
+        if (scheduleItems.data) state.scheduleItems = scheduleItems.data;
+        markLoaded('study');
+        stateEvents.emit('study');
+    } catch (e) {
+        console.error("Study Data Load Error:", e);
+    }
+}
+

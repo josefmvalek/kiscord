@@ -22,11 +22,12 @@ export function getMoodColor(val) {
 
 export function generateFilterButtons() {
     const views = [
-        { id: "all", label: "", icon: "fa-calendar-alt", color: "bg-[#5865F2]" },
-        { id: "gym", label: "Posilovna", icon: "fa-dumbbell", color: "bg-[#faa61a]" },
-        { id: "sleep", label: "Spánek", icon: "fa-bed", color: "bg-[#9b59b6]" },
-        { id: "water", label: "Voda", icon: "fa-tint", color: "bg-[#00e5ff]" },
-        { id: "health", label: "Zdraví", icon: "fa-heart", color: "bg-[#ed4245]" },
+        { id: "all", tooltip: "Všechny plány", icon: "fa-calendar-alt", color: "bg-[#5865F2]" },
+        { id: "fit", tooltip: "VUT FIT Rozvrh & Škola", icon: "fa-graduation-cap", color: "bg-emerald-600" },
+        { id: "gym", tooltip: "Posilovna & Tréninky", icon: "fa-dumbbell", color: "bg-[#faa61a]" },
+        { id: "sleep", tooltip: "Spánek & Odpočinek", icon: "fa-bed", color: "bg-[#9b59b6]" },
+        { id: "water", tooltip: "Pitný režim", icon: "fa-tint", color: "bg-[#00e5ff]" },
+        { id: "health", tooltip: "Zdraví & Nálada", icon: "fa-heart", color: "bg-[#ed4245]" },
     ];
 
     if (!state.calendarFilter) state.calendarFilter = "all";
@@ -34,19 +35,14 @@ export function generateFilterButtons() {
     return views.map((v) => {
         const isActive = state.calendarFilter === v.id;
         const style = isActive
-            ? `${v.color} text-white shadow-md border-transparent`
-            : "bg-[#202225] text-gray-400 border-gray-700 hover:text-gray-200 hover:bg-[#2f3136]";
-
-        const content = v.label
-            ? `<i class="fas ${v.icon}"></i> ${v.label}`
-            : `<i class="fas ${v.icon} text-lg"></i>`;
-        const padding = v.label
-            ? "px-3 py-1.5"
-            : "w-9 h-9 flex items-center justify-center p-0";
+            ? `${v.color} text-white shadow-lg shadow-black/40 border-transparent scale-105 ring-2 ring-white/30`
+            : "bg-[#202225] text-gray-400 border-gray-700/60 hover:text-gray-200 hover:bg-[#2f3136] hover:border-gray-500";
 
         return `<button onclick="Calendar.setCalendarFilter('${v.id}')" 
-                      class="${padding} rounded-lg text-xs font-bold border transition-all duration-200 whitespace-nowrap flex items-center gap-2 ${style}">
-                ${content}
+                      title="${v.tooltip}"
+                      aria-label="${v.tooltip}"
+                      class="w-10 h-10 flex-shrink-0 rounded-xl text-sm font-bold border transition-all duration-200 flex items-center justify-center ${style}">
+                <i class="fas ${v.icon} text-base"></i>
               </button>`;
     }).join("");
 }
@@ -83,6 +79,13 @@ export function generateCalendarGrid(year, month) {
         (state.library.movies || []).forEach(m => libraryMap.set(m.id, m));
         (state.library.series || []).forEach(m => libraryMap.set(m.id, m));
     }
+
+    const deadlineMap = new Map();
+    (state.schoolDeadlines || []).forEach(dl => {
+        if (!dl.deadline_date) return;
+        if (!deadlineMap.has(dl.deadline_date)) deadlineMap.set(dl.deadline_date, []);
+        deadlineMap.get(dl.deadline_date).push(dl);
+    });
     // ------------------------------------------------
 
     // Prázdné buňky
@@ -97,6 +100,7 @@ export function generateCalendarGrid(year, month) {
         const dayData = (state.healthData || {})[dateKey] || {};
         const plannedDate = (state.plannedDates || {})[dateKey];
         const schoolEvent = (state.schoolEvents || {})[dateKey];
+        const dayDeadlines = deadlineMap.get(dateKey) || [];
         const movieHistory = (state.movieHistory || {})[dateKey];
         const timelineEvent = timelineEventMap.get(dateKey);
         const dayDiaryEntries = diaryMap.get(dateKey) || [];
@@ -174,6 +178,17 @@ export function generateCalendarGrid(year, month) {
                 iconsHtml += `<span class="text-[10px]" title="Posilovna: ${tooltip}">🏋️‍♂️${totalLogs > 1 ? `<span class="text-[8px] font-black text-amber-400">${totalLogs}</span>` : ''}</span>`;
             }
 
+            if (dayDeadlines.length > 0) {
+                const uncompleted = dayDeadlines.filter(dl => !dl.is_completed);
+                if (uncompleted.length > 0) {
+                    const firstDL = uncompleted[0];
+                    const tooltip = uncompleted.map(dl => `${dl.subject_code}: ${dl.title}`).join(', ');
+                    iconsHtml += `<span class="text-[9px] font-black px-1 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded leading-none" title="FIT Deadline: ${tooltip}">${firstDL.subject_code || '🎯'}${uncompleted.length > 1 ? `+${uncompleted.length - 1}` : ''}</span>`;
+                } else {
+                    iconsHtml += `<span class="text-[10px]" title="Všechny deadliny splněny!">✅</span>`;
+                }
+            }
+
             if (schoolEvent) {
                 cellContent += `<div class="absolute top-0 right-0 w-2 h-2 bg-[#faa61a] rounded-bl-lg"></div>`;
                 iconsHtml += `<span class="text-[10px]">📚</span>`;
@@ -200,6 +215,14 @@ export function generateCalendarGrid(year, month) {
                 iconsHtml += `<span class="text-[10px]" title="Deník uzamčen (čeká se na partnera)">📔🔒</span>`;
             }
 
+            if (dayDeadlines.length > 0) {
+                iconsHtml += `<span class="text-[10px]" title="FIT Deadliny: ${dayDeadlines.map(d=>d.title).join(', ')}">🎯</span>`;
+            }
+
+            if (schoolEvent) {
+                iconsHtml += `<span class="text-[10px]" title="${schoolEvent.title}">🎓</span>`;
+            }
+
             if (plannedDate) {
                 bgStyle = "bg-[#5865F2]/20";
                 borderStyle = "border-[#5865F2]/50";
@@ -219,6 +242,55 @@ export function generateCalendarGrid(year, month) {
                 cellContent += `<div class="absolute bottom-1 right-1 flex gap-0.5">${iconsHtml}</div>`;
             } else {
                 cellContent += `<div class="flex items-center justify-center gap-0.5 w-full pb-0.5 mt-auto">${iconsHtml}</div>`;
+            }
+        } else if (state.calendarFilter === "fit") {
+            const dayDate = new Date(year, month, d);
+            const dayOfWeek = dayDate.getDay();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            const daySubjects = (state.scheduleItems || []).filter(s => s.day_of_week === dayOfWeek);
+
+            if (dayDeadlines.length > 0) {
+                bgStyle = "bg-rose-950/25";
+                borderStyle = isToday 
+                    ? "border-rose-500 border-2 shadow-[0_0_12px_rgba(244,63,94,0.4)] z-10" 
+                    : "border-rose-500/40 shadow-[inset_0_0_10px_rgba(244,63,94,0.15)]";
+                textStyle = "text-rose-400 font-extrabold md:text-sm";
+                const firstDL = dayDeadlines[0];
+
+                cellContent += `
+                    <div class="w-full h-full flex flex-col items-center justify-center pt-2 text-center">
+                        <div class="text-base drop-shadow-sm">🔥</div>
+                        <div class="text-[7px] text-rose-300 font-bold leading-tight truncate w-full px-0.5 mt-0.5">[${firstDL.subject_code || 'FIT'}] ${firstDL.title}</div>
+                        <div class="text-[6.5px] text-gray-400 font-mono">${firstDL.deadline_time || '23:59'}</div>
+                    </div>
+                `;
+            } else if (!isWeekend && daySubjects.length > 0) {
+                bgStyle = "bg-emerald-950/15";
+                borderStyle = isToday
+                    ? "border-emerald-500 border-2 shadow-[0_0_12px_rgba(16,185,129,0.4)] z-10"
+                    : "border-emerald-500/30 shadow-[inset_0_0_10px_rgba(16,185,129,0.1)]";
+                textStyle = "text-emerald-400 font-bold md:text-sm";
+
+                const codes = Array.from(new Set(daySubjects.map(s => s.subject_code || s.name))).slice(0, 2).join(', ');
+                cellContent += `
+                    <div class="w-full h-full flex flex-col items-center justify-center pt-2 text-center">
+                        <div class="text-base drop-shadow-sm">🎓</div>
+                        <div class="text-[7px] text-emerald-300 font-bold leading-tight truncate w-full px-0.5 mt-0.5">${codes}</div>
+                        <div class="text-[6.5px] text-gray-400 font-mono">${daySubjects.length} ${daySubjects.length === 1 ? 'hodina' : (daySubjects.length < 5 ? 'hodiny' : 'hodin')}</div>
+                    </div>
+                `;
+            } else if (schoolEvent) {
+                bgStyle = "bg-emerald-950/15";
+                borderStyle = "border-emerald-500/40";
+                textStyle = "text-emerald-400 font-semibold";
+                cellContent += `
+                    <div class="w-full h-full flex flex-col items-center justify-center pt-2 text-center">
+                        <div class="text-base drop-shadow-sm">📚</div>
+                        <div class="text-[7px] text-emerald-300 font-bold leading-tight truncate w-full px-0.5 mt-0.5">${schoolEvent.title}</div>
+                    </div>
+                `;
+            } else {
+                cellContent += `<div class="w-full h-full flex items-center justify-center text-gray-600 text-[10px] font-medium">${isWeekend ? '🌴' : '-'}</div>`;
             }
         } else if (state.calendarFilter === "gym") {
             if (dayGymLogs.length > 0) {

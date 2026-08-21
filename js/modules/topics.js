@@ -477,7 +477,7 @@ function updateBookmarkIconState() {
     }
 }
 
-export async function markQuestionDone() {
+export function markQuestionDone() {
     if (!activeTopicObject || state.currentTopicId === "bookmarks") return;
 
     if (!state.topicProgress[state.currentTopicId]) {
@@ -491,19 +491,19 @@ export async function markQuestionDone() {
     if (!prog.doneIndices.includes(state.currentQuestionIndex)) {
         prog.doneIndices.push(state.currentQuestionIndex);
         
-        await safeUpsert('topic_progress', {
+        // Background cloud persist
+        safeUpsert('topic_progress', {
             user_id: state.currentUser.id,
             topic_id: state.currentTopicId,
             current_index: state.currentQuestionIndex,
             done_indices: prog.doneIndices,
             bookmarks: prog.bookmarks || []
-        });
+        }).catch(e => console.warn("[Topics] Save progress error:", e));
     }
 
     triggerHaptic("success");
-    // Removed confetti as it may cause lag on mobile
 
-    // Move to next
+    // Move to next immediately (0 ms)
     nextQuestion();
 }
 
@@ -525,7 +525,7 @@ export function prevQuestion() {
     updateBookmarkIconState();
 }
 
-export async function toggleQuestionBookmark() {
+export function toggleQuestionBookmark() {
     if (!activeTopicObject || state.currentTopicId === "bookmarks") return;
 
     if (!state.topicProgress[state.currentTopicId]) {
@@ -546,13 +546,15 @@ export async function toggleQuestionBookmark() {
         triggerHaptic("medium");
     }
 
-    await safeUpsert('topic_progress', {
+    // Instant UI Update (0 ms)
+    updateBookmarkIconState();
+
+    // Background cloud persist
+    safeUpsert('topic_progress', {
         user_id: state.currentUser.id,
         topic_id: state.currentTopicId,
         bookmarks: prog.bookmarks
-    });
-
-    updateBookmarkIconState();
+    }).catch(e => console.warn("[Topics] Bookmark error:", e));
 }
 
 export function toggleViewBookmarks() {

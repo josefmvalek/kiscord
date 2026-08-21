@@ -23,6 +23,14 @@
   outline-offset: 2px;
 }
 
+/* Safe Area Insets for Notch & Dynamic Island */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+
 /* Base Layout */
 html, body {
   height: 100%;
@@ -35,6 +43,13 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-normal);
   transition: background-color 0.3s ease, color 0.3s ease;
+  padding-left: var(--sal);
+  padding-right: var(--sar);
+}
+
+/* Touch Target Minimum Size */
+.touch-target-min, button, a, [role="button"], input[type="checkbox"], input[type="radio"] {
+  touch-action: manipulation;
 }
 
 html { scroll-behavior: smooth; }

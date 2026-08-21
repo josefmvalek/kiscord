@@ -248,9 +248,9 @@ function renderWeeklyGridView() {
                                         </div>
 
                                         <button onclick="window.deleteScheduleItem('${item.id}')" 
-                                                class="text-gray-600 hover:text-red-400 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition"
+                                                class="text-gray-400 hover:text-red-400 active:text-red-500 p-1.5 rounded-lg transition" 
                                                 title="Smazat hodinu">
-                                            <i class="fas fa-trash-alt text-[10px]"></i>
+                                            <i class="fas fa-trash-alt text-xs"></i>
                                         </button>
                                     </div>
                                 `;
@@ -302,7 +302,9 @@ function renderAgendaView() {
                                 </div>
                             </div>
 
-                            <button onclick="window.deleteScheduleItem('${item.id}')" class="text-gray-600 hover:text-red-400 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition">
+                            <button onclick="window.deleteScheduleItem('${item.id}')" 
+                                    class="text-gray-400 hover:text-red-400 active:text-red-500 p-1.5 rounded-lg transition" 
+                                    title="Smazat hodinu">
                                 <i class="fas fa-trash-alt text-xs"></i>
                             </button>
                         </div>

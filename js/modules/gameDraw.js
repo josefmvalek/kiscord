@@ -87,6 +87,13 @@ export function renderGameDraw() {
             <!-- Toolbar -->
             <div class="p-1 px-2 md:p-3 bg-[#2f3136] border-b border-[#202225] flex flex-col md:flex-row items-center justify-between gap-2 z-20">
                 <div class="flex items-center justify-between w-full md:w-auto gap-2">
+                    <!-- Back Button -->
+                    <button onclick="window.switchChannel('games-hub'); triggerHaptic('light')" 
+                            class="w-8 h-8 flex items-center justify-center rounded-lg bg-[#202225] hover:bg-[#2f3136] text-gray-400 hover:text-white border border-white/5 transition flex-shrink-0" 
+                            title="Zpět do herny">
+                        <i class="fas fa-arrow-left text-xs"></i>
+                    </button>
+
                     <!-- Tools Group -->
                     <div class="flex items-center gap-1 bg-[#18191c]/50 p-1 rounded-lg border border-white/5">
                         <button id="eraser-btn" onclick="window.toggleEraser()" class="w-8 h-8 flex items-center justify-center rounded-md bg-transparent text-gray-400 hover:text-white transition" title="Guma">
@@ -762,7 +769,9 @@ export function showPromptManagementModal() {
                   state.gamePrompts.map(p => `
                     <div class="flex items-center justify-between gap-4 bg-[#202225] p-3 rounded-xl border border-white/5 group hover:border-[#f472b6]/30 transition">
                         <span class="text-gray-200 text-sm font-medium">${p.text}</span>
-                        <button onclick="window.loadModule('gameDraw').then(m => m.deletePrompt('${p.id}'))" class="text-gray-500 hover:text-red-400 transition opacity-0 group-hover:opacity-100 p-2">
+                        <button onclick="window.loadModule('gameDraw').then(m => m.deletePrompt('${p.id}'))" 
+                                class="text-gray-400 hover:text-red-400 active:text-red-500 transition p-2 rounded-lg" 
+                                title="Smazat téma">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>

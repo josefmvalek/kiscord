@@ -67,8 +67,8 @@ export async function renderKasicka() {
                 <div class="relative z-10 flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-400 to-teal-600 shadow-xl mb-3 animate-bounce-slow">
                     <i class="fas fa-wallet text-white text-2xl drop-shadow-md"></i>
                 </div>
-                <h1 class="relative z-10 text-2xl lg:text-3xl font-black text-white tracking-tight drop-shadow-lg text-center uppercase">Rakouská Kasička 💶</h1>
-                <p class="relative z-10 text-gray-300 font-semibold mt-1 text-center text-xs max-w-md">Moje osobní peněženka a úspory na brigádě! 🇦🇹</p>
+                <h1 class="relative z-10 text-2xl lg:text-3xl font-black text-white tracking-tight drop-shadow-lg text-center uppercase">Rakouská Kasička (Archiv 2026) 💶</h1>
+                <p class="relative z-10 text-gray-300 font-semibold mt-1 text-center text-xs max-w-md">Historický přehled úspor a Schnitzel-O-Meter z brigády v Alpách! 🇦🇹🏔️</p>
             </div>
 
             <div class="max-w-4xl mx-auto px-4 pt-6 space-y-6">

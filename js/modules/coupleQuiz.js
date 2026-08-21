@@ -1,6 +1,6 @@
-import { state } from '../core/state.js';
+import { state, awardLoveCoinsToCurrentUser } from '../core/state.js';
 import { supabase } from '../core/supabase.js';
-import { triggerHaptic } from '../core/utils.js';
+import { triggerHaptic, triggerConfetti } from '../core/utils.js';
 
 // --- COUPLES QUIZ MODULE ---
 
@@ -26,12 +26,20 @@ export async function renderCoupleQuiz() {
     container.innerHTML = `
     <div class="flex flex-col h-full animate-fade-in">
         <!-- HEADER -->
-        <div class="bg-gradient-to-r from-[#5865F2]/20 to-[#faa61a]/10 border-b border-[#202225] p-6">
-            <div class="max-w-2xl mx-auto">
-                <h1 class="text-2xl font-black text-white flex items-center gap-3 mb-1">
-                    <i class="fas fa-brain text-[#5865F2]"></i> Kvízy pro Dva
-                </h1>
-                <p class="text-gray-400 text-sm">Otázky o sobě × odpovědi partnera = kdo vás lépe zná? 🧠</p>
+        <div class="bg-gradient-to-r from-[#5865F2]/20 to-[#faa61a]/10 border-b border-[#202225] p-5 lg:p-6">
+            <div class="max-w-2xl mx-auto flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <button onclick="window.switchChannel('games-hub'); triggerHaptic('light')" 
+                            class="p-2.5 rounded-xl bg-[#202225] hover:bg-[#2f3136] text-gray-400 hover:text-white border border-white/5 text-xs font-bold transition flex items-center gap-1.5 shadow-md">
+                        <i class="fas fa-arrow-left"></i> Zpět
+                    </button>
+                    <div>
+                        <h1 class="text-xl lg:text-2xl font-black text-white flex items-center gap-2.5">
+                            <i class="fas fa-brain text-[#5865F2]"></i> Kvízy pro Dva
+                        </h1>
+                        <p class="text-gray-400 text-xs mt-0.5">Otázky o sobě × odpovědi partnera = kdo vás lépe zná? 🧠</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -569,19 +577,23 @@ export async function nextQuestion() {
             }).match({ quiz_id: currentQuiz.id, answerer_id: state.currentUser.id });
         }
 
-        // Add XP
+        // Add XP & Coins
         try {
             const xpGained = score * 10;
             if (xpGained > 0 && state.currentUser?.id) {
                 await supabase.rpc('add_xp', { user_uuid: state.currentUser.id, xp_amount: xpGained });
             }
-        } catch (e) { /* XP is optional */ }
+            const pct = Math.round((score / questions.length) * 100);
+            const coins = pct === 100 ? 10 : 5;
+            await awardLoveCoinsToCurrentUser(coins, pct === 100 ? 'Perfektní výsledek v párovém kvízu! 🧠✨' : 'Dokončený párový kvíz 🧠');
+        } catch (e) { /* XP / Coins fallback */ }
 
         // Achievement Hook: Quiz Master (100% on partner's quiz)
         if (score === questions.length && currentQuiz.creator_id !== state.currentUser.id) {
             import('./achievements.js').then(m => m.autoUnlock('quiz_master'));
         }
 
+        triggerConfetti();
         triggerHaptic('success');
         renderResults(score, questions.length);
     }

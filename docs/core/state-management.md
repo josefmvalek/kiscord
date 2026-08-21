@@ -1,71 +1,90 @@
 # State Management
 
-Kiscord používá centralizovaný, reaktivní systém správy stavu (state management) založený na jediném globálním objektu `state`. Tento systém zajišťuje synchronizaci mezi databází, lokální pamětí a uživatelským rozhraním.
+> Kiscord uses a centralized, reactive state management pattern centered around a single global `state` object. This system synchronizes Supabase data, local browser storage, and UI components without framework runtimes.
 
-## 1. Globální Objekt `state`
-Definován v `js/core/state.js`, objekt `state` obsahuje všechna data aplikace – od zdravotních záznamů po nastavení témat.
+---
 
-### Ukázka definice (zkráceno):
+## 1. Global `state` Container
+
+Defined in `js/core/state.js`, the `state` object maintains all client-side application data:
+
 ```javascript
 const state = {
-    currentChannel: "welcome",
+    currentChannel: "dashboard",
+    currentUser: null,
     healthData: {},
     library: { movies: [], series: [], games: [] },
+    watchHistory: {},
+    watchlist: [],
     achievements: [],
     settings: {
         theme: 'default',
         haptics: true
     },
-    // Příznaky pro lazy loading
+    // Lazy-loading indicators
     _loaded: {
         calendar: false,
         library: false,
+        gym: false,
         achievements: false
     }
 };
 ```
 
+---
+
 ## 2. Event Bus (`stateEvents`)
-Pro zajištění reaktivity UI bez použití těžkých frameworků (jako React) používá Kiscord jednoduchý **Pub/Sub (Publish/Subscribe)** model.
 
-- **`stateEvents.on(event, callback)`**: Zaregistruje posluchače na změnu určité části stavu.
-- **`stateEvents.emit(event, data)`**: Vyvolá upozornění pro všechny připojené komponenty, že se data změnila a je třeba je znovu vyrenderovat.
+To achieve UI reactivity without heavy frameworks, Kiscord uses a lightweight **Pub/Sub (Publish/Subscribe)** pattern:
 
-### Příklad použití:
+- **`stateEvents.on(event, callback)`**: Registers a UI component listener for a specific data domain.
+- **`stateEvents.emit(event, data)`**: Notifies subscribed components to re-render when data updates.
+
+### Usage Example:
 ```javascript
-// V modulu pro renderování
+// Inside a UI rendering module
 stateEvents.on('health', () => {
     renderHealthUI();
 });
 
-// V modulu pro ukládání dat
-function updateWater(val) {
+// Inside a mutation handler
+export function updateWater(val) {
     state.healthData[today].water = val;
-    stateEvents.emit('health'); // Spustí re-render
+    stateEvents.emit('health'); // Triggers synchronous UI re-render
 }
 ```
 
+---
+
 ## 3. Caching & Persistence
-Aplikace využívá `localStorage` pro ukládání stavu, což umožňuje okamžitý start aplikace i v offline režimu.
 
-- **`saveStateToCache()`**: Serializuje vybrané části objektu `state` a uloží je pod klíčem `kiscord_state_cache`.
-- **`loadStateFromCache()`**: Načte data při inicializaci aplikace.
-- **SWR (Stale-While-Revalidate)**: Aplikace nejprve zobrazí data z cache a na pozadí provede fetch z Supabase pro aktualizaci (`initializeState`).
+The application uses `localStorage` for state caching, enabling instantaneous application startup and offline availability:
 
-## 4. Lazy Loading Dat
-Z důvodu optimalizace výkonu a šetření dat se ne všechna data stahují při startu. Každý modul má svého „energetika“ (např. `ensureCalendarData`), který:
-1. Zkontroluje, zda jsou data už načtena (`state._loaded`).
-2. Pokud ne (nebo pokud jsou data „stale“ – starší než 5 minut), provede fetch z Supabase.
-3. Označí data za načtená a emituje událost pro UI.
+- **`saveStateToCache()`**: Serializes selected `state` domains to `kiscord_state_cache`.
+- **`loadStateFromCache()`**: Hydrates state immediately upon application load.
+- **SWR (Stale-While-Revalidate)**: The app displays cached data immediately while fetching fresh records in the background (`initializeState`).
+
+---
+
+## 4. On-Demand Lazy Data Loading (`loaders.js`)
+
+To optimize bandwidth and memory, data is fetched only when navigating to a channel:
+
+1. Checks if data is already loaded in `state._loaded`.
+2. If absent or stale (older than 5 minutes via `isStale()`), retrieves records from Supabase.
+3. Marks the domain as loaded and emits a notification to the event bus.
 
 ```javascript
-async function ensureLibraryData(force = false) {
+export async function ensureLibraryData(force = false) {
     if (state._loaded.library && !force && !isStale('library')) return;
-    // ... fetch logic ...
+    // ... Supabase fetch logic ...
     markLoaded('library');
     stateEvents.emit('library');
 }
 ```
 
-## 5. Offline Queue
-Všechny zápisové operace (Upsert, Insert, Delete) prochází přes `js/core/offline.js`, který v případě výpadku sítě ukládá požadavky do fronty a synchronizuje je po obnovení spojení.
+---
+
+## 5. Offline Mutation Queue
+
+All database writes (Upsert, Insert, Delete) are wrapped by `js/core/offline.js`, saving operations to `kiscord_sync_queue` during connection loss and automatically flushing when online.

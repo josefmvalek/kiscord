@@ -81,6 +81,9 @@ self.addEventListener('push', (event) => {
     }
 
     const title = data.title || 'Kiscord 💖';
+    const channel = data.channel || '';
+    const targetUrl = data.url || (channel ? `/?channel=${channel}` : '/');
+
     const options = {
         body: data.body || '',
         icon: '/img/app/czippel2_kytka.jpg',
@@ -88,26 +91,36 @@ self.addEventListener('push', (event) => {
         tag: data.tag || 'kiscord-push',
         renotify: true,
         vibrate: [100, 50, 100],
-        data: { url: data.url || '/' },
+        data: { url: targetUrl, channel },
     };
 
     event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// Notification Click Event
+// Notification Click Event — Deep-linking to channel & focusing client window
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-    const targetUrl = event.notification.data?.url || '/';
+    const notificationData = event.notification.data || {};
+    const targetUrl = notificationData.url || '/';
+    const channel = notificationData.channel || '';
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
             // Zkus najít existující okno a focusnout ho
             for (const client of clientList) {
                 if (client.url.includes(self.location.origin) && 'focus' in client) {
-                    return client.focus();
+                    client.focus();
+                    if (channel) {
+                        client.postMessage({
+                            type: 'NAVIGATE_CHANNEL',
+                            channel,
+                            url: targetUrl
+                        });
+                    }
+                    return;
                 }
             }
-            // Jinak otevři nové okno
+            // Pokud žádné okno neběží, otevři nové s query parametrem cílového kanálu
             return clients.openWindow(targetUrl);
         })
     );

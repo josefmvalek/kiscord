@@ -90,6 +90,13 @@ export function renderTetrisTracker() {
 
     container.innerHTML = `
     <div class="p-4 max-w-lg mx-auto space-y-6 animate-fade-in pb-24 pt-8">
+       <!-- Back Button -->
+       <div class="flex items-center justify-between">
+           <button onclick="window.switchChannel('games-hub'); triggerHaptic('light')" 
+                   class="bg-[#202225] hover:bg-[#2f3136] text-gray-300 hover:text-white border border-white/10 px-3.5 py-2 rounded-xl font-bold text-xs shadow-md transition flex items-center gap-1.5">
+               <i class="fas fa-arrow-left"></i> Zpět do herny
+           </button>
+       </div>
        
        <div class="text-center mb-8">
           <h1 class="text-4xl font-black text-white mb-2 tracking-tight" style="font-family: 'Press Start 2P', cursive; text-shadow: 4px 4px #000;">TETRIS ARÉNA</h1>
@@ -244,8 +251,8 @@ export function renderPuzzleGame(selectedImage = null) {
                  <i class="fas fa-upload text-[var(--yellow)]"></i> Nahrát
              </button>
              <input type="file" id="puzzle-upload-input" class="hidden" accept="image/*" onchange="window.loadModule('games').then(m => m.uploadPuzzleImage(this.files[0]))">
-             <button onclick="window.switchChannel('dashboard')" class="bg-transparent hover:text-[var(--text-header)] text-[var(--text-muted)] px-4 py-2.5 rounded-xl font-bold transition">
-                 Zpět
+             <button onclick="window.switchChannel('games-hub')" class="bg-transparent hover:text-[var(--text-header)] text-[var(--text-muted)] px-4 py-2.5 rounded-xl font-bold transition flex items-center gap-1.5">
+                 <i class="fas fa-arrow-left text-xs"></i> Zpět do herny
              </button>
           </div>
       </div>

@@ -425,37 +425,31 @@ export async function toggleItem(id, isCompleted) {
 }
 
 export async function toggleHeart(id) {
-    if (isHeartUpdating) return;
-    
     const item = state.bucketList.find(i => i.id === id);
     if (!item || !state.currentUser) return;
 
-    isHeartUpdating = true;
-    try {
-        let heartsSet = new Set(item.priority_users || []);
-        const myId = state.currentUser.id;
+    let heartsSet = new Set(item.priority_users || []);
+    const myId = state.currentUser.id;
 
-        if (heartsSet.has(myId)) {
-            heartsSet.delete(myId);
-            triggerHaptic('light');
-        } else {
-            heartsSet.add(myId);
-            triggerHaptic('medium');
-        }
-
-        const newHearts = Array.from(heartsSet);
-
-        const { error } = await supabase.from('bucket_list')
-            .update({ priority_users: newHearts })
-            .eq('id', id);
-
-        if (!error) {
-            item.priority_users = newHearts;
-            renderGrid();
-        }
-    } finally {
-        isHeartUpdating = false;
+    if (heartsSet.has(myId)) {
+        heartsSet.delete(myId);
+        triggerHaptic('light');
+    } else {
+        heartsSet.add(myId);
+        triggerHaptic('medium');
     }
+
+    const newHearts = Array.from(heartsSet);
+
+    // Optimistic UI update (0 ms)
+    item.priority_users = newHearts;
+    renderGrid();
+
+    // Background cloud persist
+    supabase.from('bucket_list')
+        .update({ priority_users: newHearts })
+        .eq('id', id)
+        .catch(e => console.error("Chyba při updatu srdíčka:", e));
 }
 
 export async function deleteItem(id) {

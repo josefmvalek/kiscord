@@ -45,12 +45,14 @@ export async function handleAuthState(event, session) {
                 console.error("[Auth] Background Task Error:", err);
             }
 
-            // Route to content
+            // Route to content (supports push notification deep-links via ?channel=...)
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryChannel = urlParams.get('channel');
             const savedChannel = localStorage.getItem('klarka_last_channel');
-            const defaultChannel = (savedChannel && savedChannel !== 'welcome') ? savedChannel : 'dashboard';
+            const defaultChannel = queryChannel || ((savedChannel && savedChannel !== 'welcome') ? savedChannel : 'dashboard');
             
             console.log(`[Auth] Routing to ${defaultChannel}`);
-            history.replaceState({ channel: defaultChannel }, "", "");
+            history.replaceState({ channel: defaultChannel }, "", queryChannel ? `/?channel=${queryChannel}` : "");
             switchChannel(defaultChannel, false);
         } else {
             // INITIAL_SESSION with no user means they are not logged in.

@@ -1,49 +1,42 @@
-# Skupina C: Interaktivita a Zábava
+# Group E: Entertainment & Arcade Hub
 
-Moduly v této skupině jsou navrženy pro posílení vzájemného vztahu skrze společné aktivity, hry a upřímnou komunikaci.
-
-## 1. Denní Otázky
-**Soubor**: `js/modules/dailyQuestions.js`
-
-Každodenní rituál, který pokládá partnerům stejnou otázku a odemyká odpovědi až po reakci obou stran.
-
-### Funkcionalita:
-- **Blind Reveal**: Odpověď partnera je rozmazaná/zamčená, dokud uživatel neodešle svou vlastní odpověď.
-- **Real-time synchronizace**: Okamžité zobrazení odpovědi partnera po odeslání díky Supabase Realtime.
-- **Chronologický Archiv**: Možnost procházet starší otázky a odpovědi v přehledném seznamu.
-- **Správa otázek**: Uživatelé mohou navrhovat nové otázky, které jsou následně náhodně vybírány.
-- **Speciální události**: Modul obsahuje logiku pro injektáž speciálních otázek (např. k 100. dni vztahu).
+> Encompasses the media entertainment hub and two-player interactive minigames.
 
 ---
 
-## 2. Konverzační Témata
-**Soubor**: `js/modules/topics.js`
-
-Knihovna hlubokých i zábavných otázek pro chvíle, kdy partneři chtějí vést smysluplný rozhovor.
-
-### Klíčové vlastnosti:
-- **Kategorizace**: Otázky jsou rozděleny do témat jako (Láska, Budoucnost, Nostalgie, Hypotézy).
-- **Systém postupu**: Každé téma sleduje, které otázky již byly probrány (`done_indices`), a umožňuje resetování pokroku.
-- **Záložky (Bookmarks)**: Možnost uložit si zajímavé otázky na později do Master kategorie "Moje Oblíbené".
-- **Interaktivní karty**: Otázky se zobrazují na prémiových kartách s animací rotace a náhodným výběrem z dostupného poolu.
-- **Export**: Generování `.txt` souboru s celou knihovnou otázek.
+## 1. Media Library (`#knihovna`)
+- **File:** `/js/modules/library.js`
+- **Key Features:**
+  - **Media Catalogue:** Tabbed view `[ 🎬 Movies | 📺 Series | 🎮 Games ]` with filters for genre, duration, and completion status.
+  - **Partner Wish Indicators:** Badges appear on media cards when hearted by the partner (e.g. *“Klárka wants 👸”*).
+  - **Integrations:** Magnet links, Google Drive sources, YouTube trailers, and TMDB search.
 
 ---
 
-## 3. Herní Doupě & Tier Listy
-**Soubory**: `js/modules/gamesHub.js`, `js/modules/tierlist.js`
+## 2. Shared Watchlist Hub (`#watchlist`)
+- **Files:** `/js/modules/watchlist.js`, `/js/modules/netflixMatcher.js`
+- **Key Features:**
+  - **💖 Together Mode (*Spolu-seznam*):** Mutually hearted titles with instant calendar scheduling.
+  - **🤴 My Wishlist vs. 👸 Partner Wishlist:** Categorized lists with badge counters.
+  - **🎲 Tinder Matcher:** Swipe right (like) and left (nope) for movies, series, and games with real-time match detection.
+  - **🎲 Dice of Chance:** Random picker from mutually liked items with confetti.
+  - **🍿 Reviews & Reactions:** Timeline of recent ratings with 5-star scores and quick reaction presets.
 
-### Herní Doupě:
-Rozcestník pro interaktivní minihry:
-- **Kdo spíše?**: Hlasování o tom, kdo z dvojice má k danému tvrzení blíže.
-- **Draw Duel**: Společné digitální plátno pro kreslení a hádání.
-- **Puzzle**: Minihry pro volný čas.
+---
 
-### Tier List Creator:
-Pokročilý nástroj pro hodnocení a řazení věcí do kategorií (S až D).
-- **Drag & Drop**: Využívá knihovnu `SortableJS` pro intuitivní přesouvání položek.
-- **Režim DUEL**: 
-    1. Každý partner řadí položky tajně.
-    2. Modul sleduje stav "Připraven" pro oba hráče.
-    3. Po odhalení se zobrazí shody (zvýrazněné zlatým lemem) a rozdíly v názorech.
-- **Dynamické zdroje**: Automaticky generuje položky z jiných částí aplikace (filmy z Knihovny, vzpomínky z Timelinu, rande z Mapy).
+## 3. Music Bot (`#music-bot`)
+- **File:** `/js/modules/static.js`
+- **Description:** Integrated audio web player and shared playlist featuring favorite tracks.
+
+---
+
+## 4. Central Arcade Hub (`#gamesky`)
+- **File:** `/js/modules/gamesHub.js`
+- **Description:** Central two-player minigame lounge unifying:
+  - **🎨 Draw Duel (`gameDraw.js`):** Real-time cooperative sketching and guessing canvas.
+  - **❓ Who Is More Likely To? (`gameWho.js`):** Interactive voting on habits and funny scenarios with match detection.
+  - **🧠 Couple Quizzes (`coupleQuiz.js`):** Create and take reciprocal quizzes with percentage affinity scoring.
+  - **🧩 Memory Photo Puzzle (`games.js`):** Sliding tile puzzle using photos from the memory timeline.
+  - **🕹️ Tetris War Tracker (`games.js`):** Retro Tetris game with dual high-score leaderboard.
+  - **🏆 Tier Lists (`tierlist.js`):** Collaborative S-A-B-C-D tier rankers.
+  - **💡 Fact Encyclopedia (`funfacts.js`):** Interactive knowledge cards and miniquizzes.

@@ -1,0 +1,107 @@
+# Kiscord (August 2026) — AI Context & Architecture Index
+> Fast, token-efficient context file for AI coding assistants and LLMs.
+
+## 1. Project Overview & Tech Stack
+- **What is Kiscord**: Private Progressive Web App (PWA) tailored for two users (Josef & Klárka), styled after Discord (dark mode, channels, sidebars). Combines couple life, VUT FIT university tools, fitness tracker, media entertainment, and memories.
+- **Frontend**: Vanilla JavaScript (ES6+ Modules), HTML5, CSS3 (Discord-inspired custom tokens & CSS variables), Tailwind CSS.
+- **Backend & DB**: Supabase (PostgreSQL, Realtime PostgreSQL Changes, Storage, Row Level Security).
+- **Hosting & PWA**: Vercel, Service Worker (`public/sw.js`), Offline queue & Cache API.
+
+---
+
+## 2. Core Mechanics & Global Contracts
+
+### A. State Management (`/js/core/state.js`)
+- `state`: Single source of truth holding user data, channels, library, active workout, habits, fitness stats.
+- `saveStateToCache()` / `loadStateFromCache()`: Instant offline hydration via `localStorage`.
+- `ensure[Module]Data()` in `/js/core/loaders.js`: Lazy-loads data from Supabase only when entering a channel.
+
+### B. Router & Channel Navigation (`/js/core/router.js`)
+- `switchChannel(channelId)`: Dynamic ES module importer with View Transitions, memory cleanups, and mobile drawer support.
+- `channelCategories`: Structured categories rendered in the sidebar with collapsible states.
+
+### C. Realtime & Sync (`/js/core/sync.js`, `/js/core/offline.js`)
+- `setupRealtimeSync()`: Subscribes to Supabase Realtime broadcast channels (`health_data`, `library_watchlist`, `tinder_matches`, etc.).
+- `safeUpsert()`, `safeInsert()`, `safeDelete()`: Optimistic local UI updates + background retry queue if offline.
+
+---
+
+## 3. Sidebar & Channel Catalog (August 2026 Structure)
+
+### 📌 Pinned (Always on Top)
+- `dashboard` (`/js/modules/dashboard.js`): **Můj Den** — Personal daily overview, hydration, sleep tracker, sunflower widgets, notes.
+- `calendar` (`/js/modules/calendar.js`): **Kalendář** — Shared date planner, school events, couple sync.
+
+### 🎓 VUT FIT & KOLEJE (University & Dorm Life)
+- `schedule` (`/js/modules/schedule.js`): **#rozvrh** — Joint timetable at VUT FIT with room hints & free slot detector.
+- `study-planner` (`/js/modules/studyPlanner.js`): **#studijní-plán** — WIS points tracker, exam milestones, project deadlines.
+- `dorm-hub` (`/js/modules/dormHub.js`): **#koleje-brno** — Laundry room reservation tracker, dorm checklist, campus cafeteria menus.
+- `finance-tracker` (`/js/modules/financeTracker.js`): **#finance** — Personal Brno budget (groceries, dorm, meals) + Kasička savings goals.
+- `laptop-comparison` (`/js/modules/laptopComparison.js`): **#počítač** — Guide & comparison matrix for student laptops.
+
+### 🌿 ZDRAVÍ & FITNESS
+- `gym-tracker` (`/js/modules/gym/`): **#posilovna** — Complete gym tracker: active workout HUD, rest timer, exercise catalogue with GIFs, PR analytics, muscle heatmap, couple gym streak, annual wrapped.
+- `habits` (`/js/modules/habits.js`): **#návyky** — Daily ritual streaks with Love Coins rewards.
+- `regenerace` (`/js/modules/regenerace/`): **#regenerace** — Supplement guide, health timeline, recovery science.
+
+### 💖 NÁŠ SVĚT & PŘÍBĚH (Couple, Dates & Memories)
+- `love-shop` (`/js/modules/loveShop.js`): **#obchůdek** — Couple coupon store & coupon pantry redeemable for Love Coins.
+- `dateplanner` (`/js/modules/map.js`): **#plánovač-rande** — Interactive Leaflet map with pinned date spots & route planner.
+- `bucketlist` (`/js/modules/bucketlist.js`): **#bucket-list** — Shared dream bucket list with priorities & completions.
+- `quests` (`/js/modules/quests.js`): **#společné-questy** — Shared milestones & challenge progression.
+- `daily-questions` (`/js/modules/dailyQuestions.js`): **#denní-otázky** — Daily conversational prompt for both partners.
+- `topics` (`/js/modules/topics.js`): **#témata** — Deep talk & fun conversation starters.
+- `timeline` (`/js/modules/timeline.js`): **#timeline** — Photo timeline, milestones & memory albums.
+- `letters` (`/js/modules/letters.js`): **#dopisy** — Time-locked message capsules for anniversaries.
+- `achievements` (`/js/modules/achievements.js`): **#achievementy** — Gamified relationship trophies and milestones.
+
+### 🎮 ZÁBAVA & MÉDIA
+- `library` (`/js/modules/library.js`): **#knihovna** — Unified media catalogue with tabs `[ Filmy | Seriály | Hry ]`, live search, TMDB integration, game mode filters (Stálice vs Backlog), magnet links & partner wish indicators.
+- `watchlist` (`/js/modules/watchlist.js`): **#watchlist** — Dedicated couple entertainment center: Spolu-seznam (mutual matches), personal & partner wishlists, **Tinder Matcher** (`/js/modules/netflixMatcher.js`), **Kostka Náhody** randomizer & review log.
+- `music` (`/js/modules/static.js`): **#music-bot** — Shared vibes playlist & web player.
+- `games-hub` (`/js/modules/gamesHub.js`): **#gamesky** — Central Arcade & Minigame Hub: Draw Duel, Kdo spíše?, Párové Kvízy, Foto Puzzle, Tetris War Tracker, Tier Listy & Zajímavosti.
+
+### 📦 ARCHIV (Default Collapsed)
+- `kasicka` (`/js/modules/kasicka.js`): **#rakousko-kasička** — Historical brigade earnings & Schnitzel-O-Meter.
+- `austria-info` (`/js/modules/austriaInfo.js`): **#rakousko-info** — Austrian seasonal work packing list & guidelines.
+- `shifts` (`/js/modules/shifts.js`): **#plánovač-směn** — Work shift scheduler.
+- `austrian-german` (`/js/modules/austrianGerman.js`): **#rakouská-němčina** — Alpine dialect dictionary & flashcards.
+- `alpska-vyzva` (`/js/modules/alpskaVyzva.js`): **#alpské-výzvy** — Alpine daily challenges.
+- `alpsky-denicek` (`/js/modules/alpskyDenicek.js`): **#alpský-deníček** — Locked alpine micro-journal.
+- `matura-dashboard`, `matura-czech`, `matura-it` (`/js/modules/matura.js`): **#matura** — High school graduation study tracker & knowledge base.
+
+### ⚙️ SYSTÉM & INFO (Default Collapsed)
+- `stats` (`/js/modules/stats.js`): **#statistiky** — Relationship data analytics.
+- `settings` (`/js/modules/settings.js`): **#nastavení** — Theme selector, audio preferences, avatar & offline tools.
+- `changelog` (`/js/modules/changelog.js`): **#changelog** — Kiscord update history.
+- `welcome`, `manual`, `readme` (`/js/modules/static.js`): Discord-themed onboarding & documentation.
+
+---
+
+## 4. Key Supabase Database Tables
+
+| Table | Description | Key Columns |
+|---|---|---|
+| `profiles` | Extended user profiles | `id`, `username`, `email`, `avatar_url`, `love_coins`, `xp` |
+| `health_data` | Daily health & mood tracking | `date_key`, `user_id`, `water`, `sleep`, `mood`, `pills` |
+| `planned_dates` | Calendar events & dates | `date_key`, `name`, `cat`, `status`, `proposto_by` |
+| `timeline_events` | Memory timeline items | `title`, `description`, `event_date`, `images` |
+| `library_content` | Movies, series & games catalogue | `id`, `title`, `type` (movie/series/game), `cat`, `poster_path`, `rating` |
+| `library_watchlist`| Hearted / wishlist items | `media_id`, `added_by`, `type` |
+| `library_ratings` | User review & reaction log | `media_id`, `user_id`, `status`, `rating`, `reaction` |
+| `gym_workouts` | Logged workout sessions | `id`, `user_id`, `title`, `duration_seconds`, `volume_kg`, `created_at` |
+| `gym_sets` | Individual workout sets | `workout_id`, `exercise_id`, `set_order`, `reps`, `weight_kg`, `is_warmup` |
+| `gym_exercises` | Exercise registry | `id`, `name`, `category`, `muscle_primary`, `gif_url` |
+| `gym_body_measurements` | Weight & circumference logs | `user_id`, `date_key`, `weight_kg`, `waist_cm`, `arms_cm`, `photos` |
+| `app_finances` | Personal budget & Brno expenses | `id`, `user_id`, `title`, `amount`, `type` (income/expense), `category` |
+| `habits_items` | Daily habit definitions & logs | `id`, `user_id`, `title`, `icon`, `history` (JSONB) |
+| `love_coupons` | Custom love shop coupons | `id`, `title`, `cost`, `icon`, `redeemed_at` |
+| `vut_subjects` | WIS subjects & point limits | `id`, `code`, `name`, `credits`, `points_current`, `points_max` |
+
+---
+
+## 5. Implementation Conventions for AI
+1. **Never mutate globals directly**: Use `state` in `/js/core/state.js` and call `saveStateToCache()`.
+2. **Follow Discord Glassmorphism design tokens**: Use `var(--bg-primary)`, `var(--bg-secondary)`, `var(--text-header)`, `var(--text-muted)`.
+3. **Optimistic UI with Haptics**: Call `triggerHaptic('light'|'medium'|'success')` on interactive user taps.
+4. **All asynchronous module imports**: Register in `moduleMap` in `/js/core/router.js`.

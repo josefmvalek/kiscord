@@ -1,0 +1,372 @@
+# Kiscord — Full API Signatures & Symbol Contracts (llms-full.txt)
+> Comprehensive reference containing function signatures, parameter contracts, and schemas.
+
+---
+
+## 1. Core System API (`/js/core/`)
+
+### `/js/core/state.js`
+```typescript
+export const state: {
+    currentUser: { id: string; email: string; user_metadata?: any } | null;
+    currentChannel: string;
+    library: { movies: MediaItem[]; series: MediaItem[]; games: MediaItem[] };
+    watchHistory: Record<string, { status: string; rating: number; reaction?: string }>;
+    watchlist: Array<{ id: string; type: string; user_id: string }>;
+    calendar: CalendarEvent[];
+    timeline: TimelineEvent[];
+    activeWorkout: ActiveWorkoutState | null;
+    habits: HabitItem[];
+    loveCoins: number;
+    relationshipXP: number;
+    settings: {
+        theme?: string;
+        sidebar?: {
+            collapsedCategories?: string[];
+            hiddenChannels?: string[];
+            channelOrder?: string[];
+        };
+    };
+    [key: string]: any;
+};
+
+export function saveStateToCache(): void;
+export function loadStateFromCache(): Promise<boolean>;
+export function initializeState(): Promise<void>;
+export function awardLoveCoinsToCurrentUser(amount: number, reason?: string): Promise<void>;
+```
+
+### `/js/core/router.js`
+```typescript
+export const moduleMap: Record<string, () => Promise<any>>;
+export const channelCategories: Array<{
+    name: string;
+    items: Array<{ id: string; name: string; icon: string; type: string; color: string; desc: string }>;
+}>;
+
+export function switchChannel(channelId: string, params?: any): Promise<void>;
+export function renderChannels(): void;
+export function toggleCategoryCollapse(categoryName: string): void;
+export function collapseAllCategories(): void;
+export function expandAllCategories(): void;
+export function updateGlobalWorkoutMiniBar(): void;
+```
+
+### `/js/core/loaders.js`
+```typescript
+export function isStale(key: string, maxAgeMinutes?: number): boolean;
+export function markLoaded(key: string): void;
+export function resetLazyLoaders(): void;
+
+export function ensureCalendarData(force?: boolean): Promise<void>;
+export function ensureLibraryData(force?: boolean): Promise<void>;
+export function ensureTimelineData(force?: boolean): Promise<void>;
+export function ensureGymData(force?: boolean): Promise<void>;
+export function ensureLoveShopData(force?: boolean): Promise<void>;
+export function ensureStudyData(force?: boolean): Promise<void>;
+export function ensureFinancesData(force?: boolean): Promise<void>;
+export function ensureHabitsData(force?: boolean): Promise<void>;
+```
+
+### `/js/core/sync.js`
+```typescript
+export function setupRealtimeSync(): void;
+export function broadcastHealthUpdate(data: any): Promise<void>;
+export function broadcastTinderMatch(mediaItem: any): Promise<void>;
+export function broadcastPomodoroUpdate(status: any): Promise<void>;
+export function cleanupRealtimeSync(): void;
+```
+
+### `/js/core/ui.js`
+```typescript
+export function renderModal(options: {
+    id: string;
+    title: string;
+    subtitle?: string;
+    content: string;
+    actions?: string;
+    onClose?: string;
+}): string;
+
+export function renderButton(options: {
+    text: string;
+    variant?: 'primary' | 'secondary' | 'danger' | 'success';
+    onClick?: string;
+    icon?: string;
+    className?: string;
+}): string;
+
+export function renderInputGroup(options: {
+    label: string;
+    id: string;
+    type?: string;
+    value?: string | number;
+    placeholder?: string;
+    attr?: string;
+}): string;
+```
+
+### `/js/core/utils.js`
+```typescript
+export function triggerHaptic(type?: 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error'): void;
+export function triggerConfetti(): void;
+export function normalizeText(str: string): string;
+export function getTodayKey(): string; // YYYY-MM-DD
+export function sleep(ms: number): Promise<void>;
+```
+
+---
+
+## 2. Module Interfaces (`/js/modules/`)
+
+### A. VUT FIT & KOLEJE
+```typescript
+// /js/modules/schedule.js
+export function renderSchedule(): Promise<void>;
+export function openAddSubjectModal(): void;
+export function saveScheduleSubject(): Promise<void>;
+export function deleteScheduleItem(id: string): Promise<void>;
+
+// /js/modules/studyPlanner.js
+export function renderStudyPlanner(): Promise<void>;
+export function openAddSubjectModalFIT(): void;
+export function openEditSubjectPointsModal(subjectId: string): void;
+export function saveSubjectPointsItem(): Promise<void>;
+export function saveDeadlineItem(): Promise<void>;
+export function toggleDeadlineComplete(id: string): Promise<void>;
+
+// /js/modules/dormHub.js
+export function renderDormHub(): Promise<void>;
+export function toggleChecklistItem(index: number): void;
+export function saveLaundryReservation(slot: any): Promise<void>;
+
+// /js/modules/financeTracker.js
+export function renderFinanceTracker(targetTab?: 'budget' | 'savings'): Promise<void>;
+export function switchTab(tab: 'budget' | 'savings'): void;
+export function openAddTransactionModal(preset?: any): void;
+export function saveTransactionItem(): Promise<void>;
+export function deleteTransactionItem(id: string): Promise<void>;
+export function openSavingsGoalModal(editIndex?: number): void;
+export function saveSavingsGoal(editIndex?: number): void;
+export function adjustGoalSavings(index: number, amount: number): void;
+```
+
+### B. ZDRAVÍ & FITNESS
+```typescript
+// /js/modules/gym/main.js & activeWorkout.js
+export function renderGym(initialTab?: string): Promise<void>;
+export function startWorkout(templateId?: string): void;
+export function startFreeWorkout(): void;
+export function toggleSetComplete(exerciseIndex: number, setIndex: number): void;
+export function startRestTimer(durationSeconds?: number): void;
+export function finishActiveWorkout(): Promise<void>;
+export function cancelActiveWorkout(): Promise<void>;
+
+// /js/modules/gym/bodyTracker.js
+export function renderBodyTrackerTab(): Promise<void>;
+export function openLogMeasurementModal(): void;
+export function saveBodyMeasurement(): Promise<void>;
+
+// /js/modules/gym/prs.js
+export function renderPRsTab(): Promise<void>;
+export function openExerciseAnalyticsModal(exerciseId: string): void;
+
+// /js/modules/habits.js
+export function renderHabits(): Promise<void>;
+export function toggleHabitToday(habitId: string): Promise<void>;
+export function openAddHabitModal(): void;
+export function saveHabitItem(): Promise<void>;
+```
+
+### C. NÁŠ SVĚT & PŘÍBĚH
+```typescript
+// /js/modules/loveShop.js
+export function renderLoveShop(): Promise<void>;
+export function openBuyModal(couponId: string): void;
+export function confirmBuyCoupon(couponId: string): Promise<void>;
+export function redeemCouponDirect(couponId: string): Promise<void>;
+
+// /js/modules/map.js
+export function renderMap(): Promise<void>;
+export function openGoogleMapsRoute(): void;
+export function addNewDateLocation(lat: number, lng: number, name: string): Promise<void>;
+
+// /js/modules/timeline.js
+export function renderTimeline(): Promise<void>;
+export function openGallery(photoIndex: number): void;
+export function uploadPhoto(files: FileList): Promise<void>;
+
+// /js/modules/letters.js
+export function renderLetters(): Promise<void>;
+export function sendLetter(payload: { title: string; body: string; unlock_at: string; photos?: string[] }): Promise<void>;
+export function openLetter(letterId: string): void;
+```
+
+### D. ZÁBAVA & MÉDIA
+```typescript
+// /js/modules/library.js
+export function renderLibrary(category?: 'movies' | 'series' | 'games'): void;
+export function handleLiveSearch(query: string): void;
+export function setGameFilter(filter: 'all' | 'frequent' | 'backlog' | 'completed'): void;
+export function toggleWatchlist(mediaId: string): Promise<void>;
+export function playTrailer(urlOrTitle: string): void;
+export function showAddMediaModal(category: string): void;
+export function saveNewMedia(): Promise<void>;
+export function showEditMediaModal(id: number): void;
+export function updateMedia(): Promise<void>;
+
+// /js/modules/watchlist.js
+export function renderWatchlist(filterCategory?: 'all' | 'movie' | 'series' | 'game'): void;
+export function removeWatchlistItem(mediaId: number): Promise<void>;
+export function rollTheDice(): void;
+export function startTinder(category?: 'movie' | 'series' | 'game'): void;
+
+// /js/modules/netflixMatcher.js
+export function renderNetflixMatcher(initialCategory?: 'movie' | 'series' | 'game' | null): Promise<void>;
+export function swipeLeft(): void;
+export function swipeRight(): void;
+export function setCategoryFilter(filter: 'all' | 'movie' | 'series' | 'game'): void;
+export function setMode(mode: 'watchlist' | 'discovery'): void;
+
+// /js/modules/gamesHub.js
+export function renderGamesHub(filter?: 'all' | 'couple' | 'logic' | 'ranking'): void;
+export function setFilter(filter: string): void;
+
+// /js/modules/coupleQuiz.js
+export function renderCoupleQuiz(): Promise<void>;
+export function startCreate(): void;
+export function startQuiz(quizId: string): void;
+
+// /js/modules/gameWho.js
+export function renderGameWho(): void;
+export function submitGameVote(questionId: string, votedForUserId: string): Promise<void>;
+
+// /js/modules/gameDraw.js
+export function renderGameDraw(): void;
+export function setDrawColor(color: string): void;
+export function setDrawSize(size: number): void;
+export function undoLastStroke(): void;
+
+// /js/modules/tierlist.js
+export function renderTierList(): Promise<void>;
+export function showCreateModal(): void;
+export function loadTierLists(): Promise<void>;
+
+// /js/modules/funfacts.js
+export function renderFunFacts(): void;
+export function openFactCategory(catId: string, sub1?: string, sub2?: string): void;
+export function toggleFactFavorite(factId: string, catId: string): void;
+
+// /js/modules/games.js (Tetris & Puzzle)
+export function renderTetrisTracker(): void;
+export function updateTetrisScore(who: 'jose' | 'klarka' | 'reset', amount: number): Promise<void>;
+export function renderPuzzleGame(selectedImage?: string | null): void;
+```
+
+---
+
+## 3. SQL Database Schema & RLS
+
+```sql
+-- Profiles & Gamification
+CREATE TABLE public.profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    username TEXT,
+    email TEXT,
+    avatar_url TEXT,
+    love_coins INT DEFAULT 50,
+    relationship_xp INT DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Library & Media
+CREATE TABLE public.library_content (
+    id BIGSERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    type TEXT NOT NULL CHECK (type IN ('movie', 'series', 'game')),
+    cat TEXT,
+    poster_path TEXT,
+    rating FLOAT,
+    runtime INT,
+    trailer TEXT,
+    magnet TEXT,
+    gdrive TEXT,
+    mood_tags TEXT[],
+    is_frequent BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Watchlist & Mutual Likes
+CREATE TABLE public.library_watchlist (
+    id BIGSERIAL PRIMARY KEY,
+    media_id BIGINT NOT NULL REFERENCES public.library_content(id) ON DELETE CASCADE,
+    added_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    type TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(media_id, added_by)
+);
+
+-- Reviews & Watch History
+CREATE TABLE public.library_ratings (
+    id BIGSERIAL PRIMARY KEY,
+    media_id BIGINT NOT NULL REFERENCES public.library_content(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    status TEXT NOT NULL CHECK (status IN ('watching', 'seen', 'unseen')),
+    rating INT CHECK (rating >= 1 AND rating <= 5),
+    reaction TEXT,
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(media_id, user_id)
+);
+
+-- Gym Workouts & Sets
+CREATE TABLE public.gym_workouts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id),
+    title TEXT NOT NULL,
+    duration_seconds INT NOT NULL,
+    volume_kg NUMERIC(10,2) DEFAULT 0,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE public.gym_sets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    workout_id UUID NOT NULL REFERENCES public.gym_workouts(id) ON DELETE CASCADE,
+    exercise_id UUID NOT NULL REFERENCES public.gym_exercises(id),
+    set_order INT NOT NULL,
+    reps INT NOT NULL,
+    weight_kg NUMERIC(6,2) NOT NULL,
+    is_warmup BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Personal Finances
+CREATE TABLE public.app_finances (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id),
+    title TEXT NOT NULL,
+    amount NUMERIC(10,2) NOT NULL,
+    type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
+    category TEXT DEFAULT 'Ostatní',
+    is_shared BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Tier Lists
+CREATE TABLE public.tier_lists (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title TEXT NOT NULL,
+    category TEXT DEFAULT 'general',
+    data JSONB NOT NULL DEFAULT '{}'::jsonb,
+    is_duel BOOLEAN DEFAULT false,
+    created_by UUID REFERENCES auth.users(id),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Tetris Leaderboards
+CREATE TABLE public.tetris_scores (
+    user_id UUID PRIMARY KEY REFERENCES auth.users(id),
+    score INT NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```

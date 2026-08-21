@@ -1,5 +1,5 @@
 import { supabase } from '../core/supabase.js';
-import { state } from '../core/state.js';
+import { state, awardLoveCoinsToCurrentUser } from '../core/state.js';
 import { triggerHaptic, triggerConfetti } from '../core/utils.js';
 import { showNotification, showConfirmDialog } from '../core/theme.js';
 import { renderModal, renderInputGroup } from '../core/ui.js';
@@ -299,7 +299,9 @@ function renderDeadlinesView(upcomingDeadlines) {
                                             ${diffDays < 0 ? 'Po termínu!' : (diffDays === 0 ? 'Dnes o půlnoci! 🔥' : (diffDays === 1 ? 'Zítra! ⚠️' : `za ${diffDays} dní`))}
                                         </div>
                                     </div>
-                                    <button onclick="window.deleteDeadlineItem('${item.id}')" class="text-gray-600 hover:text-red-400 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition">
+                                    <button onclick="window.deleteDeadlineItem('${item.id}')" 
+                                            class="text-gray-400 hover:text-red-400 active:text-red-500 p-1.5 rounded-lg transition" 
+                                            title="Smazat deadline">
                                         <i class="fas fa-trash-alt text-xs"></i>
                                     </button>
                                 </div>
@@ -317,17 +319,17 @@ function renderDeadlinesView(upcomingDeadlines) {
                         <span>Odevzdané a splněné úkoly (${completed.length})</span>
                     </h3>
 
-                    <div class="space-y-2 opacity-60 hover:opacity-100 transition-opacity">
+                    <div class="space-y-2 opacity-75 hover:opacity-100 transition-opacity">
                         ${completed.map(item => `
                             <div class="bg-[#18191c] border border-gray-800/60 rounded-xl p-3 flex items-center justify-between gap-3 text-xs">
                                 <div class="flex items-center gap-2.5 truncate">
-                                    <button onclick="window.toggleDeadlineComplete('${item.id}', false)" class="text-emerald-400 text-xs">
+                                    <button onclick="window.toggleDeadlineComplete('${item.id}', false)" class="text-emerald-400 text-xs p-0.5">
                                         <i class="fas fa-check-circle"></i>
                                     </button>
                                     <span class="line-through text-gray-400 truncate">${item.subject_code ? item.subject_code + ' — ' : ''}${item.title}</span>
                                 </div>
-                                <button onclick="window.deleteDeadlineItem('${item.id}')" class="text-gray-600 hover:text-red-400 p-1">
-                                    <i class="fas fa-trash-alt text-[10px]"></i>
+                                <button onclick="window.deleteDeadlineItem('${item.id}')" class="text-gray-400 hover:text-red-400 active:text-red-500 p-1.5 transition rounded-lg" title="Smazat deadline">
+                                    <i class="fas fa-trash-alt text-xs"></i>
                                 </button>
                             </div>
                         `).join('')}
@@ -747,29 +749,33 @@ export async function saveDeadlineItem() {
     }
 }
 
-export async function toggleDeadlineComplete(id, completed) {
+export function toggleDeadlineComplete(id, completed) {
     triggerHaptic(completed ? 'success' : 'light');
-    if (completed) triggerConfetti();
-
-    try {
-        const { error } = await supabase.from('school_deadlines').update({ is_completed: completed }).eq('id', id);
-        if (error) throw error;
-        renderStudyPlanner();
-    } catch (e) {
-        console.error("[StudyPlanner] Toggle error:", e);
+    if (completed) {
+        triggerConfetti();
+        awardLoveCoinsToCurrentUser(15, 'Splněný studijní deadline na FITu! 🎯').catch(() => {});
     }
+
+    const item = deadlinesData.find(d => d.id === id);
+    if (item) item.is_completed = completed;
+    renderStudyPlanner();
+
+    // Background cloud persist
+    supabase.from('school_deadlines').update({ is_completed: completed }).eq('id', id).catch(e => {
+        console.error("[StudyPlanner] Toggle error in background:", e);
+    });
 }
 
-export async function deleteDeadlineItem(id) {
+export function deleteDeadlineItem(id) {
     triggerHaptic('light');
-    try {
-        const { error } = await supabase.from('school_deadlines').delete().eq('id', id);
-        if (error) throw error;
-        showNotification('Deadline smazán.', 'info');
-        renderStudyPlanner();
-    } catch (e) {
-        console.error("[StudyPlanner] Delete error:", e);
-    }
+    deadlinesData = deadlinesData.filter(d => d.id !== id);
+    showNotification('Deadline smazán.', 'info');
+    renderStudyPlanner();
+
+    // Background cloud persist
+    supabase.from('school_deadlines').delete().eq('id', id).catch(e => {
+        console.error("[StudyPlanner] Delete error in background:", e);
+    });
 }
 
 export function calculateGrade(totalPoints) {

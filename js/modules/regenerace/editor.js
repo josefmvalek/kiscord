@@ -134,7 +134,7 @@ function renderTimelineEditor(content) {
             <div class="space-y-6" id="timeline-items-list">
                 ${content.timeline.map((t, index) => `
                     <div class="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4 relative group/time">
-                        <button onclick="window.removeTimelineItem(${index})" class="absolute top-6 right-6 w-8 h-8 rounded-lg bg-red-500/10 text-red-400 opacity-0 group-hover/time:opacity-100 hover:bg-red-500/20 transition-all flex items-center justify-center">
+                        <button onclick="window.removeTimelineItem(${index})" class="absolute top-6 right-6 w-8 h-8 rounded-lg bg-red-500/10 text-red-400 opacity-80 md:opacity-0 md:group-hover/time:opacity-100 hover:bg-red-500/20 active:scale-90 transition-all flex items-center justify-center">
                             <i class="fas fa-trash-alt text-xs"></i>
                         </button>
                         <div>
@@ -165,7 +165,7 @@ function renderManualEditor(content) {
                         <input type="text" id="edit-manual-time-${index}" value="${m.time}" class="bg-black/20 border border-white/10 rounded-lg p-2 text-[10px] text-gray-400 font-bold uppercase">
                         <input type="text" id="edit-manual-title-${index}" value="${m.title}" class="bg-black/20 border border-white/10 rounded-lg p-2 text-sm text-white font-bold">
                         <input type="text" id="edit-manual-detail-${index}" value="${m.detail}" class="bg-black/20 border border-white/10 rounded-lg p-2 text-xs text-gray-300">
-                        <button onclick="window.removeManualItem(${index})" class="md:justify-self-end w-8 h-8 rounded-lg bg-red-500/10 text-red-400 opacity-0 group-hover/man:opacity-100 hover:bg-red-500/20 transition-all flex items-center justify-center">
+                        <button onclick="window.removeManualItem(${index})" class="md:justify-self-end w-8 h-8 rounded-lg bg-red-500/10 text-red-400 opacity-80 md:opacity-0 md:group-hover/man:opacity-100 hover:bg-red-500/20 active:scale-90 transition-all flex items-center justify-center">
                             <i class="fas fa-trash-alt text-xs"></i>
                         </button>
                     </div>
@@ -199,7 +199,7 @@ function renderScienceEditor(content) {
                         <div class="space-y-8 pt-6">
                             ${section.items.map((item, iIdx) => `
                                 <div class="bg-[#2f3136] p-6 rounded-3xl border border-white/5 space-y-4 shadow-xl relative group/study">
-                                    <button onclick="window.removeScienceItem(${sIdx}, ${iIdx})" class="absolute top-6 right-6 w-8 h-8 rounded-lg bg-red-500/10 text-red-400 opacity-0 group-hover/study:opacity-100 hover:bg-red-500/20 transition-all flex items-center justify-center z-20">
+                                    <button onclick="window.removeScienceItem(${sIdx}, ${iIdx})" class="absolute top-6 right-6 w-8 h-8 rounded-lg bg-red-500/10 text-red-400 opacity-80 md:opacity-0 md:group-hover/study:opacity-100 hover:bg-red-500/20 active:scale-90 transition-all flex items-center justify-center z-20">
                                         <i class="fas fa-trash-alt text-xs"></i>
                                     </button>
                                     <div class="flex items-center justify-between">
@@ -236,7 +236,7 @@ function renderDidYouKnowEditor(content) {
             <div class="space-y-8" id="dyk-sections-list">
                 ${content.didYouKnow.sections.map((section, sIdx) => `
                     <div class="p-8 bg-black/20 rounded-[2.5rem] border border-white/5 space-y-6 relative group/dyksec">
-                        <button onclick="window.removeDidYouKnowSection(${sIdx})" class="absolute top-8 right-8 w-8 h-8 rounded-lg bg-red-500/10 text-red-400 opacity-0 group-hover/dyksec:opacity-100 hover:bg-red-500/20 transition-all flex items-center justify-center z-10">
+                        <button onclick="window.removeDidYouKnowSection(${sIdx})" class="absolute top-8 right-8 w-8 h-8 rounded-lg bg-red-500/10 text-red-400 opacity-80 md:opacity-0 md:group-hover/dyksec:opacity-100 hover:bg-red-500/20 active:scale-90 transition-all flex items-center justify-center z-10">
                             <i class="fas fa-trash-alt text-xs"></i>
                         </button>
                         <div class="flex items-center gap-4 mb-2">
@@ -253,7 +253,7 @@ function renderDidYouKnowEditor(content) {
                             <div class="space-y-6">
                                 ${section.items.map((item, iIdx) => `
                                     <div class="bg-white/5 p-5 rounded-2xl border border-white/5 space-y-3 relative group/dykitem">
-                                        <button onclick="window.removeDidYouKnowItem(${sIdx}, ${iIdx})" class="absolute top-4 right-4 w-6 h-6 rounded-md bg-red-500/10 text-red-400 opacity-0 group-hover/dykitem:opacity-100 hover:bg-red-500/20 transition-all flex items-center justify-center">
+                                        <button onclick="window.removeDidYouKnowItem(${sIdx}, ${iIdx})" class="absolute top-4 right-4 w-6 h-6 rounded-md bg-red-500/10 text-red-400 opacity-80 md:opacity-0 md:group-hover/dykitem:opacity-100 hover:bg-red-500/20 active:scale-90 transition-all flex items-center justify-center">
                                             <i class="fas fa-times text-[10px]"></i>
                                         </button>
                                         <input type="text" id="edit-dyk-section-${sIdx}-item-${iIdx}-title" value="${item.title}" class="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-[11px] text-indigo-300 font-black uppercase tracking-widest">

@@ -29,8 +29,12 @@ export async function renderTierList() {
                 <h1 class="relative z-10 text-3xl lg:text-4xl font-black text-white tracking-tight drop-shadow-lg text-center uppercase">Tier List Creator</h1>
                 <p class="relative z-10 text-gray-400 font-medium mt-2 text-center max-w-md">Rankuj vše od nejlepších vzpomínek po oblíbené filmy.</p>
                 
-                <div class="mt-6 flex gap-4 relative z-10">
-                    <button onclick="TierList.showCreateModal()" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-6 py-2.5 rounded-xl font-bold shadow-lg transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
+                <div class="mt-6 flex flex-wrap items-center justify-center gap-3 relative z-10">
+                    <button onclick="window.switchChannel('games-hub'); triggerHaptic('light')" 
+                            class="bg-[#202225] hover:bg-[#2f3136] text-gray-300 hover:text-white border border-white/10 px-4 py-2.5 rounded-xl font-bold text-xs shadow-lg transition flex items-center gap-2">
+                        <i class="fas fa-arrow-left"></i> Zpět do herny
+                    </button>
+                    <button onclick="TierList.showCreateModal()" class="bg-[#3ba55c] hover:bg-[#2d7d46] text-white px-6 py-2.5 rounded-xl font-bold text-xs shadow-lg transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
                         <i class="fas fa-plus"></i> Nový Tier List
                     </button>
                 </div>

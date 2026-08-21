@@ -1,22 +1,60 @@
 import { supabase } from './supabase.js';
 import { showNotification } from './theme.js';
+import { idbGet, idbSet } from './idb.js';
 
 const QUEUE_KEY = 'kiscord_sync_queue';
+let _memoryQueue = null;
+
+/**
+ * Load the sync queue from memory/IndexedDB/localStorage.
+ * @returns {Promise<Array<any>>}
+ */
+export async function getQueue() {
+    if (_memoryQueue !== null) return _memoryQueue;
+
+    try {
+        let queue = await idbGet(QUEUE_KEY);
+        if (!queue || queue.length === 0) {
+            const legacy = localStorage.getItem(QUEUE_KEY);
+            if (legacy) {
+                try {
+                    queue = JSON.parse(legacy);
+                    await idbSet(QUEUE_KEY, queue);
+                } catch {
+                    queue = [];
+                }
+            } else {
+                queue = [];
+            }
+        }
+        _memoryQueue = Array.isArray(queue) ? queue : [];
+    } catch {
+        try {
+            _memoryQueue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
+        } catch {
+            _memoryQueue = [];
+        }
+    }
+    return _memoryQueue;
+}
 
 /**
  * Enqueue a Supabase operation for later processing.
  * @param {string} table - The table name
  * @param {string} action - 'upsert', 'insert', 'update', 'delete'
  * @param {object} data - The data payload
+ * @param {object|null} [match=null] - Optional match criteria
  */
 export function enqueueOperation(table, action, data, match = null) {
-    const queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
-
-    // Check if we already have a pending upsert for this specific record (optional optimization)
-    // For now, simplicity is better: just add to queue.
+    let queue = [];
+    try {
+        queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
+    } catch {
+        queue = [];
+    }
 
     queue.push({
-        id: crypto.randomUUID(),
+        id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `op-${Date.now()}-${Math.random()}`,
         timestamp: new Date().toISOString(),
         table,
         action,
@@ -24,19 +62,35 @@ export function enqueueOperation(table, action, data, match = null) {
         match
     });
 
+    _memoryQueue = queue;
     localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+    idbSet(QUEUE_KEY, queue).catch(() => {});
     console.log(`[OFFLINE] Operation queued for ${table}:`, data);
+    updateHeaderOfflineBadge();
 }
 
 /**
  * Process all pending operations in the sync queue.
  */
 export async function processSyncQueue() {
-    if (!navigator.onLine) return;
+    if (!navigator.onLine) {
+        updateHeaderOfflineBadge();
+        return;
+    }
 
-    const queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
-    if (queue.length === 0) return;
+    let queue = [];
+    try {
+        queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
+    } catch {
+        queue = await getQueue();
+    }
 
+    if (queue.length === 0) {
+        updateHeaderOfflineBadge();
+        return;
+    }
+
+    updateHeaderOfflineBadge();
     console.log(`[OFFLINE] Processing ${queue.length} pending operations...`);
     showNotification(`Synchronizace ${queue.length} změn...`, 'info');
 
@@ -58,22 +112,46 @@ export async function processSyncQueue() {
                 result = await supabase.from(op.table).delete().match(matchCriteria);
             }
 
-            if (result.error) throw result.error;
+            if (result && result.error) throw result.error;
             successCount++;
         } catch (err) {
             console.error(`[OFFLINE] Failed to process operation ${op.id}:`, err);
-            // Keep in queue if it's a network error, maybe remove if it's a data error (RLS etc)
-            // For now, if it fails, we keep it and try later.
             remainingQueue.push(op);
         }
     }
 
+    _memoryQueue = remainingQueue;
     localStorage.setItem(QUEUE_KEY, JSON.stringify(remainingQueue));
+    await idbSet(QUEUE_KEY, remainingQueue);
+    updateHeaderOfflineBadge();
 
     if (successCount > 0) {
         showNotification(`Synchronizace dokončena (${successCount} změn).`, 'success');
-        // Trigger a global event to refresh state if needed
         window.dispatchEvent(new CustomEvent('sync-completed'));
+    }
+}
+
+export function updateHeaderOfflineBadge() {
+    const badge = document.getElementById('header-offline-badge');
+    const textEl = document.getElementById('header-offline-text');
+    if (!badge || !textEl) return;
+
+    const count = _memoryQueue ? _memoryQueue.length : 0;
+    const isOffline = !navigator.onLine;
+
+    if (isOffline) {
+        badge.classList.remove('hidden');
+        badge.classList.add('flex');
+        badge.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/15 border border-red-500/30 text-red-400 text-[10px] font-black uppercase tracking-wider flex-shrink-0 animate-pulse select-none';
+        textEl.textContent = `Offline (${count})`;
+    } else if (count > 0) {
+        badge.classList.remove('hidden');
+        badge.classList.add('flex');
+        badge.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-black uppercase tracking-wider flex-shrink-0 select-none';
+        textEl.textContent = `Sync (${count})`;
+    } else {
+        badge.classList.add('hidden');
+        badge.classList.remove('flex');
     }
 }
 
@@ -86,6 +164,7 @@ window.addEventListener('online', () => {
         statusEl.classList.remove('text-[#ed4245]', 'animate-pulse');
         statusEl.parentElement.classList.remove('text-[#ed4245]');
     }
+    updateHeaderOfflineBadge();
     processSyncQueue();
 });
 
@@ -97,7 +176,15 @@ window.addEventListener('offline', () => {
         statusEl.classList.add('text-[#ed4245]', 'animate-pulse');
         statusEl.parentElement.classList.add('text-[#ed4245]');
     }
+    updateHeaderOfflineBadge();
 });
+
+// Initial check on load
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+        updateHeaderOfflineBadge();
+    });
+}
 
 // Initial check on load
 if (navigator.onLine) {
@@ -113,6 +200,11 @@ if (navigator.onLine) {
 
 /**
  * Perform a Supabase upsert if online, or queue it if offline.
+ * @template {keyof import('../types/database.js').Database['public']['Tables']} T
+ * @param {T} table - The Supabase table name
+ * @param {import('../types/database.js').TablesInsert<T>} data - Record payload to upsert
+ * @param {string|null} [onConflict=null] - Optional column list for conflict resolution
+ * @returns {Promise<{ data: any, error: any, offline?: boolean }>}
  */
 export async function safeUpsert(table, data, onConflict = null) {
     if (!navigator.onLine) {
@@ -125,6 +217,10 @@ export async function safeUpsert(table, data, onConflict = null) {
 
 /**
  * Perform a Supabase insert if online, or queue it if offline.
+ * @template {keyof import('../types/database.js').Database['public']['Tables']} T
+ * @param {T} table - The Supabase table name
+ * @param {import('../types/database.js').TablesInsert<T>} data - Record payload to insert
+ * @returns {Promise<{ data: any, error: any, offline?: boolean }>}
  */
 export async function safeInsert(table, data) {
     if (!navigator.onLine) {
@@ -134,6 +230,14 @@ export async function safeInsert(table, data) {
     return supabase.from(table).insert(data).select();
 }
 
+/**
+ * Perform a Supabase update if online, or queue it if offline.
+ * @template {keyof import('../types/database.js').Database['public']['Tables']} T
+ * @param {T} table - The Supabase table name
+ * @param {import('../types/database.js').TablesUpdate<T>} data - Update payload
+ * @param {Record<string, any>|null} [match=null] - Optional match criteria
+ * @returns {Promise<{ data: any, error: any, offline?: boolean }>}
+ */
 export async function safeUpdate(table, data, match = null) {
     if (!navigator.onLine) {
         enqueueOperation(table, 'update', data, match);
@@ -145,6 +249,10 @@ export async function safeUpdate(table, data, match = null) {
 
 /**
  * Perform a Supabase delete if online, or queue it if offline.
+ * @template {keyof import('../types/database.js').Database['public']['Tables']} T
+ * @param {T} table - The Supabase table name
+ * @param {string|Record<string, any>} matchCriteria - Record ID or match object
+ * @returns {Promise<{ data: any, error: any, offline?: boolean }>}
  */
 export async function safeDelete(table, matchCriteria) {
     if (!navigator.onLine) {

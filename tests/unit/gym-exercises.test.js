@@ -161,9 +161,14 @@ describe('Gym Exercises Management', () => {
 
   describe('Premium Multitasking & Badge Management', () => {
     beforeEach(() => {
-      // Clean up body
-      const badge = document.getElementById('global-active-workout-badge');
-      badge?.remove();
+      document.body.innerHTML = `
+        <div id="global-workout-mini-bar" class="hidden">
+          <span id="mini-bar-title"></span>
+          <span id="mini-bar-timer"></span>
+          <span id="mini-bar-subtitle"></span>
+        </div>
+        <span id="mobile-nav-gym-dot" class="hidden"></span>
+      `;
       localStorage.removeItem('kiscord_active_workout');
     });
 
@@ -182,7 +187,7 @@ describe('Gym Exercises Management', () => {
       expect(cached.exercises[0].sets[0].reps).toBe(12);
     });
 
-    it('should render a global active workout badge if active and user on a different channel', () => {
+    it('should show global active workout mini-bar if active and user on a different channel', () => {
       startWorkout('temp-1');
       
       // Access state to change channel
@@ -190,12 +195,12 @@ describe('Gym Exercises Management', () => {
 
       updateGlobalWorkoutBadge();
 
-      const badge = document.getElementById('global-active-workout-badge');
-      expect(badge).toBeTruthy();
-      expect(badge.innerHTML).toContain('Běží trénink');
+      const miniBar = document.getElementById('global-workout-mini-bar');
+      expect(miniBar).toBeTruthy();
+      expect(miniBar.classList.contains('hidden')).toBe(false);
     });
 
-    it('should remove the floating badge if user returns to gym-tracker channel', () => {
+    it('should hide the floating mini-bar if user returns to gym-tracker channel', () => {
       startWorkout('temp-1');
       
       state.currentChannel = 'calendar';
@@ -205,8 +210,8 @@ describe('Gym Exercises Management', () => {
       state.currentChannel = 'gym-tracker';
       updateGlobalWorkoutBadge();
 
-      const badge = document.getElementById('global-active-workout-badge');
-      expect(badge).toBeNull();
+      const miniBar = document.getElementById('global-workout-mini-bar');
+      expect(miniBar.classList.contains('hidden')).toBe(true);
     });
   });
 

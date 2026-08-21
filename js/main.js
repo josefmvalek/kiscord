@@ -14,7 +14,7 @@ import { state, stateEvents } from './core/state.js';
 // Refactored Handlers
 import { initAuthListeners, updateUserProfileUI, updateGlobalAssetsUI } from './core/auth-handler.js';
 import { setupNavigation, renderChannels, setupSearch, switchChannel } from './core/router.js';
-import { setupConnectivityListeners, checkAppUpdate } from './core/app-ui.js';
+import { setupConnectivityListeners, checkAppUpdate, setupGlobalTouchGestures } from './core/app-ui.js';
 import { exposeGlobals } from './core/globals.js';
 
 // Extra Module Initialization (Legacy/Dependencies)
@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupNavigation();
     setupSearch();
     setupConnectivityListeners();
+    setupGlobalTouchGestures();
 
     // 4. Auth & State Handlers
     initAuthListeners();
@@ -81,6 +82,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.requestIdleCallback(prefetchModules, { timeout: 3000 });
     } else {
         setTimeout(prefetchModules, 3000);
+    }
+
+    // 8. Service Worker Message Listener (Push Notification Deep-links)
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data?.type === 'NAVIGATE_CHANNEL' && event.data.channel) {
+                console.log(`[Push] Received deep-link navigation to: ${event.data.channel}`);
+                switchChannel(event.data.channel);
+            }
+        });
     }
 
     console.log('--- KISCORD BOOTSTRAPPED ---');

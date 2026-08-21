@@ -158,6 +158,143 @@ export function selectQuickPlanCategory(cat) {
     showQuickPlanModal(2);
 }
 
+export function cleanupPlanningTimer() {
+    if (dashboardTimer) {
+        clearInterval(dashboardTimer);
+        dashboardTimer = null;
+    }
+}
+
+export function showQuickPlanModalForCoupon({ couponId, couponTitle, note } = {}) {
+    triggerHaptic('light');
+    quickPlanData = {
+        cat: 'date',
+        name: `Kupón: ${couponTitle || 'Rande'}`,
+        time: '19:00',
+        couponId: couponId || null,
+        couponNote: note || ''
+    };
+
+    import('../../core/ui.js').then(ui => {
+        const todayStr = getTodayKey();
+        const content = `
+            <div class="space-y-4">
+                <div class="p-3.5 bg-pink-500/10 border border-pink-500/20 rounded-2xl flex items-center gap-3 shadow-inner">
+                    <div class="w-10 h-10 rounded-xl bg-pink-500/20 flex items-center justify-center text-pink-400 text-lg flex-shrink-0">
+                        🎟️
+                    </div>
+                    <div class="min-w-0">
+                        <span class="text-[10px] font-black uppercase tracking-wider text-pink-400 block">Uplatnění kupónu ze Spížky</span>
+                        <p class="text-xs font-bold text-white truncate">${couponTitle || 'Kupón'}</p>
+                        ${note ? `<p class="text-[10px] text-pink-300 italic truncate mt-0.5">„${note}“</p>` : ''}
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-black text-[var(--text-muted)] uppercase tracking-wider mb-2">Den rande / události</label>
+                    <div class="bg-[var(--bg-tertiary)] p-3 rounded-xl border border-[var(--border-subtle)] focus-within:border-[#eb459e] transition-colors">
+                        <input type="date" id="qp-date" value="${todayStr}" min="${todayStr}"
+                               class="w-full bg-transparent text-[var(--text-header)] text-sm outline-none font-bold">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-black text-[var(--text-muted)] uppercase tracking-wider mb-2">Název akce</label>
+                    <div class="bg-[var(--bg-tertiary)] p-3 rounded-xl border border-[var(--border-subtle)] focus-within:border-[#eb459e] transition-colors">
+                        <input type="text" id="qp-name" value="${quickPlanData.name}"
+                               class="w-full bg-transparent text-[var(--text-header)] text-sm outline-none font-medium">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-black text-[var(--text-muted)] uppercase tracking-wider mb-2">Čas</label>
+                    <div class="flex gap-2 items-center">
+                        <input type="time" id="qp-time" value="19:00"
+                               class="bg-[var(--bg-tertiary)] text-[var(--text-header)] text-sm p-3 rounded-xl border border-[var(--border-subtle)] outline-none flex-1 font-mono font-bold">
+                        <div class="flex gap-1">
+                            <button type="button" onclick="document.getElementById('qp-time').value = '18:00'" class="bg-[var(--bg-tertiary)] hover:bg-[var(--bg-modifier-hover)] px-3 py-2 rounded-xl text-xs font-bold text-[var(--text-normal)] border border-[var(--border-subtle)]">18:00</button>
+                            <button type="button" onclick="document.getElementById('qp-time').value = '20:00'" class="bg-[var(--bg-tertiary)] hover:bg-[var(--bg-modifier-hover)] px-3 py-2 rounded-xl text-xs font-bold text-[var(--text-normal)] border border-[var(--border-subtle)]">20:00</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="button" onclick="window.submitQuickPlanWithDate()" 
+                            class="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white py-3.5 rounded-xl font-black uppercase tracking-wider text-xs transition active:scale-95 shadow-lg shadow-pink-500/20 flex items-center justify-center gap-2 cursor-pointer min-h-[44px]">
+                        <i class="fas fa-calendar-check text-xs"></i> Naplánovat a uplatnit kupón 🥂
+                    </button>
+                </div>
+            </div>
+        `;
+
+        const modalHtml = ui.renderModal({
+            id: 'quick-plan-modal',
+            title: '🥂 Naplánovat Rande z Kupónu',
+            subtitle: 'Vyber datum a čas společné chvíle',
+            content: content,
+            onClose: "document.getElementById('quick-plan-modal')?.remove()"
+        });
+
+        document.getElementById('quick-plan-modal')?.remove();
+        const div = document.createElement('div');
+        div.innerHTML = modalHtml;
+        document.body.appendChild(div.firstElementChild);
+        const modal = document.getElementById('quick-plan-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+    });
+}
+
+export async function submitQuickPlanWithDate() {
+    const date = document.getElementById('qp-date')?.value.trim() || getTodayKey();
+    const name = document.getElementById('qp-name')?.value.trim();
+    const time = document.getElementById('qp-time')?.value.trim() || '19:00';
+
+    if (!name) return showNotification("Napiš název rande!", "warning");
+
+    triggerHaptic('success');
+    document.getElementById('quick-plan-modal')?.remove();
+
+    const planId = crypto.randomUUID();
+    const newPlan = {
+        id: planId,
+        date_key: date,
+        name: name,
+        cat: 'date',
+        time: time,
+        proposed_by: state.currentUser?.id,
+        status: 'pending'
+    };
+
+    try {
+        if (!state.plannedDates) state.plannedDates = {};
+        state.plannedDates[date] = newPlan;
+
+        const { error } = await supabase.from('planned_dates').upsert(newPlan, { onConflict: 'date_key' });
+        if (error) throw error;
+
+        // Link with coupon if available
+        if (quickPlanData.couponId) {
+            const loveShop = await import('../loveShop.js');
+            if (typeof loveShop.redeemCouponDirect === 'function') {
+                await loveShop.redeemCouponDirect(quickPlanData.couponId);
+            }
+        }
+
+        showNotification("Kupón uplatněn a rande naplánováno! 🥂❤️", "success");
+        broadcastPlanUpdate({ type: 'proposal', name: name, cat: 'date' });
+
+        const { renderDashboard } = await import('../dashboard.js');
+        renderDashboard();
+
+    } catch (err) {
+        console.error("Plan submit error:", err);
+        showNotification("Chyba při odesílání plánu.", "error");
+    }
+}
+
 export async function submitQuickPlan() {
     const name = document.getElementById('qp-name')?.value.trim();
     const time = document.getElementById('qp-time')?.value.trim();
@@ -198,6 +335,11 @@ export async function submitQuickPlan() {
         showNotification("Chyba při odesílání plánu.", "error");
     }
 }
+
+// Attach globals to window
+window.cleanupPlanningTimer = cleanupPlanningTimer;
+window.showQuickPlanModalForCoupon = showQuickPlanModalForCoupon;
+window.submitQuickPlanWithDate = submitQuickPlanWithDate;
 
 export async function respondToPlan(dateKey, status) {
     if (!state.plannedDates || !state.plannedDates[dateKey]) return;

@@ -274,25 +274,87 @@ export function showDayDetail(dateKey) {
         dateSection.classList.add("hidden");
     }
 
-    // B) ŠKOLA
+    // B) ŠKOLA & DEADLINY
     if (schoolSection) {
-        if (isPast) {
-            schoolSection.classList.add("hidden");
-        } else {
-            schoolSection.classList.remove("hidden");
-            const schoolDisplay = document.getElementById("school-event-display");
-            const schoolForm = document.getElementById("school-add-form");
+        schoolSection.classList.remove("hidden");
+        const schoolDisplay = document.getElementById("school-event-display");
+        const schoolForm = document.getElementById("school-add-form");
 
-            if (schoolEvent) {
+        const dayDate = new Date(dateKey);
+        const dayOfWeek = dayDate.getDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        const daySchedule = (state.scheduleItems || []).filter(s => s.day_of_week === dayOfWeek);
+        const deadlinesOnDate = (state.schoolDeadlines || []).filter(d => d.deadline_date === dateKey);
+
+        let schoolHtml = '';
+
+        if (!isWeekend && daySchedule.length > 0) {
+            schoolHtml += `
+                <div class="space-y-2 mb-3 bg-[#202225] border border-emerald-500/20 rounded-2xl p-3">
+                    <div class="flex items-center justify-between pb-1.5 border-b border-white/5">
+                        <span class="text-[9px] font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <i class="fas fa-graduation-cap"></i> VUT FIT Výuka (${daySchedule.length} hod.):
+                        </span>
+                        <button onclick="window.switchChannel('schedule')" class="text-[9px] font-bold text-emerald-400/80 hover:text-emerald-300 transition uppercase tracking-wider flex items-center gap-1">
+                            Celý rozvrh <i class="fas fa-arrow-right text-[7px]"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-1.5 pt-0.5">
+                        ${daySchedule.sort((a, b) => (a.time_start || '').localeCompare(b.time_start || '')).map(sub => `
+                            <div class="flex items-center justify-between bg-black/30 border border-white/5 p-2 rounded-xl text-xs">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span class="text-[9px] font-black px-1.5 py-0.5 bg-emerald-500/15 text-emerald-400 rounded">[${sub.subject_code || 'FIT'}]</span>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-bold text-white truncate">${sub.name}</div>
+                                        <span class="text-[9px] text-gray-400 block">${sub.type || 'Výuka'} • Učebna ${sub.room || 'Božetěchova'}</span>
+                                    </div>
+                                </div>
+                                <span class="text-[10px] text-emerald-300 font-mono font-bold ml-2 flex-shrink-0">${sub.time_start} - ${sub.time_end}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        if (schoolEvent) {
+            schoolHtml += `
+                <div class="flex items-center justify-between bg-black/20 p-2.5 rounded-xl border border-white/5 mb-2">
+                    <span class="text-xs font-bold text-white">${schoolEvent.title}</span>
+                    <button onclick="Calendar.deleteSchoolEvent()" class="text-gray-500 hover:text-red-400 p-1 transition"><i class="fas fa-trash-alt text-xs"></i></button>
+                </div>
+            `;
+        }
+
+        if (deadlinesOnDate.length > 0) {
+            schoolHtml += `
+                <div class="space-y-1.5 mb-2">
+                    <span class="text-[9px] font-black text-emerald-400 uppercase tracking-wider block">FIT Deadliny & Zkoušky:</span>
+                    ${deadlinesOnDate.map(dl => `
+                        <div class="flex items-center justify-between bg-emerald-950/20 border border-emerald-500/20 p-2 rounded-xl text-xs">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="text-[9px] font-black px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded">${dl.subject_code || 'FIT'}</span>
+                                <span class="${dl.is_completed ? 'line-through text-gray-500' : 'text-white font-bold'} truncate">${dl.title}</span>
+                            </div>
+                            <span class="text-[10px] text-gray-400 font-mono">${dl.deadline_time || '23:59'}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        if (schoolHtml) {
+            if (schoolDisplay) {
+                schoolDisplay.innerHTML = schoolHtml;
                 schoolDisplay.classList.remove("hidden");
-                schoolForm.classList.add("hidden");
-                document.getElementById("school-event-text").innerText = schoolEvent.title;
-                const delBtn = schoolDisplay.querySelector("button");
-                delBtn.onclick = () => deleteSchoolEvent();
-            } else {
-                schoolDisplay.classList.add("hidden");
+            }
+            if (schoolForm) schoolForm.classList.add("hidden");
+        } else {
+            if (schoolDisplay) schoolDisplay.classList.add("hidden");
+            if (schoolForm) {
                 schoolForm.classList.remove("hidden");
-                document.getElementById("school-input").value = "";
+                const inp = document.getElementById("school-input");
+                if (inp) inp.value = "";
             }
         }
     }

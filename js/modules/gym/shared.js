@@ -14,6 +14,7 @@ export let restTimerInterval = null;
 export let restTimeRemaining = 0;
 export let restTimeDuration = 90; // Default 90 seconds
 export let isRestTimerRunning = false;
+export let restStartedAt = null;
 
 // Setters (needed because ES module exports are read-only bindings for importers)
 export function setActiveWorkout(val) { activeWorkout = val; }
@@ -24,6 +25,7 @@ export function setRestTimerInterval(val) { restTimerInterval = val; }
 export function setRestTimeRemaining(val) { restTimeRemaining = val; }
 export function setRestTimeDuration(val) { restTimeDuration = val; }
 export function setIsRestTimerRunning(val) { isRestTimerRunning = val; }
+export function setRestStartedAt(val) { restStartedAt = val; }
 
 // --- USER / PARTNER IDENTITY HELPERS ---
 // Use these everywhere instead of hardcoded name comparisons
@@ -317,18 +319,22 @@ export function saveActiveWorkoutToStorage() {
         const dataToSave = {
             templateId: activeWorkout.templateId,
             name: activeWorkout.name,
-            startTime: activeWorkout.startTime.toISOString(),
+            startTime: activeWorkout.startTime instanceof Date ? activeWorkout.startTime.toISOString() : activeWorkout.startTime,
             durationSeconds: activeWorkout.durationSeconds,
             exercises: activeWorkout.exercises,
             isMinimized: activeWorkout.isMinimized || false,
             lastSavedTime: new Date().toISOString(),
             restTimeRemaining,
             restTimeDuration,
-            isRestTimerRunning
+            isRestTimerRunning,
+            restStartedAt: isRestTimerRunning ? (restStartedAt || Date.now()) : null
         };
         localStorage.setItem(ACTIVE_WORKOUT_KEY, JSON.stringify(dataToSave));
     } else {
         localStorage.removeItem(ACTIVE_WORKOUT_KEY);
+    }
+    if (typeof window.updateGlobalWorkoutMiniBar === 'function') {
+        window.updateGlobalWorkoutMiniBar();
     }
 }
 
@@ -347,10 +353,17 @@ export function loadActiveWorkoutFromStorage() {
                 // Adjust rest timer
                 restTimeDuration = parsed.restTimeDuration ?? 90;
                 isRestTimerRunning = parsed.isRestTimerRunning ?? false;
-                if (isRestTimerRunning && parsed.restTimeRemaining > 0) {
-                    restTimeRemaining = Math.max(0, parsed.restTimeRemaining - elapsedSeconds);
+                restStartedAt = parsed.restStartedAt ?? null;
+                if (isRestTimerRunning) {
+                    if (restStartedAt) {
+                        const restElapsed = Math.floor((Date.now() - Number(restStartedAt)) / 1000);
+                        restTimeRemaining = Math.max(0, restTimeDuration - restElapsed);
+                    } else if (parsed.restTimeRemaining > 0) {
+                        restTimeRemaining = Math.max(0, parsed.restTimeRemaining - elapsedSeconds);
+                    }
                     if (restTimeRemaining === 0) {
                         isRestTimerRunning = false;
+                        restStartedAt = null;
                     }
                 } else {
                     restTimeRemaining = parsed.restTimeRemaining ?? 0;
@@ -508,48 +521,29 @@ export function cleanupWorkoutTimers() {
     isRestTimerRunning = false;
     restTimeRemaining = 0;
     
-    // Remove the global floating badge!
     document.getElementById('global-active-workout-badge')?.remove();
+    if (typeof window.updateGlobalWorkoutMiniBar === 'function') {
+        window.updateGlobalWorkoutMiniBar();
+    }
 }
 
-// --- GLOBAL WORKOUT BADGE ---
+// --- GLOBAL WORKOUT BADGE DELEGATION ---
 
 export function updateGlobalWorkoutBadge() {
-    if (!activeWorkout) {
-        document.getElementById('global-active-workout-badge')?.remove();
-        return;
-    }
-    
-    // Do not show the global floating badge if we are already in the Posilovna channel
-    if (state.currentChannel === 'gym-tracker') {
-        document.getElementById('global-active-workout-badge')?.remove();
-        return;
-    }
-    
-    let badge = document.getElementById('global-active-workout-badge');
-    if (!badge) {
-        const html = `
-            <div id="global-active-workout-badge" onclick="window.Gym.restoreWorkoutGlobal()" 
-                 class="fixed bottom-4 right-4 z-[100] cursor-pointer bg-[#2f3136]/95 backdrop-blur-md border border-[#faa61a]/30 shadow-[0_4px_20px_rgba(250,166,26,0.25)] rounded-2xl px-4 py-2.5 flex items-center gap-3 hover:scale-105 active:scale-95 transition-all select-none animate-pulse-slow">
-                <div class="w-8 h-8 rounded-xl bg-[#faa61a]/10 flex items-center justify-center text-[#faa61a]">
-                    <i class="fas fa-dumbbell text-sm animate-bounce-slow"></i>
-                </div>
-                <div>
-                    <span class="text-[9px] font-black uppercase text-white/40 tracking-widest block leading-none mb-1 font-sans">Běží trénink</span>
-                    <span id="global-workout-timer" class="text-xs font-mono font-black text-white leading-none">00:00</span>
-                </div>
-            </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', html);
-        badge = document.getElementById('global-active-workout-badge');
-    }
-    
-    const globalTimerEl = document.getElementById('global-workout-timer');
-    if (globalTimerEl && activeWorkout) {
-        const h = Math.floor(activeWorkout.durationSeconds / 3600);
-        const m = Math.floor((activeWorkout.durationSeconds % 3600) / 60);
-        const s = activeWorkout.durationSeconds % 60;
-        globalTimerEl.textContent = `${h > 0 ? h + ':' : ''}${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    document.getElementById('global-active-workout-badge')?.remove();
+    if (typeof window.updateGlobalWorkoutMiniBar === 'function') {
+        window.updateGlobalWorkoutMiniBar();
+    } else {
+        const bar = document.getElementById('global-workout-mini-bar');
+        if (bar) {
+            if (activeWorkout && state.currentChannel !== 'gym-tracker') {
+                bar.classList.remove('hidden');
+                bar.classList.add('flex');
+            } else {
+                bar.classList.add('hidden');
+                bar.classList.remove('flex');
+            }
+        }
     }
 }
 

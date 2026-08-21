@@ -1,4 +1,4 @@
-import { state, ensureLibraryData, ensureBucketListData, ensureAchievementsData } from '../core/state.js';
+import { state, ensureLibraryData, ensureBucketListData, ensureAchievementsData, ensureGymData, ensureStudyData, ensureLoveShopData } from '../core/state.js';
 import { supabase } from '../core/supabase.js';
 import { renderVitalityPanels } from './stats/charts.js';
 
@@ -30,7 +30,7 @@ export async function renderStats() {
                     ${renderStatCard('Získané milníky', calculateUnlockedAchievementsCount(), 'fa-medal', 'text-[#FEE75C]', 'bg-[#FEE75C]/10', 'stat-achievements')}
                 </div>
 
-                <!-- Detailed Stats Sections -->
+                <!-- Detailed Stats Sections: Row 1 -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <!-- Mood Overview -->
                     <div class="bg-[#2f3136] rounded-3xl border border-white/5 p-6 shadow-xl relative overflow-hidden group">
@@ -59,6 +59,35 @@ export async function renderStats() {
                             <i class="fas fa-bookmark text-[#5865F2]"></i> Knihovna v číslech
                         </h3>
                         <div id="library-stats-container" class="grid grid-cols-2 gap-4">
+                            <!-- JS injected stats -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Stats Sections: Row 2 (Fitness & Study) -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Fitness & Posilovna -->
+                    <div class="bg-[#2f3136] rounded-3xl border border-white/5 p-6 shadow-xl relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-8 opacity-5">
+                            <i class="fas fa-dumbbell text-8xl"></i>
+                        </div>
+                        <h3 class="text-xl font-black text-white mb-6 flex items-center gap-3">
+                            <i class="fas fa-dumbbell text-amber-400"></i> Posilovna & Tonáž
+                        </h3>
+                        <div id="gym-stats-container" class="grid grid-cols-2 gap-4">
+                            <!-- JS injected stats -->
+                        </div>
+                    </div>
+
+                    <!-- VUT FIT & Love Economy -->
+                    <div class="bg-[#2f3136] rounded-3xl border border-white/5 p-6 shadow-xl relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-8 opacity-5">
+                            <i class="fas fa-coins text-8xl"></i>
+                        </div>
+                        <h3 class="text-xl font-black text-white mb-6 flex items-center gap-3">
+                            <i class="fas fa-graduation-cap text-emerald-400"></i> FIT & Love Coins Ekonomika
+                        </h3>
+                        <div id="study-stats-container" class="grid grid-cols-2 gap-4">
                             <!-- JS injected stats -->
                         </div>
                     </div>
@@ -123,78 +152,69 @@ export async function renderStats() {
                             <i class="fas fa-file-export text-white"></i>
                         </div>
                         <div>
-                            <h3 class="text-2xl font-black text-white">Záloha tvých dat</h3>
-                            <p class="text-gray-300 text-sm">Stáhni si kompletní historii tvého koutku v JSON formátu.</p>
+                            <h3 class="text-2xl font-black text-white">Záloha & Export</h3>
+                            <p class="text-gray-300 text-sm mt-1">Stáhněte si kompletní data aplikace ve formátu JSON pro jistotu.</p>
                         </div>
                     </div>
-                    <button onclick="Stats.exportAllData()" 
-                            class="bg-white text-[#2f3136] hover:bg-gray-200 px-8 py-4 rounded-2xl font-black shadow-xl transition transform hover:scale-105 active:scale-95 flex items-center gap-3 uppercase tracking-widest text-sm shrink-0">
-                        <i class="fas fa-download"></i> Exportovat vše
+                    <button onclick="Stats.exportAllData()" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl transition transform hover:scale-105 active:scale-95 flex items-center gap-3">
+                        <i class="fas fa-download"></i> Stáhnout JSON Zálohu
                     </button>
                 </div>
             </div>
-            
-            <div class="h-20 flex-shrink-0"></div> <!-- Spacer -->
         </div>
     `;
 
+    // Fetch async parts
     fetchDetailedStats();
-    updateNotificationStatusUI();
+    checkNotificationStatus();
 }
 
-export async function requestPushPermission() {
-    import('../core/utils.js').then(async m => {
-        const granted = await m.requestNotificationPermission();
+async function testNotification() {
+    import('../core/utils.js').then(m => m.triggerHaptic('medium'));
+    import('../core/notifications.js').then(n => {
+        n.triggerNotification('reminders', 'meds', '🌸 Kiscord funguje skvěle! Všechna data jsou propojena.');
+    });
+}
+
+async function requestPushPermission() {
+    import('../core/utils.js').then(m => m.triggerHaptic('medium'));
+    import('../core/notifications.js').then(async n => {
+        const granted = await n.registerForPushNotifications();
         if (granted) {
-            m.sendLocalNotification("Kiscord: Oznámení povolena! ✨", { body: "Teď už ti nic neuteče." });
-
-            // Registruj Web Push subscripci (pro notifikace i při zavřené appce)
-            import('../core/notifications.js').then(async nm => {
-                const success = await nm.initPushSubscription();
-                if (success) {
-                    window.dispatchEvent(new CustomEvent('notification', {
-                        detail: { message: "Push notifikace aktivovány! 🔔 Dostaneš zprávy i při zavřené appce.", type: "success" }
-                    }));
-                }
-                updateNotificationStatusUI();
-            });
-        } else {
+            checkNotificationStatus();
             window.dispatchEvent(new CustomEvent('notification', {
-                detail: { message: "Oznámení byla zamítnuta nebo nejsou podporována.", type: "error" }
+                detail: { message: "Notifikace byly úspěšně povoleny! 🔔", type: "success" }
+            }));
+        } else {
+            checkNotificationStatus();
+            window.dispatchEvent(new CustomEvent('notification', {
+                detail: { message: "Oprávnění nebylo uděleno.", type: "error" }
             }));
         }
     });
 }
 
-export function testNotification() {
-    import('../core/utils.js').then(m => {
-        if (Notification.permission === 'granted') {
-            m.sendLocalNotification("Testovací mňouknutí! 🐾", {
-                body: "Takhle budou vypadat tvoje budoucí notifikace z Kiscordu.",
-                vibrate: [200, 100, 200]
-            });
-        } else {
-            window.dispatchEvent(new CustomEvent('notification', {
-                detail: { message: "Nejdřív musíš notifikace povolit! 😊", type: "info" }
-            }));
-        }
-    });
-}
-
-function updateNotificationStatusUI() {
+function checkNotificationStatus() {
     const textEl = document.getElementById('notification-status-text');
     const btn = document.getElementById('notif-request-btn');
     if (!textEl || !btn) return;
 
+    if (!('Notification' in window)) {
+        textEl.innerHTML = 'Stav: <span class="text-[#ed4245]">Nepodporováno tímto prohlížečem ❌</span>';
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'cursor-default');
+        btn.classList.remove('hover:scale-105', 'active:scale-95');
+        return;
+    }
+
     const status = Notification.permission;
     if (status === 'granted') {
-        // Zkontroluj jestli máme push subscripci uloženou
         navigator.serviceWorker?.ready.then(reg => {
             reg.pushManager.getSubscription().then(sub => {
                 if (sub) {
-                    textEl.innerHTML = 'Stav: <span class="text-[#3ba55c]">Push aktivní ✅ (i při zavřené appce)</span>';
+                    textEl.innerHTML = 'Stav: <span class="text-[#3ba55c]">Aktivní (Web Push připojeno) ✅</span>';
                 } else {
-                    textEl.innerHTML = 'Stav: <span class="text-[#faa61a]">Povoleno (bez background push) ⚠️</span>';
+                    textEl.innerHTML = 'Stav: <span class="text-[#3ba55c]">Povoleno (Lokální notifikace) ✅</span>';
                 }
             });
         }).catch(() => {
@@ -230,7 +250,7 @@ function renderStatCard(label, value, icon, iconColor, bgColor, id) {
 // --- CALCULATION HELPERS ---
 
 function calculateDaysTogether() {
-    const start = new Date("2025-12-24"); // Datum startu vztahu dle projektu
+    const start = new Date("2025-12-24");
     const now = new Date();
     const diff = Math.floor((now - start) / (1000 * 60 * 60 * 24));
     return diff > 0 ? diff : 0;
@@ -243,7 +263,6 @@ function calculateCompletedBuckets() {
 
 function calculateTotalMovies() {
     if (!state.movieHistory) return 0;
-    // movieHistory is an object keyed by dateKey
     return Object.values(state.movieHistory).flat().length;
 }
 
@@ -256,10 +275,13 @@ async function fetchDetailedStats() {
     await Promise.all([
         ensureLibraryData(),
         ensureBucketListData(),
-        ensureAchievementsData()
+        ensureAchievementsData(),
+        ensureGymData().catch(() => {}),
+        ensureStudyData().catch(() => {}),
+        ensureLoveShopData().catch(() => {})
     ]);
 
-    // Update Top Row cards (might have been rendered as 0 initially)
+    // Update Top Row cards
     const bucketsEl = document.getElementById('stat-buckets');
     const moviesEl = document.getElementById('stat-movies');
     const achEl = document.getElementById('stat-achievements');
@@ -273,7 +295,13 @@ async function fetchDetailedStats() {
     // 2. Library breakdowns
     renderLibraryStats();
 
-    // 3. Render Charts
+    // 3. Gym breakdowns
+    renderGymStats();
+
+    // 4. Study & Love economy
+    renderStudyStats();
+
+    // 5. Render Charts
     setTimeout(() => {
         updateVitalitySummary();
         renderVitalityPanels({
@@ -288,7 +316,6 @@ function updateVitalitySummary() {
     const container = document.getElementById('vitality-summary');
     if (!container) return;
 
-    // Use exact 14-day window matching charts.js logic
     const moodArr = [];
     const sleepArr = [];
     const waterArr = [];
@@ -298,45 +325,49 @@ function updateVitalitySummary() {
         const d = new Date(now);
         d.setDate(now.getDate() - i);
         const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
         const key = `${y}-${m}-${day}`;
-        const entry = state.healthData[key] || {};
         
-        let mVal = entry.mood || 0;
-        if (mVal > 10) mVal = Math.round(mVal / 10);
-        moodArr.push(mVal);
-        sleepArr.push(entry.sleep || 0);
-        waterArr.push(entry.water || 0);
+        const row = (state.healthData || {})[key];
+        if (row) {
+            if (typeof row.mood === 'number' && row.mood > 0) {
+                moodArr.push(row.mood > 10 ? row.mood / 10 : row.mood);
+            }
+            if (typeof row.sleep === 'number' && row.sleep > 0) {
+                sleepArr.push(row.sleep);
+            }
+            if (typeof row.water === 'number' && row.water > 0) {
+                waterArr.push(row.water);
+            }
+        }
     }
 
-    const validMoods = moodArr.filter(v => v > 0);
-    const avgMood = validMoods.length > 0 ? (validMoods.reduce((a,b)=>a+b,0)/validMoods.length).toFixed(1) : "0.0";
-    const avgSleep = (sleepArr.reduce((a,b)=>a+b,0)/14).toFixed(1);
-    const avgWater = (waterArr.reduce((a,b)=>a+b,0)/14).toFixed(1);
+    const avgMood = moodArr.length ? (moodArr.reduce((a, b) => a + b, 0) / moodArr.length).toFixed(1) : '-';
+    const avgSleep = sleepArr.length ? (sleepArr.reduce((a, b) => a + b, 0) / sleepArr.length).toFixed(1) : '-';
+    const avgWater = waterArr.length ? Math.round(waterArr.reduce((a, b) => a + b, 0) / waterArr.length) : '-';
 
     container.innerHTML = `
-        <!-- Mood Tile -->
         <div class="flex items-center gap-3 px-4 py-2 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 shadow-lg group hover:border-[#7B2CBF]/50 transition-all duration-300">
             <div class="w-10 h-10 rounded-xl bg-[#7B2CBF]/10 flex items-center justify-center border border-[#7B2CBF]/20 group-hover:bg-[#7B2CBF]/20">
-                <i class="fas fa-heart text-[#7B2CBF]"></i>
+                <i class="fas fa-face-smile text-[#7B2CBF]"></i>
             </div>
             <div>
                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Nálada</p>
                 <p class="text-lg font-black text-white leading-tight">${avgMood}<span class="text-xs text-gray-500 ml-0.5">/10</span></p>
             </div>
         </div>
-        <!-- Sleep Tile -->
-        <div class="flex items-center gap-3 px-4 py-2 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 shadow-lg group hover:border-[#7289da]/50 transition-all duration-300">
-            <div class="w-10 h-10 rounded-xl bg-[#7289da]/10 flex items-center justify-center border border-[#7289da]/20 group-hover:bg-[#7289da]/20">
-                <i class="fas fa-moon text-[#7289da]"></i>
+
+        <div class="flex items-center gap-3 px-4 py-2 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 shadow-lg group hover:border-[#faa61a]/50 transition-all duration-300">
+            <div class="w-10 h-10 rounded-xl bg-[#faa61a]/10 flex items-center justify-center border border-[#faa61a]/20 group-hover:bg-[#faa61a]/20">
+                <i class="fas fa-moon text-[#faa61a]"></i>
             </div>
             <div>
                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Spánek</p>
                 <p class="text-lg font-black text-white leading-tight">${avgSleep}<span class="text-xs text-gray-500 ml-0.5">h</span></p>
             </div>
         </div>
-        <!-- Water Tile (Full width on mobile) -->
+
         <div class="col-span-2 lg:col-span-1 flex items-center gap-3 px-4 py-2 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 shadow-lg group hover:border-[#00e5ff]/50 transition-all duration-300">
             <div class="w-10 h-10 rounded-xl bg-[#00e5ff]/10 flex items-center justify-center border border-[#00e5ff]/20 group-hover:bg-[#00e5ff]/20">
                 <i class="fas fa-droplet text-[#00e5ff]"></i>
@@ -415,12 +446,69 @@ function renderLibraryStats() {
     `;
 }
 
+function renderGymStats() {
+    const container = document.getElementById('gym-stats-container');
+    if (!container) return;
+
+    const logs = state.gymLogs || [];
+    const totalWorkouts = logs.length;
+    const prsCount = (state.gymPRs || []).length;
+
+    // Calculate total tonnage lifted
+    let totalKg = 0;
+    logs.forEach(log => {
+        (log.exercises || []).forEach(ex => {
+            (ex.sets || []).forEach(set => {
+                if (set.completed && set.weight && set.reps) {
+                    totalKg += (Number(set.weight) * Number(set.reps));
+                }
+            });
+        });
+    });
+    const tons = (totalKg / 1000).toFixed(1);
+
+    container.innerHTML = `
+        <div class="bg-black/20 p-4 rounded-2xl border border-white/5">
+            <div class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Odcvičené tréninky</div>
+            <div class="text-2xl font-black text-amber-400">${totalWorkouts}</div>
+            <div class="text-[10px] text-gray-500 mt-1">Celkem logů</div>
+        </div>
+        <div class="bg-black/20 p-4 rounded-2xl border border-white/5">
+            <div class="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-1">Nazvedaná tonáž</div>
+            <div class="text-2xl font-black text-white">${tons} <span class="text-xs text-orange-400 font-normal">tun</span></div>
+            <div class="text-[10px] text-gray-500 mt-1">${prsCount} osobních rekordů</div>
+        </div>
+    `;
+}
+
+function renderStudyStats() {
+    const container = document.getElementById('study-stats-container');
+    if (!container) return;
+
+    const deadlines = state.schoolDeadlines || [];
+    const completedDeadlines = deadlines.filter(d => d.is_completed).length;
+    const totalCoins = (state.loveCoins?.jose || 0) + (state.loveCoins?.klarka || 0);
+
+    container.innerHTML = `
+        <div class="bg-black/20 p-4 rounded-2xl border border-white/5">
+            <div class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">FIT Deadliny</div>
+            <div class="text-2xl font-black text-emerald-400">${completedDeadlines} <span class="text-xs text-gray-500 font-normal">/ ${deadlines.length}</span></div>
+            <div class="text-[10px] text-gray-500 mt-1">Splněných projektů</div>
+        </div>
+        <div class="bg-black/20 p-4 rounded-2xl border border-white/5">
+            <div class="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-1">Love Coins v oběhu</div>
+            <div class="text-2xl font-black text-white">${totalCoins} <span class="text-xs text-amber-400 font-normal">🪙</span></div>
+            <div class="text-[10px] text-gray-500 mt-1">J: ${state.loveCoins?.jose || 0} • K: ${state.loveCoins?.klarka || 0}</div>
+        </div>
+    `;
+}
+
 function getMoodColor(val) {
-    if (val <= 3) return '#ed4245'; // Red
-    if (val <= 5) return '#faa61a'; // Orange
-    if (val <= 7) return '#FEE75C'; // Yellow
-    if (val <= 9) return '#3ba55c'; // Green
-    return '#eb459e'; // Pink/Awesome
+    if (val <= 3) return '#ed4245';
+    if (val <= 5) return '#faa61a';
+    if (val <= 7) return '#FEE75C';
+    if (val <= 9) return '#3ba55c';
+    return '#eb459e';
 }
 
 // --- EXPORT FUNCTIONALITY ---
@@ -430,7 +518,7 @@ export async function exportAllData() {
         m.triggerHaptic('heavy');
 
         const exportObj = {
-            version: '1.0',
+            version: '2.0',
             exported_at: new Date().toISOString(),
             user: state.currentUser?.name,
             data: {
@@ -439,7 +527,11 @@ export async function exportAllData() {
                 movieHistory: state.movieHistory || {},
                 plannedDates: state.plannedDates || {},
                 confessions: state.confessions || [],
-                achievements: state.unlockedAchievements || []
+                achievements: state.unlockedAchievements || [],
+                gymLogs: state.gymLogs || [],
+                gymPRs: state.gymPRs || [],
+                schoolDeadlines: state.schoolDeadlines || [],
+                loveCoins: state.loveCoins || {}
             }
         };
 
@@ -454,7 +546,7 @@ export async function exportAllData() {
         linkElement.click();
 
         window.dispatchEvent(new CustomEvent('notification', {
-            detail: { message: "Záloha stažena! 💾", type: "success" }
+            detail: { message: "Kompletní záloha Kiscordu stažena! 💾", type: "success" }
         }));
     });
 }

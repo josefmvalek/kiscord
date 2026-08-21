@@ -55,11 +55,131 @@ let easterEggClicks = 0;
 let lastEasterEggClick = 0;
 let renderTimeout = null;
 
+// --- HABITS DASHBOARD WIDGET ---
+export function generateHabitsDashboardWidget() {
+    let habits = [];
+    let logs = [];
+    try {
+        const rawH = localStorage.getItem('kiscord_local_habits');
+        if (rawH) habits = JSON.parse(rawH);
+        const rawL = localStorage.getItem('kiscord_local_habit_logs');
+        if (rawL) logs = JSON.parse(rawL);
+    } catch(e) {}
+
+    const myId = state.currentUser?.id;
+    const todayStr = getTodayKey();
+    const myHabits = habits.filter(h => h.user_id === myId || h.is_shared);
+
+    if (myHabits.length === 0) {
+        return `
+            <div data-dashboard-habits-container="true" class="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl p-5 shadow-sm select-none">
+                <div class="flex justify-between items-center pb-2 border-b border-[var(--border-subtle)] mb-3">
+                    <h3 class="text-xs font-black text-[var(--text-header)] uppercase tracking-wider flex items-center gap-1.5 leading-none">
+                        🌿 Dnešní Návyky & Rutina
+                    </h3>
+                    <button onclick="window.switchChannel('habits')" class="text-[10px] font-bold text-emerald-400 hover:underline uppercase tracking-wider">
+                        + Přidat návyk
+                    </button>
+                </div>
+                <div class="p-3 bg-[var(--bg-tertiary)] rounded-xl border border-[var(--border-subtle)] text-center cursor-pointer hover:border-emerald-500/30 transition" onclick="window.switchChannel('habits')">
+                    <p class="text-xs text-[var(--text-muted)]">Zatím nemáš zadané žádné denní návyky. Klikni pro přidání ranní rutiny (+5 Love Coins) 🌿</p>
+                </div>
+            </div>
+        `;
+    }
+
+    const completedCount = myHabits.filter(h => logs.some(l => l.habit_id === h.id && l.date_key === todayStr && l.user_id === myId)).length;
+    const totalCount = myHabits.length;
+    const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+    return `
+        <div data-dashboard-habits-container="true" class="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl p-5 shadow-sm space-y-3.5 select-none">
+            <div class="flex justify-between items-center pb-2 border-b border-[var(--border-subtle)]">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-xs font-black text-[var(--text-header)] uppercase tracking-wider flex items-center gap-1.5 leading-none">
+                        🌿 Dnešní Návyky & Rutina
+                    </h3>
+                    <span class="text-[9px] bg-emerald-500/10 text-emerald-400 font-bold px-2 py-0.5 rounded-md border border-emerald-500/20">${completedCount}/${totalCount} splněno</span>
+                </div>
+                <button onclick="window.switchChannel('habits')" 
+                        class="px-2.5 py-1 bg-[var(--bg-tertiary)] hover:bg-[var(--bg-modifier-hover)] text-emerald-400 rounded-lg text-[10px] font-black uppercase tracking-wider transition border border-[var(--border-subtle)] flex items-center gap-1">
+                    Návyky <i class="fas fa-chevron-right text-[8px]"></i>
+                </button>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="w-full h-1.5 bg-[var(--bg-tertiary)] rounded-full overflow-hidden border border-white/5">
+                <div class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-700" style="width: ${pct}%"></div>
+            </div>
+
+            <!-- Quick Habits Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                ${myHabits.map(h => {
+                    const isDone = logs.some(l => l.habit_id === h.id && l.date_key === todayStr && l.user_id === myId);
+                    return `
+                        <div class="bg-[var(--bg-tertiary)] hover:bg-[var(--bg-modifier-hover)] border ${isDone ? 'border-emerald-500/30 bg-emerald-950/10' : 'border-[var(--border-subtle)]'} rounded-xl p-2.5 flex items-center justify-between gap-2.5 transition active:scale-98 cursor-pointer group"
+                             onclick="window.toggleHabitFromDashboard('${h.id}')">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0 transition-all ${isDone ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'bg-black/30 text-gray-500 border border-white/10 group-hover:border-white/20'}">
+                                    <i class="fas ${isDone ? 'fa-check text-xs' : 'fa-plus text-[10px]'}"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <span class="text-xs font-bold ${isDone ? 'text-emerald-300 line-through opacity-80' : 'text-[var(--text-header)]'} truncate block">
+                                        ${h.icon || '🌿'} ${h.name}
+                                    </span>
+                                </div>
+                            </div>
+                            <span class="text-[9px] font-black uppercase text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 flex-shrink-0">
+                                +5 🪙
+                            </span>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
+}
+
 // --- VUT FIT & KOLEJE LIVE CONTEXT WIDGET ---
 export function generateFitAndDormDashboardWidget() {
     const today = new Date();
     const dayOfWeek = today.getDay(); // 0 = Ne, 1 = Po, 5 = Pá
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const todayStr = getTodayKey();
+
+    const upcoming = (state.schoolDeadlines || [])
+        .filter(d => !d.is_completed && d.deadline_date && d.deadline_date >= todayStr)
+        .sort((a, b) => a.deadline_date.localeCompare(b.deadline_date));
+    const nextDL = upcoming.length > 0 ? upcoming[0] : null;
+
+    const daySubjects = (state.scheduleItems || []).filter(s => s.day_of_week === dayOfWeek);
+    let todayClassInfo = isWeekend 
+        ? 'Víkendové volno 🎉' 
+        : (daySubjects.length > 0 ? `${daySubjects.length} ${daySubjects.length === 1 ? 'hodina' : (daySubjects.length < 5 ? 'hodiny' : 'hodin')} výuky` : 'Žádná výuka v rozvrhu');
+
+    let deadlineBadgeHtml = '';
+    if (nextDL) {
+        const diffDays = Math.ceil((new Date(nextDL.deadline_date) - new Date(todayStr)) / (1000 * 60 * 60 * 24));
+        const diffLabel = diffDays === 0 ? 'Dnes!' : (diffDays === 1 ? 'Zítra!' : `za ${diffDays} dní`);
+        const isUrgent = diffDays <= 2;
+        deadlineBadgeHtml = `
+            <div class="mt-3 bg-[var(--bg-tertiary)] hover:bg-[var(--bg-modifier-hover)] p-3 rounded-xl border ${isUrgent ? 'border-rose-500/40 bg-rose-950/15 shadow-sm' : 'border-[var(--border-subtle)]'} flex items-center justify-between transition cursor-pointer group" onclick="window.switchChannel('study-planner')">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <span class="text-base flex-shrink-0 group-hover:scale-110 transition-transform">${isUrgent ? '🔥' : '🎯'}</span>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[9px] font-black uppercase tracking-wider text-emerald-400">[${nextDL.subject_code || 'FIT'}]</span>
+                            <span class="text-xs font-bold text-[var(--text-header)] truncate">${nextDL.title}</span>
+                        </div>
+                        <span class="text-[10px] text-[var(--text-muted)] truncate block">${nextDL.type || 'Zadání'} • Termín ${nextDL.deadline_date} (${nextDL.deadline_time || '23:59'})</span>
+                    </div>
+                </div>
+                <span class="text-[10px] font-black uppercase px-2.5 py-1 rounded-lg ${isUrgent ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse' : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'} flex-shrink-0 ml-2">
+                    ${diffLabel}
+                </span>
+            </div>
+        `;
+    }
 
     return `
         <div class="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-2xl p-5 shadow-sm space-y-3.5 select-none">
@@ -89,7 +209,7 @@ export function generateFitAndDormDashboardWidget() {
                     <div class="min-w-0">
                         <span class="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest block">Výuka dnes</span>
                         <p class="text-xs font-bold text-[var(--text-header)] truncate">
-                            ${isWeekend ? 'Víkendové volno 🎉' : 'Otevřít dnešní rozvrh hodin'}
+                            ${todayClassInfo}
                         </p>
                     </div>
                 </div>
@@ -107,6 +227,8 @@ export function generateFitAndDormDashboardWidget() {
                     </div>
                 </div>
             </div>
+
+            ${deadlineBadgeHtml}
         </div>
     `;
 }
@@ -446,13 +568,16 @@ async function actuallyRenderDashboard(forceRefresh = false) {
                     </div>
                 ` : ''}
 
-                <!-- 4. VUT FIT & KOLEJE WIDGET -->
+                <!-- 4. DENNÍ NÁVYKY TRACKER -->
+                ${generateHabitsDashboardWidget()}
+
+                <!-- 5. VUT FIT & KOLEJE WIDGET -->
                 ${state.settings.dashboardWidgets.schoolDorm !== false ? generateFitAndDormDashboardWidget() : ''}
 
-                <!-- 5. VZTAHOVÉ LEVELY & LOVE COINS -->
+                <!-- 6. VZTAHOVÉ LEVELY & LOVE COINS -->
                 ${state.settings.dashboardWidgets.loveShop !== false ? generateLoveAndLevelsWidget() : ''}
 
-                <!-- 6. DENNÍ OTÁZKA -->
+                <!-- 7. DENNÍ OTÁZKA -->
                 ${state.settings.dashboardWidgets.dailyQuestion !== false ? generateDailyQuestionCard() : ''}
             </div>
         </div>
@@ -566,6 +691,15 @@ export function setupDashboardEvents() {
         if (state.currentChannel === 'dashboard') renderDashboard();
     });
 
+    window.addEventListener('habits-updated', () => {
+        if (state.currentChannel === 'dashboard') {
+            const widgetContainer = document.querySelector('[data-dashboard-habits-container]');
+            if (widgetContainer) {
+                widgetContainer.outerHTML = generateHabitsDashboardWidget();
+            }
+        }
+    });
+
     stateEvents.on('settings_changed', () => {
         if (state.currentChannel === 'dashboard') renderDashboard();
     });
@@ -573,10 +707,25 @@ export function setupDashboardEvents() {
     dashboardListenersSet = true;
 }
 
-export async function sendSunlight() {
-    triggerHaptic('light'); triggerConfetti();
-    try { await supabase.from('sunlight_history').insert([{ from_user_id: state.currentUser?.id }]); } catch (e) { }
-    await broadcastSunlight();
+export function sendSunlight() {
+    triggerHaptic('success');
+    triggerConfetti();
+    showNotification("Poslal/a jsi sluneční paprsek! ☀️💛", "success");
+
+    // Background insert & broadcast
+    supabase.from('sunlight_history').insert([{ from_user_id: state.currentUser?.id }]).catch(() => {});
+    broadcastSunlight();
+
+    // Background Web Push to partner
+    import('../core/notifications.js').then(m => {
+        const senderName = state.currentUser?.name?.includes('Josef') ? 'Josef' : (state.currentUser?.name?.includes('Klára') ? 'Klárka' : 'Partner');
+        m.sendPushToPartner({
+            title: 'Kiscord ☀️',
+            body: `${senderName} ti posílá hřejivý sluneční paprsek! 💛`,
+            tag: 'sunlight',
+            channel: 'dashboard'
+        }).catch(() => {});
+    }).catch(() => {});
 }
 
 export function inspectPartnerSunflower(isPartner) {
@@ -753,6 +902,16 @@ export async function syncDashboardData(forceRefresh = false) {
 
         saveStateToCache();
 
+        // Also sync habits in background
+        import('./habits.js').then(m => m.loadHabitsData().then(() => {
+            if (state.currentChannel === 'dashboard') {
+                const widgetContainer = document.querySelector('[data-dashboard-habits-container]');
+                if (widgetContainer) {
+                    widgetContainer.outerHTML = generateHabitsDashboardWidget();
+                }
+            }
+        }));
+
         if (state.currentChannel === 'dashboard') {
             updateSunflowersDOM();
             updateWaterVisuals();
@@ -769,8 +928,52 @@ export async function syncDashboardData(forceRefresh = false) {
     }
 }
 
+export function toggleHabitFromDashboard(habitId) {
+    const todayStr = getTodayKey();
+    const myId = state.currentUser?.id;
+
+    // 1. INSTANT 0ms SYNCHRONOUS OPTIMISTIC UPDATE
+    let logs = [];
+    try {
+        const rawL = localStorage.getItem('kiscord_local_habit_logs');
+        if (rawL) logs = JSON.parse(rawL);
+    } catch(e) {}
+
+    const isAlreadyDone = logs.some(l => l.habit_id === habitId && l.date_key === todayStr && l.user_id === myId);
+
+    if (isAlreadyDone) {
+        triggerHaptic('light');
+        logs = logs.filter(l => !(l.habit_id === habitId && l.date_key === todayStr && l.user_id === myId));
+    } else {
+        triggerHaptic('success');
+        triggerConfetti();
+        logs.push({
+            id: crypto.randomUUID(),
+            habit_id: habitId,
+            user_id: myId,
+            date_key: todayStr
+        });
+    }
+
+    // Save immediately to localStorage
+    localStorage.setItem('kiscord_local_habit_logs', JSON.stringify(logs));
+
+    // Update DOM IMMEDIATELY (0ms delay, instantaneous response!)
+    const widgetContainer = document.querySelector('[data-dashboard-habits-container]');
+    if (widgetContainer) {
+        widgetContainer.outerHTML = generateHabitsDashboardWidget();
+    }
+
+    // 2. BACKGROUND PERSISTENCE & COIN AWARDING (Non-blocking)
+    import('./habits.js').then(habitsMod => {
+        habitsMod.toggleHabitToday(habitId, true /* suppress second feedback */);
+    }).catch(e => {
+        console.warn("[Dashboard] Background habit sync error:", e);
+    });
+}
+
 // Global window attachments
-function attachWindowDashboardGlobals() {
+export function attachWindowDashboardGlobals() {
     window.submitDailyAnswerFromDashboard = submitDailyAnswerFromDashboard;
     window.sendSunlight = sendSunlight;
     window.handleEasterEggClick = handleEasterEggClick;
@@ -785,4 +988,8 @@ function attachWindowDashboardGlobals() {
     window.showRejectionModal = showRejectionModal;
     window.rejectPlanWithReason = rejectPlanWithReason;
     window.inspectPartnerSunflower = inspectPartnerSunflower;
+    window.toggleHabitFromDashboard = toggleHabitFromDashboard;
 }
+
+// Attach immediately on module load
+attachWindowDashboardGlobals();

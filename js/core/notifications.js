@@ -60,28 +60,25 @@ export function handleSystemAction(id, message) { triggerNotification('system', 
  * Triggers a notification with haptics and sound based on user preferences.
  */
 export function triggerNotification(category, id, message) {
-    const section = state.settings.notifications[category];
-    if (!section) return;
-    const config = section[id];
+    const section = state.settings?.notifications?.[category];
+    const config = section?.[id];
     
-    if (!config || !config.enabled) return;
+    if (config && config.enabled === false) return;
 
     // 1. Show UI Toast
     showNotification(message, category === 'reminders' ? 'info' : 'success');
 
     // 2. Trigger Haptics
-    if (config.haptic && state.settings.haptics) {
+    if ((!config || config.haptic !== false) && state.settings?.haptics !== false) {
         triggerHaptic('heavy');
     }
 
     // 3. Send Native System Notification
-    if (state.settings.notifications.nativeEnabled) {
-        sendLocalNotification(message, { 
-            tag: id,
-            renotify: true,
-            silent: false
-        });
-    }
+    sendLocalNotification(message, { 
+        tag: id,
+        renotify: true,
+        silent: false
+    });
 }
 
 /**
@@ -140,4 +137,74 @@ export async function initPushSubscription() {
         console.error('[Push] Failed to subscribe:', err);
         return false;
     }
+}
+
+/**
+ * Send a background Web Push notification to a target user via the Supabase send-push Edge Function.
+ * @param {string} targetUserId
+ * @param {object} options
+ * @param {string} options.title - Notification title
+ * @param {string} [options.body=''] - Notification body text
+ * @param {string} [options.tag='kiscord-push'] - Collapsing/grouping tag
+ * @param {string} [options.url='/'] - Deep link URL
+ * @param {string} [options.channel=''] - Target channel ID (e.g. 'daily-questions', 'dorm-hub')
+ * @returns {Promise<boolean>}
+ */
+export async function sendPushNotification(targetUserId, { title, body = '', tag = 'kiscord-push', url = '/', channel = '' }) {
+    if (!targetUserId || !title) return false;
+
+    try {
+        const payload = {
+            userId: targetUserId,
+            title,
+            body,
+            tag,
+            url: channel ? `/?channel=${channel}` : url,
+            channel
+        };
+
+        const { data, error } = await supabase.functions.invoke('send-push', {
+            body: payload
+        });
+
+        if (error) {
+            console.warn('[Push] Edge function error:', error);
+            return false;
+        }
+
+        console.log('[Push] Push notification dispatched successfully:', data);
+        return true;
+    } catch (err) {
+        console.warn('[Push] Failed to invoke send-push:', err);
+        return false;
+    }
+}
+
+/**
+ * Send a background Web Push notification directly to the partner (Josef or Klárka).
+ * @param {object} options
+ * @param {string} options.title - Notification title
+ * @param {string} [options.body=''] - Notification body text
+ * @param {string} [options.tag='partner-action'] - Notification tag
+ * @param {string} [options.url='/'] - Deep link URL
+ * @param {string} [options.channel=''] - Target channel ID
+ * @returns {Promise<boolean>}
+ */
+export async function sendPushToPartner(options) {
+    if (!state.currentUser?.id) return false;
+
+    // Resolve partner ID
+    const myId = state.currentUser.id;
+    let partnerId = null;
+
+    if (state.user_ids?.jose && state.user_ids?.klarka) {
+        partnerId = (myId === state.user_ids.jose) ? state.user_ids.klarka : state.user_ids.jose;
+    }
+
+    if (!partnerId) {
+        console.warn('[Push] Partner user ID could not be determined.');
+        return false;
+    }
+
+    return sendPushNotification(partnerId, options);
 }

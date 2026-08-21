@@ -206,6 +206,8 @@ function renderUI() {
         confirmBuyCoupon,
         buyCouponDirect: buyCoupon,
         redeemCoupon,
+        redeemCouponDirect,
+        planCouponDate,
         vetoCoupon,
         startRps,
         makeRpsChoice,
@@ -386,14 +388,19 @@ function renderInventoryView(partnerName) {
                         </div>
                     </div>
                     
-                    <div class="flex justify-end gap-2.5 border-t border-gray-700/40 pt-3 relative z-10">
+                    <div class="flex flex-wrap justify-end gap-2 border-t border-gray-700/40 pt-3 relative z-10">
+                        <button onclick="window.LoveShop.planCouponDate('${coupon.id}', '${cleanedTitle.replace(/'/g, "\\'")}', '${(coupon.note || '').replace(/'/g, "\\'")}')" 
+                            class="px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-pink-500/20 to-rose-500/20 hover:from-pink-500/30 hover:to-rose-500/30 text-pink-300 border border-pink-500/30 hover:border-pink-400 active:scale-95 transition-all flex items-center gap-1.5 shadow-sm"
+                            title="Naplánovat rande s tímto kupónem do kalendáře">
+                            <i class="fas fa-calendar-plus text-[10px] text-pink-400"></i> <span>Naplánovat rande 🥂</span>
+                        </button>
                         <button onclick="window.LoveShop.vetoCoupon('${coupon.id}')" 
-                            class="px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 hover:bg-gray-800/30 active:scale-95 transition-all flex items-center gap-1.5"
+                            class="px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider text-gray-400 hover:text-white border border-gray-700 hover:border-gray-500 hover:bg-gray-800/30 active:scale-95 transition-all flex items-center gap-1.5"
                             title="Tlačítko Veto použijete, pokud partner zrovna nemůže vyhovět. Kupón se vrátí s prioritní hvězdou úroku.">
                             <i class="fas fa-star-half-alt text-[9px]"></i> <span>Veto</span>
                         </button>
                         <button onclick="window.LoveShop.redeemCoupon('${coupon.id}')" 
-                            class="px-4.5 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white cursor-pointer active:scale-95 shadow-md shadow-emerald-500/20 transition-all flex items-center gap-1.5">
+                            class="px-4 py-2 rounded-xl text-[10px] font-black tracking-widest uppercase bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white cursor-pointer active:scale-95 shadow-md shadow-emerald-500/20 transition-all flex items-center gap-1.5">
                             <i class="fas fa-bell text-[9px]"></i> <span>Uplatnit</span>
                         </button>
                     </div>
@@ -564,54 +571,67 @@ async function buyCoupon(itemId, note = '') {
     const item = (state.shopItems || []).find(i => i.id === itemId);
     if (!item) return;
 
-    try {
-        console.log(`[LoveShop] Buying item ${item.title} for ${item.cost} coins...`);
-
-        const currentCoins = isMeJose ? state.loveCoins.jose : state.loveCoins.klarka;
-        const newCoins = currentCoins - item.cost;
-        if (newCoins < 0) {
-            showNotification("Nedostatek Love Coinů pro nákup této odměny! 🪙", "warning");
-            return;
-        }
-
-        const { error: profileError } = await supabase
-            .from('profiles')
-            .update({ love_coins: newCoins })
-            .eq('id', myId);
-
-        if (profileError) throw profileError;
-
-        const { error: couponError } = await supabase
-            .from('user_coupons')
-            .insert({
-                shop_item_id: item.id,
-                owner_id: partnerId,
-                creator_id: myId,
-                note: note || null
-            });
-
-        if (couponError) throw couponError;
-
-        // Odešleme push notifikaci i realtime broadcast partnerovi
-        notifyPartnerCouponGifted(cleanTitle(item.title), note).catch(e => console.warn("[Push] Error:", e));
-
-        import('../core/sound.js').then(m => m.playCoinsSound?.()).catch(() => {});
-        triggerConfetti();
-
-        if (typeof window.showNotification === 'function') {
-            const partnerName = isMeJose ? "Klárce" : "Jožkovi";
-            window.showNotification(`🎁 Úspěšně jsi zakoupil/a a daroval/a kupón "${cleanTitle(item.title)}" ${partnerName}!`, "success");
-        }
-
-        await ensureLoveShopData(true);
-        renderUI();
-
-    } catch (e) {
-        console.error("[LoveShop] Nákup selhal:", e);
-        if (typeof window.showNotification === 'function') {
-            window.showNotification("Nákup selhal, zkuste to znovu.", "error");
-        }
+    const currentCoins = isMeJose ? (state.loveCoins?.jose || 0) : (state.loveCoins?.klarka || 0);
+    const newCoins = currentCoins - item.cost;
+    if (newCoins < 0) {
+        showNotification("Nedostatek Love Coinů pro nákup této odměny! 🪙", "warning");
+        return;
     }
+
+    // --- 1. INSTANT OPTIMISTIC STATE & DOM UPDATE (0 ms) ---
+    if (!state.loveCoins) state.loveCoins = {};
+    if (isMeJose) state.loveCoins.jose = newCoins;
+    else state.loveCoins.klarka = newCoins;
+
+    const tempCoupon = {
+        id: 'temp_' + Date.now(),
+        shop_item_id: item.id,
+        owner_id: partnerId,
+        creator_id: myId,
+        note: note || null,
+        is_redeemed: false,
+        created_at: new Date().toISOString(),
+        love_shop_items: item
+    };
+    if (!state.userCoupons) state.userCoupons = [];
+    state.userCoupons.unshift(tempCoupon);
+
+    saveStateToCache();
+
+    // Instant Visual & Audio Feedback
+    import('../core/sound.js').then(m => m.playCoinsSound?.()).catch(() => {});
+    triggerConfetti();
+
+    const partnerName = isMeJose ? "Klárce" : "Jožkovi";
+    showNotification(`🎁 Úspěšně jsi zakoupil/a a daroval/a kupón "${cleanTitle(item.title)}" ${partnerName}!`, "success");
+
+    renderUI();
+
+    // --- 2. ASYNC CLOUD PERSISTENCE (Non-blocking) ---
+    Promise.all([
+        supabase.from('profiles').update({ love_coins: newCoins }).eq('id', myId),
+        supabase.from('user_coupons').insert({
+            shop_item_id: item.id,
+            owner_id: partnerId,
+            creator_id: myId,
+            note: note || null
+        }).select()
+    ]).then(([profileRes, couponRes]) => {
+        if (couponRes.data && couponRes.data[0]) {
+            Object.assign(tempCoupon, couponRes.data[0]);
+        }
+        notifyPartnerCouponGifted(cleanTitle(item.title), note).catch(e => console.warn("[Push] Error:", e));
+        ensureLoveShopData(true).then(() => renderUI());
+    }).catch(e => {
+        console.error("[LoveShop] Nákup v pozadí selhal:", e);
+        // Rollback state
+        if (isMeJose) state.loveCoins.jose = currentCoins;
+        else state.loveCoins.klarka = currentCoins;
+        state.userCoupons = (state.userCoupons || []).filter(c => c !== tempCoupon && c.id !== tempCoupon.id);
+        saveStateToCache();
+        renderUI();
+        showNotification("Nákup se nepodařilo dokončit, mince byly vráceny. 🪙", "error");
+    });
 }
 
 /**
@@ -621,35 +641,67 @@ async function redeemCoupon(couponId) {
     triggerHaptic('success');
     triggerConfetti();
 
-    try {
-        console.log(`[LoveShop] Redeeming coupon ${couponId}...`);
+    const coupon = (state.inventory || []).find(c => c.id === couponId);
+    const title = coupon?.love_shop_items?.title || 'Kupón';
 
-        const coupon = (state.inventory || []).find(c => c.id === couponId);
-        const title = coupon?.love_shop_items?.title || 'Kupón';
-
-        const { error } = await supabase
-            .from('user_coupons')
-            .update({ 
-                is_redeemed: true,
-                redeemed_at: new Date().toISOString()
-            })
-            .eq('id', couponId);
-
-        if (error) throw error;
-
-        // Odeslat Web Push a broadcast partnerovi
-        notifyPartnerCouponRedeemed(cleanTitle(title)).catch(e => console.warn("[Push] Error:", e));
-
-        if (typeof window.showNotification === 'function') {
-            window.showNotification("Kupón uplatněn! Partner obdržel notifikaci! 🎉", "success");
-        }
-
-        await ensureLoveShopData(true);
-        renderUI();
-
-    } catch (e) {
-        console.error("[LoveShop] Uplatnění selhalo:", e);
+    // Optimistic UI state
+    if (coupon) {
+        coupon.is_redeemed = true;
+        coupon.redeemed_at = new Date().toISOString();
     }
+    saveStateToCache();
+    showNotification("Kupón uplatněn! Partner obdržel notifikaci! 🎉", "success");
+    renderUI();
+
+    // Background cloud update & push
+    supabase.from('user_coupons').update({ 
+        is_redeemed: true,
+        redeemed_at: new Date().toISOString()
+    }).eq('id', couponId).then(() => {
+        notifyPartnerCouponRedeemed(cleanTitle(title)).catch(e => console.warn("[Push] Error:", e));
+        ensureLoveShopData(true);
+    }).catch(e => {
+        console.error("[LoveShop] Uplatnění selhalo:", e);
+    });
+}
+
+/**
+ * Přímé uplatnění kupónu (např. při naplánování rande).
+ */
+export async function redeemCouponDirect(couponId) {
+    const coupon = (state.inventory || []).find(c => c.id === couponId);
+    const title = coupon?.love_shop_items?.title || 'Kupón';
+
+    if (coupon) {
+        coupon.is_redeemed = true;
+        coupon.redeemed_at = new Date().toISOString();
+    }
+    saveStateToCache();
+
+    // Background cloud update & push
+    supabase.from('user_coupons').update({ 
+        is_redeemed: true,
+        redeemed_at: new Date().toISOString()
+    }).eq('id', couponId).then(() => {
+        notifyPartnerCouponRedeemed(cleanTitle(title)).catch(e => console.warn("[Push] Error:", e));
+        ensureLoveShopData(true);
+    }).catch(e => {
+        console.error("[LoveShop] Uplatnění selhalo:", e);
+    });
+}
+
+/**
+ * Otevře plánovač rande a předvyplní data z kupónu.
+ */
+export function planCouponDate(couponId, couponTitle, note = '') {
+    triggerHaptic('light');
+    import('./dashboard/planning.js').then(m => {
+        m.showQuickPlanModalForCoupon({
+            couponId,
+            couponTitle: cleanTitle(couponTitle),
+            note
+        });
+    });
 }
 
 /**

@@ -1,31 +1,39 @@
-# Sync a Realtime
+# Real-Time Synchronization & Presence
 
-Kiscord klade velký důraz na pocit sounáležitosti obou uživatelů. Aby aplikace působila „živě“, využívá pokročilé real-time funkce platformy Supabase.
+> Kiscord prioritizes a responsive, shared experience for both users. To make the app feel alive and interactive, it utilizes real-time features provided by Supabase.
 
-## 1. Dva typy synchronizace
-Aplikace rozlišuje mezi **trvalou synchronizací dat** (změny v databázi) a **pomíjivými událostmi** (broadcasty).
+---
 
-### A. Database Sync (Postgres Changes)
-Tento systém sleduje změny přímo v tabulkách databáze. Jakmile Jožka nebo Klárka změní záznam (např. v Bucket listu), Supabase pošle notifikaci druhému zařízení.
+## 1. Two Synchronization Modalities
 
-- **Implementace**: `supabase.channel('schema-db-changes')`
-- **Využití**: 
-    - Achievementy (animace odemčení u partnera)
-    - Bucket list (zaškrtnutí položky)
-    - Kalendář (přidání rande)
-    - Tier Listy (přesouvání položek)
+The application distinguishes between **persistent database synchronization** (persisted PostgreSQL updates) and **ephemeral broadcast events**.
+
+### A. Database Synchronization (Postgres Changes)
+Listens for change events directly on database tables. Whenever Josef or Klárka modifies a record (e.g. updating a Bucket List item or logging a workout), Supabase pushes a WebSocket notification to the partner's device.
+
+- **Implementation**: `supabase.channel('schema-db-changes')`
+- **Use Cases**:
+  - Unlocked achievements (animated celebration modal on partner's device)
+  - Bucket list item check-offs
+  - Calendar event additions and date responses
+  - Tier list rank updates
+
+---
 
 ### B. Broadcast Channel (Ephemeral Events)
-Broadcasty se neukládají do databáze. Jsou to rychlé zprávy poslané přímo mezi prohlížeči. Jsou ideální pro akce, které mají okamžitý vizuální efekt, ale nemusí být v logu.
+Broadcasts bypass the database completely, transmitting rapid peer-to-peer WebSocket payloads between active clients.
 
-- **Implementace**: `js/core/sync.js`
-- **Využití**:
-    - **Health Updates**: Když partner pohne sliderem nálady, emoji na slunečnici partnera se okamžitě změní.
-    - **Sunlight Aura**: Poslání „slunečního paprsku“ vyvolá na druhém zařízení déšť konfet a vizuální auru.
-    - **Draw Strokes**: Tahy v modulu Kreslení se přenáší v reálném čase.
+- **Implementation**: `js/core/sync.js`
+- **Use Cases**:
+  - **Health Updates**: Moving the mood slider immediately rotates and updates the partner's sunflower emoji.
+  - **Sunlight Aura**: Tapping the "Send Sunlight" button triggers a screen confetti rain and glowing aura on the partner's phone.
+  - **Draw Strokes**: Pen strokes in Draw Duel are streamed in real time for cooperative sketching.
+
+---
 
 ## 2. Broadcast API Helper
-V `js/core/sync.js` je definována funkce `broadcastToPartner`, která zjednodušuje odesílání událostí:
+
+In `js/core/sync.js`, the helper function `broadcastToPartner` streamlines real-time event dispatching:
 
 ```javascript
 export function broadcastToPartner(event, payload) {
@@ -38,8 +46,25 @@ export function broadcastToPartner(event, payload) {
 }
 ```
 
-## 3. Realtime Listenery a Cleanup
-Protože Realtime kanály spotřebovávají zdroje, je kritické je správně zavírat při odchodu z modulu. Router automaticky volá cleanup funkce registrované na objektu `window` (např. `drawCleanup`), které odhlásí daný kanál.
+---
 
-## 4. Presence (Kdo je online)
-Systém dokáže detekovat, zda je partner právě aktivní v aplikaci. To je využito například u slunečnice na Dashboardu, která „spí“, pokud jsou oba uživatelé neaktivní (nebo je noc).
+## 3. Realtime Listeners & Cleanup Lifecycle
+
+Because open WebSocket channels consume client and server resources, it is essential to disconnect them when leaving a channel. The router automatically invokes cleanup routines (e.g. `drawCleanup()`) registered on the global `window` object.
+
+---
+
+## 4. User Presence
+
+The application tracks whether the partner is currently active in Kiscord. For example, the sunflower on the Dashboard enters a "sleeping" animation if both users are inactive or if it is nighttime.
+
+---
+
+## 5. Native Background Web Push Notifications (`js/core/notifications.js` & `public/sw.js`)
+
+When either user is inactive, asleep, or has their device screen locked, live WebSockets are paused by the mobile OS. Kiscord bridges this with **Native Web Push Notifications**:
+
+- **Device Subscription (`initPushSubscription`)**: VAPID public key subscription stored in PostgreSQL table `push_subscriptions`.
+- **Server Dispatch (`sendPushToPartner`)**: Dispatches push packets via Supabase Edge Function `send-push` to Apple APNs and Google FCM gateways.
+- **Automated Reminders (`cron-reminders`)**: Server-side `pg_cron` runs every 15 minutes (Europe/Prague timezone) to check medication schedules, hydration targets, and bedtime alerts.
+- **Service Worker Deep Linking (`public/sw.js`)**: Wakes the device, displays native lock-screen banner, and navigates directly to the target channel (e.g. `/?channel=daily-questions`) upon interaction.

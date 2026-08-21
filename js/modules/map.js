@@ -64,8 +64,8 @@ export function updateRouteUI() {
                 <span class="text-[10px] bg-[#2f3136] text-gray-400 w-4 h-4 rounded-full flex items-center justify-center font-bold">${i + 1}</span>
                 <span class="text-xs text-gray-200 truncate font-medium">${loc.name}</span>
             </div>
-            <button onclick="KiscordMap.removeFromRoute(${i})" class="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition">
-                <i class="fas fa-times"></i>
+            <button onclick="KiscordMap.removeFromRoute(${i})" class="text-gray-400 hover:text-red-400 active:text-red-500 p-1 rounded transition" title="Odebrat z trasy">
+                <i class="fas fa-times text-xs"></i>
             </button>
         </div>
     `).join("");
@@ -485,7 +485,7 @@ export function selectLocation(id) {
                         
                         <!-- Edit Button Overlay -->
                         <button onclick="event.stopPropagation(); window.openEventModal('${photo.eventId}')" 
-                                class="absolute top-1.5 right-1.5 w-6 h-6 bg-black/60 hover:bg-[#5865F2] text-white rounded-full flex items-center justify-center opacity-0 group-hover/polaroid:opacity-100 transition duration-200 z-10 hover:scale-110"
+                                class="absolute top-1.5 right-1.5 w-6 h-6 bg-black/60 hover:bg-[#5865F2] text-white rounded-full flex items-center justify-center opacity-80 md:opacity-0 md:group-hover/polaroid:opacity-100 transition duration-200 z-10 hover:scale-110 active:scale-90"
                                 title="Upravit nebo smazat vzpomínku">
                             <i class="fas fa-edit text-[10px]"></i>
                         </button>

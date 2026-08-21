@@ -1,54 +1,38 @@
-# Skupina D: Společná Cesta a Vzpomínky
+# Group D: Our World & Journey
 
-Tyto moduly slouží jako digitální archiv vztahu, od prvních setkání až po plánování budoucnosti.
-
-## 1. Timeline (Naše Společná Cesta)
-**Soubor**: `js/modules/timeline.js`
-
-Chronologický deník všech důležitých momentů s důrazem na vizuální vyprávění.
-
-### Klíčové vlastnosti:
-- **Časová osa**: Události jsou seskupeny podle měsíců a let.
-- **Polaroidová Galerie**: Speciální komponenta pro zobrazení fotografií s "polaroid" efektem, datem a lepící páskou. Podporuje gesta (swipe) a full-screen režim.
-- **Milníky (Milestones)**: Možnost označit událost jako klíčovou (ikona korunky), doprovázenou konfetami.
-- **Uživatelské Highlighty**: Každý partner může k události připsat svůj osobní postřeh nebo "vtipný moment".
-- **Integrace s Mapou**: Pokud je k události přiřazena lokace, lze na ni jedním kliknutím přejít v modulu Mapa.
+> Modules dedicated to couple life, date planning, deep conversations, shared dreams, and memory preservation.
 
 ---
 
-## 2. Mapa & Plánovač Rande
-**Soubor**: `js/modules/map.js`
-
-Interaktivní plánovač založený na mapě (Leaflet.js) pro objevování nových míst a hodnocení těch navštívených.
-
-### Funkcionalita:
-- **Kategorizace míst**: Procházky, Výhledy, Zábava a Jídlo s barevně odlišenými piny.
-- **Plánovač trasy**: Sidebar umožňující přidat až 10 míst do seznamu a následně celou trasu otevřít v Google Maps.
-- **Hodnocení (Star System)**: Pětihvězdičkový systém hodnocení rande s textovými popisky.
-- **Propojení se vzpomínkami**: Místa, na kterých se již odehrála událost z Timelinu, jsou označena pulzujícím srdcem.
-- **Plánování do kalendáře**: Možnost nastavit čas a poznámku k místu, což automaticky vytvoří záznam v modulu Kalendář.
+## 1. Love Shop & Coupon Pantry (`#obchůdek`)
+- **File:** `/js/modules/loveShop.js`
+- **Capabilities:**
+  - Romantic coupon shop where users redeem **Love Coins** (earned from completing habits, workouts, and health goals) for custom vouchers (e.g. *Back Massage*, *Breakfast in Bed*, *Movie Night Choice*).
+  - Coupon pantry for redeeming purchased vouchers with direct calendar event creation.
 
 ---
 
-## 3. Digitální Dopisy
-**Soubor**: `js/modules/letters.js`
-
-Systém pro posílání dlouhých, promyšlených vzkazů, které se odemykají v budoucnu.
-
-### Klíčové vlastnosti:
-- **Časové odemknutí (Timed Lock)**: Dopis lze odeslat s datem v budoucnosti. Do té doby vidí příjemce v inboxu pouze zámek a čas odpočtu.
-- **Potvrzení o přečtení**: Odesílatel vidí, zda už si partner jeho dopis přečetl.
-- **Prémiový prohlížeč**: Pokročilý fullscreen prohlížeč přiložených fotografií s podporou pinch-to-zoom a stahování.
-- **Archivace**: Třídění na Doručené, Odeslané a Koncepty (Compose view).
+## 2. Date Planner & Map (`#plánovač-rande`)
+- **File:** `/js/modules/map.js`
+- **Capabilities:**
+  - Interactive Leaflet map featuring pinned favorite spots, future wishlist destinations, and visited memories.
+  - Route planning and external links to Google Maps navigation.
 
 ---
 
-## 4. Confession (Speciální Patch)
-**Soubor**: `js/modules/confession.js`
+## 3. Shared Dreams & Co-op Quests
+- **`#bucket-list` (`bucketlist.js`)**: Shared bucket list with priority tags, category filters, and completion photo uploads.
+- **`#společné-questy` (`quests.js`)**: Cooperative challenges (e.g. *100 km walked*, *30 days no sugar*) with real-time aggregate progression.
 
-Unikátní interaktivní modul navržený jako "překvapení", využívající technickou estetiku aplikace.
+---
 
-### Fáze zážitku:
-1. **Terminal Simulation**: Vizuální simulace příkazové řádky (CMD), která "skenuje" data aplikace (logs, inside jokes) a potvrzuje kompatibilitu.
-2. **Typewriter Message**: Heartfelt vyznání psané strojem s progresivním odhalováním textu.
-3. **Interaktivní rozhodnutí**: Finální otázka s možností volby, která dynamicky mění závěr zážitku a spouští vizuální efekty (konfety, haptika).
+## 4. Daily Conversations & Questions
+- **`#denní-otázky` (`dailyQuestions.js`)**: Unlocks a daily question for both partners with historical answer archives.
+- **`#témata` (`topics.js`)**: Digital card deck with thought-provoking, deep, and fun conversation prompts.
+
+---
+
+## 5. Memories & Milestones
+- **`#timeline` (`timeline.js`)**: Chronological memory timeline with photo albums, captions, and lightbox gallery.
+- **`#dopisy` (`letters.js`)**: Time-locked digital message capsules that remain sealed until a specific future date (e.g. anniversaries).
+- **`#achievementy` (`achievements.js`)**: Gamified relationship trophies with automated unlock triggers.

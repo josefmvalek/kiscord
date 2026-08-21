@@ -1,72 +1,139 @@
-# Databázový Model
+# 💾 Database Model (Supabase & PostgreSQL)
 
-Kiscord využívá **PostgreSQL** hostovaný na platformě **Supabase**. Databáze je navržena tak, aby podporovala jak soukromá data jednotlivců (zdraví, achievementy), tak sdílená data páru (kalendář, média, timeline).
+> Kiscord uses **PostgreSQL 15+** hosted on the **Supabase** platform.  
+> The database architecture strictly separates personal private records and shared couple data via **Row Level Security (RLS)** policies.
 
-## 1. Architektura dat
-Většina tabulek používá UUID pro identifikaci uživatelů a integruje se se systémem **Supabase Auth**.
+---
 
-### Osobní vs. Sdílená data
-1. **Osobní data**: Přístupná pouze vlastníkovi (např. nálada, vlastní achievementy).
-2. **Sdílená data**: Přístupná oběma uživatelům (např. společný kalendář, bucket list).
+## 1. Table Overview by Domain
 
-## 2. Přehled Tabulek
+```mermaid
+erDiagram
+    PROFILES ||--o{ HEALTH_DATA : logs
+    PROFILES ||--o{ GYM_WORKOUTS : logs
+    PROFILES ||--o{ LOVE_COUPONS : redeems
+    PROFILES ||--o{ APP_FINANCES : manages
+    GYM_WORKOUTS ||--|{ GYM_SETS : contains
+    GYM_EXERCISES ||--o{ GYM_SETS : referenced_by
+    LIBRARY_CONTENT ||--o{ LIBRARY_RATINGS : reviewed_in
+    LIBRARY_CONTENT ||--o{ LIBRARY_WATCHLIST : wishlisted_in
+    PROFILES ||--o{ FUTURE_LETTERS : writes
+    PROFILES ||--o{ ACHIEVEMENTS : unlocks
+```
 
-### Jádro a Zdraví
-| Tabulka | Popis | Klíčová Pole |
+---
+
+### 👤 Profiles, Users & Gamification
+
+| Table | Description | Key Columns |
 |---|---|---|
-| `health_data` | Denní záznamy zdraví | `date_key`, `user_id`, `water`, `sleep`, `mood`, `pills` |
-| `profiles` | Rozšířené info o uživatelích | `id`, `username`, `email`, `avatar_url` |
+| `profiles` | Extended profile metadata & game stats | `id` (UUID, FK auth.users), `username`, `email`, `avatar_url`, `love_coins`, `relationship_xp`, `level`, `created_at` |
+| `love_coupons` | Couple shop coupon definitions | `id` (UUID), `title`, `description`, `cost`, `icon`, `category`, `redeemed_at`, `redeemed_by` |
+| `achievements` | Unlocked trophies and milestones | `id` (UUID), `user_id`, `achievement_key`, `unlocked_at`, `progress` |
+| `quests` | Co-op monthly and continuous missions | `id` (UUID), `title`, `description`, `target_value`, `current_value`, `is_completed`, `reward_coins` |
 
-### Vzpomínky a Plánování
-| Tabulka | Popis | Klíčová Pole |
+---
+
+### 🏋️‍♂️ Fitness, Gym & Health
+
+| Table | Description | Key Columns |
 |---|---|---|
-| `timeline_events` | Záznamy v timelinu | `title`, `description`, `event_date`, `images` (array) |
-| `planned_dates` | Akce v kalendáři | `date_key`, `name`, `cat`, `status`, ` proposto_by` |
-| `bucket_list` | Společné sny a cíle | `title`, `category`, `is_completed`, `is_priority` |
-| `date_locations` | Špendlíky na mapě | `name`, `lat`, `lng`, `category` |
+| `gym_workouts` | Completed workout sessions | `id` (UUID), `user_id`, `title`, `duration_seconds`, `volume_kg`, `total_sets`, `created_at` |
+| `gym_sets` | Individual recorded workout sets | `id` (UUID), `workout_id` (FK), `exercise_id`, `set_order`, `reps`, `weight_kg`, `is_warmup`, `rpe` |
+| `gym_exercises` | Exercise registry (100+ exercises) | `id` (TEXT), `name`, `category`, `muscle_primary`, `muscle_secondary`, `gif_url`, `instructions` |
+| `gym_templates` | Workout routines and templates (PPL, Fullbody) | `id` (UUID), `user_id`, `name`, `exercises_json`, `is_shared` |
+| `gym_body_measurements` | Body circumferences & weight | `id` (UUID), `user_id`, `date_key`, `weight_kg`, `waist_cm`, `arms_cm`, `chest_cm`, `photos` |
+| `health_data` | Daily health & biometric logs | `date_key` (TEXT, YYYY-MM-DD), `user_id`, `water`, `sleep_hours`, `sleep_start`, `sleep_end`, `mood`, `pills` (JSONB) |
+| `habits_items` | Daily habit items & streaks | `id` (UUID), `user_id`, `title`, `icon`, `target_frequency`, `history` (JSONB) |
 
-### Knihovna Médií
-| Tabulka | Popis | Klíčová Pole |
+---
+
+### 🎓 VUT FIT, Dorm Life & Personal Finances
+
+| Table | Description | Key Columns |
 |---|---|---|
-| `library_content` | Katalog filmů/her | `title`, `type`, `category`, `magnet`, `gdrive` |
-| `library_ratings` | Stav a hodnocení | `media_id`, `user_id`, `status`, `rating`, `reaction` |
-| `library_watchlist` | Seznam Heartíků | `media_id`, `added_by` |
+| `vut_subjects` | WIS university subjects & point limits | `id` (UUID), `code`, `name`, `credits`, `points_current`, `points_max`, `has_credit`, `has_exam` |
+| `study_deadlines` | Projects, assignments & exams | `id` (UUID), `subject_code`, `title`, `due_date`, `type` (project/exam/quiz), `is_done` |
+| `dorm_laundry` | Dorm laundry machine bookings | `id` (UUID), `machine_id`, `slot_start`, `slot_end`, `user_id`, `is_active` |
+| `dorm_checklist` | Dorm room equipment checklist | `id` (UUID), `category`, `item_name`, `is_packed`, `assigned_to` |
+| `app_finances` | Personal budget & expense records | `id` (UUID), `user_id`, `title`, `amount`, `type` (income/expense), `category` (menza/dorm/groceries/other), `date` |
+| `finance_goals` | Savings goal piggy bank (*Kasička*) | `id` (UUID), `user_id`, `title`, `target_amount`, `current_amount`, `deadline` |
 
-### Studium (Maturita 2026)
-| Tabulka | Popis | Klíčová Pole |
+---
+
+### 🍿 Entertainment, Media & Minigames
+
+| Table | Description | Key Columns |
 |---|---|---|
-| `matura_topics` | Katalog témat | `id`, `category_id`, `title`, `content_url` |
-| `matura_topic_progress` | Stav naučení | `item_id`, `user_id`, `status`, `notes` |
-| `matura_streaks` | Studijní série | `user_id`, `current_streak`, `last_activity` |
+| `library_content` | Movies, series & games catalogue | `id` (UUID), `title`, `type` (movie/series/game), `cat`, `poster_path`, `rating`, `year`, `runtime_min` |
+| `library_watchlist` | Hearted / wishlist media items | `id` (UUID), `media_id` (FK), `added_by`, `type`, `created_at` |
+| `library_ratings` | User reviews and watch history | `id` (UUID), `media_id` (FK), `user_id`, `status` (watching/seen/planned), `rating`, `reaction` |
+| `drawings` | Draw Duel cooperative sketches | `id` (UUID), `image_data`, `prompt`, `created_by`, `likes` |
+| `tier_lists` | Interactive tier rankers (S-A-B-C-D) | `id` (UUID), `title`, `category`, `items_json`, `created_by` |
+| `couple_quizzes` | Reciprocal couple quiz challenges | `id` (UUID), `creator_id`, `title`, `questions_json`, `answers_json` |
 
-## 3. Row Level Security (RLS)
-RLS zajišťuje, že uživatelé vidí jen to, co mají.
+---
 
-### Příklad politiky pro osobní data (Zdraví):
+### 💌 Relationship, Memories & Planning
+
+| Table | Description | Key Columns |
+|---|---|---|
+| `timeline_events` | Photo timeline records | `id` (UUID), `title`, `description`, `event_date`, `images` (array), `location` |
+| `planned_dates` | Calendar events & date invites | `date_key`, `name`, `cat`, `status` (pending/accepted/rejected), `proposto_by` |
+| `bucket_list` | Shared dreams bucket list | `id` (UUID), `title`, `category`, `is_completed`, `is_priority`, `photo_url` |
+| `date_locations` | Interactive map pinned spots | `id` (UUID), `name`, `lat`, `lng`, `category`, `notes` |
+| `future_letters` | Time-locked message capsules | `id` (UUID), `title`, `body`, `unlock_at`, `from_user`, `to_user`, `is_read` |
+
+---
+
+## 2. Row Level Security (RLS) Policies
+
+Supabase enforces strict RLS across all tables. We implement two core security archetypes:
+
+### A. Personal Private Data (Finances, Biometrics, Body Measurements)
+Readable and writable strictly by the record owner:
+
 ```sql
-CREATE POLICY "Individuální přístup k zdraví" ON public.health_data 
-    FOR ALL TO authenticated 
-    USING (auth.uid() = user_id) 
+ALTER TABLE public.app_finances ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Personal financial access" ON public.app_finances
+    FOR ALL TO authenticated
+    USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 ```
 
-### Příklad politiky pro sdílená data (Kalendář):
+### B. Shared Couple Data (Media Library, Calendar, Timeline, Dorm Checklist)
+Accessible to both authenticated users:
+
 ```sql
-CREATE POLICY "Povolit vše pro přihlášené" ON public.planned_dates 
-    FOR ALL TO authenticated 
-    USING (true) 
+ALTER TABLE public.library_content ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow authenticated couple access" ON public.library_content
+    FOR ALL TO authenticated
+    USING (true)
     WITH CHECK (true);
 ```
 
-## 4. RPC Funkce (Vzdálené procedury)
-Některé komplexní operace (zejména pro Questy) jsou implementovány jako SQL funkce přímo v DB pro zajištění výkonu.
+---
 
-- **`get_shared_water_stats(month_prefix)`**: Sečte kapky vody obou uživatelů za daný měsíc.
-- **`get_shared_sleep_sync(min_hours, month_prefix)`**: Vrátí počet dní, kdy oba splnili limit spánku.
-- **`get_tetris_total_score()`**: Agreguje skóre z historických tabulek.
+## 3. Serverless Functions (PL/pgSQL RPC)
 
-## 5. Storage Buckets
-Pro ukládání souborů používáme Supabase Storage:
-- `timeline-photos`: Fotky k událostem.
-- `avatars`: Profilové obrázky.
-- `matura-docs`: PDF a materiály ke studiu.
+For complex data aggregations and atomic transactions, we employ stored procedures:
+
+1. **`calculate_user_level(user_uuid)`**:
+   - Aggregates XP across all activities (habits, workouts, health, bucket list) and computes the current level and progression percentage.
+2. **`claim_love_coupon(coupon_uuid, user_uuid)`**:
+   - Atomically validates the user's Love Coins balance, deducts the price, and marks the coupon as purchased/redeemed.
+3. **`sync_workout_prs(workout_uuid)`**:
+   - Scans completed workout sets and updates personal records (1RM PRs) in `gym_exercises`.
+
+---
+
+## 4. Storage Buckets & Policies
+
+| Bucket | Permissions | Purpose |
+|---|---|---|
+| `timeline-photos` | Authenticated (Read/Write) | High-resolution memory timeline images |
+| `avatars` | Public Read / Auth Write | User profile avatars |
+| `gym-photos` | Private (Owner only) | Body transformation progress photos (RLS-guarded) |
+| `matura-docs` | Authenticated (Read only) | Study PDF summaries and cheat sheets |

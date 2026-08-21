@@ -156,54 +156,57 @@ function renderPartnerAnswerSlot(partnerAnswer, iHaveAnswered) {
 export async function submitAnswer() {
     const input = document.getElementById('daily-answer-input');
     const answer = input?.value.trim();
-    if (!answer) return;
+    if (!answer || !state.dailyQuestion) return;
 
-    const btn = document.getElementById('btn-submit-answer');
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Odesílám...';
+    // --- 1. INSTANT OPTIMISTIC STATE & DOM UPDATE (0 ms) ---
+    const myNewAnswer = {
+        id: 'temp_' + Date.now(),
+        question_id: state.dailyQuestion.id,
+        user_id: state.currentUser.id,
+        answer_text: answer,
+        created_at: new Date().toISOString()
+    };
+
+    state.dailyAnswers = (state.dailyAnswers || []).filter(a => a.user_id !== state.currentUser.id);
+    state.dailyAnswers.push(myNewAnswer);
+
+    triggerHaptic('success');
+
+    const partnerAnswer = state.dailyAnswers.find(a => a.user_id !== state.currentUser.id);
+    if (partnerAnswer && typeof window.triggerConfetti === 'function') {
+        window.triggerConfetti();
     }
 
-    try {
-        const { error } = await safeInsert('daily_answers', [{
-            question_id: state.dailyQuestion.id,
-            user_id: state.currentUser.id,
-            answer_text: answer
-        }]);
+    saveStateToCache();
 
-        if (error) throw error;
+    // Notify other components (like Dashboard) and re-render
+    window.dispatchEvent(new CustomEvent('daily-questions-updated'));
 
-        triggerHaptic('success');
-        
-        // Refresh local state and re-render
-        const { data } = await supabase.from('daily_answers').select('*').eq('question_id', state.dailyQuestion.id);
-        if (data) state.dailyAnswers = data;
-        
-        const partnerAnswer = state.dailyAnswers.find(a => a.user_id !== state.currentUser.id);
-        if (partnerAnswer && typeof window.triggerConfetti === 'function') {
-            window.triggerConfetti();
-        }
-
-        saveStateToCache();
-        
-        // Award +3 Love Coins
-        await awardLoveCoinsToCurrentUser(3, 'odpověď na denní otázku');
-
-        // Notify other components (like Dashboard)
-        window.dispatchEvent(new CustomEvent('daily-questions-updated'));
-
-        if (state.currentChannel === 'daily-questions') {
-            renderDailyQuestions();
-        }
-
-    } catch (err) {
-        console.error("Chyba při odesílání odpovědi:", err);
-        if (window.showNotification) window.showNotification("Nepodařilo se odeslat odpověď.", "error");
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane text-xs"></i> Zkusit znovu';
-        }
+    if (state.currentChannel === 'daily-questions') {
+        renderDailyQuestions();
     }
+
+    // --- 2. ASYNC CLOUD PERSISTENCE & COINS (Non-blocking) ---
+    awardLoveCoinsToCurrentUser(3, 'odpověď na denní otázku').catch(() => {});
+    
+    safeInsert('daily_answers', [{
+        question_id: state.dailyQuestion.id,
+        user_id: state.currentUser.id,
+        answer_text: answer
+    }]).catch(err => {
+        console.error("Chyba při odesílání odpovědi na pozadí:", err);
+    });
+
+    // --- 3. BACKGROUND WEB PUSH TO PARTNER ---
+    import('../core/notifications.js').then(m => {
+        const senderName = state.currentUser?.name?.includes('Josef') ? 'Josef' : (state.currentUser?.name?.includes('Klára') ? 'Klárka' : 'Partner');
+        m.sendPushToPartner({
+            title: 'Kiscord ❓',
+            body: `${senderName} odpověděl/a na dnešní otázku! Odemkni si odpověď ✨`,
+            tag: 'daily-questions',
+            channel: 'daily-questions'
+        }).catch(() => {});
+    }).catch(() => {});
 }
 
 // --- ARCHIVE LOGIC ---

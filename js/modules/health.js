@@ -117,52 +117,49 @@ export async function updateHealth(type, value) {
         triggerHaptic(data.supplements[value] ? 'success' : 'light');
     }
 
-    // --- SAVE ---
+    // --- 1. INSTANT LOCAL STATE & CACHE UPDATE (0 ms) ---
     state.healthData[todayKey] = data;
-    
-    // Cloud Save (Supabase) - Offline Ready
-    const { error } = await safeUpsert('health_data', {
+    const storageKey = `vault_health_${state.currentUser.name.toLowerCase()}`;
+    localStorage.setItem(storageKey, JSON.stringify(state.healthData));
+    saveStateToCache();
+
+    // Instant local UI dispatch (0 ms latency)
+    window.dispatchEvent(new CustomEvent('health-updated'));
+
+    // --- 2. ASYNC CLOUD PERSISTENCE & BROADCAST (Non-blocking) ---
+    safeUpsert('health_data', {
         date_key: todayKey,
         user_id: state.currentUser.id,
         water: data.water,
         sleep: data.sleep || 0,
         mood: data.mood,
         movement: data.movement,
-        bedtime: data.bedtime, // Added: persist bedtime
+        bedtime: data.bedtime,
         pills: data.pills,
         supplements: data.supplements
+    }).then(({ error }) => {
+        if (error) {
+            console.error("Error saving health to Supabase:", error);
+        } else {
+            broadcastHealthUpdate({
+                date_key: todayKey,
+                user_id: state.currentUser.id,
+                water: data.water,
+                sleep: data.sleep,
+                mood: data.mood,
+                movement: data.movement,
+                pills: data.pills,
+                supplements: data.supplements
+            });
+        }
+    }).catch(err => {
+        console.warn("[Health] Background upsert error:", err);
     });
-    if (error) console.error("Error saving health to Supabase:", error);
-    else {
-        // Successful save - Broadcast the up-to-date row to partner
-        broadcastHealthUpdate({
-            date_key: todayKey,
-            user_id: state.currentUser.id,
-            water: data.water,
-            sleep: data.sleep,
-            mood: data.mood,
-            movement: data.movement,
-            pills: data.pills,
-            supplements: data.supplements
-        });
-    }
 
-    // Achievement Hook
+    // Achievement Hook (Background)
     import('./achievements.js').then(m => {
         m.checkHealthAchievements(todayKey, data, state.healthData);
     });
-
-    // Local Fallback Save - User Specific
-    const storageKey = `vault_health_${state.currentUser.name.toLowerCase()}`;
-    localStorage.setItem(storageKey, JSON.stringify(state.healthData));
-    
-    // Update main state cache
-    saveStateToCache();
-
-    // --- RE-RENDER ---
-    // Essential to update UI state (active classes, colors)
-    // We dispatch a custom event so other modules (Dashboard) can react
-    window.dispatchEvent(new CustomEvent('health-updated'));
 }
 
 export function updateBedtime(time) {

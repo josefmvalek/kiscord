@@ -33,5 +33,35 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Můj Den",
+      "short_name": "Můj Den",
+      "description": "Otevřít denní přehled a zdraví",
+      "url": "/?channel=dashboard",
+      "icons": [{ "src": "/img/app/czippel2_kytka.jpg", "sizes": "192x192" }]
+    },
+    {
+      "name": "VUT FIT Rozvrh",
+      "short_name": "Rozvrh FIT",
+      "description": "Týdenní rozvrh hodin a učebny",
+      "url": "/?channel=schedule",
+      "icons": [{ "src": "/img/app/czippel2_kytka.jpg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Posilovna & Cvičení",
+      "short_name": "Posilovna",
+      "description": "Tréninkový deník a stopky",
+      "url": "/?channel=gym-tracker",
+      "icons": [{ "src": "/img/app/czippel2_kytka.jpg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Kalendář & Plány",
+      "short_name": "Kalendář",
+      "description": "Společné plány a události",
+      "url": "/?channel=calendar",
+      "icons": [{ "src": "/img/app/czippel2_kytka.jpg", "sizes": "192x192" }]
+    }
   ]
 }

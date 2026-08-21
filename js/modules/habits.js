@@ -101,7 +101,9 @@ export async function renderHabits() {
                                                 </div>
                                                 <div class="text-[8px] text-gray-500 font-bold uppercase mt-0.5">+5 🪙 coins</div>
                                             </div>
-                                            <button onclick="window.deleteHabitItem('${h.id}')" class="text-white/20 hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition">
+                                            <button onclick="window.deleteHabitItem('${h.id}')" 
+                                                    class="text-gray-400 hover:text-red-400 active:text-red-500 p-1.5 transition rounded-lg" 
+                                                    title="Smazat návyk">
                                                 <i class="fas fa-trash-alt text-xs"></i>
                                             </button>
                                         </div>
@@ -177,17 +179,25 @@ function calculateHabitStreak(habitId) {
     return streak;
 }
 
-async function loadHabitsData() {
+export async function loadHabitsData() {
     try {
         const [habitsRes, logsRes] = await Promise.all([
             supabase.from('app_habits').select('*'),
             supabase.from('app_habit_logs').select('*')
         ]);
-        if (habitsRes.data) habitsData = habitsRes.data;
-        else habitsData = JSON.parse(localStorage.getItem('kiscord_local_habits') || '[]');
+        if (habitsRes.data && Array.isArray(habitsRes.data)) {
+            habitsData = habitsRes.data;
+            saveLocalHabits();
+        } else {
+            habitsData = JSON.parse(localStorage.getItem('kiscord_local_habits') || '[]');
+        }
 
-        if (logsRes.data) habitLogs = logsRes.data;
-        else habitLogs = JSON.parse(localStorage.getItem('kiscord_local_habit_logs') || '[]');
+        if (logsRes.data && Array.isArray(logsRes.data)) {
+            habitLogs = logsRes.data;
+            saveLocalHabitLogs();
+        } else {
+            habitLogs = JSON.parse(localStorage.getItem('kiscord_local_habit_logs') || '[]');
+        }
     } catch (e) {
         console.warn("[Habits] Load fallback to localStorage:", e);
         habitsData = JSON.parse(localStorage.getItem('kiscord_local_habits') || '[]');
@@ -308,13 +318,13 @@ export async function saveHabitItem() {
     renderHabits();
 }
 
-export async function toggleHabitToday(habitId) {
+export async function toggleHabitToday(habitId, suppressFeedback = false) {
     const todayStr = getTodayKey();
     const myId = state.currentUser?.id;
     const isDone = isHabitCompletedToday(habitId, todayStr);
 
     if (isDone) {
-        triggerHaptic('light');
+        if (!suppressFeedback) triggerHaptic('light');
         habitLogs = habitLogs.filter(l => !(l.habit_id === habitId && l.date_key === todayStr && l.user_id === myId));
         saveLocalHabitLogs();
 
@@ -329,8 +339,10 @@ export async function toggleHabitToday(habitId) {
             console.warn("[Habits] DB delete exception:", e);
         }
     } else {
-        triggerHaptic('success');
-        triggerConfetti();
+        if (!suppressFeedback) {
+            triggerHaptic('success');
+            triggerConfetti();
+        }
 
         const newLog = {
             id: crypto.randomUUID(),
@@ -362,9 +374,12 @@ export async function toggleHabitToday(habitId) {
             console.warn("[Habits] DB insert log exception:", e);
         }
 
-        showNotification('Návyk splněn! Získáváte +5 Love Coins! 🪙🎉', 'success');
+        if (!suppressFeedback) {
+            showNotification('Návyk splněn! Získáváte +5 Love Coins! 🪙🎉', 'success');
+        }
     }
 
+    window.dispatchEvent(new CustomEvent('habits-updated'));
     renderHabits();
 }
 

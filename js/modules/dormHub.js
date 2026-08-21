@@ -47,9 +47,9 @@ export async function renderDormHub() {
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <button onclick="window.pickRandomFood()" 
-                            class="kiscord-btn kiscord-btn-warning kiscord-btn-sm text-[10px] uppercase font-black tracking-wider">
-                        <i class="fas fa-dice text-xs"></i> <span>Kam dnes na oběd?</span>
+                    <button onclick="import('./decisionMatcher.js').then(m => m.openDecisionMatcher('food'))" 
+                            class="kiscord-btn kiscord-btn-warning kiscord-btn-sm text-[10px] uppercase font-black tracking-wider shadow-lg hover:scale-105 active:scale-95 transition flex items-center gap-1.5">
+                        <i class="fas fa-utensils text-xs"></i> <span>Kam dnes na oběd? (Swipe & Ruleta)</span>
                     </button>
                 </div>
             </div>
@@ -91,7 +91,7 @@ export async function renderDormHub() {
                                         <i class="fas fa-shopping-basket text-emerald-400"></i>
                                         <h3 class="text-xs font-black text-white uppercase tracking-wider">Checklist na kolej & pokoj</h3>
                                     </div>
-                                    <span class="text-[9px] font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                                    <span id="dorm-shopping-badge" class="text-[9px] font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
                                         ${shoppingItems.filter(i => !i.is_bought).length} položek
                                     </span>
                                 </div>
@@ -103,29 +103,14 @@ export async function renderDormHub() {
                                            class="flex-1 bg-black/40 text-white text-xs px-3.5 py-2.5 rounded-xl border border-gray-700 outline-none focus:border-emerald-500 transition"
                                            onkeydown="if(event.key === 'Enter') window.addDormShoppingItem()">
                                     <button onclick="window.addDormShoppingItem()" 
-                                            class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-xl transition shadow-md shadow-emerald-600/20">
+                                            class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black rounded-xl transition shadow-md shadow-emerald-600/20 active:scale-95">
                                         <i class="fas fa-plus"></i>
                                     </button>
                                 </div>
 
                                 <!-- Seznam položek -->
                                 <div class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar pr-1" id="dorm-shopping-list">
-                                    ${shoppingItems.length === 0 ? `
-                                        <p class="text-xs text-gray-500 italic text-center py-6">Máte vše nakoupeno a pokoj je zásoben! 🎉</p>
-                                    ` : shoppingItems.map(item => `
-                                        <div class="bg-[#18191c] border border-gray-800/80 rounded-xl p-3 flex items-center justify-between gap-3 text-xs transition group">
-                                            <div class="flex items-center gap-2.5 min-w-0">
-                                                <button onclick="window.toggleDormItemBought('${item.id}', ${!item.is_bought})" 
-                                                        class="w-5 h-5 rounded-lg border ${item.is_bought ? 'bg-emerald-500 border-emerald-500 text-black' : 'border-gray-600 text-transparent'} flex items-center justify-center text-[10px] transition">
-                                                    <i class="fas fa-check"></i>
-                                                </button>
-                                                <span class="${item.is_bought ? 'line-through text-gray-500' : 'text-gray-200 font-medium'} truncate">${item.title}</span>
-                                            </div>
-                                            <button onclick="window.deleteDormShoppingItem('${item.id}')" class="text-gray-600 hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition">
-                                                <i class="fas fa-trash-alt text-[10px]"></i>
-                                            </button>
-                                        </div>
-                                    `).join('')}
+                                    ${getDormShoppingListHtml()}
                                 </div>
                             </div>
                         </div>
@@ -317,6 +302,13 @@ function startLaundryLiveTicker() {
         if (remainingMs <= 0) {
             el.textContent = "00:00 - Dopráno!";
             el.className = "text-lg font-black text-emerald-400 animate-pulse";
+            if (!laundryState._notified) {
+                laundryState._notified = true;
+                import('../core/notifications.js').then(n => {
+                    n.triggerNotification('system', 'laundry', '🧺 Pračka na kolejích doprala! Nezapomeňte prádlo pověsit.');
+                });
+                import('../core/sound.js').then(s => s.playChime());
+            }
             return;
         }
 
@@ -406,49 +398,107 @@ export async function cancelDormLaundry() {
     }
 }
 
-export async function addDormShoppingItem() {
+function getDormShoppingListHtml() {
+    if (shoppingItems.length === 0) {
+        return `<p class="text-xs text-gray-500 italic text-center py-6">Máte vše nakoupeno a pokoj je zásoben! 🎉</p>`;
+    }
+    return shoppingItems.map(item => `
+        <div class="bg-[#18191c] border border-gray-800/80 rounded-xl p-3 flex items-center justify-between gap-3 text-xs transition group hover:border-gray-700">
+            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                <button onclick="window.toggleDormItemBought('${item.id}', ${!item.is_bought})" 
+                        class="w-5 h-5 rounded-lg border ${item.is_bought ? 'bg-emerald-500 border-emerald-500 text-black' : 'border-gray-600 text-transparent'} flex items-center justify-center text-[10px] transition flex-shrink-0 active:scale-90">
+                    <i class="fas fa-check"></i>
+                </button>
+                <span class="${item.is_bought ? 'line-through text-gray-500' : 'text-gray-200 font-medium'} truncate">${item.title}</span>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                ${item.is_bought ? `
+                    <button onclick="window.recordDormItemExpense('${item.id}', '${item.title.replace(/'/g, "\\'")}')" 
+                            class="px-2 py-0.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-[9px] font-black uppercase tracking-wider transition flex items-center gap-1 active:scale-95" 
+                            title="Zapsat výdaj do Finance Brno">
+                        <i class="fas fa-wallet text-[8px]"></i> <span>+Výdaj</span>
+                    </button>
+                ` : ''}
+                <button onclick="window.deleteDormShoppingItem('${item.id}')" 
+                        class="text-gray-400 hover:text-red-400 active:text-red-500 p-1.5 rounded-lg transition" 
+                        title="Smazat položku">
+                    <i class="fas fa-trash-alt text-xs"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateDormShoppingListUI() {
+    const listEl = document.getElementById('dorm-shopping-list');
+    const badgeEl = document.getElementById('dorm-shopping-badge');
+    if (badgeEl) {
+        badgeEl.textContent = `${shoppingItems.filter(i => !i.is_bought).length} položek`;
+    }
+    if (listEl) {
+        listEl.innerHTML = getDormShoppingListHtml();
+    }
+}
+
+export function addDormShoppingItem() {
     const input = document.getElementById('dorm-item-input');
     const title = input?.value.trim();
     if (!title) return;
 
     triggerHaptic('light');
-    try {
-        const { data, error } = await supabase.from('dorm_shopping_items').insert({
-            title,
-            added_by: state.currentUser?.id,
-            is_bought: false
-        }).select();
+    const tempId = 'temp_' + Date.now();
+    const newItem = {
+        id: tempId,
+        title,
+        added_by: state.currentUser?.id,
+        is_bought: false
+    };
 
-        if (error) throw error;
-        input.value = '';
-        shoppingItems.unshift(data[0]);
-        renderDormHub();
-    } catch (e) {
-        showNotification('Chyba při přidávání: ' + e.message, 'danger');
-    }
+    input.value = '';
+    shoppingItems.unshift(newItem);
+    updateDormShoppingListUI();
+
+    // Background cloud persist
+    supabase.from('dorm_shopping_items').insert({
+        title,
+        added_by: state.currentUser?.id,
+        is_bought: false
+    }).select().then(({ data, error }) => {
+        if (error) {
+            console.warn("[DormHub] Insert error:", error);
+        } else if (data && data[0]) {
+            Object.assign(newItem, data[0]);
+            updateDormShoppingListUI();
+        }
+    }).catch(e => console.warn("[DormHub] Insert exception:", e));
 }
 
-export async function toggleDormItemBought(id, isBought) {
+export function toggleDormItemBought(id, isBought) {
     triggerHaptic('light');
-    try {
-        await supabase.from('dorm_shopping_items').update({ is_bought: isBought }).eq('id', id);
-        const item = shoppingItems.find(i => i.id === id);
-        if (item) item.is_bought = isBought;
-        renderDormHub();
-    } catch (e) {
-        console.error(e);
+    const item = shoppingItems.find(i => i.id === id);
+    if (item) item.is_bought = isBought;
+    updateDormShoppingListUI();
+
+    if (isBought && item) {
+        triggerConfetti();
+        showNotification(`Koupeno: ${item.title}! 🛒 Můžeš rovnou zapsat "+Výdaj" do Financí Brno.`, 'success');
     }
+
+    // Background cloud persist
+    supabase.from('dorm_shopping_items').update({ is_bought: isBought }).eq('id', id).catch(e => {
+        console.warn("[DormHub] Update item error:", e);
+    });
 }
 
-export async function deleteDormShoppingItem(id) {
+export function deleteDormShoppingItem(id) {
     triggerHaptic('light');
-    try {
-        await supabase.from('dorm_shopping_items').delete().eq('id', id);
-        shoppingItems = shoppingItems.filter(i => i.id !== id);
-        renderDormHub();
-    } catch (e) {
-        console.error(e);
-    }
+    shoppingItems = shoppingItems.filter(i => i.id !== id);
+    updateDormShoppingListUI();
+
+    // Background cloud persist
+    supabase.from('dorm_shopping_items').delete().eq('id', id).catch(e => {
+        console.warn("[DormHub] Delete item error:", e);
+    });
 }
 
 export function pickRandomFood() {
@@ -459,6 +509,24 @@ export function pickRandomFood() {
     showNotification(`Dnes vyhrává: ${randomFood.name}! 🍲 (${randomFood.type})`, 'success');
 }
 
+export function recordDormItemExpense(id, title) {
+    triggerHaptic('light');
+    import('./financeTracker.js').then(m => {
+        m.openAddTransactionModal({
+            title: title,
+            category: 'Kolej & Bydlení',
+            isShared: true
+        });
+    });
+}
+
+export function dormHubCleanup() {
+    if (laundryTimerInterval) {
+        clearInterval(laundryTimerInterval);
+        laundryTimerInterval = null;
+    }
+}
+
 function attachWindowDormHub() {
     window.startDormLaundry = startDormLaundry;
     window.finishDormLaundry = finishDormLaundry;
@@ -467,4 +535,6 @@ function attachWindowDormHub() {
     window.toggleDormItemBought = toggleDormItemBought;
     window.deleteDormShoppingItem = deleteDormShoppingItem;
     window.pickRandomFood = pickRandomFood;
+    window.recordDormItemExpense = recordDormItemExpense;
+    window.dormHubCleanup = dormHubCleanup;
 }

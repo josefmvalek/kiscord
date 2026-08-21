@@ -334,15 +334,74 @@
 /* Sidebar Channels & Interaction Overrides */
 .channel-link {
   color: var(--text-muted);
-  transition: all 0.15s ease;
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s ease, color 0.15s ease;
+  position: relative;
 }
 .channel-link:hover {
   background-color: var(--bg-modifier-hover) !important;
   color: var(--text-header) !important;
+  transform: translateX(3px);
+}
+.channel-link:active {
+  transform: scale(0.97) translateX(2px);
 }
 .channel-link.active {
   background-color: var(--bg-modifier-selected) !important;
   color: var(--text-header) !important;
   font-weight: 700;
+  transform: translateX(0);
 }
+.channel-link.active::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 22%;
+  bottom: 22%;
+  width: 3px;
+  background-color: var(--blurple, #5865F2);
+  border-radius: 0 4px 4px 0;
+}
+
+/* Sidebar Category Collapsible Header & Smooth Accordion */
+.category-header {
+  color: var(--text-muted);
+  transition: color 0.15s ease, background-color 0.15s ease, transform 0.1s ease;
+}
+.category-header:hover {
+  color: var(--text-header);
+}
+.category-header:active {
+  transform: scale(0.99);
+}
+.category-header.collapsed {
+  color: var(--text-muted);
+}
+.category-header.collapsed:hover {
+  color: var(--text-header);
+}
+.category-chevron {
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+.category-header.collapsed .category-chevron {
+  transform: rotate(-90deg);
+}
+
+/* Fluid CSS Grid Height Transition */
+.category-items {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.24s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+}
+.category-items.collapsed {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+}
+.category-items-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
 

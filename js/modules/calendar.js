@@ -56,17 +56,18 @@ export function renderCalendar(year = null, month = null) {
     ensureModals();
     setupCalendarSync();
     
-    // Trigger lazy loading of shifts, diary and gym data just in case they aren't loaded yet
+    // Trigger lazy loading of shifts, diary, gym and study/schedule data just in case they aren't loaded yet
     Promise.all([
         import('../core/state.js').then(s => s.ensureShiftsData()),
         import('../core/state.js').then(s => s.ensureDiaryData()),
-        import('../core/state.js').then(s => s.ensureGymData())
+        import('../core/state.js').then(s => s.ensureGymData()),
+        import('../core/state.js').then(s => s.ensureStudyData())
     ]).then(() => {
         if (state.currentChannel === 'calendar') {
             const grid = document.getElementById('calendar-grid');
             if (grid) grid.innerHTML = generateCalendarGrid(currentCalYear, currentCalMonth);
         }
-    }).catch(err => console.error('[Calendar] Error lazy loading shifts, diary or gym:', err));
+    }).catch(err => console.error('[Calendar] Error lazy loading shifts, diary, gym or study:', err));
     
     const container = document.getElementById("messages-container");
     if (!container) return;

@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 const createSelectChain = () => {
   const chain = {
     order: vi.fn(() => chain),
+    limit: vi.fn(() => chain),
     eq: vi.fn(() => chain),
     then: (resolve) => Promise.resolve({ data: state.gymBodyMeasurements || [], error: null }).then(resolve),
     catch: (reject) => Promise.resolve({ data: state.gymBodyMeasurements || [], error: null }).catch(reject)

@@ -1,53 +1,45 @@
-# Skupina B: Vzdělávání a Pozvání
+# Group B: Education, Recovery & Historical Archives
 
-Tato skupina modulů slouží k prohlubování znalostí, systematickému studiu a podpoře zdravého životního stylu.
-
-## 1. Maturita 2026
-**Soubor**: `js/modules/matura.js` (a submoduly v `js/modules/matura/*`)
-
-Komplexní studijní ekosystém navržený pro přípravu k maturitní zkoušce.
-
-### Klíčové součásti:
-- **Study Dashboard**: Zobrazuje aktuální studijní sérii (Streak), naplánované „mise“ pro daný den a umožňuje spustit SOS volání o pomoc (notifikace partnerovi).
-- **Knowledge Base (KB)**:
-    - **Markdown Editor**: Podporuje formátování, vkládání obrázků a matematických vzorců (KaTeX).
-    - **Interaktivní Obsah (TOC)**: Automaticky generovaná navigace podle nadpisů.
-    - **Highlighter**: Systém pro barevné zvýrazňování textu (Důležité, Biflování, Ovládám).
-- **AI Integrace (Gemini)**:
-    - **Generování Testů**: Automatická tvorba kvízů z obsahu zápisku.
-    - **Flashcards**: Generování studijních kartiček.
-- **Pomodoro Timer**: Integrovaný časovač soustředění s synchronizací stavu mezi partnery.
-
-### Technická zajímavost (Highlighting):
-Systém využívá `highlighter.js` pro manipulaci s DOMem bez poškození struktury Markdownu, což umožňuje perzistentní barevné značení přímo v textu.
+> Modules dedicated to systematic learning, health biohacking, and historical work/study archives.
 
 ---
 
-## 2. Regenerace
-**Soubor**: `js/modules/regenerace.js`
+## 1. Recovery & Supplement Guide (`#regenerace`)
+**File**: `js/modules/regenerace/`
 
-Personalizovaný průvodce biohackingem a zdravím, vytvořený na míru pro Klárku.
+Personalized biohacking and recovery guide designed for Klárka.
 
-### Sekce modulu:
-- **Holistický Rozbor**: Hloubková analýza zdravotních mechanismů.
-- **Katalog Suplementů**: Detailní karty doplňků stravy (Železo, Zinek, Hořčík) s popisem účinků a dávkováním.
-- **Biologická Proměna (Timeline)**: Vizuální osa pokroku s dynamickým progress barem, který se plní v čase od začátku regeneračního protokolu (`REGENERACE_START_DATE`).
-- **Vědecká Knihovna**: Výtahy z odborných studií a klinických testů.
+### Sections:
+- **Holistic Breakdown**: Deep dive into biological recovery mechanisms and circadian health.
+- **Supplement Registry**: Detailed cards for essential nutrients (Iron, Zinc, Magnesium, Creatine, Omega-3) with dosages and effects.
+- **Health Timeline**: Visual progression meter tracking weeks on the recovery protocol.
+- **Scientific Library**: Summaries of clinical studies and medical consensus.
 
 ---
 
-## 3. Encyklopedie (Funfacts)
-**Soubor**: `js/modules/funfacts.js`
+## 2. Archive: High School Graduation Hub (`📦 ARCHIV $\rightarrow$ #matura-*`)
+**File**: `js/modules/matura.js` (and submodules in `js/modules/matura/*`)
 
-Modul pro objevování zajímavostí rozdělený do tematických kategorií.
+Study ecosystem built for passing high school graduation examinations.
 
-### Architektura kategorií:
-Modul využívá třístupňovou hierarchii:
-1. **Hlavní kategorie**: (např. 🦝 Mývalí moudra, 🦉 Soví vědomosti).
-2. **Podkategorie L1**: (např. Anatomie, Chování).
-3. **Podkategorie L2**: (např. Tlapky, Srst).
+### Components:
+- **Graduation Dashboard (`#matura-dashboard`)**: Study streak tracker, milestone planner, and SOS help beacon.
+- **Czech Literature (`#matura-czech`)**: Book analyses and literary period summaries.
+- **IT Systems (`#matura-it`)**: Databases, computer networks, operating systems, and algorithms.
+- **Knowledge Base (KB) & Tools**:
+  - **Highlighter**: Persistent multi-color text highlighter (Crucial, Memorize, Mastered).
+  - **Flashcards & Quizzes**: Automated study flashcard generation and spaced repetition.
+  - **Pomodoro Timer**: Integrated focus timer with sound notifications.
 
-### Funkce:
-- **Míra osvícení**: Pro každou kategorii se sleduje progres (kolik faktů již uživatel viděl) pomocí tabulky `fun_fact_progress`.
-- **Oblíbené (Bookmarks)**: Možnost uložit si konkrétní fakt srdíčkem do vlastní sbírky.
-- **Random Mix**: Speciální režim pro „všehochuť“ faktů.
+---
+
+## 3. Archive: Alpine Work Brigade (`📦 ARCHIV $\rightarrow$ #rakousko-*`)
+**Files**: `js/modules/kasicka.js`, `js/modules/austriaInfo.js`, `js/modules/shifts.js`, `js/modules/austrianGerman.js`, `js/modules/alpskaVyzva.js`, `js/modules/alpskyDenicek.js`
+
+Historical archive from seasonal work in Austria:
+- **#rakousko-kasička (`kasicka.js`)**: Seasonal earnings tracker and Schnitzel-O-Meter.
+- **#rakousko-info (`austriaInfo.js`)**: Travel guide, packing checklist, and work contracts.
+- **#plánovač-směn (`shifts.js`)**: Work shift scheduler and days-off synchronization.
+- **#rakouská-němčina (`austrianGerman.js`)**: Alpine dialect survival phrasebook and flashcards.
+- **#alpské-výzvy (`alpskaVyzva.js`)**: Mountain daily challenge checklists.
+- **#alpský-deníček (`alpskyDenicek.js`)**: Locked couple micro-journal.

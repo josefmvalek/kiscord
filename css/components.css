@@ -464,3 +464,66 @@ input[type="range"]::-moz-range-track { width: 100%; height: 8px; cursor: pointe
     #easter-egg-ascii { font-size: 14px; }
 }
 
+/* ==========================================================
+   MOBILE BOTTOM NAVIGATION & SAFE AREAS
+   ========================================================== */
+#mobile-bottom-nav {
+  padding-bottom: max(0.375rem, env(safe-area-inset-bottom));
+}
+
+.mobile-nav-btn {
+  position: relative;
+}
+
+.mobile-nav-btn.active .nav-icon-box {
+  background: var(--bg-modifier-selected);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-nav-btn.active .nav-label {
+  color: var(--text-header);
+  font-weight: 900;
+}
+
+.mobile-nav-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: 16px;
+  height: 2.5px;
+  border-radius: 9999px;
+  background: var(--blurple);
+  box-shadow: 0 0 8px var(--blurple);
+}
+
+.mobile-nav-btn[data-nav-channel="dashboard"].active::after {
+  background: #eb459e;
+  box-shadow: 0 0 8px #eb459e;
+}
+
+.mobile-nav-btn[data-nav-channel="gym-tracker"].active::after {
+  background: #faa61a;
+  box-shadow: 0 0 8px #faa61a;
+}
+
+.mobile-nav-btn[data-nav-category="vut"].active::after {
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.mobile-nav-btn[data-nav-category="more"].active::after {
+  background: #a855f7;
+  box-shadow: 0 0 8px #a855f7;
+}
+
+/* Slide Up Animation */
+@keyframes slideUpDrawer {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slideUpDrawer 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+

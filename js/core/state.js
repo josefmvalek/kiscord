@@ -1,10 +1,12 @@
 import { supabase } from './supabase.js';
 import { isJosef, isKlarka } from './auth.js';
+import { idbGet, idbSet, idbDelete } from './idb.js';
 
 // Cache buster: 2026-03-25-20-30
 const STATE_CACHE_KEY = 'kiscord_state_cache';
 const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
+/** @type {import('../types/state.js').AppState} */
 const state = {
     shifts: {},
     tetris: { jose: 0, klarka: 0 },
@@ -61,6 +63,9 @@ const state = {
     gymLogs: [],
     gymPRs: [],
     gymBodyMeasurements: [],
+    schoolDeadlines: [],
+    schoolSubjects: [],
+    scheduleItems: [],
     loveCoins: { jose: 0, klarka: 0 },
     inventory: [],
     shopItems: [],
@@ -86,7 +91,8 @@ const state = {
             hiddenChannels: [],
             channelOrder: [],
             categoryOrder: [],
-            channelCategoryMap: {}
+            channelCategoryMap: {},
+            collapsedCategories: ['📦 ARCHIV', '⚙️ SYSTÉM & INFO']
         },
         dashboardWidgets: {
             loveShop: true,
@@ -174,7 +180,11 @@ const stateEvents = {
 
 let _settingsSyncTimeout = null;
 
-function saveStateToCache() {
+/**
+ * Save current application state to high-capacity IndexedDB cache.
+ * @returns {Promise<boolean>}
+ */
+async function saveStateToCache() {
     const cacheData = {
         shifts: state.shifts,
         healthData: state.healthData,
@@ -209,7 +219,9 @@ function saveStateToCache() {
         inventory: state.inventory,
         shopItems: state.shopItems
     };
-    localStorage.setItem(STATE_CACHE_KEY, JSON.stringify(cacheData));
+
+    // Save asynchronously to IndexedDB (non-blocking, multi-gigabyte capacity)
+    const success = await idbSet(STATE_CACHE_KEY, cacheData);
 
     // Debounced sync of settings to Supabase profiles table
     if (state.currentUser?.id) {
@@ -224,16 +236,37 @@ function saveStateToCache() {
                 .then(({ error }) => { if (error) console.error('[State] Failed to sync settings:', error); })
                 .catch(e => console.error('[State] Settings sync exception:', e));
         }, 2000);
-
     }
+
+    return success;
 }
 
-function loadStateFromCache() {
+/**
+ * Hydrate state from IndexedDB (with transparent legacy localStorage migration).
+ * @returns {Promise<boolean>}
+ */
+async function loadStateFromCache() {
     try {
-        const cached = localStorage.getItem(STATE_CACHE_KEY);
-        if (cached) {
-            const data = JSON.parse(cached);
-            
+        // 1. Try to load from high-capacity IndexedDB
+        let data = await idbGet(STATE_CACHE_KEY);
+
+        // 2. Automated Migration: If not in IndexedDB yet, check legacy localStorage
+        if (!data) {
+            const legacyCached = localStorage.getItem(STATE_CACHE_KEY);
+            if (legacyCached) {
+                try {
+                    data = JSON.parse(legacyCached);
+                    // Silently migrate into IndexedDB and clean up legacy localStorage key
+                    await idbSet(STATE_CACHE_KEY, data);
+                    localStorage.removeItem(STATE_CACHE_KEY);
+                    console.log('[State] Successfully migrated cache from localStorage to IndexedDB.');
+                } catch (err) {
+                    console.warn('[State] Failed to parse legacy cache:', err);
+                }
+            }
+        }
+
+        if (data) {
             // Deep merge safety for critical config objects
             if (data.settings) {
                 data.settings = { ...state.settings, ...data.settings };
@@ -253,29 +286,22 @@ function loadStateFromCache() {
                     data.settings.sidebar = state.settings.sidebar;
                 }
                 if (data.settings.notifications) {
-                    // Update: Remove obsolete keys (movement, confessions, mood)
                     if (data.settings.notifications.reminders) delete data.settings.notifications.reminders.movement;
                     if (data.settings.notifications.partner) {
                         delete data.settings.notifications.partner.confessions;
                         delete data.settings.notifications.partner.mood;
                     }
 
-                    // Migration: pills.time (string) -> pills.times (array) -> pills.reminders (labeled objects)
                     if (data.settings.notifications.reminders?.pills) {
                         const p = data.settings.notifications.reminders.pills;
-                        
-                        // Stage 1: time (string) -> times (array)
                         if (p.time && !p.times && !p.reminders) {
                             p.times = [p.time];
                             delete p.time;
                         }
-                        
-                        // Stage 2: times (array) -> reminders (labeled objects)
                         if (p.times && !p.reminders) {
                             p.reminders = p.times.map(t => ({ time: t, label: 'Léky' }));
                             delete p.times;
                         }
-
                         if (!p.reminders) p.reminders = [{ time: '08:00', label: 'Léky' }];
                     }
 
@@ -326,7 +352,7 @@ function loadStateFromCache() {
 }
 
 async function initializeState() {
-    const hasCached = loadStateFromCache();
+    const hasCached = await loadStateFromCache();
 
     // SWR Strategy: If we have cache, resolve immediately to show UI.
     // The actual fetch happens as a background "revalidate" process.
@@ -421,10 +447,10 @@ async function initializeState() {
                                 const catOrder = Array.isArray(p.settings.sidebar.categoryOrder)
                                     ? p.settings.sidebar.categoryOrder
                                     : state.settings.sidebar.categoryOrder;
-                                const catMap = p.settings.sidebar.channelCategoryMap
-                                    ? { ...state.settings.sidebar.channelCategoryMap, ...p.settings.sidebar.channelCategoryMap }
-                                    : state.settings.sidebar.channelCategoryMap;
-                                mergedSettings.sidebar = { hiddenChannels: hidden, channelOrder: order, categoryOrder: catOrder, channelCategoryMap: catMap };
+                                const collapsed = Array.isArray(p.settings.sidebar.collapsedCategories)
+                                    ? p.settings.sidebar.collapsedCategories
+                                    : (state.settings.sidebar.collapsedCategories || ['📦 ARCHIV', '⚙️ SYSTÉM & INFO']);
+                                mergedSettings.sidebar = { hiddenChannels: hidden, channelOrder: order, categoryOrder: catOrder, channelCategoryMap: catMap, collapsedCategories: collapsed };
                             }
                             if (p.settings.notifications) {
                                 mergedSettings.notifications = {
@@ -513,6 +539,7 @@ async function initializeState() {
     ensureDiaryData,
     ensureGymData,
     ensureLoveShopData,
+    ensureStudyData,
     resetLazyLoaders
 } from './loaders.js';
 
@@ -564,6 +591,7 @@ export {
     state,
     stateEvents,
     saveStateToCache,
+    loadStateFromCache,
     initializeState
 };
 

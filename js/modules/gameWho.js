@@ -96,11 +96,19 @@ function renderContent(question) {
             <div class="absolute -top-20 -left-20 w-64 h-64 bg-[#faa61a]/10 rounded-full blur-[80px]"></div>
             <div class="absolute -bottom-20 -right-20 w-80 h-80 bg-[#faa61a]/5 rounded-full blur-[100px]"></div>
 
+            <!-- Back Navigation Bar -->
+            <div class="w-full max-w-2xl flex items-center justify-between mb-4 z-20">
+                <button onclick="window.switchChannel('games-hub'); triggerHaptic('light')" 
+                        class="p-2.5 rounded-xl bg-[#202225] hover:bg-[#2f3136] text-gray-400 hover:text-white border border-white/5 text-xs font-bold transition flex items-center gap-1.5 shadow-md">
+                    <i class="fas fa-arrow-left"></i> Zpět do herny
+                </button>
+            </div>
+
             <div class="z-10 max-w-2xl w-full">
                 <div class="mb-8 relative group">
                     <span class="px-3 py-1 bg-[#faa61a]/20 text-[#faa61a] rounded-full text-xs font-bold uppercase tracking-widest mb-4 inline-block">Kdo spíše?</span>
                     ${state.currentUser && (state.currentUser.email.toLowerCase().includes('josef') || state.currentUser.email.toLowerCase().includes('jozk')) ? `
-                        <button onclick="window.loadModule('gameWho').then(m => m.showAddGameQuestionModal())" class="absolute -top-1 right-0 md:-right-8 opacity-0 group-hover:opacity-100 bg-[#2f3136] hover:bg-[#faa61a] text-white hover:text-black p-2 rounded-lg transition shadow-lg" title="Přidat otázku">
+                        <button onclick="window.loadModule('gameWho').then(m => m.showAddGameQuestionModal())" class="absolute -top-1 right-0 md:-right-8 bg-[#2f3136] hover:bg-[#faa61a] active:bg-[#faa61a] text-white hover:text-black active:text-black p-2 rounded-lg transition shadow-lg" title="Přidat otázku">
                             <i class="fas fa-plus"></i>
                         </button>
                     ` : ''}
