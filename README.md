@@ -157,30 +157,45 @@ kiscord/
 
 ---
 
-## 📺 Channel & Module Catalog (7 Categories)
+## 🖥️ Discord Multi-Server Architecture
 
-Kiscord organizes its 55+ modules into an authentic Discord channel hierarchy:
+Kiscord features an authentic Discord desktop & mobile interface structured into a 3-column layout:
 
-### 1. 📌 Pinned (Always at Top)
+```
+┌───────────┬─────────────────────────┬──────────────────────────────────────────────────┐
+│ SERVER    │ CHANNELS SIDEBAR        │ MAIN VIEW CONTAINER                              │
+│ BAR       │                         │                                                  │
+│           │ 🏠 Domov & Přehled      │                                                  │
+│  [ 🏠 ]   ├─────────────────────────┤                                                  │
+│  [ 💖 ]   │ ▼ 📌 HLAVNÍ PŘEHLED     │                                                  │
+│  [ 🏋️‍♂️ ]   │   # ☀️ dashboard        │                 Active Channel                   │
+│  [ 🎓 ]   │   # 📅 kalendář         │                 View Container                   │
+│  [ 🎮 ]   │                         │              (Dynamic Lazy Load)                 │
+│  [ 📦 ]   │ ▼ 💖 NÁŠ PŘÍBĚH         │                                                  │
+│  [ ⚙️ ]   │   # 🪙 obchůdek         │                                                  │
+│           │   # 🫀 dotek-na-dálku   │                                                  │
+└───────────┴─────────────────────────┴──────────────────────────────────────────────────┘
+```
+
+1. **Left Server Bar (`servers.js`)**:
+   - 7 distinct Discord servers with hover tooltips, active white pill indicators, and custom gradient icons.
+   - Switching a server updates the channel list and server header without forcing an unwanted sub-channel jump.
+2. **Channel Sidebar (`router.js`)**:
+   - Collapsible categories with persistent state and unread badges.
+3. **Main Content View**:
+   - Lazy-loaded modules with View Transitions API and haptic feedback.
+
+---
+
+## 📺 Discord Server & Channel Catalog (7 Servers, 55+ Modules)
+
+### 1. 🏠 Server: Domov & Přehled (`home`)
 - **`#dashboard`** (`dashboard.js`): *Můj Den (My Day)* — Personal daily overview, hydration tracker (8 water droplets), sleep tracker with active session timer, sunflower mood sync, fact of the day, and quick notes.
 - **`#kalendář`** (`calendar.js`): *Kalendář (Calendar)* — Monthly date planner, university schedule, work shifts, and memory highlights with integrated mood heatmap.
 
-### 2. 🎓 VUT FIT & KOLEJE (University & Dorm Life)
-- **`#rozvrh`** (`schedule.js`): VUT FIT weekly timetable with campus room hints and automated joint free window calculator.
-- **`#studijní-plán`** (`studyPlanner.js`): WIS point tracking, credit requirements, and project/exam countdowns.
-- **`#koleje-brno`** (`dormHub.js`): Dorm laundry room machine booking, packing checklist, and university cafeteria menu radar.
-- **`#finance`** (`financeTracker.js`): Personal budget in Brno + savings piggy bank (*Kasička*) with financial milestones.
-- **`#počítač`** (`laptopComparison.js`): Laptop comparison matrix and buyer's guide for CS students.
-
-### 3. 🌿 ZDRAVÍ & FITNESS (Health & Gym)
-- **`#posilovna`** (`gym/`): Complete gym tracker (floating active workout HUD, rest timer with sound/haptics, 100+ exercises with GIFs, 1RM progression charts, muscle volume heatmap, couple gym streak, annual wrapped).
-- **`#výživa`** (`nutrition/`): Premium nutrition tracker with circular SVG calorie donut, 4 macro bars, Intermittent Fasting (IF) timer, MacroFactor adaptive TDEE coach, AI natural language food parser, OpenFoodFacts product search, and batch meal prep recipe builder.
-- **`#tělo-a-míry`** (`bodyMetrics/`): Central biometrics hub with morning weight logs & EMA trend smoothing, 6 body circumferences with delta progression, BMR/TDEE Mifflin-St Jeor & Katch-McArdle calculations, FFMI index, and 1-click nutrition macro sync.
-- **`#návyky`** (`habits.js`): Daily habit tracker rewarding Love Coins.
-- **`#regenerace`** (`regenerace/`): Evidence-based supplement guide, recovery protocols, and wellness timeline.
-
-### 4. 💖 NÁŠ SVĚT & PŘÍBĚH (Couple Life & Memories)
+### 2. 💖 Server: Náš Svět & Láska (`love`)
 - **`#obchůdek`** (`loveShop.js`): Romantic coupon store redeemable with Love Coins and coupon inventory pantry.
+- **`#dotek-na-dálku`** (`dotek`): Real-time Haptic Touchpad & heartbeat transmitter for long-distance connection 🫀
 - **`#plánovač-rande`** (`map.js`): Interactive Leaflet map with pinned date locations and routing.
 - **`#bucket-list`** (`bucketlist.js`): Shared dream bucket list with priorities and completion photo uploads.
 - **`#společné-questy`** (`quests.js`): Co-op monthly challenges and shared milestones.
@@ -189,18 +204,32 @@ Kiscord organizes its 55+ modules into an authentic Discord channel hierarchy:
 - **`#dopisy`** (`letters.js`): Time-locked message capsules for future anniversaries.
 - **`#achievementy`** (`achievements.js`): Gamified trophies celebrating couple milestones.
 
-### 5. 🎮 ZÁBAVA & MÉDIA (Entertainment & Arcade Hub)
+### 3. 🏋️‍♂️ Server: Zdraví & Fitness (`fitness`)
+- **`#posilovna`** (`gym/`): Complete gym tracker (floating active workout HUD, rest timer with sound/haptics, 100+ exercises with GIFs, 1RM progression charts, muscle volume heatmap, couple gym streak, annual wrapped).
+- **`#výživa`** (`nutrition/`): Premium nutrition tracker with circular SVG calorie donut, 4 macro bars, Intermittent Fasting (IF) timer, MacroFactor adaptive TDEE coach, AI natural language food parser, OpenFoodFacts product search, and batch meal prep recipe builder.
+- **`#tělo-a-míry`** (`bodyMetrics/`): Central biometrics hub with morning weight logs & EMA trend smoothing, 6 body circumferences with delta progression, BMR/TDEE Mifflin-St Jeor & Katch-McArdle calculations, FFMI index, and 1-click nutrition macro sync.
+- **`#návyky`** (`habits.js`): Daily habit tracker rewarding Love Coins.
+- **`#regenerace`** (`regenerace/`): Evidence-based supplement guide, recovery protocols, and wellness timeline.
+
+### 4. 🎓 Server: VUT FIT & Koleje (`fit`)
+- **`#rozvrh`** (`schedule.js`): VUT FIT weekly timetable with campus room hints and automated joint free window calculator.
+- **`#studijní-plán`** (`studyPlanner.js`): WIS point tracking, credit requirements, and project/exam countdowns.
+- **`#koleje-brno`** (`dormHub.js`): Dorm laundry room machine booking, packing checklist, and university cafeteria menu radar.
+- **`#finance`** (`financeTracker.js`): Personal budget in Brno + savings piggy bank (*Kasička*) with financial milestones.
+- **`#počítač`** (`laptopComparison.js`): Laptop comparison matrix and buyer's guide for CS students.
+
+### 5. 🎮 Server: Média & Zábava (`media`)
 - **`#knihovna`** (`library.js`): Media catalogue with TMDB search, game modes (Stálice vs Backlog), and magnet link integration.
 - **`#watchlist`** (`watchlist.js`): Mutual matches (*Spolu-seznam*), personal wishlists, **Tinder Matcher** (`netflixMatcher.js`), and **Dice of Chance** (*Kostka Náhody*).
 - **`#gamesky`** (`gamesHub.js`): Central Arcade Hub unifying Draw Duel (real-time canvas), Who Is More Likely To?, Couple Quizzes, Memory Photo Puzzle, Tetris War Tracker, Tier Lists, and Fact Encyclopedia.
 - **`#music-bot`** (`static.js`): Shared music playlist and web audio player.
 
-### 6. 📦 ARCHIV (Default Collapsed)
+### 6. 📦 Server: Archiv (`archive`)
 - **`#rakousko-kasička`** (`kasicka.js`) & **`#rakousko-info`** (`austriaInfo.js`): Seasonal Alpine work earnings archive and guide.
 - **`#plánovač-směn`** (`shifts.js`) & **`#rakouská-němčina`** (`austrianGerman.js`): Work shifts and Austrian dialect flashcards.
 - **`#matura-*`** (`matura.js`): High school graduation knowledge base (Czech literature, IT systems, Pomodoro timer, text highlighter).
 
-### 7. ⚙️ SYSTÉM & INFO (Default Collapsed)
+### 7. ⚙️ Server: Systém & Nastavení (`system`)
 - **`#statistiky`** (`stats.js`): Relationship data analytics and activity stats.
 - **`#nastavení`** (`settings.js`): 7 visual themes switcher, audio/haptic preferences, profile manager, and cache cleanup.
 - **`#changelog`** (`changelog.js`): Release version history.

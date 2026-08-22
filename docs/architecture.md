@@ -87,9 +87,13 @@ sequenceDiagram
 ```
 
 #### Core Router Capabilities:
+- **Discord Multi-Server Layout (`js/core/servers.js`)**:
+  - Implements the 3-column Discord UI (Server Bar $\rightarrow$ Channel Sidebar $\rightarrow$ Main View).
+  - 7 Dedicated Servers (`home`, `love`, `fitness`, `fit`, `media`, `archive`, `system`) with custom icons, color badges, and active state pill indicators.
+  - Server selection switches the active category/channel list in the sidebar without forcing an auto-jump to subchannels.
 - **Memory Management & Cleanup Hooks**: When navigating away from a channel, the router automatically unbinds active WebSockets and timers (e.g. Draw Duel canvas, Gym stopwatches) to eliminate memory leaks.
 - **View Transitions API**: Where supported by the browser (`document.startViewTransition()`), screen changes transition smoothly with native-like fade and slide effects.
-- **Collapsible Categories**: Organizes 55+ channels into collapsible sidebar sections, saving state to the user profile.
+- **Collapsible Categories**: Organizes channels within each server into collapsible sidebar sections, saving state to the user profile.
 
 ---
 
