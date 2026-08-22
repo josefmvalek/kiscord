@@ -622,3 +622,48 @@ export async function ensureStudyData(force = false) {
     }
 }
 
+export async function ensureNutritionData(force = false) {
+    if (state._loaded.nutrition && !force && !isStale('nutrition')) return;
+    try {
+        const threeMonthsAgo = getMonthsAgoDateString(3);
+        const [logsRes, foodsRes, targetsRes] = await Promise.all([
+            supabase.from('nutrition_logs').select('*').gte('date_key', threeMonthsAgo).order('created_at', { ascending: true }),
+            supabase.from('nutrition_saved_foods').select('*').order('name'),
+            supabase.from('nutrition_targets').select('*')
+        ]);
+
+        if (logsRes.data) {
+            const grouped = {};
+            logsRes.data.forEach(item => {
+                if (!grouped[item.date_key]) grouped[item.date_key] = [];
+                grouped[item.date_key].push(item);
+            });
+            state.nutritionLogs = grouped;
+        }
+
+        if (foodsRes.data) {
+            state.savedFoods = foodsRes.data;
+        }
+
+        if (targetsRes.data && targetsRes.data.length > 0) {
+            targetsRes.data.forEach(t => {
+                const userKey = (t.user_id === state.user_ids?.jose || t.user_name === 'josef') ? 'josef' : 'klarka';
+                if (!state.nutritionTargets) state.nutritionTargets = {};
+                state.nutritionTargets[userKey] = {
+                    calories: t.calories || state.nutritionTargets[userKey]?.calories || 2400,
+                    protein: t.protein || state.nutritionTargets[userKey]?.protein || 150,
+                    carbs: t.carbs || state.nutritionTargets[userKey]?.carbs || 280,
+                    fats: t.fats || state.nutritionTargets[userKey]?.fats || 70,
+                    fiber: t.fiber || state.nutritionTargets[userKey]?.fiber || 30
+                };
+            });
+        }
+
+        markLoaded('nutrition');
+        stateEvents.emit('nutrition');
+    } catch (e) {
+        console.warn("Nutrition Data Load fallback / offline:", e);
+    }
+}
+
+

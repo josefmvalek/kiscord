@@ -74,7 +74,8 @@
 - `stats` (`/js/modules/stats.js`): **#statistiky** — Relationship data analytics.
 - `settings` (`/js/modules/settings.js`): **#nastavení** — Theme selector, audio preferences, avatar & offline tools.
 - `changelog` (`/js/modules/changelog.js`): **#changelog** — Kiscord update history.
-- `welcome`, `manual`, `readme` (`/js/modules/static.js`): Discord-themed onboarding & documentation.
+- `manual` (`/js/modules/manual.js`): **#návod** — Interactive application manual, quick start routine, keyboard shortcuts & FAQ.
+- `welcome`, `readme` (`/js/modules/static.js`): Discord-themed onboarding & documentation.
 
 ---
 

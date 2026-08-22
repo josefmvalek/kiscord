@@ -261,6 +261,9 @@ export function toggleFactFavorite(factId: string, catId: string): void;
 export function renderTetrisTracker(): void;
 export function updateTetrisScore(who: 'jose' | 'klarka' | 'reset', amount: number): Promise<void>;
 export function renderPuzzleGame(selectedImage?: string | null): void;
+
+// /js/modules/manual.js (Application Guide & Interactive Documentation)
+export function renderManual(): void;
 ```
 
 ---

@@ -7,74 +7,11 @@ import { getAssetUrl } from '../core/assets.js';
  * Handles rendering of non-dynamic or placeholder pages.
  */
 
-export function renderManual() {
-    const container = document.getElementById("messages-container");
-    if (!container) return;
-
-    container.innerHTML = `
-        <div class="p-8 max-w-4xl mx-auto text-gray-300 space-y-8 animate-fade-in">
-            <div class="text-center mb-10">
-                <div class="w-20 h-20 bg-[#5865F2] rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <i class="fas fa-book text-3xl text-white"></i>
-                </div>
-                <h1 class="text-3xl font-bold text-white mb-2">Jak používat Kiscord</h1>
-                <p class="text-gray-400">Rychlý průvodce všemi funkcemi</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-[#2f3136] p-6 rounded-xl border border-[#202225] hover:border-[#5865F2] transition-colors">
-                    <h3 class="text-xl font-bold text-white mb-3 flex items-center">
-                        <span class="w-8 h-8 rounded-lg bg-[#ed4245] flex items-center justify-center mr-3 text-sm">❤️</span>
-                        Můj Den
-                    </h3>
-                    <p class="text-sm leading-relaxed">
-                        Tady najdeš přehled všeho důležitého. Počet dní, co jsme spolu, náhodný fakt o zvířátkách,
-                        aktuální náladu a graf spánku. Vše na jednom místě.
-                    </p>
-                </div>
-
-                <div class="bg-[#2f3136] p-6 rounded-xl border border-[#202225] hover:border-[#FEE75C] transition-colors">
-                    <h3 class="text-xl font-bold text-white mb-3 flex items-center">
-                        <span class="w-8 h-8 rounded-lg bg-[#FEE75C] text-black flex items-center justify-center mr-3 text-sm">📅</span>
-                        Kalendář
-                    </h3>
-                    <p class="text-sm leading-relaxed">
-                        Společný plánovač. Vidíš tady naše výročí, naplánovaná rande a můžeš si sem psát i školní povinnosti.
-                    </p>
-                </div>
-
-                <div class="bg-[#2f3136] p-6 rounded-xl border border-[#202225] hover:border-[#3ba55c] transition-colors">
-                    <h3 class="text-xl font-bold text-white mb-3 flex items-center">
-                        <span class="w-8 h-8 rounded-lg bg-[#3ba55c] flex items-center justify-center mr-3 text-sm">🗺️</span>
-                        Rande Plánovač
-                    </h3>
-                    <p class="text-sm leading-relaxed">
-                        Interaktivní mapa míst, kam můžeme vyrazit. Filtruj podle nálady a objevuj nová místa.
-                    </p>
-                </div>
-
-                <div class="bg-[#2f3136] p-6 rounded-xl border border-[#202225] hover:border-[#5865F2] transition-colors">
-                    <h3 class="text-xl font-bold text-white mb-3 flex items-center">
-                        <span class="w-8 h-8 rounded-lg bg-[#5865F2] flex items-center justify-center mr-3 text-sm">📚</span>
-                        Knihovna
-                    </h3>
-                    <p class="text-sm leading-relaxed">
-                        Seznam filmů, seriálů a her, které si chceme zahrát nebo pustit.
-                    </p>
-                </div>
-            </div>
-
-            <div class="bg-[#2f3136] p-6 rounded-xl border border-[#faa61a]">
-                <h3 class="text-xl font-bold text-[#faa61a] mb-2 flex items-center gap-2">
-                    <i class="fas fa-lightbulb"></i> Tip
-                </h3>
-                <p class="text-sm text-gray-300">
-                    Aplikace podporuje <strong>Valentýnský mód</strong>! Klikni na srdíčko v horní liště. 💕
-                </p>
-            </div>
-        </div>
-    `;
+export async function renderManual() {
+    const manualModule = await import('./manual.js');
+    manualModule.renderManual();
 }
+
 
 export function renderMusicBot() {
     const container = document.getElementById("messages-container");

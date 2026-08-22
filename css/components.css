@@ -527,3 +527,59 @@ input[type="range"]::-moz-range-track { width: 100%; height: 8px; cursor: pointe
   animation: slideUpDrawer 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* ==========================================================
+   DISCORD SERVER SIDEBAR & PILLS
+   ========================================================== */
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.server-item-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.server-pill {
+  position: absolute;
+  left: 0;
+  width: 4px;
+  background-color: #ffffff;
+  border-radius: 0 4px 4px 0;
+  transition: height 0.22s cubic-bezier(0.2, 0, 0, 1), opacity 0.22s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.server-icon-btn {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-radius 0.28s cubic-bezier(0.2, 0, 0, 1), background 0.25s ease, transform 0.15s ease, box-shadow 0.25s ease;
+  overflow: hidden;
+}
+
+.server-icon-btn:hover {
+  transform: scale(1.02);
+}
+
+.server-icon-btn:active {
+  transform: scale(0.95);
+}
+
+.server-tooltip {
+  pointer-events: none;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
+}
+
+

@@ -48,8 +48,7 @@ export async function handleAuthState(event, session) {
             // Route to content (supports push notification deep-links via ?channel=...)
             const urlParams = new URLSearchParams(window.location.search);
             const queryChannel = urlParams.get('channel');
-            const savedChannel = localStorage.getItem('klarka_last_channel');
-            const defaultChannel = queryChannel || ((savedChannel && savedChannel !== 'welcome') ? savedChannel : 'dashboard');
+            const defaultChannel = queryChannel || 'dashboard';
             
             console.log(`[Auth] Routing to ${defaultChannel}`);
             history.replaceState({ channel: defaultChannel }, "", queryChannel ? `/?channel=${queryChannel}` : "");

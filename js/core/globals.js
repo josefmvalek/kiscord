@@ -66,6 +66,7 @@ window.loadModule = (name) => {
         case 'kasicka': return import('../modules/kasicka.js');
         case 'alpskaVyzva': return import('../modules/alpskaVyzva.js');
         case 'alpskyDenicek': return import('../modules/alpskyDenicek.js');
+        case 'manual': return import('../modules/manual.js');
         default: console.error('Unknown loadModule request:', name); return Promise.reject(new Error('Module not found'));
     }
 };

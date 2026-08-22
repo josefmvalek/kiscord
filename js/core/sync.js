@@ -157,6 +157,20 @@ export function setupRealtimeSync() {
                 window.showNotification(msg, 'success');
             }
         })
+        // A9. Handle Broadcasts (Haptic Touch Pulse)
+        .on('broadcast', { event: 'haptic-pulse' }, (payload) => {
+            if (payload.payload.from === state.currentUser?.id) return;
+            window.dispatchEvent(new CustomEvent('haptic-pulse-received', { 
+                detail: payload.payload 
+            }));
+        })
+        // A10. Handle Broadcasts (Ambient Activity Status)
+        .on('broadcast', { event: 'ambient-activity' }, (payload) => {
+            if (payload.payload.from === state.currentUser?.id) return;
+            window.dispatchEvent(new CustomEvent('ambient-activity-received', { 
+                detail: payload.payload 
+            }));
+        })
         // B. Handle Database Changes (Health Data)
         .on('postgres_changes', { 
             event: '*', 
@@ -552,6 +566,40 @@ export async function notifyPartnerCouponRedeemed(couponTitle) {
         `${redeemerName} právě uplatnil/a kupón: "${couponTitle}"! ✨`,
         'coupon-redeemed'
     );
+}
+
+/**
+ * Broadcasts a haptic touch pulse pattern to the partner in real-time.
+ */
+export async function broadcastHapticPulse(pulseData) {
+    if (!mainChannel) return;
+    await mainChannel.send({
+        type: 'broadcast',
+        event: 'haptic-pulse',
+        payload: {
+            from: state.currentUser?.id,
+            senderName: state.currentUser?.name,
+            timestamp: Date.now(),
+            ...pulseData
+        }
+    });
+}
+
+/**
+ * Broadcasts ambient activity status (active channel, state, battery) to the partner.
+ */
+export async function broadcastAmbientActivity(activityData) {
+    if (!mainChannel) return;
+    await mainChannel.send({
+        type: 'broadcast',
+        event: 'ambient-activity',
+        payload: {
+            from: state.currentUser?.id,
+            senderName: state.currentUser?.name,
+            timestamp: Date.now(),
+            ...activityData
+        }
+    });
 }
 
 /**

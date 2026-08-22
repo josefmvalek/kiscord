@@ -440,6 +440,7 @@ export function renderSettings() {
 
     // Initialize SortableJS
     setTimeout(() => {
+        if (typeof document === 'undefined') return;
         const sortContainers = document.querySelectorAll('.sortable-category-list');
         if (sortContainers.length > 0 && typeof Sortable !== 'undefined') {
             sortContainers.forEach(container => {

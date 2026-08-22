@@ -188,6 +188,101 @@ export function playBeep(freq = 880, duration = 0.08) {
     }
 }
 
+/**
+ * Plays a resonant soft heartbeat thump (lub-dub)
+ */
+export function playHeartbeat() {
+    if (!isSoundEnabled()) return;
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        // Lub (First thump - lower pitch)
+        const osc1 = ctx.createOscillator();
+        const filter1 = ctx.createBiquadFilter();
+        const gain1 = ctx.createGain();
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(65, now);
+        osc1.frequency.exponentialRampToValueAtTime(35, now + 0.12);
+
+        filter1.type = 'lowpass';
+        filter1.frequency.value = 120;
+
+        gain1.gain.setValueAtTime(0.001, now);
+        gain1.gain.linearRampToValueAtTime(0.2, now + 0.02);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+
+        osc1.connect(filter1);
+        filter1.connect(gain1);
+        gain1.connect(ctx.destination);
+
+        osc1.start(now);
+        osc1.stop(now + 0.16);
+
+        // Dub (Second thump - slightly higher, shorter delay)
+        const dubTime = now + 0.14;
+        const osc2 = ctx.createOscillator();
+        const filter2 = ctx.createBiquadFilter();
+        const gain2 = ctx.createGain();
+
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(75, dubTime);
+        osc2.frequency.exponentialRampToValueAtTime(40, dubTime + 0.14);
+
+        filter2.type = 'lowpass';
+        filter2.frequency.value = 140;
+
+        gain2.gain.setValueAtTime(0.001, dubTime);
+        gain2.gain.linearRampToValueAtTime(0.25, dubTime + 0.02);
+        gain2.gain.exponentialRampToValueAtTime(0.001, dubTime + 0.16);
+
+        osc2.connect(filter2);
+        filter2.connect(gain2);
+        gain2.connect(ctx.destination);
+
+        osc2.start(dubTime);
+        osc2.stop(dubTime + 0.18);
+    } catch (e) {
+        console.warn("[Sound] Failed to play heartbeat:", e);
+    }
+}
+
+/**
+ * Plays a triumphant celebratory fanfare for Wrapped celebrations
+ */
+export function playFanfare() {
+    if (!isSoundEnabled()) return;
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        const chord = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        chord.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + i * 0.08);
+
+            const start = now + i * 0.08;
+            const end = start + 0.8;
+
+            gain.gain.setValueAtTime(0.001, start);
+            gain.gain.linearRampToValueAtTime(0.12, start + 0.03);
+            gain.gain.exponentialRampToValueAtTime(0.001, end);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(start);
+            osc.stop(end + 0.1);
+        });
+    } catch (e) {
+        console.warn("[Sound] Failed to play fanfare:", e);
+    }
+}
+
 // Global window event listener to resume AudioContext upon first interaction
 if (typeof window !== 'undefined') {
     const resumeContext = () => {
@@ -200,3 +295,4 @@ if (typeof window !== 'undefined') {
     window.addEventListener('click', resumeContext);
     window.addEventListener('keydown', resumeContext);
 }
+

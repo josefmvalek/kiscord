@@ -44,6 +44,7 @@ describe('Sidebar Collapsible Categories & Navigation', () => {
             <div id="sidebar-wrapper"></div>
             <div id="mobile-overlay"></div>
         `;
+        state.currentServer = 'all';
         state.currentChannel = 'dashboard';
         state.settings = {
             sidebar: {

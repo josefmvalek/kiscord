@@ -10,7 +10,9 @@ const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 const state = {
     shifts: {},
     tetris: { jose: 0, klarka: 0 },
+    currentServer: "home",
     currentChannel: "welcome",
+    lastServerChannels: {},
     topicProgress: {},
     schoolEvents: [],
     calendarFilter: "all",
@@ -69,6 +71,16 @@ const state = {
     loveCoins: { jose: 0, klarka: 0 },
     inventory: [],
     shopItems: [],
+    nutritionLogs: {},
+    nutritionTargets: {
+        josef: { calories: 2500, protein: 160, carbs: 290, fats: 75, fiber: 30 },
+        klarka: { calories: 1900, protein: 110, carbs: 220, fats: 60, fiber: 25 }
+    },
+    biometricsProfiles: {
+        josef: { gender: 'male', age: 24, height_cm: 184, activityLevel: 'moderate', goal: 'maintain', targetWeight_kg: 82.0 },
+        klarka: { gender: 'female', age: 23, height_cm: 168, activityLevel: 'moderate', goal: 'maintain', targetWeight_kg: 60.0 }
+    },
+    savedFoods: [],
     user_ids: { jose: null, klarka: null },
     loadError: false, // Track if initial load failed
     maturaProgress: {}, // { item_id: { jose: { status, notes }, klarka: { status, notes } } }
@@ -217,7 +229,11 @@ async function saveStateToCache() {
         gymPRs: state.gymPRs,
         loveCoins: state.loveCoins,
         inventory: state.inventory,
-        shopItems: state.shopItems
+        shopItems: state.shopItems,
+        nutritionLogs: state.nutritionLogs,
+        nutritionTargets: state.nutritionTargets,
+        biometricsProfiles: state.biometricsProfiles,
+        savedFoods: state.savedFoods
     };
 
     // Save asynchronously to IndexedDB (non-blocking, multi-gigabyte capacity)
@@ -341,6 +357,22 @@ async function loadStateFromCache() {
             if (data.shopItems) {
                 data.shopItems = [ ...data.shopItems ];
             }
+            if (data.nutritionLogs) {
+                data.nutritionLogs = { ...data.nutritionLogs };
+            }
+            if (data.nutritionTargets) {
+                data.nutritionTargets = { ...data.nutritionTargets };
+            }
+            if (data.biometricsProfiles) {
+                data.biometricsProfiles = { ...data.biometricsProfiles };
+            }
+            if (data.savedFoods) {
+                data.savedFoods = [ ...data.savedFoods ];
+            }
+
+            delete data.currentChannel;
+            delete data.currentServer;
+            delete data.lastServerChannels;
 
             Object.assign(state, data);
             return true;

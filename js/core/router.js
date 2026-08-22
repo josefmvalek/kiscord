@@ -1,6 +1,21 @@
 import { state, saveStateToCache } from './state.js';
 import { triggerHaptic } from './utils.js';
 import * as StaticPages from '../modules/static.js';
+import {
+    serverDefinitions,
+    getServerById,
+    getServerForChannel,
+    renderServersList,
+    updateServerActiveStates
+} from './servers.js';
+
+export {
+    serverDefinitions,
+    getServerById,
+    getServerForChannel,
+    renderServersList,
+    updateServerActiveStates
+};
 
 /** @type {Record<string, () => Promise<any>>} */
 export const moduleMap = {
@@ -42,7 +57,14 @@ export const moduleMap = {
     'habits': () => import('../modules/habits.js'),
     'finance-tracker': () => import('../modules/financeTracker.js'),
     'finance': () => import('../modules/financeTracker.js'),
-    'decision-matcher': () => import('../modules/decisionMatcher.js')
+    'decision-matcher': () => import('../modules/decisionMatcher.js'),
+    'rozhodovac': () => import('../modules/decisionArena.js'),
+    'decision-arena': () => import('../modules/decisionArena.js'),
+    'manual': () => import('../modules/manual.js'),
+    'wrapped': () => import('../modules/coupleWrapped.js'),
+    'dotek': () => import('../modules/hapticTouch.js'),
+    'nutrition': () => import('../modules/nutrition/index.js'),
+    'body-metrics': () => import('../modules/bodyMetrics/index.js')
 };
 
 export const DEFAULT_COLLAPSED_CATEGORIES = ['📦 ARCHIV', '⚙️ SYSTÉM & INFO'];
@@ -63,6 +85,8 @@ export const channelCategories = [
         name: "🌿 ZDRAVÍ & FITNESS",
         items: [
             { id: 'gym-tracker', name: 'posilovna', icon: '<i class="fas fa-dumbbell"></i>', type: 'text', color: '#faa61a', desc: 'Logování tréninků a sledování maximálek 🏋️‍♂️💪' },
+            { id: 'nutrition', name: 'výživa', icon: '<i class="fas fa-apple-alt"></i>', type: 'text', color: '#14b8a6', desc: 'Nutriční tracker, kalorie, makra & oblíbená jídla 🥗🥑' },
+            { id: 'body-metrics', name: 'tělo-a-míry', icon: '<i class="fas fa-ruler-combined"></i>', type: 'text', color: '#3ba55c', desc: 'Sledování váhy, tělesných obvodů & biometrie ⚖️📐' },
             { id: 'habits', name: 'návyky', icon: '<i class="fas fa-check-circle"></i>', type: 'text', color: '#3ba55c', desc: 'Sledování denních návyků & odměny v Love Coins 🌿' },
             { id: 'regenerace', name: 'regenerace', icon: '<i class="fas fa-leaf"></i>', type: 'text', color: '#3ba55c', desc: 'Proč a jak brát suplementy. 🌿' }
         ]
@@ -71,6 +95,7 @@ export const channelCategories = [
         name: "💖 NÁŠ SVĚT & PŘÍBĚH",
         items: [
             { id: 'love-shop', name: 'obchůdek', icon: '<i class="fas fa-store"></i>', type: 'text', color: '#faa61a', desc: 'Láskyplný obchůdek a spížka na kupóny. 🪙🎁' },
+            { id: 'dotek', name: 'dotek-na-dálku', icon: '<i class="fas fa-heartbeat"></i>', type: 'text', color: '#eb459e', desc: 'Haptic Touchpad & přenos tlukotu srdce v reálném čase 🫀' },
             { id: 'dateplanner', name: 'plánovač-rande', icon: '<i class="fas fa-map-marker-alt"></i>', type: 'text', color: '#3ba55c', desc: 'Kam vyrazíme příště?🥂' },
             { id: 'bucketlist', name: 'bucket-list', icon: '<i class="fas fa-rocket"></i>', type: 'text', color: '#ed4245', desc: 'Všechno, co spolu chceme zažít! ✨' },
             { id: 'quests', name: 'společné-questy', icon: '<i class="fas fa-shield-alt"></i>', type: 'text', color: '#faa61a', desc: 'Naše společné cíle a progress. 💪' },
@@ -84,8 +109,10 @@ export const channelCategories = [
     {
         name: "🎮 ZÁBAVA & MÉDIA",
         items: [
+            { id: 'rozhodovac', name: 'rozhodovací-aréna', icon: '<i class="fas fa-gavel"></i>', type: 'text', color: '#faa61a', desc: 'Kdo vybere jídlo, film či úkol? 1v1 duely a Kolo Osudu ⚔️🍕' },
             { id: 'library', name: 'knihovna', icon: '<i class="fas fa-film"></i>', type: 'text', color: '#5865F2', desc: 'Filmy, seriály, hry & katalog 🍿🎮' },
             { id: 'watchlist', name: 'watchlist', icon: '<i class="fas fa-heart"></i>', type: 'text', color: '#eb459e', desc: 'Společná přání, Spolu-seznam & Tinder ❤️' },
+            { id: 'wrapped', name: 'couple-wrapped', icon: '<i class="fas fa-sparkles"></i>', type: 'text', color: '#faa61a', desc: 'Spotify-style rekapitulace vztahu & Stories karta 📊✨' },
             { id: 'music', name: 'music-bot', icon: '<i class="fas fa-music"></i>', type: 'text', color: '#3ba55c', desc: 'Náš společný vibes playlist 🎧' },
             { id: 'games-hub', name: 'gamesky', icon: '<i class="fas fa-gamepad"></i>', type: 'text', color: '#faa61a', desc: 'Herní Doupě – Kvízy, Draw Duel, Tetris, Puzzle & Tierlisty 🕹️' }
         ]
@@ -175,9 +202,39 @@ export function expandAllCategories() {
     renderChannels();
 }
 
+export function switchServer(serverId, targetChannelId = null, push = true) {
+    const server = getServerById(serverId);
+    if (!server) return;
+
+    triggerHaptic('light');
+    console.log(`[NAV] Switching to server: ${server.id} (${server.name})`);
+
+    state.currentServer = server.id;
+    saveStateToCache();
+
+    // 1. Update active states in server sidebar
+    updateServerActiveStates(server.id);
+
+    // 2. Re-render channels sidebar for active server
+    renderChannels();
+
+    // 3. Open target channel ONLY if explicitly specified
+    if (targetChannelId) {
+        switchChannel(targetChannelId, push);
+    }
+}
+
 export function renderChannels() {
     const container = document.getElementById("channels-container");
     if (!container) return;
+
+    const currentServer = getServerById(state.currentServer || 'home');
+
+    // Update Server Header in Channels Sidebar
+    const serverHeaderEl = document.getElementById("server-header-title");
+    if (serverHeaderEl) {
+        serverHeaderEl.textContent = currentServer.name;
+    }
 
     const hidden = state.settings?.sidebar?.hiddenChannels || [];
     const order = state.settings?.sidebar?.channelOrder || [];
@@ -187,41 +244,15 @@ export function renderChannels() {
         ? state.settings.sidebar.collapsedCategories
         : DEFAULT_COLLAPSED_CATEGORIES;
 
-    console.log('[DEBUG] renderChannels - hidden:', hidden);
-    console.log('[DEBUG] renderChannels - catMap:', JSON.stringify(catMap));
-    console.log('[DEBUG] renderChannels - order:', order);
+    console.log('[DEBUG] renderChannels - currentServer:', state.currentServer, 'hidden:', hidden);
 
-    const mainChannelDefinitions = {
-        dashboard: { id: 'dashboard', name: 'Můj Den', icon: '<i class="fas fa-heart"></i>', color: '#eb459e', desc: 'Tvůj osobní přehled a zdraví ❤️' },
-        calendar: { id: 'calendar', name: 'Kalendář', icon: '<i class="fas fa-calendar-alt"></i>', color: '#5865F2', desc: 'Plánování našich akcí a školy 📅' }
-    };
-
-    let html = "";
-
-    // Special Top Items (Dashboard and Calendar) - render at top only if not moved to a category
-    console.log('[DEBUG] dashboard top rendering check:', !hidden.includes('dashboard'), !catMap['dashboard']);
-    if (!hidden.includes('dashboard') && !catMap['dashboard']) {
-        const isActive = state.currentChannel === 'dashboard';
-        html += `
-            <div class="channel-link group flex items-center px-2.5 py-2 mx-1.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--bg-modifier-hover)] text-[var(--text-muted)] hover:text-[var(--text-header)] mb-1 mt-1 ${isActive ? 'active bg-[var(--bg-modifier-selected)] text-[var(--text-header)] font-bold' : ''}" data-channel="dashboard">
-                <div class="w-5 text-center mr-2.5 text-lg text-[#eb459e] flex items-center justify-center flex-shrink-0"><i class="fas fa-heart"></i></div>
-                <div class="flex-1 font-bold text-sm text-[var(--text-header)] truncate">Můj Den</div>
-            </div>
-        `;
-    }
-    console.log('[DEBUG] calendar top rendering check:', !hidden.includes('calendar'), !catMap['calendar']);
-    if (!hidden.includes('calendar') && !catMap['calendar']) {
-        const isActive = state.currentChannel === 'calendar';
-        html += `
-            <div class="channel-link group flex items-center px-2.5 py-2 mx-1.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--bg-modifier-hover)] text-[var(--text-muted)] hover:text-[var(--text-header)] mb-3 ${isActive ? 'active bg-[var(--bg-modifier-selected)] text-[var(--text-header)] font-bold' : ''}" data-channel="calendar">
-                <div class="w-5 text-center mr-2.5 text-lg text-[#5865F2] flex items-center justify-center flex-shrink-0"><i class="fas fa-calendar-alt"></i></div>
-                <div class="flex-1 font-bold text-sm text-[var(--text-header)] truncate">Kalendář</div>
-            </div>
-        `;
-    }
+    // Use current server's categories, or all channelCategories if currentServer is 'all'
+    const baseCategories = (state.currentServer === 'all')
+        ? channelCategories
+        : (currentServer.categories || channelCategories);
 
     // Deep clone categories so we can dynamically restructure items without altering the original array
-    const clonedCategories = channelCategories.map(cat => ({
+    const clonedCategories = baseCategories.map(cat => ({
         name: cat.name,
         items: [...cat.items]
     }));
@@ -239,11 +270,6 @@ export function renderChannels() {
                 cat.items.splice(idx, 1); // Remove from source category
             }
         });
-
-        // Fallback for main channels (dashboard or calendar) that are not in default categories list
-        if (!foundItem && mainChannelDefinitions[channelId]) {
-            foundItem = mainChannelDefinitions[channelId];
-        }
 
         if (foundItem) {
             const targetCat = clonedCategories.find(cat => cat.name === targetCatName);
@@ -264,6 +290,29 @@ export function renderChannels() {
         return indexA - indexB;
     });
 
+    let html = "";
+
+    if (state.currentServer === 'all') {
+        if (!hidden.includes('dashboard') && !catMap['dashboard']) {
+            const isActive = state.currentChannel === 'dashboard';
+            html += `
+                <div class="channel-link group flex items-center px-2.5 py-2 mx-1.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--bg-modifier-hover)] text-[var(--text-muted)] hover:text-[var(--text-header)] mb-1 mt-1 ${isActive ? 'active bg-[var(--bg-modifier-selected)] text-[var(--text-header)] font-bold' : ''}" data-channel="dashboard">
+                    <div class="w-5 text-center mr-2.5 text-lg text-[#eb459e] flex items-center justify-center flex-shrink-0"><i class="fas fa-heart"></i></div>
+                    <div class="flex-1 font-bold text-sm text-[var(--text-header)] truncate">Můj Den</div>
+                </div>
+            `;
+        }
+        if (!hidden.includes('calendar') && !catMap['calendar']) {
+            const isActive = state.currentChannel === 'calendar';
+            html += `
+                <div class="channel-link group flex items-center px-2.5 py-2 mx-1.5 rounded-lg cursor-pointer transition-colors hover:bg-[var(--bg-modifier-hover)] text-[var(--text-muted)] hover:text-[var(--text-header)] mb-3 ${isActive ? 'active bg-[var(--bg-modifier-selected)] text-[var(--text-header)] font-bold' : ''}" data-channel="calendar">
+                    <div class="w-5 text-center mr-2.5 text-lg text-[#5865F2] flex items-center justify-center flex-shrink-0"><i class="fas fa-calendar-alt"></i></div>
+                    <div class="flex-1 font-bold text-sm text-[var(--text-header)] truncate">Kalendář</div>
+                </div>
+            `;
+        }
+    }
+
     clonedCategories.forEach(cat => {
         const visibleItems = cat.items.filter(item => !hidden.includes(item.id));
 
@@ -281,7 +330,6 @@ export function renderChannels() {
         });
 
         const isCollapsed = collapsedCategories.includes(cat.name);
-        const hasActiveChannel = visibleItems.some(i => i.id === state.currentChannel);
 
         html += `
             <div class="category-wrapper mt-3 mb-0.5" data-category="${cat.name}">
@@ -317,25 +365,45 @@ export function renderChannels() {
 
 export function setupNavigation() {
     const container = document.getElementById("channels-container");
-    if (!container || container._hasNavListener) return;
+    if (container && !container._hasNavListener) {
+        // Use event delegation on the parent container so listeners survive innerHTML updates
+        container.addEventListener('click', (e) => {
+            const header = e.target.closest('.category-header');
+            if (header) {
+                const catName = header.getAttribute('data-category');
+                if (catName) toggleCategoryCollapse(catName);
+                return;
+            }
 
-    // Use event delegation on the parent container so listeners survive innerHTML updates
-    container.addEventListener('click', (e) => {
-        const header = e.target.closest('.category-header');
-        if (header) {
-            const catName = header.getAttribute('data-category');
-            if (catName) toggleCategoryCollapse(catName);
-            return;
-        }
+            const link = e.target.closest('.channel-link');
+            if (link) {
+                const channelId = link.getAttribute('data-channel');
+                switchChannel(channelId);
+                // On mobile (Varianta A), close sidebar on channel selection
+                if (window.innerWidth < 768) {
+                    const sidebar = document.getElementById("sidebar-wrapper");
+                    const overlay = document.getElementById("mobile-overlay");
+                    if (sidebar && !sidebar.classList.contains("-translate-x-full")) {
+                        sidebar.classList.add("-translate-x-full");
+                        if (overlay) overlay.classList.add("hidden");
+                    }
+                }
+            }
+        });
+        container._hasNavListener = true;
+    }
 
-        const link = e.target.closest('.channel-link');
-        if (link) {
-            const channelId = link.getAttribute('data-channel');
-            switchChannel(channelId);
-        }
-    });
-
-    container._hasNavListener = true;
+    const serversContainer = document.getElementById("servers-container");
+    if (serversContainer && !serversContainer._hasNavListener) {
+        serversContainer.addEventListener('click', (e) => {
+            const wrapper = e.target.closest('.server-item-wrapper');
+            if (wrapper) {
+                const serverId = wrapper.getAttribute('data-server');
+                if (serverId) switchServer(serverId);
+            }
+        });
+        serversContainer._hasNavListener = true;
+    }
 }
 
 export function setupSearch() {
@@ -421,6 +489,14 @@ export function switchChannel(channelId, push = true) {
         return;
     }
 
+    // Auto-switch server if channel belongs to a different server
+    const targetServer = getServerForChannel(channelId);
+    if (targetServer && state.currentServer !== targetServer.id && state.currentServer !== 'all') {
+        state.currentServer = targetServer.id;
+        updateServerActiveStates(targetServer.id);
+        renderChannels();
+    }
+
     // Update browser history
     if (push) {
         history.pushState({ channel: channelId }, "", "");
@@ -434,7 +510,7 @@ export function switchChannel(channelId, push = true) {
 
     console.log(`[NAV] Switching to channel: ${channelId}`);
     state.currentChannel = channelId;
-    localStorage.setItem('klarka_last_channel', channelId);
+    localStorage.removeItem('klarka_last_channel');
 
     // Auto-expand category containing current channel if collapsed
     if (state.settings?.sidebar) {
@@ -502,12 +578,12 @@ export function switchChannel(channelId, push = true) {
     // Centrální error handler pro navigační chyby
     const navErr = (err) => {
         console.error(`[NAV] Navigating to ${channelId} failed:`, err);
-        if (window.renderErrorState) {
+        if (typeof window !== 'undefined' && window.renderErrorState && container) {
             container.innerHTML = window.renderErrorState({
                 message: `Nepodařilo se přepnout na kanál ${channelId}... 🦝`,
                 onRetry: `switchChannel('${channelId}')`
             });
-        } else {
+        } else if (container) {
             container.innerHTML = `<div class="p-8 text-center text-red-400">Chyba navigace: ${err.message}</div>`;
         }
     };
@@ -593,7 +669,7 @@ export function switchChannel(channelId, push = true) {
             import('../modules/letters.js').then(m => m.renderLetters()).catch(navErr);
             break;
         case 'manual':
-            StaticPages.renderManual();
+            moduleMap.manual().then(m => m.renderManual()).catch(navErr);
             break;
         case 'readme':
             StaticPages.renderReadme();
@@ -628,6 +704,13 @@ export function switchChannel(channelId, push = true) {
         case 'regenerace':
             moduleMap.regenerace().then(m => m.renderRegenerace()).catch(navErr);
             break;
+        case 'nutrition':
+            import('./state.js').then(s => s.ensureNutritionData ? s.ensureNutritionData() : Promise.resolve()).then(() => moduleMap.nutrition()).then(m => m.renderNutrition()).catch(navErr);
+            break;
+        case 'body-metrics':
+        case 'telo-a-miry':
+            import('./state.js').then(s => s.ensureGymData ? s.ensureGymData() : Promise.resolve()).then(() => moduleMap['body-metrics']()).then(m => m.renderBodyMetrics()).catch(navErr);
+            break;
         case 'schedule':
             moduleMap.schedule().then(m => m.renderSchedule()).catch(navErr);
             break;
@@ -656,9 +739,22 @@ export function switchChannel(channelId, push = true) {
         case 'changelog':
             moduleMap['changelog']().then(m => m.renderChangelog()).catch(navErr);
             break;
+        case 'wrapped':
+            import('../modules/coupleWrapped.js').then(m => m.renderCoupleWrapped()).catch(navErr);
+            break;
+        case 'dotek':
+            import('../modules/hapticTouch.js').then(m => m.renderHapticTouch()).catch(navErr);
+            break;
+        case 'rozhodovac':
+        case 'decision-arena':
+            import('../modules/decisionArena.js').then(m => m.renderDecisionArena()).catch(navErr);
+            break;
         default:
             import('../modules/dashboard.js').then(m => m.renderWelcome()).catch(navErr);
     }
+
+    // Broadcast presence update to partner in background
+    import('../modules/ambientPresence.js').then(m => m.broadcastMyPresence(channelId)).catch(() => {});
 
     // Mobile Sidebar Close
     const sidebar = document.getElementById('sidebar-wrapper');
@@ -986,7 +1082,9 @@ export function logCurrentMiniBarSet() {
 
 // Global window attachments for easy integration & onclick triggers
 window.switchChannel = switchChannel;
+window.switchServer = switchServer;
 window.renderChannels = renderChannels;
+window.renderServersList = renderServersList;
 window.toggleCategoryCollapse = toggleCategoryCollapse;
 window.collapseAllCategories = collapseAllCategories;
 window.expandAllCategories = expandAllCategories;

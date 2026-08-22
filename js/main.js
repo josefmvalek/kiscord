@@ -13,7 +13,7 @@ import { state, stateEvents } from './core/state.js';
 
 // Refactored Handlers
 import { initAuthListeners, updateUserProfileUI, updateGlobalAssetsUI } from './core/auth-handler.js';
-import { setupNavigation, renderChannels, setupSearch, switchChannel } from './core/router.js';
+import { setupNavigation, renderChannels, setupSearch, switchChannel, renderServersList } from './core/router.js';
 import { setupConnectivityListeners, checkAppUpdate, setupGlobalTouchGestures, setupNativePopovers, setupMobileCollapsibleHeaders } from './core/app-ui.js';
 import { exposeGlobals } from './core/globals.js';
 
@@ -46,6 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     checkAppUpdate();
 
     // 3. UI & Events Setup
+    renderServersList();
     renderChannels();
     setupNavigation();
     setupSearch();

@@ -1,27 +1,54 @@
 import { state, ensureLibraryData, ensureBucketListData, ensureAchievementsData, ensureGymData, ensureStudyData, ensureLoveShopData } from '../core/state.js';
 import { supabase } from '../core/supabase.js';
 import { renderVitalityPanels } from './stats/charts.js';
+import { openCoupleWrappedStories, generateWrappedCardImage, showWrappedCardPreviewModal, calculateCoupleWrapped } from './coupleWrapped.js';
 
 export async function renderStats() {
     // Expose API to window
-    window.Stats = { testNotification, requestPushPermission, exportAllData };
+    window.Stats = { testNotification, requestPushPermission, exportAllData, openCoupleWrappedStories, showWrappedCardPreviewModal };
 
     const container = document.getElementById("messages-container");
     if (!container) return;
 
+    const wrappedAll = calculateCoupleWrapped('all');
+
     container.innerHTML = `
         <div class="h-full bg-[#36393f] flex flex-col font-sans animate-fade-in overflow-y-auto custom-scrollbar">
             <!-- Header -->
-            <div class="bg-[#2f3136] shadow-md z-10 flex-shrink-0 border-b border-[#202225] p-8 flex flex-col items-center justify-center relative overflow-hidden">
+            <div class="bg-[#2f3136] shadow-md z-10 flex-shrink-0 border-b border-[#202225] p-6 sm:p-8 flex flex-col items-center justify-center relative overflow-hidden">
                 <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
-                <div class="relative z-10 flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-[#5865F2] to-[#eb459e] shadow-2xl mb-4 transform hover:scale-110 transition-transform">
-                    <i class="fas fa-chart-line text-white text-4xl"></i>
+                <div class="relative z-10 flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-[#5865F2] to-[#eb459e] shadow-2xl mb-3 transform hover:scale-110 transition-transform">
+                    <i class="fas fa-chart-line text-white text-3xl sm:text-4xl"></i>
                 </div>
-                <h1 class="relative z-10 text-3xl font-black text-white tracking-tight text-center uppercase">Statistiky Našeho Světa</h1>
-                <p class="relative z-10 text-gray-400 font-medium mt-2 text-center max-w-md">Čísla, která vyprávějí náš příběh.</p>
+                <h1 class="relative z-10 text-2xl sm:text-3xl font-black text-white tracking-tight text-center uppercase">Statistiky & Wrapped</h1>
+                <p class="relative z-10 text-gray-400 font-medium mt-1 text-xs sm:text-sm text-center max-w-md">Čísla a příběhy, které tvoří náš společný svět.</p>
             </div>
 
-            <div class="p-4 lg:p-8 max-w-6xl mx-auto w-full space-y-8">
+            <div class="p-4 lg:p-8 max-w-6xl mx-auto w-full space-y-6 sm:space-y-8">
+                <!-- Spotify Wrapped Hero Banner -->
+                <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-900/40 via-[#2f3136] to-pink-900/30 border border-white/10 p-6 sm:p-8 shadow-2xl">
+                    <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div class="space-y-2 text-center md:text-left">
+                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/20 border border-pink-500/30 text-pink-300 text-xs font-mono font-bold">
+                                <i class="fas fa-sparkles"></i> Spotify-Style Rekapitulace
+                            </div>
+                            <h2 class="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight">Couple Wrapped Stories</h2>
+                            <p class="text-xs sm:text-sm text-gray-300 max-w-lg">
+                                Zažijte interaktivní rekapitulaci našeho vztahu v 9:16 Stories formátu s hudbou, tonáží v gymu, shodami v Tinderu a exportem na Instagram/TikTok!
+                            </p>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row md:flex-col gap-2.5 w-full md:w-auto flex-shrink-0">
+                            <button id="stats-launch-wrapped-btn" class="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-pink-500 via-purple-500 to-amber-500 hover:opacity-95 text-white font-black text-xs sm:text-sm uppercase tracking-wider transition shadow-xl flex items-center justify-center gap-2 transform active:scale-95">
+                                <i class="fas fa-play"></i> <span>Spustit Wrapped Stories</span>
+                            </button>
+                            <button id="stats-export-card-btn" class="px-6 py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/10 text-white font-bold text-xs uppercase tracking-wider transition flex items-center justify-center gap-2">
+                                <i class="fas fa-camera-retro text-pink-400"></i> <span>Stáhnout Stories Kartu</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Top Row: Big Numbers -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     ${renderStatCard('Dní Spolu', calculateDaysTogether(), 'fa-heart', 'text-[#ed4245]', 'bg-[#ed4245]/10')}
@@ -167,6 +194,15 @@ export async function renderStats() {
     // Fetch async parts
     fetchDetailedStats();
     checkNotificationStatus();
+
+    // Bind Wrapped Stories & Card Export
+    document.getElementById('stats-launch-wrapped-btn')?.addEventListener('click', () => {
+        openCoupleWrappedStories('all');
+    });
+
+    document.getElementById('stats-export-card-btn')?.addEventListener('click', () => {
+        showWrappedCardPreviewModal(wrappedAll);
+    });
 }
 
 async function testNotification() {

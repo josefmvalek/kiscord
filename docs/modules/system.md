@@ -55,3 +55,17 @@ Monthly cooperative missions requiring mutual participation.
 - **Quest Types**: Combined hydration targets, synchronized sleep streaks, joint workout counts, or shared Tetris high scores.
 - **Data Aggregation**: Real-time SQL aggregations comparing both partners' activities.
 - **Visual Progress**: Gradient cards with live progress bars.
+ 
+---
+
+## 5. Interactive Application Guide & Manual (`#návod`)
+**File**: `js/modules/manual.js`
+
+Central interactive user manual and operational guide for both users.
+
+### Key Capabilities:
+- **Real-Time Search & Category Filters**: Instant filtering across core domains (Health, VUT FIT, Fitness, Love & Dates, Entertainment, System).
+- **Direct Navigation Links**: Quick-jump buttons (`switchChannel`) from every guide card directly into the target channel.
+- **3-Step Daily Routine Cheat Sheet**: Rapid morning, daytime, and evening flow.
+- **Keyboard Shortcuts & Gestures**: Reference table for Command Palette (`Ctrl+K`), modal closing (`Esc`), Tinder swipes, and floating workout HUD.
+- **Interactive FAQ Accordion**: Practical solutions for offline syncing, Love Coins accumulation, locked letters, and mobile PWA installation.

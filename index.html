@@ -99,27 +99,18 @@
     <!-- SERVER LIST -->
     <div id="sidebar-wrapper"
       class="fixed inset-y-0 left-0 z-50 flex h-full transition-transform duration-300 transform -translate-x-full md:relative md:translate-x-0 shadow-2xl md:shadow-none">
-      <div
-        class="bg-[var(--bg-tertiary)] w-[72px] flex flex-col items-center py-3 gap-2 flex-shrink-0 border-r border-[var(--border-subtle)]">
-        <div
-          class="w-12 h-12 bg-[var(--bg-primary)] rounded-full hover:rounded-2xl hover:bg-[var(--blurple)] transition-all cursor-pointer flex items-center justify-center text-[var(--text-normal)] hover:text-white mb-2">
-          <i class="fab fa-discord text-xl"></i>
-        </div>
-        <div class="w-8 h-[2px] bg-[var(--border-subtle)] rounded mb-2"></div>
-        <div
-          class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-2xl cursor-pointer flex items-center justify-center overflow-hidden">
-          <div
-            class="w-12 h-12 rounded-2xl cursor-pointer flex items-center justify-center overflow-hidden shadow-lg group transition-all duration-200">
-            <img id="server-icon" src="/img/app/czippel2_vanoce.png" alt="K&T Server" class="w-full h-full object-cover" loading="lazy" />
-          </div>
-        </div>
+      <div id="servers-sidebar"
+        class="bg-[var(--bg-tertiary)] w-[72px] flex flex-col items-center py-3 gap-1.5 flex-shrink-0 border-r border-[var(--border-subtle)] overflow-y-auto no-scrollbar select-none">
+        <div id="servers-container" class="flex flex-col items-center gap-1.5 w-full"></div>
       </div>
 
       <div class="bg-[var(--bg-secondary)] w-60 flex flex-col flex-shrink-0 border-r border-[var(--border-subtle)]">
-        <div
-          class="h-12 border-b border-[var(--border-subtle)] flex items-center justify-between px-4 font-bold text-[var(--text-header)] hover:bg-[var(--bg-modifier-hover)] cursor-pointer transition">
-          <span class="truncate">Kiscord 🦝🤍🦉</span>
-          <button onclick="toggleValentineMode()" class="text-xs hover:text-[#eb459e] transition p-1"
+        <div id="server-header-container"
+          class="h-12 border-b border-[var(--border-subtle)] flex items-center justify-between px-4 font-bold text-[var(--text-header)] hover:bg-[var(--bg-modifier-hover)] cursor-pointer transition select-none">
+          <div class="flex items-center gap-2 min-w-0">
+            <span id="server-header-title" class="truncate text-sm font-extrabold tracking-wide">Kiscord Hub</span>
+          </div>
+          <button onclick="toggleValentineMode()" class="text-xs hover:text-[#eb459e] transition p-1 flex-shrink-0"
             title="Přepnout Valentýnský Theme">
             <i class="fas fa-heart"></i>
           </button>
