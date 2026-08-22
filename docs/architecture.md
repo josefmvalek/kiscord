@@ -22,6 +22,8 @@ flowchart TB
     subgraph DynamicModules ["Lazy Loaded Modules (js/modules/)"]
         Dashboard["dashboard.js"]
         Calendar["calendar.js"]
+        Nutrition["nutrition/index.js (TDEE, Fasting, AI)"]
+        BodyMetrics["bodyMetrics/index.js (Weight, BMR, FFMI)"]
         Gym["gym/main.js"]
         Library["library.js"]
         Watchlist["watchlist.js"]
@@ -38,7 +40,7 @@ flowchart TB
 
     Entry -->|Mounts UI| UI
     Entry -->|Checks Session| Auth
-    UI -->|User clicks channel| Router
+    UI -->|User clicks server/channel| Router
     Router -->|Lazy imports| DynamicModules
     DynamicModules <-->|Reads & Emits changes| State
     State <-->|Persists / Hydrates| Offline
@@ -131,6 +133,7 @@ The app remains fully functional in airplanes, subways, or during connectivity d
 |---|---|
 | [`js/core/auth.js`](../js/core/auth.js) | Supabase authentication, session handling, and user metadata |
 | [`js/core/router.js`](../js/core/router.js) | Dynamic module routing, channel categories, and View Transitions |
+| [`js/core/servers.js`](../js/core/servers.js) | Discord 7-server architecture, server switching, active state indicators |
 | [`js/core/state.js`](../js/core/state.js) | Global reactive state container, Pub/Sub event bus, cache persistence |
 | [`js/core/idb.js`](../js/core/idb.js) | High-capacity IndexedDB async storage engine (keyval & media stores) |
 | [`js/core/loaders.js`](../js/core/loaders.js) | On-demand lazy data loaders for channels |

@@ -2,7 +2,7 @@
 
 > **A private, Discord-inspired Progressive Web App (PWA)** built for two users (**Josef & Klárka**). Combines relationship life, university companion tools for VUT FIT Brno, a comprehensive fitness and gym tracker, a media entertainment hub, and a shared memory archive with complete offline resilience.
 
-[![Tests](https://img.shields.io/badge/Vitest-125%20passing-success?style=flat-square&logo=vitest)](https://vitest.dev/)
+[![Tests](https://img.shields.io/badge/Vitest-203%20passing-success?style=flat-square&logo=vitest)](https://vitest.dev/)
 [![Stack](https://img.shields.io/badge/Stack-Vanilla%20JS%20%7C%20Tailwind%20%7C%20Supabase-blue?style=flat-square)](https://supabase.com/)
 [![PWA](https://img.shields.io/badge/PWA-Offline%20Ready-purple?style=flat-square)](https://web.dev/progressive-web-apps/)
 [![Hosting](https://img.shields.io/badge/Deploy-Vercel-black?style=flat-square&logo=vercel)](https://vercel.com/)
@@ -38,14 +38,14 @@ npm run test:run
 ```
 
 > [!TIP]
-> The app runs on `http://localhost:5173`. Thanks to Vite HMR (Hot Module Replacement), changes to JS, CSS, and HTML files are reflected immediately without manual page refreshes.
+> The app runs on `http://localhost:3000`. Thanks to Vite HMR (Hot Module Replacement), changes to JS, CSS, and HTML files are reflected immediately without manual page refreshes.
 
 ### Verification Checklist
 
-- [ ] Dev server is accessible at `http://localhost:5173` with no console errors.
-- [ ] All 18 test suites (125 tests) pass cleanly via `npm run test:run`.
-- [ ] Opening the app in a browser renders the Discord-themed dashboard and channel sidebar.
-- [ ] DevTools $\rightarrow$ Application confirms the Service Worker is registered and `localStorage` is hydrated.
+- [ ] Dev server is accessible at `http://localhost:3000` with no console errors.
+- [ ] All 29 test suites (203 tests) pass cleanly via `npm run test:run`.
+- [ ] Opening the app in a browser renders the Discord-themed server bar, dashboard, and channel sidebar.
+- [ ] DevTools $\rightarrow$ Application confirms the Service Worker is registered and `IndexedDB` is hydrated.
 
 ---
 
@@ -124,10 +124,13 @@ kiscord/
 │   │   ├── loaders.js       # On-demand lazy data loaders
 │   │   ├── offline.js       # Sync queue (kiscord_sync_queue) & safe write APIs
 │   │   ├── router.js        # Dynamic module routing & View Transitions
+│   │   ├── servers.js       # Discord 7-server architecture & navigation
 │   │   ├── state.js         # Reactive state container & Pub/Sub event bus
 │   │   ├── sync.js          # Supabase Realtime broadcast & Postgres changes
 │   │   └── theme.js         # Engine for 7 visual themes
 │   ├── modules/             # 55+ discrete functional modules
+│   │   ├── nutrition/       # Premium nutrition tracker (TDEE, IF Fasting, AI parser, recipes)
+│   │   ├── bodyMetrics/     # Body metrics hub (Weight EMA, circumferences, BMR & FFMI)
 │   │   ├── gym/             # Complete gym tracker (15 submodules, HUD, PRs, anatomy)
 │   │   ├── calendar/        # Calendar & date planning submodules
 │   │   ├── dashboard/       # Daily hub, sunflower sync, hydration, sleep tracker
@@ -171,6 +174,8 @@ Kiscord organizes its 55+ modules into an authentic Discord channel hierarchy:
 
 ### 3. 🌿 ZDRAVÍ & FITNESS (Health & Gym)
 - **`#posilovna`** (`gym/`): Complete gym tracker (floating active workout HUD, rest timer with sound/haptics, 100+ exercises with GIFs, 1RM progression charts, muscle volume heatmap, couple gym streak, annual wrapped).
+- **`#výživa`** (`nutrition/`): Premium nutrition tracker with circular SVG calorie donut, 4 macro bars, Intermittent Fasting (IF) timer, MacroFactor adaptive TDEE coach, AI natural language food parser, OpenFoodFacts product search, and batch meal prep recipe builder.
+- **`#tělo-a-míry`** (`bodyMetrics/`): Central biometrics hub with morning weight logs & EMA trend smoothing, 6 body circumferences with delta progression, BMR/TDEE Mifflin-St Jeor & Katch-McArdle calculations, FFMI index, and 1-click nutrition macro sync.
 - **`#návyky`** (`habits.js`): Daily habit tracker rewarding Love Coins.
 - **`#regenerace`** (`regenerace/`): Evidence-based supplement guide, recovery protocols, and wellness timeline.
 
