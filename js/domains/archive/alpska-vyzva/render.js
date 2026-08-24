@@ -143,7 +143,7 @@ export function renderTodayChallengeHtml(todayKey, dayIndex, isTripStarted) {
     }
 }
 
-function renderAllChallengesHtml(dayIndex, departureDate) {
+export function renderAllChallengesHtml(dayIndex, departureDate) {
     const rows = [];
     const nowKey = new Date().toISOString().split("T")[0];
 

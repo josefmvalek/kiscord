@@ -28,7 +28,7 @@ export async function loadTierLists() {
     }
 }
 
-function renderTableMissingState() {
+export function renderTableMissingState() {
     const listContainer = document.getElementById('tierlist-list');
     if (!listContainer) return;
 
@@ -47,7 +47,7 @@ function renderTableMissingState() {
     `;
 }
 
-function renderListView(tierLists) {
+export function renderListView(tierLists) {
     const listContainer = document.getElementById('tierlist-list');
     if (!listContainer) return;
 
@@ -170,7 +170,7 @@ export async function deleteTierList(id) {
     }
 }
 
-function getCategoryIcon(cat) {
+export function getCategoryIcon(cat) {
     switch (cat) {
         case 'movies': return '🍿';
         case 'timeline': return '🎞️';

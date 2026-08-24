@@ -326,7 +326,7 @@ export function renderChecklistTabHtml() {
 // ----------------------------------------------------
 
 // Calculate total percent of checklist packed
-function calculateTotalProgress() {
+export function calculateTotalProgress() {
     const checkedState = getCheckedItems();
     let total = 0;
     let checked = 0;
@@ -366,7 +366,7 @@ export function togglePackingItem(itemId) {
 }
 
 // Search packing list live input
-function searchPackingList(val) {
+export function searchPackingList(val) {
     searchQuery = val;
     // Rerender checklist
     const contentArea = document.getElementById("austria-info-content-area");
@@ -376,7 +376,7 @@ function searchPackingList(val) {
 }
 
 // Filter packing list tabs
-function filterPackingList(filter) {
+export function filterPackingList(filter) {
     triggerHaptic('light');
     activeFilter = filter;
     
@@ -388,7 +388,7 @@ function filterPackingList(filter) {
 }
 
 // Expand / Collapse category container
-function toggleCategoryCollapse(categoryId) {
+export function toggleCategoryCollapse(categoryId) {
     triggerHaptic('light');
     collapsedCategories[categoryId] = !collapsedCategories[categoryId];
     
@@ -400,7 +400,7 @@ function toggleCategoryCollapse(categoryId) {
 }
 
 // Full reset of packed items
-async function resetPackingList() {
+export async function resetPackingList() {
     const confirmed = await showConfirmDialog("Opravdu chceš resetovat celého sbaleného průvodce a začít znova? 🎒");
     if (!confirmed) return;
     

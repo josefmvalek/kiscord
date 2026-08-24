@@ -24,7 +24,7 @@ export async function openEditor(id) {
     }
 }
 
-function renderEditorUI() {
+export function renderEditorUI() {
     const container = document.getElementById("messages-container");
     if (!container) return;
 
@@ -92,7 +92,7 @@ function renderEditorUI() {
     initSortable();
 }
 
-function renderTierRow(tier) {
+export function renderTierRow(tier) {
     const user = state.currentUser.name?.toLowerCase().includes('klárka') ? 'klarka' : 'jose';
     const isRevealed = activeTierList.duel_data?.revealed;
     
@@ -137,7 +137,7 @@ function renderTierRow(tier) {
     `;
 }
 
-function renderItem(item, badge = null) {
+export function renderItem(item, badge = null) {
     let badgeHtml = '';
     let extraClasses = '';
     
@@ -168,7 +168,7 @@ function renderItem(item, badge = null) {
 }
 
 
-function initSortable() {
+export function initSortable() {
     if (typeof Sortable === 'undefined') {
         console.error("SortableJS not loaded");
         return;
@@ -189,7 +189,7 @@ function initSortable() {
     });
 }
 
-function updateInternalState() {
+export function updateInternalState() {
     if (!activeTierList) return;
 
     const tiers = document.querySelectorAll('.sortable-tier');
@@ -218,7 +218,7 @@ function updateInternalState() {
     }
 }
 
-function findItemInCurrentState(id) {
+export function findItemInCurrentState(id) {
     let item = activeTierList.data.pool.find(i => i.id == id);
     if (item) return item;
     

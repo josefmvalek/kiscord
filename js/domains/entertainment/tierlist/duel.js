@@ -57,7 +57,7 @@ export async function toggleDuelMode() {
     }
 }
 
-function renderDuelStatusBar() {
+export function renderDuelStatusBar() {
     const isRevealed = activeTierList.duel_data?.revealed;
     const joseReady = activeTierList.duel_data?.jose_ready;
     const klarkaReady = activeTierList.duel_data?.klarka_ready;
