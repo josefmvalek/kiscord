@@ -117,6 +117,15 @@ self.addEventListener('notificationclick', (event) => {
                             url: targetUrl
                         });
                     }
+                    return;
+                }
+            }
+            // No existing window found — open a new one
+            return clients.openWindow(targetUrl);
+        })
+    );
+});
+
 // Periodic Background Sync Event — noční/ranní pre-fetch denních dat
 self.addEventListener('periodicsync', (event) => {
     if (event.tag === 'kiscord-morning-sync') {
@@ -128,4 +137,3 @@ self.addEventListener('periodicsync', (event) => {
         );
     }
 });
-
