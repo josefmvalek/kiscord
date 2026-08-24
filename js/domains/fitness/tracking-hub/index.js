@@ -4,9 +4,9 @@ import { getTodayKey, triggerHaptic } from '@core/utils.js';
 import { ensureCycleData, ensureStepData, ensureBiohacksData, ensureNutritionData } from '@core/loaders.js';
 import { calculateCurrentCycleState } from '@domains/fitness/cycle/cycleEngine.js';
 import { renderPartnerCycleCard } from '@domains/fitness/cycle/partnerView.js';
-import { calculateBloodCaffeine, calculateSleepCutoffTime } from '../bioHacks/caffeineTracker.js';
-import { calculateFastingProgress } from '../bioHacks/fastingTimer.js';
-import { calculateDailyRecoveryScore } from '../bioHacks/recoveryScore.js';
+import { calculateBloodCaffeine, calculateSleepCutoffTime } from '../biohacks/caffeineTracker.js';
+import { calculateFastingProgress } from '../biohacks/fastingTimer.js';
+import { calculateDailyRecoveryScore } from '../biohacks/recoveryScore.js';
 import { generateCrossMetricInsights } from './correlationEngine.js';
 import { initQuickLogDrawer } from './quickLogDrawer.js';
 
