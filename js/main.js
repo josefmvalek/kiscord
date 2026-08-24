@@ -18,12 +18,12 @@ import { setupConnectivityListeners, checkAppUpdate, setupGlobalTouchGestures, s
 import { exposeGlobals } from './core/globals.js';
 
 // Extra Module Initialization (Legacy/Dependencies)
-import { setupQuestsRealtime } from './modules/quests.js';
-import { initLevels } from './modules/levels.js';
+import { setupQuestsRealtime } from './domains/entertainment/quests.js';
+import { initLevels } from './domains/entertainment/levels.js';
 
 // --- INITIALIZATION ---
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function initApp() {
     // 1. Service Worker registration
     if ('serviceWorker' in navigator) {
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -55,6 +55,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupNativePopovers();
     setupMobileCollapsibleHeaders();
 
+    import('./core/servers.js').then(s => {
+        s.applyServerAmbientTheme(state.currentServer || 'home');
+        s.updateHeaderLoveCoins();
+    });
+
     // 4. Auth & State Handlers
     initAuthListeners();
 
@@ -66,6 +71,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     stateEvents.on('settings_changed', () => {
         renderChannels();
+    });
+
+    stateEvents.on('love-shop-updated', () => {
+        import('./core/servers.js').then(s => s.updateHeaderLoveCoins());
+    });
+    stateEvents.on('love_coins', () => {
+        import('./core/servers.js').then(s => s.updateHeaderLoveCoins());
     });
     
     exposeGlobals();
@@ -98,14 +110,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     console.log('--- KISCORD BOOTSTRAPPED ---');
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
 
 // Pre-fetch klíčových komponent pro okamžité přepínání
 function prefetchModules() {
     console.log('[App] Pre-fetching common modules in background...');
-    import('./modules/calendar.js').catch(() => {});
-    import('./modules/timeline.js').catch(() => {});
-    import('./modules/library.js').catch(() => {});
-    import('./modules/bucketlist.js').catch(() => {});
-    import('./modules/alpskaVyzva.js').catch(() => {});
+    import('./domains/lifestyle/calendar/index.js').catch(() => {});
+    import('./domains/lifestyle/timeline/index.js').catch(() => {});
+    import('./domains/entertainment/library/index.js').catch(() => {});
+    import('./domains/lifestyle/bucketlist.js').catch(() => {});
+    import('./domains/archive/alpska-vyzva.js').catch(() => {});
 }

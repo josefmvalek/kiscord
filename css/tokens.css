@@ -49,6 +49,11 @@
   --font-main: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-display: "Inter", sans-serif;
 
+  /* --- AMBIENT SERVER ACCENT TOKENS --- */
+  --server-current-accent: #5865f2;
+  --server-current-glow: rgba(88, 101, 242, 0.25);
+  --server-current-gradient: linear-gradient(135deg, #5865f2, #7289da);
+
   /* --- SPATIAL SYSTEM (8pt Grid Tokens) --- */
   --space-1: 4px;
   --space-2: 8px;

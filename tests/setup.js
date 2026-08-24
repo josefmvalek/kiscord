@@ -22,3 +22,16 @@ Object.defineProperty(global, 'localStorage', {
   writable: true,
   configurable: true
 });
+
+// Provide standard WebSocket mock for Supabase Realtime in happy-dom test environment
+if (!globalThis.WebSocket) {
+  globalThis.WebSocket = class MockWebSocket {
+    constructor() {
+      this.readyState = 1; // OPEN
+    }
+    addEventListener() {}
+    removeEventListener() {}
+    send() {}
+    close() {}
+  };
+}

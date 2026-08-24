@@ -21,7 +21,7 @@ vi.mock('../../js/core/utils.js', () => ({
   triggerConfetti: vi.fn(),
 }));
 
-import { calculateLevelFromXP, LEVEL_MILESTONES } from '../../js/modules/levels.js';
+import { calculateLevelFromXP, LEVEL_MILESTONES } from '../../js/domains/entertainment/levels.js';
 
 describe('Progressive Relationship Leveling 2.0', () => {
   it('should calculate Level 1 for 0 XP', () => {

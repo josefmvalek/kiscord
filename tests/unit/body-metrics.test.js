@@ -31,10 +31,10 @@ import {
     calculateLBM, 
     calculateFFMI, 
     calculateFullBiometrics 
-} from '../../js/modules/bodyMetrics/biometricsCalculator.js';
-import { renderWeightTrendHero, renderCircumferencesSection } from '../../js/modules/bodyMetrics/components.js';
-import { applyBiometricsToNutrition } from '../../js/modules/bodyMetrics/modals.js';
-import { renderBodyMetrics } from '../../js/modules/bodyMetrics/index.js';
+} from '../../js/domains/fitness/body-metrics/biometricsCalculator.js';
+import { renderWeightTrendHero, renderCircumferencesSection } from '../../js/domains/fitness/body-metrics/components.js';
+import { applyBiometricsToNutrition } from '../../js/domains/fitness/body-metrics/modals.js';
+import { renderBodyMetrics } from '../../js/domains/fitness/body-metrics/index.js';
 import { channelCategories, moduleMap } from '../../js/core/router.js';
 
 describe('Body Metrics Hub & Nutrition Integration (#tělo-a-míry)', () => {

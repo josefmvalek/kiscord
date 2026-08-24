@@ -441,3 +441,21 @@ export function renderMetricCard({
     `;
 }
 
+/**
+ * Closes a modal by ID or element reference.
+ * Hides it, adds 'hidden' class, and removes dynamic modals after animation.
+ * @param {string|HTMLElement} id - Modal element ID or element itself
+ */
+export function closeModal(id) {
+    const modal = typeof id === 'string' ? document.getElementById(id) : id;
+    if (!modal) return;
+    modal.classList.add('opacity-0');
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+    if (modal.dataset && modal.dataset.dynamicModal === 'true') {
+        setTimeout(() => modal.remove(), 250);
+    }
+    if (id === 'gallery-modal' && window.Timeline && window.Timeline.closeGallery) {
+        window.Timeline.closeGallery();
+    }
+}

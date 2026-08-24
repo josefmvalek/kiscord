@@ -1,0 +1,436 @@
+import { state } from '@core/state.js';
+import { triggerHaptic } from '@core/utils.js';
+import { getAssetUrl } from '@core/assets.js';
+import { showNotification } from '@core/theme.js';
+import { supabase } from '@core/supabase.js';
+
+// --- TETRIS TRACKER ---
+
+export function getTetrisScore() {
+    return state.tetris || { jose: 0, klarka: 0 };
+}
+
+export async function updateTetrisScore(who, amount) {
+    if (who === 'reset') {
+        const ok = await window.showConfirmDialog('Opravdu resetovat skóre?', 'Resetovat', 'Zrušit');
+        if (!ok) return;
+        state.tetris.jose = 0;
+        state.tetris.klarka = 0;
+        
+        const updates = [];
+        if (state.tetris.jose_id) updates.push(supabase.from('tetris_scores').upsert({ user_id: state.tetris.jose_id, score: 0 }));
+        if (state.tetris.klarka_id) updates.push(supabase.from('tetris_scores').upsert({ user_id: state.tetris.klarka_id, score: 0 }));
+        
+        await Promise.all(updates);
+    } else {
+        const key = who === 'jose' ? 'jose' : 'klarka';
+        let targetUserId = who === 'jose' ? state.tetris.jose_id : state.tetris.klarka_id;
+
+        // Last-resort ID resolution if state hasn't discovered it yet
+        if (!targetUserId && state.currentUser?.id) {
+            const isMeJose = isJosef(state.currentUser);
+            if ((who === 'jose' && isMeJose) || (who === 'klarka' && !isMeJose)) {
+                targetUserId = state.currentUser.id;
+                // Back-fill the state
+                if (isMeJose) state.tetris.jose_id = targetUserId;
+                else state.tetris.klarka_id = targetUserId;
+            }
+        }
+
+        if (!targetUserId) {
+            console.error("Missing target user ID for score update", who);
+            if (window.showNotification) window.showNotification("Chyba: ID uživatele nenalezeno.", "error");
+            return;
+        }
+
+        state.tetris[key] = (state.tetris[key] || 0) + amount;
+
+        if (amount > 0) {
+            import('@core/sound.js').then(m => m.playArcade());
+            if (typeof triggerHaptic === 'function') triggerHaptic('success');
+            if (window.showNotification) window.showNotification(`${who === 'jose' ? 'Jožka' : 'Klárka'} +1 bod! 🧱`, 'success');
+        }
+
+        // Save to Supabase
+        try {
+            await supabase.from('tetris_scores').upsert({
+                user_id: targetUserId,
+                score: state.tetris[key]
+            });
+        } catch (err) {
+            console.error("Failed to save tetris score", err);
+        }
+    }
+
+    // Re-render
+    if (state.currentChannel === 'dashboard') {
+        if (typeof window.renderDashboard === 'function') window.renderDashboard();
+    } else if (state.currentChannel === 'tetris' || state.currentChannel === 'games') {
+        renderTetrisTracker();
+    }
+}
+
+export function renderTetrisTracker() {
+    const container = document.getElementById("messages-container");
+    if (!container) return;
+
+    const score = getTetrisScore();
+    const leader = score.jose > score.klarka ? 'Jožka' : (score.jose < score.klarka ? 'Klárka' : 'Remíza');
+    const leaderColor = score.jose > score.klarka ? 'text-[#5865F2]' : score.jose < score.klarka ? 'text-[#eb459e]' : 'text-gray-400';
+
+    const isJose = state.currentUser.name === 'Jožka';
+    const currKey = isJose ? 'jose' : 'klarka';
+    const partKey = isJose ? 'klarka' : 'jose';
+    const currName = isJose ? 'Jožka' : 'Klárka';
+    const partName = isJose ? 'Klárka' : 'Jožka';
+    const currEmoji = isJose ? '🦝' : '🐸';
+    const partEmoji = isJose ? '🐸' : '🦝';
+    const currColor = isJose ? '#5865F2' : '#eb459e';
+    const partColor = isJose ? '#eb459e' : '#5865F2';
+
+    container.innerHTML = `
+    <div class="p-4 max-w-lg mx-auto space-y-6 animate-fade-in pb-24 pt-8">
+       <!-- Back Button -->
+       <div class="flex items-center justify-between">
+           <button onclick="window.switchChannel('games-hub'); triggerHaptic('light')" 
+                   class="bg-[#202225] hover:bg-[#2f3136] text-gray-300 hover:text-white border border-white/10 px-3.5 py-2 rounded-xl font-bold text-xs shadow-md transition flex items-center gap-1.5">
+               <i class="fas fa-arrow-left"></i> Zpět do herny
+           </button>
+       </div>
+       
+       <div class="text-center mb-8">
+          <h1 class="text-4xl font-black text-white mb-2 tracking-tight" style="font-family: 'Press Start 2P', cursive; text-shadow: 4px 4px #000;">TETRIS ARÉNA</h1>
+          <p class="text-gray-400 text-sm font-bold uppercase tracking-widest">Nekonečná válka o čest</p>
+       </div>
+
+       <div class="bg-[#2f3136] rounded-xl shadow-2xl border border-[#202225] overflow-hidden relative">
+            <div class="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+
+            <div class="p-8 relative z-10">
+                <div class="flex items-center justify-between gap-6 mb-8">
+                    <!-- ME -->
+                    <div class="flex-1 flex flex-col items-center group">
+                        <div class="w-24 h-24 rounded-full bg-[#5865F2]/10 flex items-center justify-center border-4 border-[#5865F2] mb-4 relative cursor-pointer transition transform active:scale-95 hover:shadow-[0_0_20px_rgba(88,101,242,0.5)]" 
+                             onclick="window.updateTetrisScore('${currKey}', 1)">
+                            <div class="text-6xl">${currEmoji}</div>
+                            <div class="absolute -bottom-2 -right-2 bg-[#5865F2] w-8 h-8 rounded-full flex items-center justify-center text-sm text-white font-bold shadow-md group-hover:scale-110 transition">+1</div>
+                        </div>
+                        <div class="text-lg font-bold text-gray-300 mb-1">${(isJose || state.currentUser.name === 'Klárka') ? `Ty (${currName})` : currName}</div>
+                        <div class="text-5xl font-black text-[#5865F2] tracking-tighter filter drop-shadow-lg" id="score-${currKey}">${score[currKey]}</div>
+                    </div>
+
+                   <!-- VS -->
+                   <div class="flex flex-col items-center opacity-30">
+                       <div class="text-xs font-black text-gray-500 uppercase tracking-widest mb-4">VS</div>
+                       <div class="h-24 w-1 bg-white rounded-full"></div>
+                   </div>
+
+                   <!-- PARTNER -->
+                   <div class="flex-1 flex flex-col items-center group">
+                       <div class="w-24 h-24 rounded-full bg-[#eb459e]/10 flex items-center justify-center border-4 border-[#eb459e] mb-4 relative cursor-pointer transition transform active:scale-95 hover:shadow-[0_0_20px_rgba(235,69,158,0.5)]" 
+                            onclick="window.updateTetrisScore('${partKey}', 1)">
+                           <div class="text-6xl">${partEmoji}</div>
+                           <div class="absolute -bottom-2 -left-2 bg-[#eb459e] w-8 h-8 rounded-full flex items-center justify-center text-sm text-white font-bold shadow-md group-hover:scale-110 transition">+1</div>
+                       </div>
+                       <div class="text-lg font-bold text-gray-300 mb-1">${partName}</div>
+                       <div class="text-5xl font-black text-[#eb459e] tracking-tighter filter drop-shadow-lg" id="score-${partKey}">${score[partKey]}</div>
+                   </div>
+                </div>
+
+               <div class="bg-[#202225]/80 backdrop-blur rounded-xl p-4 flex items-center justify-between border border-gray-700">
+                   <div class="flex flex-col">
+                       <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wide">Aktuální lídr</span>
+                       <span id="tetris-leader-text" class="text-xl font-bold ${leaderColor}">${leader}</span>
+                   </div>
+                   <button onclick="window.updateTetrisScore('reset')" class="text-xs bg-[#2f3136] hover:bg-red-500/20 text-gray-500 hover:text-red-400 border border-gray-600 hover:border-red-500/50 px-4 py-2 rounded transition uppercase font-bold">
+                       Reset
+                   </button>
+               </div>
+            </div>
+       </div>
+
+       <button onclick="window.switchChannel('dashboard')" class="w-full py-4 rounded-xl border border-[#202225] bg-[#2f3136] text-gray-400 hover:text-white hover:bg-[#36393f] transition font-bold text-sm uppercase tracking-wider">
+            <i class="fas fa-arrow-left mr-2"></i> Zpět na dashboard
+       </button>
+    </div>
+  `;
+}
+
+// --- PUZZLE GAME ---
+
+export function getPuzzleImageList() {
+    const images = [];
+    const seen = new Set();
+
+    // 1. Add user uploaded photos from Database
+    if (state.dbPuzzleImages && Array.isArray(state.dbPuzzleImages)) {
+        state.dbPuzzleImages.forEach(dbImg => {
+            if (dbImg.src && !seen.has(dbImg.src)) {
+                seen.add(dbImg.src);
+                images.push({
+                    id: dbImg.id,
+                    src: dbImg.src,
+                    name: dbImg.name || "Vlastní fotka",
+                    isDeletable: true
+                });
+            }
+        });
+    }
+
+    // 2. Add user photos from Timeline
+    if (state.timelineEvents && Array.isArray(state.timelineEvents)) {
+        state.timelineEvents.forEach(event => {
+            if (event.images && Array.isArray(event.images)) {
+                event.images.forEach((img, idx) => {
+                    if (img && !seen.has(img)) {
+                        seen.add(img);
+                        images.push({
+                            src: img,
+                            name: event.title || `Vzpomínka ${idx + 1}`,
+                            isTimeline: true
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    // 3. If no timeline/DB photos exist, provide default application banner
+    if (images.length === 0) {
+        images.push({
+            src: getAssetUrl('banner_vanoce'),
+            name: "Výchozí vzpomínka"
+        });
+    }
+
+    return images;
+}
+
+export function renderPuzzleGame(selectedImage = null) {
+    if (state.puzzleInstance && typeof state.puzzleInstance.destroy === 'function') {
+        state.puzzleInstance.destroy();
+        state.puzzleInstance = null;
+    }
+
+    const container = document.getElementById("messages-container");
+    if (!container) return;
+
+    const puzzleImages = getPuzzleImageList();
+    const currentImageSrc = selectedImage || puzzleImages[0].src;
+
+    container.innerHTML = `
+      <div class="flex flex-col h-full bg-[var(--bg-primary)] p-4 items-center justify-center overflow-hidden relative">
+          <div class="z-10 text-center mb-6">
+              <h1 class="text-3xl font-black text-[var(--text-header)] drop-shadow-lg flex items-center justify-center gap-2">
+                  <span>Puzzle</span> <span class="text-2xl">🧩</span>
+              </h1>
+              <p class="text-[var(--text-muted)] text-sm font-bold mt-1">Vyber si vzpomínku a poskládej ji!</p>
+          </div>
+
+          <div id="puzzle-container" class="relative bg-[var(--bg-tertiary)] p-2 rounded-2xl shadow-2xl border-4 border-[var(--blurple)] mb-6 max-w-[90vw]"></div>
+
+          <div class="flex gap-8 text-[var(--text-header)] font-mono text-xl bg-[var(--bg-secondary)] px-6 py-3 rounded-2xl shadow-md border border-[var(--border-subtle)]">
+              <div class="flex flex-col items-center">
+                  <span class="text-xs text-[var(--text-muted)] uppercase font-black tracking-wider">Čas</span>
+                  <span id="puzzle-timer" class="font-bold">0:00</span>
+              </div>
+              <div class="flex flex-col items-center">
+                  <span class="text-xs text-[var(--text-muted)] uppercase font-black tracking-wider">Tahy</span>
+                  <span id="puzzle-moves" class="font-bold">0</span>
+              </div>
+          </div>
+          
+          <div class="mt-6 flex flex-wrap gap-3 justify-center">
+             <button onclick="window.loadModule('games').then(m => m.renderPuzzleGame('${currentImageSrc}'))" class="bg-[var(--blurple)] hover:bg-[var(--blurple-hover)] text-white px-5 py-2.5 rounded-xl font-bold shadow-lg transition transform active:scale-95 flex items-center gap-2">
+                 <i class="fas fa-undo"></i> Restart
+             </button>
+             <button onclick="window.loadModule('games').then(m => m.showPuzzleGallery())" class="bg-[var(--bg-secondary)] hover:bg-[var(--bg-modifier-hover)] text-[var(--text-header)] px-5 py-2.5 rounded-xl font-bold shadow-lg border border-[var(--border-subtle)] transition transform active:scale-95 flex items-center gap-2">
+                 <i class="fas fa-images text-[var(--blurple)]"></i> Galerie
+             </button>
+             <button onclick="document.getElementById('puzzle-upload-input').click()" class="bg-[var(--bg-secondary)] hover:bg-[var(--bg-modifier-hover)] text-[var(--text-header)] px-5 py-2.5 rounded-xl font-bold border border-[var(--border-subtle)] transition flex items-center gap-2 active:scale-95">
+                 <i class="fas fa-upload text-[var(--yellow)]"></i> Nahrát
+             </button>
+             <input type="file" id="puzzle-upload-input" class="hidden" accept="image/*" onchange="window.loadModule('games').then(m => m.uploadPuzzleImage(this.files[0]))">
+             <button onclick="window.switchChannel('games-hub')" class="bg-transparent hover:text-[var(--text-header)] text-[var(--text-muted)] px-4 py-2.5 rounded-xl font-bold transition flex items-center gap-1.5">
+                 <i class="fas fa-arrow-left text-xs"></i> Zpět do herny
+             </button>
+          </div>
+      </div>
+  `;
+
+    // Dynamic Load of Puzzle Engine via proper ES Module Import
+    import('./puzzle.js').then(({ PuzzleGame }) => {
+        if (state.puzzleInstance && typeof state.puzzleInstance.destroy === 'function') {
+            state.puzzleInstance.destroy();
+        }
+        state.puzzleInstance = new PuzzleGame('puzzle-container', currentImageSrc, 3);
+    }).catch(err => {
+        console.error("Failed to load PuzzleGame:", err);
+    });
+
+    // Fetch extra images from DB if not already done recently
+    if (!state.puzzleImagesFetched) {
+        state.puzzleImagesFetched = true; // Mark early to avoid loops
+        supabase.from('puzzle_images').select('*').then(({ data }) => {
+            if (data && data.length > 0) {
+                state.dbPuzzleImages = data.map(d => ({ id: d.id, src: d.url, name: d.name, isDeletable: true }));
+                // re-render gallery if we found new ones
+                renderPuzzleGame(selectedImage || currentImageSrc);
+            }
+        });
+    }
+}
+
+export function showPuzzleGallery() {
+    const puzzleImages = getPuzzleImageList();
+
+    const modalHtml = `
+        <div id="puzzle-gallery-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in z-50">
+            <div class="bg-[var(--bg-secondary)] rounded-3xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl border border-[var(--border-subtle)] relative">
+                <div class="p-6 border-b border-[var(--border-subtle)] flex justify-between items-center bg-[var(--bg-tertiary)]">
+                    <h2 class="text-xl font-black text-[var(--text-header)] flex items-center gap-3">
+                        <i class="fas fa-images text-[var(--blurple)]"></i> Galerie Vzpomínek
+                    </h2>
+                    <button onclick="this.closest('#puzzle-gallery-modal').remove()" class="text-[var(--text-muted)] hover:text-[var(--text-header)] text-2xl transition">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto custom-scrollbar puzzle-gallery-grid p-6 gap-4">
+                    ${puzzleImages.map(img => `
+                        <div class="puzzle-card relative cursor-pointer group rounded-2xl overflow-hidden border border-[var(--border-subtle)] hover:border-[var(--blurple)] transition-all" 
+                             onclick="window.loadModule('games').then(m => { m.renderPuzzleGame('${img.src}'); document.getElementById('puzzle-gallery-modal').remove(); })">
+                             <img src="${img.src}" class="w-full h-full object-cover" onerror="this.parentElement.style.display='none'">
+                             <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2.5 pointer-events-none">
+                                <span class="text-xs text-white font-bold truncate">${img.name || 'Vzpomínka'}</span>
+                             </div>
+                             ${img.isDeletable ? `
+                                <button onclick="event.stopPropagation(); window.loadModule('games').then(m => m.deletePuzzleImage('${img.id}', '${img.src}'))" 
+                                        class="absolute top-2 right-2 w-7 h-7 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center shadow-lg transition-all transform hover:scale-110 z-20" title="Smazat">
+                                    <i class="fas fa-trash-alt text-xs"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                    
+                    <div onclick="document.getElementById('puzzle-upload-input').click()" 
+                         class="puzzle-card border-2 border-dashed border-[var(--border-subtle)] rounded-2xl flex flex-col items-center justify-center gap-2 text-[var(--text-muted)] hover:text-[var(--blurple)] hover:border-[var(--blurple)] transition bg-[var(--bg-tertiary)] cursor-pointer min-h-[120px]">
+                        <i class="fas fa-plus text-2xl"></i>
+                        <span class="text-xs font-bold uppercase tracking-wider">Přidat</span>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-[var(--bg-tertiary)] border-t border-[var(--border-subtle)] text-center">
+                    <p class="text-xs text-[var(--text-muted)] font-bold uppercase tracking-widest">Kliknutím na obrázek začneš hru</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+export async function uploadPuzzleImage(file) {
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        showNotification("Vyber prosím platný obrázek.", "error");
+        return;
+    }
+
+    try {
+        showNotification("Nahrávám obrázek... ⏳", "info");
+        
+        const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+        const filePath = `uploads/${fileName}`;
+
+        // Upload to Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('puzzle-images')
+            .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        // Get Public URL
+        const { data: urlData } = supabase.storage
+            .from('puzzle-images')
+            .getPublicUrl(filePath);
+
+        const publicUrl = urlData.publicUrl;
+
+        // Save to DB
+        const { error: dbError } = await supabase.from('puzzle_images').insert({
+            url: publicUrl,
+            name: file.name.split('.')[0] || "Vlastní puzzle",
+            created_by: state.currentUser.id
+        });
+
+        if (dbError) throw dbError;
+
+        showNotification("Obrázek byl úspěšně nahrán! 🧩✨", "success");
+        state.puzzleImagesFetched = false; // Trigger re-fetch
+        renderPuzzleGame(publicUrl);
+    } catch (err) {
+        console.error("Error uploading puzzle image:", err);
+        showNotification(`Chyba při nahrávání: ${err.message}`, "error");
+    }
+}
+
+export async function deletePuzzleImage(id, url) {
+    const ok = await window.showConfirmDialog("Opravdu chceš tuto fotku z galerie smazat?", "Smazat", "Zrušit");
+    if (!ok) return;
+
+    try {
+        // 1. Delete from storage if it's a Supabase URL
+        if (url.includes('puzzle-images') && url.includes('uploads/')) {
+            const pathMatch = url.match(/uploads\/[^?]+/);
+            if (pathMatch) {
+                const filePath = pathMatch[0];
+                await supabase.storage.from('puzzle-images').remove([filePath]);
+            }
+        }
+
+        // 2. Delete from Database
+        const { error } = await supabase.from('puzzle_images').delete().eq('id', id);
+        if (error) throw error;
+
+        showNotification("Obrázek byl smazán.", "success");
+        state.puzzleImagesFetched = false;
+        
+        // Remove modal and re-render game (which will re-fetch)
+        const modal = document.getElementById('puzzle-gallery-modal');
+        if (modal) modal.remove();
+        renderPuzzleGame();
+    } catch (err) {
+        console.error("Error deleting puzzle image:", err);
+        showNotification("Chyba při mazání obrázku.", "error");
+    }
+}
+
+export async function addPuzzleImage(url) {
+    if (!url || !url.startsWith('http')) {
+        showNotification("Zadej prosím platnou URL adresu obrázku.", "error");
+        return;
+    }
+
+    try {
+        const { error } = await supabase.from('puzzle_images').insert({
+            url: url,
+            name: "Vlastní puzzle",
+            created_by: state.currentUser.id
+        });
+
+        if (error) throw error;
+
+        showNotification("Obrázek byl přidán do galerie! 🧩", "success");
+        state.puzzleImagesFetched = false; // Trigger re-fetch
+        renderPuzzleGame(url);
+    } catch (err) {
+        console.error("Error adding puzzle image:", err);
+        showNotification("Nepodařilo se přidat obrázek.", "error");
+    }
+}
+
+// Global exposure for onclick handlers
+window.updateTetrisScore = updateTetrisScore;
+window.renderTetrisTracker = renderTetrisTracker;

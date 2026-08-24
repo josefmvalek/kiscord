@@ -19,7 +19,7 @@ export async function handleAuthState(event, session) {
             lastUserId = user.id;
 
             // Priority: Show the UI IMMEDIATELY
-            if (loginEl) loginEl.style.display = 'none';
+            if (loginEl) loginEl.classList.remove('login-visible');
             if (appEl) {
                 appEl.classList.add('show');
                 appEl.classList.remove('opacity-0');
@@ -56,7 +56,7 @@ export async function handleAuthState(event, session) {
         } else {
             // INITIAL_SESSION with no user means they are not logged in.
             // We must force the login screen to appear
-            if (loginEl) loginEl.style.display = 'flex';
+            if (loginEl) loginEl.classList.add('login-visible');
             if (appEl) {
                 appEl.classList.remove('show');
                 appEl.classList.add('opacity-0');
@@ -64,7 +64,7 @@ export async function handleAuthState(event, session) {
             lastUserId = null;
         }
     } else if (event === 'SIGNED_OUT') {
-        if (loginEl) loginEl.style.display = 'flex';
+        if (loginEl) loginEl.classList.add('login-visible');
         if (appEl) {
             appEl.classList.remove('show');
             appEl.classList.add('opacity-0');
@@ -82,6 +82,13 @@ export function initAuthListeners() {
         if (user && !lastUserId) {
             console.log('[Auth] Manual session detection');
             handleAuthState('INITIAL_SESSION', { user });
+        } else if (!user && !lastUserId) {
+            handleAuthState('INITIAL_SESSION', { user: null });
+        }
+    }).catch(err => {
+        console.warn('[Auth] Session detection fallback:', err);
+        if (!lastUserId) {
+            handleAuthState('INITIAL_SESSION', { user: null });
         }
     });
 }

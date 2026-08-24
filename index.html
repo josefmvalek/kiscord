@@ -46,7 +46,7 @@
       if (saved !== 'default') document.documentElement.classList.add('theme-' + saved);
 
       // 2. Pre-emptive Auth Check: Prevents login screen flicker for logged-in users
-      window.addEventListener('DOMContentLoaded', () => {
+      function checkPreAuth() {
         let hasSession = false;
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
@@ -57,16 +57,22 @@
         }
         if (!hasSession) {
           const loginScreen = document.getElementById('login-screen');
-          if (loginScreen) loginScreen.style.display = 'flex';
+          if (loginScreen) loginScreen.classList.add('login-visible');
         }
-      });
+      }
+
+      if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', checkPreAuth);
+      } else {
+        checkPreAuth();
+      }
     })();
   </script>
 </head>
 
 <body class="h-screen w-screen flex flex-col md:flex-row text-sm transition-colors duration-300">
   <!-- ========== LOGIN SCREEN ========== -->
-  <div id="login-screen" class="fixed inset-0 z-[200] bg-[#202225] flex items-center justify-center p-4">
+  <div id="login-screen" class="fixed inset-0 z-[200] bg-[#202225] items-center justify-center p-4">
     <div class="login-gradient z-0"></div>
     <div class="login-card animate-fade-in">
       <div class="text-6xl text-center mb-6">🦝</div>
@@ -148,29 +154,56 @@
     <!-- MAIN CONTENT AREA -->
     <div class="bg-[var(--bg-primary)] flex-1 flex flex-col min-w-0 relative z-10 overflow-hidden h-screen">
 
-      <div
-        class="h-12 border-b border-[var(--border-subtle)] flex items-center px-4 shadow-sm z-20 bg-[var(--bg-primary)] flex-shrink-0">
+      <div id="chat-header"
+        class="h-12 border-b border-[var(--border-subtle)] flex items-center px-4 shadow-sm z-20 bg-[var(--bg-primary)] flex-shrink-0 transition-colors duration-300">
         <button onclick="toggleMobileMenu()"
-          class="md:hidden mr-4 text-[var(--text-muted)] hover:text-[var(--text-header)] focus:outline-none">
+          class="md:hidden mr-3 text-[var(--text-muted)] hover:text-[var(--text-header)] focus:outline-none">
           <i class="fas fa-bars text-xl"></i>
         </button>
 
-        <i id="channel-icon" class="fas fa-hashtag text-[var(--text-muted)] text-xl mr-2"></i>
-        <span id="channel-name" class="font-bold text-[var(--text-header)] mr-4 truncate">&nbsp;</span>
-        <span id="channel-desc" class="text-xs text-[var(--text-muted)] truncate hidden md:block">&nbsp;</span>
+        <!-- Dynamic Server & Channel Breadcrumbs -->
+        <div id="channel-breadcrumbs" class="flex items-center gap-2 flex-1 min-w-0 mr-2 overflow-hidden">
+          <span id="header-server-badge" class="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-black uppercase tracking-wider bg-[var(--server-current-glow)] text-[var(--text-header)] border border-[var(--server-current-accent)]/40 flex-shrink-0">
+            <span id="header-server-icon">❤️</span>
+            <span id="header-server-name">Kiscord Hub</span>
+          </span>
+          <span class="text-xs text-[var(--text-muted)] hidden sm:inline flex-shrink-0">›</span>
+          <i id="channel-icon" class="fas fa-hashtag text-[var(--text-muted)] text-base mr-1 flex-shrink-0"></i>
+          <span id="channel-name" class="font-bold text-[var(--text-header)] truncate text-sm flex-1 min-w-0">&nbsp;</span>
+        </div>
+        <span id="channel-desc" class="text-xs text-[var(--text-muted)] truncate hidden xl:block mr-4 max-w-xs">&nbsp;</span>
         
         <!-- Offline Status Badge -->
-        <div id="header-offline-badge" class="hidden items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-black uppercase tracking-wider flex-shrink-0 animate-pulse select-none" title="Změny jsou uloženy v zařízení a čekají na odeslání">
+        <div id="header-offline-badge" class="hidden items-center gap-1.5 px-2 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-black uppercase tracking-wider flex-shrink-0 animate-pulse select-none mr-2" title="Změny jsou uloženy v zařízení a čekají na odeslání">
           <i class="fas fa-cloud-upload-alt text-[9px]"></i>
           <span id="header-offline-text">Offline</span>
         </div>
 
-        <div class="ml-auto flex items-center gap-3 text-[var(--text-muted)]">
+        <div class="flex items-center gap-2 text-[var(--text-muted)] flex-shrink-0">
+          <!-- Permanent Level & XP HUD Pill (Desktop) -->
+          <button id="header-level-btn" onclick="window.openRelationshipMilestonesModal ? window.openRelationshipMilestonesModal() : null" 
+                  class="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-black transition-all active:scale-95 shadow-sm group select-none flex-shrink-0 bg-[var(--bg-tertiary)] border border-amber-500/20 hover:border-amber-500/50 text-amber-300" 
+                  title="Úroveň vztahu a milníky • Klikni pro přehled">
+            <span class="w-2 h-2 rounded-full bg-amber-400 group-hover:animate-ping"></span>
+            <span id="header-level-text">Lv. 1</span>
+            <span id="header-xp-text" class="text-[9px] text-gray-400 font-bold hidden lg:inline">0 XP</span>
+          </button>
+
+          <!-- Permanent Love Coins HUD Pill (Desktop) -->
+          <button id="header-love-coins-btn" onclick="window.switchChannel('love-shop')" 
+                  class="hidden md:flex header-love-coins-btn items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-black transition-all active:scale-95 shadow-sm group select-none flex-shrink-0" 
+                  title="Zůstatek Love Coins • Otevřít Obchůdek">
+            <i class="fas fa-coins text-amber-400 group-hover:rotate-12 transition-transform"></i>
+            <span id="header-love-coins-count">0</span>
+            <span class="text-[9px] text-amber-400/80 uppercase font-black">LC</span>
+          </button>
+
+          <!-- Command Palette Launcher (Compact on mobile, full on desktop) -->
           <div onclick="window.openCommandPalette ? window.openCommandPalette() : null" 
-               class="bg-[var(--bg-tertiary)] hover:bg-[var(--bg-modifier-hover)] border border-[var(--border-subtle)] hover:border-[var(--border-strong)] px-3 py-1.5 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition shadow-sm group select-none">
+               class="bg-[var(--bg-tertiary)] hover:bg-[var(--bg-modifier-hover)] border border-[var(--border-subtle)] hover:border-[var(--border-strong)] p-2 sm:px-3 sm:py-1.5 rounded-xl text-xs flex items-center gap-2 cursor-pointer transition shadow-sm group select-none flex-shrink-0"
+               title="Hledat kanál či akci (Ctrl+K)">
             <i class="fas fa-search text-xs text-[var(--text-muted)] group-hover:text-[var(--text-header)] transition-colors"></i>
-            <span class="text-xs text-[var(--text-muted)] group-hover:text-[var(--text-normal)] hidden sm:inline transition-colors">Hledat kanál či akci...</span>
-            <span class="text-xs text-[var(--text-muted)] group-hover:text-[var(--text-normal)] sm:hidden transition-colors">Hledat...</span>
+            <span class="text-xs text-[var(--text-muted)] group-hover:text-[var(--text-normal)] hidden sm:inline transition-colors">Hledat...</span>
             <kbd class="hidden md:inline-flex items-center text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-[var(--bg-secondary)] border border-[var(--border-subtle)] text-[var(--text-muted)] group-hover:text-[var(--text-header)] group-hover:border-[var(--border-strong)] transition-all">Ctrl K</kbd>
           </div>
         </div>
@@ -182,40 +215,42 @@
     </div>
 
 
-    <!-- MEMBER LIST -->
+    <!-- MEMBER LIST (Live Rich Presence Hub) -->
     <div
-      class="w-60 bg-[var(--bg-secondary)] hidden lg:flex flex-col p-3 flex-shrink-0 border-l border-[var(--border-subtle)] z-20">
-      <h3 class="text-xs font-bold text-[var(--text-muted)] uppercase mb-2 px-2">
-        ONLINE — 2
-      </h3>
-      <div class="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-[var(--bg-modifier-hover)] cursor-pointer group">
-        <div class="relative">
-          <img id="online-avatar-jozka" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%235865F2'/%3E%3Ctext x='50' y='65' font-size='45' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E🦝%3C/text%3E%3C/svg%3E" alt="Jožka" class="w-8 h-8 rounded-full object-cover"
-            loading="lazy" />
-          <div
-            class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--green)] rounded-full border-2 border-[var(--bg-secondary)]">
-          </div>
-        </div>
-        <div>
-          <div class="font-bold text-[var(--text-header)] text-sm">Jožka</div>
-          <div class="text-xs text-[var(--text-muted)]">
-            Hraje Tetris <span class="text-[var(--pink)]">🧩</span>
-          </div>
-        </div>
+      class="w-60 bg-[var(--bg-secondary)] hidden lg:flex flex-col p-3 flex-shrink-0 border-l border-[var(--border-subtle)] z-20 select-none">
+      <div class="flex items-center justify-between px-2 mb-2">
+        <h3 class="text-[11px] font-black text-[var(--text-muted)] uppercase tracking-wider">
+          PARTNER & AKTIVITA — 2
+        </h3>
+        <span class="w-2 h-2 rounded-full bg-[var(--green)] animate-pulse" title="Realtime spojení aktivní"></span>
       </div>
-      <div class="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-[var(--bg-modifier-hover)] cursor-pointer group mt-1">
-        <div class="relative">
-          <img id="online-avatar-klarka" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23eb459e'/%3E%3Ctext x='50' y='65' font-size='45' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E🦉%3C/text%3E%3C/svg%3E" alt="Klárka" class="w-8 h-8 rounded-full object-cover" />
-          <div
-            class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--green)] rounded-full border-2 border-[var(--bg-secondary)]">
+
+      <div id="rich-presence-members-container" class="space-y-2">
+        <!-- Default Initial Member Cards -->
+        <div class="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-[var(--bg-modifier-hover)] cursor-pointer group">
+          <div class="relative">
+            <img id="online-avatar-jozka" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%235865F2'/%3E%3Ctext x='50' y='65' font-size='45' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E🦝%3C/text%3E%3C/svg%3E" alt="Jožka" class="w-8 h-8 rounded-full object-cover" loading="lazy" />
+            <div class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--green)] rounded-full border-2 border-[var(--bg-secondary)]"></div>
+          </div>
+          <div>
+            <div class="font-bold text-[var(--text-header)] text-sm">Jožka</div>
+            <div class="text-xs text-[var(--text-muted)]">Online na Kiscordu</div>
           </div>
         </div>
-        <div>
-          <div class="font-bold text-[var(--text-header)] text-sm">Klárka</div>
-          <div class="text-xs text-[var(--text-muted)]">Vrchní Fact-Checker</div>
+
+        <div class="flex items-center gap-3 px-2 py-1.5 rounded-lg hover:bg-[var(--bg-modifier-hover)] cursor-pointer group mt-1">
+          <div class="relative">
+            <img id="online-avatar-klarka" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23eb459e'/%3E%3Ctext x='50' y='65' font-size='45' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E🦉%3C/text%3E%3C/svg%3E" alt="Klárka" class="w-8 h-8 rounded-full object-cover" />
+            <div class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-[var(--green)] rounded-full border-2 border-[var(--bg-secondary)]"></div>
+          </div>
+          <div>
+            <div class="font-bold text-[var(--text-header)] text-sm">Klárka</div>
+            <div class="text-xs text-[var(--text-muted)]">Online na Kiscordu</div>
+          </div>
         </div>
       </div>
     </div>
+
   </div>
 
   <!-- Floating Settings Quick Button (Desktop only) -->

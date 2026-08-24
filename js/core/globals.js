@@ -4,8 +4,12 @@ import { switchChannel } from './router.js';
 import { toggleUserPopout, toggleMobileMenu } from './app-ui.js';
 import { handleLogin } from './auth-handler.js';
 import { state } from './state.js';
-import { renderSkeletonLoader, renderMetricCard } from './ui.js';
+import { renderSkeletonLoader, renderMetricCard, closeModal } from './ui.js';
 import { openCommandPalette, closeCommandPalette } from './commandPalette.js';
+import { initKiscordNamespace } from './actions/namespace.js';
+import { ActionDispatcher } from './actions/dispatcher.js';
+
+export { ActionDispatcher, initKiscordNamespace };
 
 window.loadModule = (name) => {
     switch(name) {
@@ -28,50 +32,57 @@ window.loadModule = (name) => {
         case 'auth-handler': return import('./auth-handler.js');
         case 'globals': return import('./globals.js');
         // Modules
-        case 'achievements': return import('../modules/achievements.js');
-        case 'bucketlist': return import('../modules/bucketlist.js');
-        case 'calendar': return import('../modules/calendar.js');
-        case 'confession': return import('../modules/confession.js');
-        case 'coupleQuiz': return import('../modules/coupleQuiz.js');
-        case 'dailyQuestions': return import('../modules/dailyQuestions.js');
-        case 'dashboard': return import('../modules/dashboard.js');
-        case 'drawGallery': return import('../modules/drawGallery.js');
-        case 'flashcards': return import('../modules/flashcards.js');
-        case 'funfacts': return import('../modules/funfacts.js');
-        case 'gameDraw': return import('../modules/gameDraw.js');
-        case 'gameWho': return import('../modules/gameWho.js');
-        case 'games': return import('../modules/games.js');
-        case 'gamesHub': return import('../modules/gamesHub.js');
-        case 'health': return import('../modules/health.js');
-        case 'health_ui': return import('../modules/dashboard/health_ui.js');
-        case 'highlighter': return import('../modules/highlighter.js');
-        case 'letters': return import('../modules/letters.js');
-        case 'library': return import('../modules/library.js');
-        case 'map': return import('../modules/map.js');
-        case 'matura': return import('../modules/matura.js');
-        case 'profile': return import('../modules/profile.js');
-        case 'progress': return import('../modules/progress.js');
-        case 'quests': return import('../modules/quests.js');
-        case 'quiz': return import('../modules/quiz.js');
-        case 'regenerace': return import('../modules/regenerace.js');
-        case 'restore': return import('../modules/restore.js');
-        case 'search': return import('../modules/search.js');
-        case 'settings': return import('../modules/settings.js');
-        case 'spaced_repetition': return import('../modules/spaced_repetition.js');
-        case 'stats': return import('../modules/stats.js');
-        case 'tierlist': return import('../modules/tierlist.js');
-        case 'timeline': return import('../modules/timeline.js');
-        case 'topics': return import('../modules/topics.js');
-        case 'watchlist': return import('../modules/watchlist.js');
-        case 'kasicka': return import('../modules/kasicka.js');
-        case 'alpskaVyzva': return import('../modules/alpskaVyzva.js');
-        case 'alpskyDenicek': return import('../modules/alpskyDenicek.js');
-        case 'manual': return import('../modules/manual.js');
+        case 'achievements': return import('../domains/entertainment/achievements.js');
+        case 'bucketlist': return import('../domains/lifestyle/bucketlist.js');
+        case 'calendar': return import('../domains/lifestyle/calendar/index.js');
+        case 'confession': return import('../domains/couple/confession.js');
+        case 'coupleQuiz': return import('../domains/couple/couple-quiz.js');
+        case 'coupleWrapped': return import('../domains/couple/wrapped/index.js');
+        case 'dailyQuestions': return import('../domains/couple/daily-questions.js');
+        case 'dashboard': return import('../domains/lifestyle/dashboard/index.js');
+        case 'drawGallery': return import('../domains/entertainment/draw-gallery.js');
+        case 'financeTracker': return import('../domains/archive/finance/index.js');
+        case 'flashcards': return import('../domains/entertainment/flashcards.js');
+        case 'funfacts': return import('../domains/entertainment/funfacts.js');
+        case 'gameDraw': return import('../domains/entertainment/game-draw.js');
+        case 'gameWho': return import('../domains/entertainment/game-who.js');
+        case 'games': return import('../domains/entertainment/games.js');
+        case 'gamesHub': return import('../domains/entertainment/games-hub.js');
+        case 'gym': return import('../domains/fitness/gym/index.js');
+        case 'health': return import('../domains/fitness/health.js');
+        case 'health_ui': return import('../domains/lifestyle/dashboard/health_ui.js');
+        case 'highlighter': return import('../domains/entertainment/highlighter.js');
+        case 'letters': return import('../domains/couple/letters.js');
+        case 'library': return import('../domains/entertainment/library/index.js');
+        case 'loveShop': return import('../domains/couple/love-shop/index.js');
+        case 'manual': return import('../domains/system/manual/index.js');
+        case 'map': return import('../domains/lifestyle/date-planner/index.js');
+        case 'matura': return import('../domains/university/matura/index.js');
+        case 'profile': return import('../domains/system/profile.js');
+        case 'progress': return import('../domains/system/progress.js');
+        case 'quests': return import('../domains/entertainment/quests.js');
+        case 'quiz': return import('../domains/entertainment/quiz.js');
+        case 'regenerace': return import('../domains/fitness/regenerace.js');
+        case 'restore': return import('../domains/archive/restore.js');
+        case 'search': return import('../domains/system/search.js');
+        case 'settings': return import('../domains/system/settings/index.js');
+        case 'spaced_repetition': return import('../domains/entertainment/spaced-repetition.js');
+        case 'stats': return import('../domains/entertainment/stats.js');
+        case 'studyPlanner': return import('../domains/university/study-planner/index.js');
+        case 'tierlist': return import('../domains/entertainment/tierlist.js');
+        case 'timeline': return import('../domains/lifestyle/timeline/index.js');
+        case 'topics': return import('../domains/couple/topics/index.js');
+        case 'watchlist': return import('../domains/entertainment/watchlist.js');
+        case 'kasicka': return import('../domains/archive/kasicka.js');
+        case 'alpskaVyzva': return import('../domains/archive/alpska-vyzva.js');
+        case 'alpskyDenicek': return import('../domains/archive/alpsky-denicek.js');
         default: console.error('Unknown loadModule request:', name); return Promise.reject(new Error('Module not found'));
     }
 };
 
 export function exposeGlobals() {
+    initKiscordNamespace();
+
     window.state = state;
     window.switchChannel = switchChannel;
     window.triggerConfetti = triggerConfetti;
@@ -90,23 +101,12 @@ export function exposeGlobals() {
     window.handleLogin = handleLogin;
 
     // Modals & form
-    window.closeModal = (id) => {
-        const modal = typeof id === 'string' ? document.getElementById(id) : id;
-        if (!modal) return;
-        modal.classList.add('opacity-0');
-        modal.classList.add('hidden');
-        modal.style.display = 'none';
-        // If it was dynamically appended with remove-on-close pattern
-        if (modal.dataset && modal.dataset.dynamicModal === 'true') {
-            setTimeout(() => modal.remove(), 250);
-        }
-        if (id === 'gallery-modal' && window.Timeline && window.Timeline.closeGallery) window.Timeline.closeGallery();
-    };
+    window.closeModal = closeModal;
 
     // Library Lazy Functions
     const libraryFn = (fn) => (...args) => {
         if (window.Library && window.Library[fn]) return window.Library[fn](...args);
-        return import('../modules/library.js').then(m => m[fn](...args));
+        return import('../domains/entertainment/library/index.js').then(m => m[fn](...args));
     };
     window.openDownloadModal = libraryFn('openDownloadModal');
     window.openMagnetLink = libraryFn('openMagnetLink');
@@ -123,7 +123,7 @@ export function exposeGlobals() {
     window.confirmLibraryPlan = libraryFn('confirmLibraryPlan');
 
     // Confession Lazy Functions
-    const confessionFn = (fn) => (...args) => import('../modules/confession.js').then(m => m[fn](...args));
+    const confessionFn = (fn) => (...args) => import('../domains/couple/confession.js').then(m => m[fn](...args));
     window.startConfession = confessionFn('startConfession');
     window.responseYes = confessionFn('responseYes');
     window.responseNo = confessionFn('responseNo');
@@ -131,7 +131,7 @@ export function exposeGlobals() {
     // Topics Lazy Functions
     const topicsFn = (fn) => (...args) => {
         if (window.Topics && window.Topics[fn]) return window.Topics[fn](...args);
-        return import('../modules/topics.js').then(m => m[fn](...args));
+        return import('../domains/couple/topics/index.js').then(m => m[fn](...args));
     };
     window.closeTopicModal = topicsFn('closeTopicModal');
     window.toggleViewBookmarks = topicsFn('toggleViewBookmarks');
@@ -144,7 +144,7 @@ export function exposeGlobals() {
     // Calendar Lazy Functions
     const calendarFn = (fn) => (...args) => {
         if (window.Calendar && window.Calendar[fn]) return window.Calendar[fn](...args);
-        return import('../modules/calendar.js').then(m => m[fn](...args));
+        return import('../domains/lifestyle/calendar/index.js').then(m => m[fn](...args));
     };
     window.showDayDetail = calendarFn('showDayDetail');
     window.closeDayModal = calendarFn('closeDayModal');
@@ -154,7 +154,7 @@ export function exposeGlobals() {
     // Timeline Lazy Functions
     const timelineFn = (fn) => (...args) => {
         if (window.Timeline && window.Timeline[fn]) return window.Timeline[fn](...args);
-        return import('../modules/timeline.js').then(m => m[fn](...args));
+        return import('../domains/lifestyle/timeline/index.js').then(m => m[fn](...args));
     };
     window.openGallery = timelineFn('openGallery');
     window.closeGallery = timelineFn('closeGallery');
@@ -171,16 +171,16 @@ export function exposeGlobals() {
     window.deleteEvent = timelineFn('deleteEvent');
     window.jumpToTimeline = timelineFn('jumpToTimeline');
     window.searchTimeline = timelineFn('searchTimeline');
-    window.renderGlobalSearch = (...args) => import('../modules/search.js').then(m => m.renderGlobalSearch(...args));
+    window.renderGlobalSearch = (...args) => import('../domains/system/search.js').then(m => m.renderGlobalSearch(...args));
 
     // Map Lazy Functions
     window.selectLocation = (...args) => {
         if (window.KiscordMap && window.KiscordMap.selectLocation) return window.KiscordMap.selectLocation(...args);
-        return import('../modules/map.js').then(m => m.selectLocation(...args));
+        return import('../domains/lifestyle/date-planner/index.js').then(m => m.selectLocation(...args));
     };
 
     // Health (for dashboard inline handlers)
-    const healthFn = (fn) => (...args) => import('../modules/health.js').then(m => m[fn](...args));
+    const healthFn = (fn) => (...args) => import('../domains/fitness/health.js').then(m => m[fn](...args));
     window.updateHealth = healthFn('updateHealth');
     window.updateBedtime = healthFn('updateBedtime');
     window.startSleep = healthFn('startSleep');
@@ -188,19 +188,19 @@ export function exposeGlobals() {
     window.startSleepTimer = healthFn('startSleepTimer');
 
     // Dashboard Functions (imported at top in main, but accessed globally... wait, we need to bind these properly)
-    window.updateMoodVisuals = (...args) => import('../modules/dashboard.js').then(m=>m.updateMoodVisuals(...args));
-    window.updateSleep = (...args) => import('../modules/dashboard.js').then(m=>m.updateSleep(...args));
-    window.refreshDashboardFact = (...args) => import('../modules/dashboard.js').then(m=>m.refreshDashboardFact(...args));
-    window.handleWelcomeChat = (...args) => import('../modules/dashboard.js').then(m=>m.handleWelcomeChat(...args));
-    window.renderDashboard = (...args) => import('../modules/dashboard.js').then(m=>m.renderDashboard(...args));
+    window.updateMoodVisuals = (...args) => import('../domains/lifestyle/dashboard/index.js').then(m=>m.updateMoodVisuals(...args));
+    window.updateSleep = (...args) => import('../domains/lifestyle/dashboard/index.js').then(m=>m.updateSleep(...args));
+    window.refreshDashboardFact = (...args) => import('../domains/lifestyle/dashboard/index.js').then(m=>m.refreshDashboardFact(...args));
+    window.handleWelcomeChat = (...args) => import('../domains/lifestyle/dashboard/index.js').then(m=>m.handleWelcomeChat(...args));
+    window.renderDashboard = (...args) => import('../domains/lifestyle/dashboard/index.js').then(m=>m.renderDashboard(...args));
 
     // Achievements
-    window.toggleAchievement = (...args) => import('../modules/achievements.js').then(m => m.toggleAchievement(...args));
+    window.toggleAchievement = (...args) => import('../domains/entertainment/achievements.js').then(m => m.toggleAchievement(...args));
 
     // Watchlist
     window.rollTheDice = () => {
         if (window.Watchlist && window.Watchlist.rollTheDice) return window.Watchlist.rollTheDice();
-        return import('../modules/watchlist.js').then(m => m.rollTheDice());
+        return import('../domains/entertainment/watchlist.js').then(m => m.rollTheDice());
     };
 
     // Extra Timeline

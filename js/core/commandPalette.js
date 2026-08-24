@@ -64,6 +64,33 @@ const QUICK_ACTIONS = [
                 m.processSyncQueue?.();
             });
         }
+    },
+    {
+        id: 'action-calendar',
+        title: 'Otevřít Kalendář & Události',
+        category: 'Rychlá akce',
+        icon: '📅',
+        color: '#5865f2',
+        handler: () => window.switchChannel('calendar')
+    },
+    {
+        id: 'action-shop',
+        title: 'Otevřít Obchůdek (Love Shop & Kupóny)',
+        category: 'Rychlá akce',
+        icon: '🪙',
+        color: '#faa61a',
+        handler: () => window.switchChannel('love-shop')
+    },
+    {
+        id: 'action-pomodoro',
+        title: 'Spustit Pomodoro studijní fokus (25 min)',
+        category: 'FIT & Studium',
+        icon: '⏱️',
+        color: '#3b82f6',
+        handler: () => {
+            window.startPomodoroTimer?.(25);
+            import('./theme.js').then(t => t.showNotification('Pomodoro fokus časovač spuštěn! ⏱️📚', 'info'));
+        }
     }
 ];
 
@@ -71,16 +98,275 @@ let isPaletteOpen = false;
 let selectedIndex = 0;
 let currentResults = [];
 
+const SLASH_COMMAND_DEFS = [
+    {
+        command: '/server',
+        title: '/server [home/love/fitness/fit/media/archive/system]',
+        desc: 'Bleskově přepne aktivní server Kiscordu z klávesnice',
+        category: '⚡ Slash Příkaz',
+        icon: '🌐',
+        color: '#5865f2',
+        match: (q) => q.startsWith('/server'),
+        getDynamicItem: (q) => {
+            const raw = q.replace('/server', '').trim().toLowerCase();
+            const serverMap = {
+                'home': 'home', 'hub': 'home', 'hlavni': 'home', 'dm': 'home',
+                'love': 'love', 'laska': 'love', 'svet': 'love',
+                'fitness': 'fitness', 'fitko': 'fitness', 'gym': 'fitness', 'zdravi': 'fitness',
+                'fit': 'fit', 'vut': 'fit', 'skola': 'fit', 'koleje': 'fit',
+                'media': 'media', 'filmy': 'media', 'hry': 'media', 'fun': 'media',
+                'archive': 'archive', 'archiv': 'archive', 'trezor': 'archive', 'brigada': 'archive',
+                'system': 'system', 'nastaveni': 'system', 'sys': 'system'
+            };
+            const targetId = serverMap[raw] || 'home';
+            return {
+                id: `slash-server-${targetId}`,
+                title: `/server: Přepnout na server [${targetId.toUpperCase()}]`,
+                desc: `Aktivuje vybraný server a přenačte kanály`,
+                category: '⚡ Slash Příkaz',
+                icon: '🌐',
+                color: '#5865f2',
+                type: 'action',
+                handler: () => {
+                    import('./router.js').then(r => r.switchServer(targetId));
+                }
+            };
+        }
+    },
+    {
+        command: '/pomodoro',
+        title: '/pomodoro [minuty]',
+        desc: 'Spustí studijní fokus časovač v Dynamic Islandu (např. /pomodoro 25)',
+        category: '⚡ Slash Příkaz',
+        icon: '⏱️',
+        color: '#3b82f6',
+        match: (q) => q.startsWith('/pomodoro'),
+        getDynamicItem: (q) => {
+            const raw = q.replace('/pomodoro', '').trim();
+            const minutes = parseInt(raw, 10) || 25;
+            return {
+                id: 'slash-pomodoro',
+                title: `/pomodoro: Spustit ${minutes}min studijní fokus ⏱️`,
+                desc: 'Aktivuje plovoucí Dynamic Island s odpočtem na učení',
+                category: '⚡ Slash Příkaz',
+                icon: '⏱️',
+                color: '#3b82f6',
+                type: 'action',
+                handler: () => {
+                    window.startPomodoroTimer?.(minutes);
+                    import('./theme.js').then(t => t.showNotification(`Pomodoro fokus ${minutes} min spuštěn! ⏱️`, 'info'));
+                }
+            };
+        }
+    },
+    {
+        command: '/rande',
+        title: '/rande [návrh]',
+        desc: 'Vytvoří nový návrh na rande a odešle pozvánku partnerovi (např. /rande Piknik u přehrady)',
+        category: '⚡ Slash Příkaz',
+        icon: '🥂',
+        color: '#eb459e',
+        match: (q) => q.startsWith('/rande'),
+        getDynamicItem: (q) => {
+            const planText = q.replace('/rande', '').trim() || 'Společný romantický večer';
+            return {
+                id: 'slash-rande',
+                title: `/rande: Navrhnout rande "${planText}" 🥂`,
+                desc: 'Otevře Plánovač rande s předvyplněným návrhem',
+                category: '⚡ Slash Příkaz',
+                icon: '🥂',
+                color: '#eb459e',
+                type: 'action',
+                handler: () => {
+                    window.switchChannel('dateplanner');
+                    import('./theme.js').then(t => t.showNotification(`Návrh "${planText}" připraven! 🥂`, 'love'));
+                }
+            };
+        }
+    },
+    {
+        command: '/kupon',
+        title: '/kupon',
+        desc: 'Zobrazí tvou spížku na kupóny a odměny v Obchůdku 🪙🎁',
+        category: '⚡ Slash Příkaz',
+        icon: '🎟️',
+        color: '#faa61a',
+        match: (q) => q.startsWith('/kupon'),
+        getDynamicItem: () => ({
+            id: 'slash-kupon',
+            title: '/kupon: Otevřít Spížku na kupóny a odměny 🎟️',
+            desc: 'Přepne tě do Obchůdku a aktivuje záložku Moje kupóny',
+            category: '⚡ Slash Příkaz',
+            icon: '🎟️',
+            color: '#faa61a',
+            type: 'action',
+            handler: () => {
+                window.switchChannel('love-shop');
+            }
+        })
+    },
+    {
+        command: '/voda',
+        title: '/voda [počet]',
+        desc: 'Bleskově zapíše vypité sklenice vody (např. /voda +2 nebo /voda 3)',
+        category: '⚡ Slash Příkaz',
+        icon: '💧',
+        color: '#00aff4',
+        match: (q) => q.startsWith('/voda'),
+        getDynamicItem: (q) => {
+            const raw = q.replace('/voda', '').trim();
+            const count = parseInt(raw.replace('+', ''), 10) || 1;
+            return {
+                id: 'slash-voda',
+                title: `/voda: Přidat ${count} ${count === 1 ? 'sklenici' : (count < 5 ? 'sklenice' : 'sklenic')} vody (+${count * 250} ml)`,
+                desc: 'Okamžitě aktualizuje denní hydrataci a synchronizuje se serverem',
+                category: '⚡ Slash Příkaz',
+                icon: '💧',
+                color: '#00aff4',
+                type: 'action',
+                handler: () => {
+                    import('./state.js').then(({ state, saveStateToCache }) => {
+                        const todayKey = new Date().toISOString().split('T')[0];
+                        if (!state.healthData) state.healthData = {};
+                        if (!state.healthData[todayKey]) state.healthData[todayKey] = { water: 0 };
+                        state.healthData[todayKey].water = Math.min(8, (state.healthData[todayKey].water || 0) + count);
+                        saveStateToCache();
+                        if (typeof window.updateWater === 'function') {
+                            window.updateWater(state.healthData[todayKey].water);
+                        }
+                        import('./theme.js').then(t => t.showNotification(`Zapsáno +${count} sklenic vody! 💧`, 'success'));
+                        import('./sound.js').then(s => s.playSuccessChime?.());
+                    });
+                }
+            };
+        }
+    },
+    {
+        command: '/vaha',
+        title: '/vaha [kg]',
+        desc: 'Zapíše ranní tělesnou váhu do biometrického hubu (např. /vaha 74.5)',
+        category: '⚡ Slash Příkaz',
+        icon: '⚖️',
+        color: '#3ba55c',
+        match: (q) => q.startsWith('/vaha'),
+        getDynamicItem: (q) => {
+            const raw = q.replace('/vaha', '').trim().replace(',', '.');
+            const weight = parseFloat(raw);
+            const valid = !isNaN(weight) && weight > 30 && weight < 250;
+            return {
+                id: 'slash-vaha',
+                title: valid ? `/vaha: Uložit ranní váhu ${weight} kg` : '/vaha [kg]: Zadej hodnotu váhy (např. /vaha 72.5)',
+                desc: valid ? 'Uloží váhu do biometrie, přepočítá trend a EMA křivku' : 'Zadej číslo v kilogramech',
+                category: '⚡ Slash Příkaz',
+                icon: '⚖️',
+                color: '#3ba55c',
+                type: 'action',
+                handler: () => {
+                    if (!valid) {
+                        import('./theme.js').then(t => t.showNotification('Zadej platnou hodnotu váhy, např. /vaha 74.5', 'warning'));
+                        return;
+                    }
+                    import('../domains/fitness/body-metrics/index.js').then(bm => {
+                        bm.saveQuickWeight?.(weight);
+                        import('./theme.js').then(t => t.showNotification(`Váha ${weight} kg úspěšně zaznamenána! ⚖️`, 'success'));
+                        import('./sound.js').then(s => s.playSuccessChime?.());
+                    }).catch(() => {
+                        window.switchChannel('body-metrics');
+                    });
+                }
+            };
+        }
+    },
+    {
+        command: '/dotek',
+        title: '/dotek',
+        desc: 'Odešle partnerovi okamžitý haptický puls a tlukot srdce přes WebSocket 🫀',
+        category: '⚡ Slash Příkaz',
+        icon: '🫀',
+        color: '#eb459e',
+        match: (q) => q.startsWith('/dotek'),
+        getDynamicItem: () => ({
+            id: 'slash-dotek',
+            title: '/dotek: Odeslat partnerovi haptický tlukot srdce 💓',
+            desc: 'Vyšle okamžitou haptickou vibraci a zvukové zaťukání na zařízení partnera',
+            category: '⚡ Slash Příkaz',
+            icon: '🫀',
+            color: '#eb459e',
+            type: 'action',
+            handler: () => {
+                import('./sync.js').then(s => {
+                    s.broadcastToPartner?.('haptic-pulse', { from: 'command-palette', timestamp: Date.now() });
+                });
+                import('./sound.js').then(s => s.playHeartbeat?.());
+                import('./theme.js').then(t => t.showNotification('Tlukot srdce byl odeslán partnerovi! 🫀❤️', 'love'));
+                triggerHaptic('heartbeat');
+            }
+        })
+    },
+    {
+        command: '/lovecoin',
+        title: '/lovecoin [počet] [zpráva]',
+        desc: 'Daruje Love Coins partnerovi s oslavnými konfetami (např. /lovecoin +5 Skvělá večeře!)',
+        category: '⚡ Slash Příkaz',
+        icon: '🪙',
+        color: '#faa61a',
+        match: (q) => q.startsWith('/lovecoin') || q.startsWith('/coin'),
+        getDynamicItem: (q) => {
+            const clean = q.replace(/^\/(lovecoin|coin)/, '').trim();
+            const parts = clean.split(' ');
+            const numPart = (parts[0] || '').replace('+', '');
+            const amount = parseInt(numPart, 10) || 5;
+            const message = parts.slice(1).join(' ') || 'Za to, jak jsi úžasná/ý! ❤️';
+
+            return {
+                id: 'slash-coin',
+                title: `/lovecoin: Poslat +${amount} Love Coins ("${message}")`,
+                desc: 'Odešle mince s oslavným efektem',
+                category: '⚡ Slash Příkaz',
+                icon: '🪙',
+                color: '#faa61a',
+                type: 'action',
+                handler: () => {
+                    import('./state.js').then(({ awardLoveCoinsToCurrentUser }) => {
+                        awardLoveCoinsToCurrentUser(amount, message);
+                        import('./utils.js').then(u => u.triggerConfetti?.());
+                        import('./sound.js').then(s => s.playSuccessChime?.());
+                    });
+                }
+            };
+        }
+    }
+];
+
 export function getAllSearchableItems() {
     const items = [];
 
-    // 1. Add Quick Actions
+    // 1. Add Slash Commands
+    items.push(...SLASH_COMMAND_DEFS.map(s => ({
+        id: `slash-cmd-${s.command}`,
+        title: s.title,
+        category: s.category,
+        desc: s.desc,
+        icon: s.icon,
+        color: s.color,
+        type: 'action',
+        handler: () => {
+            const input = document.getElementById('command-palette-input');
+            if (input) {
+                input.value = s.command + ' ';
+                input.focus();
+                renderPaletteResults(input.value);
+            }
+        }
+    })));
+
+    // 2. Add Quick Actions
     items.push(...QUICK_ACTIONS.map(a => ({
         ...a,
         type: 'action'
     })));
 
-    // 2. Add all Channels from router categories if available
+    // 3. Add all Channels from router categories if available
     const categories = window.__channelCategories || [];
     categories.forEach(cat => {
         cat.items.forEach(ch => {
@@ -140,8 +426,52 @@ export function renderPaletteResults(query = '') {
     const q = query.toLowerCase().trim();
 
     if (!q) {
-        // Show Quick Actions + Popular Channels
-        currentResults = allItems.slice(0, 10);
+        // Show Slash Commands + Quick Actions + Popular Channels
+        currentResults = allItems.slice(0, 12);
+    } else if (q.startsWith('/')) {
+        // Check for dynamic slash command match
+        const matchedDef = SLASH_COMMAND_DEFS.find(s => s.match(q));
+        if (matchedDef) {
+            currentResults = [
+                matchedDef.getDynamicItem(query),
+                ...SLASH_COMMAND_DEFS.filter(s => s !== matchedDef).map(s => ({
+                    id: `slash-cmd-${s.command}`,
+                    title: s.title,
+                    category: s.category,
+                    desc: s.desc,
+                    icon: s.icon,
+                    color: s.color,
+                    type: 'action',
+                    handler: () => {
+                        const input = document.getElementById('command-palette-input');
+                        if (input) {
+                            input.value = s.command + ' ';
+                            input.focus();
+                            renderPaletteResults(input.value);
+                        }
+                    }
+                }))
+            ];
+        } else {
+            // Filter slash commands
+            currentResults = SLASH_COMMAND_DEFS.map(s => ({
+                id: `slash-cmd-${s.command}`,
+                title: s.title,
+                category: s.category,
+                desc: s.desc,
+                icon: s.icon,
+                color: s.color,
+                type: 'action',
+                handler: () => {
+                    const input = document.getElementById('command-palette-input');
+                    if (input) {
+                        input.value = s.command + ' ';
+                        input.focus();
+                        renderPaletteResults(input.value);
+                    }
+                }
+            })).filter(s => s.title.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q));
+        }
     } else {
         currentResults = allItems.filter(item => {
             const titleMatch = item.title.toLowerCase().includes(q);
@@ -153,6 +483,7 @@ export function renderPaletteResults(query = '') {
     }
 
     selectedIndex = Math.min(selectedIndex, Math.max(0, currentResults.length - 1));
+
 
     if (currentResults.length === 0) {
         container.innerHTML = `

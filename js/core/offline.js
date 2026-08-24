@@ -4,6 +4,7 @@ import { idbGet, idbSet } from './idb.js';
 
 const QUEUE_KEY = 'kiscord_sync_queue';
 let _memoryQueue = null;
+let _isProcessing = false;
 
 /**
  * Load the sync queue from memory/IndexedDB/localStorage.
@@ -39,13 +40,14 @@ export async function getQueue() {
 }
 
 /**
- * Enqueue a Supabase operation for later processing.
+ * Enqueue a Supabase operation for later processing with metadata.
  * @param {string} table - The table name
  * @param {string} action - 'upsert', 'insert', 'update', 'delete'
  * @param {object} data - The data payload
  * @param {object|null} [match=null] - Optional match criteria
+ * @param {object} [metadata={}] - Optional metadata like expected_server_version
  */
-export function enqueueOperation(table, action, data, match = null) {
+export function enqueueOperation(table, action, data, match = null, metadata = {}) {
     let queue = [];
     try {
         queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
@@ -53,14 +55,21 @@ export function enqueueOperation(table, action, data, match = null) {
         queue = [];
     }
 
-    queue.push({
+    const timestamp = new Date().toISOString();
+    const op = {
         id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `op-${Date.now()}-${Math.random()}`,
-        timestamp: new Date().toISOString(),
+        timestamp,
+        client_updated_at: timestamp,
         table,
         action,
         data,
-        match
-    });
+        match,
+        retry_count: 0,
+        expected_server_version: metadata.expected_server_version || null,
+        last_error: null
+    };
+
+    queue.push(op);
 
     _memoryQueue = queue;
     localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
@@ -70,11 +79,29 @@ export function enqueueOperation(table, action, data, match = null) {
 }
 
 /**
+ * Calculate exponential backoff delay with jitter in milliseconds.
+ * @param {number} retryCount
+ * @returns {number} Delay in ms
+ */
+export function getExponentialBackoffDelay(retryCount) {
+    const base = 1000;
+    const maxDelay = 30000;
+    const exponent = Math.min(retryCount, 5);
+    const delay = Math.min(base * Math.pow(2, exponent), maxDelay);
+    const jitter = Math.random() * 500;
+    return delay + jitter;
+}
+
+/**
  * Process all pending operations in the sync queue.
  */
 export async function processSyncQueue() {
     if (!navigator.onLine) {
         updateHeaderOfflineBadge();
+        return;
+    }
+
+    if (_isProcessing) {
         return;
     }
 
@@ -90,6 +117,7 @@ export async function processSyncQueue() {
         return;
     }
 
+    _isProcessing = true;
     updateHeaderOfflineBadge();
     console.log(`[OFFLINE] Processing ${queue.length} pending operations...`);
 
@@ -115,6 +143,8 @@ export async function processSyncQueue() {
             successCount++;
         } catch (err) {
             console.error(`[OFFLINE] Failed to process operation ${op.id}:`, err);
+            op.retry_count = (op.retry_count || 0) + 1;
+            op.last_error = err?.message || 'Network/DB error';
             remainingQueue.push(op);
         }
     }
@@ -122,10 +152,11 @@ export async function processSyncQueue() {
     _memoryQueue = remainingQueue;
     localStorage.setItem(QUEUE_KEY, JSON.stringify(remainingQueue));
     await idbSet(QUEUE_KEY, remainingQueue);
+    _isProcessing = false;
     updateHeaderOfflineBadge();
 
     if (successCount > 0) {
-        window.dispatchEvent(new CustomEvent('sync-completed'));
+        window.dispatchEvent(new CustomEvent('sync-completed', { detail: { processed: successCount, remaining: remainingQueue.length } }));
     }
 }
 
@@ -154,28 +185,30 @@ export function updateHeaderOfflineBadge() {
 }
 
 // Global listener for online status
-window.addEventListener('online', () => {
-    console.log('[NETWORK] Connection restored. Flushing queue...');
-    const statusEl = document.getElementById('user-status');
-    if (statusEl) {
-        statusEl.textContent = 'Online';
-        statusEl.classList.remove('text-[#ed4245]', 'animate-pulse');
-        statusEl.parentElement.classList.remove('text-[#ed4245]');
-    }
-    updateHeaderOfflineBadge();
-    processSyncQueue();
-});
+if (typeof window !== 'undefined') {
+    window.addEventListener('online', () => {
+        console.log('[NETWORK] Connection restored. Flushing queue...');
+        const statusEl = document.getElementById('user-status');
+        if (statusEl) {
+            statusEl.textContent = 'Online';
+            statusEl.classList.remove('text-[#ed4245]', 'animate-pulse');
+            statusEl.parentElement?.classList.remove('text-[#ed4245]');
+        }
+        updateHeaderOfflineBadge();
+        processSyncQueue();
+    });
 
-window.addEventListener('offline', () => {
-    console.log('[NETWORK] Connection lost.');
-    const statusEl = document.getElementById('user-status');
-    if (statusEl) {
-        statusEl.textContent = 'Offline (Změny se ukládají lokálně)';
-        statusEl.classList.add('text-[#ed4245]', 'animate-pulse');
-        statusEl.parentElement.classList.add('text-[#ed4245]');
-    }
-    updateHeaderOfflineBadge();
-});
+    window.addEventListener('offline', () => {
+        console.log('[NETWORK] Connection lost.');
+        const statusEl = document.getElementById('user-status');
+        if (statusEl) {
+            statusEl.textContent = 'Offline (Změny se ukládají lokálně)';
+            statusEl.classList.add('text-[#ed4245]', 'animate-pulse');
+            statusEl.parentElement?.classList.add('text-[#ed4245]');
+        }
+        updateHeaderOfflineBadge();
+    });
+}
 
 // Initial check on load
 if (typeof document !== 'undefined') {
@@ -184,16 +217,8 @@ if (typeof document !== 'undefined') {
     });
 }
 
-// Initial check on load
-if (navigator.onLine) {
+if (typeof navigator !== 'undefined' && navigator.onLine) {
     processSyncQueue();
-} else {
-    // Manually trigger offline UI if we start offline
-    const statusEl = document.getElementById('user-status');
-    if (statusEl) {
-        statusEl.textContent = 'Offline (Změny se ukládají lokálně)';
-        statusEl.classList.add('text-[#ed4245]', 'animate-pulse');
-    }
 }
 
 /**

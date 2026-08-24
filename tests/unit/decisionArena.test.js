@@ -26,7 +26,7 @@ vi.mock('../../js/core/theme.js', () => ({
   showNotification: vi.fn()
 }));
 
-import { ARENA_TOPICS, WHEEL_PRESETS } from '../../js/modules/decisionArena.js';
+import { ARENA_TOPICS, WHEEL_PRESETS } from '../../js/domains/entertainment/decision-arena.js';
 import { state } from '../../js/core/state.js';
 
 describe('Couple Decision Arena Engine', () => {

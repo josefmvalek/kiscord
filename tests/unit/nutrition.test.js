@@ -29,9 +29,9 @@ vi.mock('../../js/core/theme.js', () => ({
 
 import { state } from '../../js/core/state.js';
 import { getServerForChannel } from '../../js/core/servers.js';
-import { calculateDailyNutrition, calculatePortionMacros } from '../../js/modules/nutrition/macroCalculator.js';
-import { renderMacroDonut, renderMacroBar, renderMealCard } from '../../js/modules/nutrition/components.js';
-import { renderNutrition } from '../../js/modules/nutrition/index.js';
+import { calculateDailyNutrition, calculatePortionMacros } from '../../js/domains/fitness/nutrition/macroCalculator.js';
+import { renderMacroDonut, renderMacroBar, renderMealCard } from '../../js/domains/fitness/nutrition/components.js';
+import { renderNutrition } from '../../js/domains/fitness/nutrition/index.js';
 
 describe('Nutrition & Macro Tracker Module (#výživa)', () => {
     beforeEach(() => {

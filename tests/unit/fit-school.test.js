@@ -12,9 +12,9 @@ vi.mock('../../js/core/supabase.js', () => ({
     }
 }));
 
-import { calculateGrade } from '../../js/modules/studyPlanner.js';
-import { calculateDayFreeSlots, FIT_PRESET_SUBJECTS, FIT_ROOM_HINTS } from '../../js/modules/schedule.js';
-import { BRNO_CAMPUS_FOOD } from '../../js/modules/dormHub.js';
+import { calculateGrade } from '../../js/domains/university/study-planner/index.js';
+import { calculateDayFreeSlots, FIT_PRESET_SUBJECTS, FIT_ROOM_HINTS } from '../../js/domains/university/schedule.js';
+import { BRNO_CAMPUS_FOOD } from '../../js/domains/university/dorm-hub.js';
 
 describe('VUT FIT Studijní Plánovač & Bodový systém', () => {
     it('should correctly calculate grades based on points (A, B, C, D, E, F)', () => {

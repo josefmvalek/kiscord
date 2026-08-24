@@ -1,0 +1,246 @@
+/**
+ * Kiscord Calendar Module - Main Orchestrator
+ */
+
+import { state } from '@core/state.js';
+import { triggerHaptic } from '@core/utils.js';
+
+export * from './grid.js';
+export * from './day-modal.js';
+export * from './sections-health.js';
+export * from './sections-gym.js';
+export * from './sections-plans.js';
+export * from './sections-diary.js';
+export * from './sections-school.js';
+export * from './state.js';
+
+import { 
+    generateFilterButtons, 
+    generateCalendarGrid 
+} from './grid.js';
+import { 
+    ensureModals, 
+    showDayDetail, 
+    closeDayModal 
+} from './day-modal.js';
+import { 
+    toggleHealthEdit, 
+    saveHealthRecord 
+} from './sections-health.js';
+import { 
+    openGymLog, 
+    openGymSchedule, 
+    openEditGymLog, 
+    deleteGymLog, 
+    deleteGymPlan 
+} from './sections-gym.js';
+import { 
+    addCustomPlan, 
+    deletePlannedDate, 
+    cyclePlanStatus, 
+    toggleChecklistItem 
+} from './sections-plans.js';
+import { 
+    addSchoolEvent, 
+    deleteSchoolEvent 
+} from './sections-school.js';
+import { 
+    getCurrentModalDateKey, 
+    getCalSession, 
+    setCalSession 
+} from './state.js';
+
+export function attachWindowCalendar() {
+    window.Calendar = { 
+        renderCalendar, setCalendarFilter, setupCalendarSync,
+        addSchoolEvent, deleteSchoolEvent, toggleHealthEdit, saveHealthRecord,
+        showDayDetail, closeDayModal, deletePlannedDate, addCustomPlan,
+        cyclePlanStatus, toggleChecklistItem, openGymLog, openGymSchedule,
+        deleteGymLog, deleteGymPlan, openEditGymLog
+    };
+}
+
+if (typeof window !== 'undefined') {
+    attachWindowCalendar();
+}
+
+/**
+ * Main entry point for rendering the calendar.
+ * Orchestrates grid generation and event setup.
+ */
+export function renderCalendar(year = null, month = null) {
+    attachWindowCalendar();
+    ensureModals();
+    setupCalendarSync();
+    
+    // Trigger lazy loading of shifts, diary, gym and study/schedule data just in case they aren't loaded yet
+    Promise.all([
+        import('@core/state.js').then(s => s.ensureShiftsData()),
+        import('@core/state.js').then(s => s.ensureDiaryData()),
+        import('@core/state.js').then(s => s.ensureGymData()),
+        import('@core/state.js').then(s => s.ensureStudyData())
+    ]).then(() => {
+        if (state.currentChannel === 'calendar') {
+            const grid = document.getElementById('calendar-grid');
+            const session = getCalSession();
+            if (grid) grid.innerHTML = generateCalendarGrid(session.year, session.month);
+        }
+    }).catch(err => console.error('[Calendar] Error lazy loading shifts, diary, gym or study:', err));
+    
+    const container = document.getElementById("messages-container");
+    if (!container) return;
+
+    if (state.loadError) {
+        container.innerHTML = window.renderErrorState({
+            message: "Nepodařilo se mi načíst tvé plány a události. Zkusíme to znovu rozmrazit?",
+            onRetry: "window.loadModule('state').then(async m => { await m.initializeState(); Calendar.renderCalendar(); })"
+        });
+        return;
+    }
+
+    const session = getCalSession();
+    if (typeof year !== 'number' || isNaN(year)) year = session.year;
+    if (typeof month !== 'number' || isNaN(month)) month = session.month;
+
+    // Handle year transitions
+    if (month < 0) { month = 11; year--; }
+    else if (month > 11) { month = 0; year++; }
+
+    // Haptic feedback on navigation
+    if (year !== session.year || month !== session.month) {
+        triggerHaptic('light');
+    }
+
+    setCalSession(year, month);
+
+    const monthNames = ["Leden", "Únor", "Březen", "Duben", "Květen", "Červen", "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec"];
+    const prevMonth = month === 0 ? 11 : month - 1;
+    const prevYear = month === 0 ? year - 1 : year;
+    const nextMonth = month === 11 ? 0 : month + 1;
+    const nextYear = month === 11 ? year + 1 : year;
+
+    container.innerHTML = `
+          <div class="flex flex-col h-full bg-[#36393f] animate-fade-in">
+              <div class="bg-[#2f3136] shadow-sm z-10 flex-shrink-0 border-b border-[#202225]">
+                  <div class="px-4 py-3 flex justify-between items-center w-full max-w-5xl mx-auto">
+                      <h2 class="text-2xl font-extrabold text-white flex items-center gap-2">
+                          ${monthNames[month]} <span class="text-gray-500 font-light text-xl">${year}</span>
+                      </h2>
+                      <div class="flex gap-1">
+                          <button onclick="Calendar.renderCalendar(${prevYear}, ${prevMonth})" class="w-8 h-8 rounded-lg bg-[#202225] hover:bg-[#40444b] text-gray-300 flex items-center justify-center transition border border-[#202225] hover:border-gray-500">
+                              <i class="fas fa-chevron-left text-sm"></i>
+                          </button>
+                          <button onclick="Calendar.renderCalendar(${nextYear}, ${nextMonth})" class="w-8 h-8 rounded-lg bg-[#202225] hover:bg-[#40444b] text-gray-300 flex items-center justify-center transition border border-[#202225] hover:border-gray-500">
+                              <i class="fas fa-chevron-right text-sm"></i>
+                          </button>
+                      </div>
+                  </div>
+              </div>
+
+              <div class="bg-[#36393f] flex-shrink-0 border-b border-[#202225]">
+                  <div id="calendar-filters" class="flex items-center gap-2 px-4 py-2 md:py-3 overflow-x-auto no-scrollbar w-full max-w-5xl mx-auto">
+                      ${generateFilterButtons()}
+                  </div>
+              </div>
+
+              <div class="flex-1 overflow-y-auto p-2 md:p-6 custom-scrollbar">
+                  <div class="w-full max-w-5xl mx-auto">
+                      <div class="grid grid-cols-7 gap-1 md:gap-2 mb-1 md:mb-2 text-center text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">
+                          <div>Po</div><div>Út</div><div>St</div><div>Čt</div><div>Pá</div><div>So</div><div>Ne</div>
+                      </div>
+
+                      <div id="calendar-grid" class="grid grid-cols-7 gap-1 md:gap-2 pb-20 auto-rows-fr">
+                          ${generateCalendarGrid(year, month)}
+                      </div>
+                  </div>
+              </div>
+          </div>`;
+}
+
+/**
+ * Updates the calendar filter and refreshes the grid only.
+ */
+export function setCalendarFilter(filterId) {
+    state.calendarFilter = filterId;
+    triggerHaptic("light");
+
+    const filterContainer = document.getElementById("calendar-filters");
+    if (filterContainer) filterContainer.innerHTML = generateFilterButtons();
+
+    const gridContainer = document.getElementById("calendar-grid");
+    if (gridContainer) {
+        gridContainer.style.opacity = "0";
+        setTimeout(() => {
+            const session = getCalSession();
+            gridContainer.innerHTML = generateCalendarGrid(session.year, session.month);
+            gridContainer.style.opacity = "1";
+        }, 150);
+    }
+}
+
+// --- SYNC LISTENERS ---
+let calendarSyncSet = false;
+
+/**
+ * Sets up real-time sync for calendar events.
+ */
+export function setupCalendarSync() {
+    if (calendarSyncSet) return;
+
+    window.addEventListener('planned-dates-updated', (e) => {
+        const payload = e.detail.payload;
+        const row = payload.new || payload.old;
+        if (!row) return;
+
+        if (payload.eventType === 'DELETE') {
+            delete state.plannedDates[row.date_key];
+        } else {
+            state.plannedDates[row.date_key] = {
+                id: row.id,
+                name: row.name,
+                cat: row.cat,
+                time: row.time,
+                note: row.note
+            };
+        }
+
+        if (state.currentChannel === 'calendar') {
+            const grid = document.getElementById('calendar-grid');
+            const session = getCalSession();
+            if (grid) grid.innerHTML = generateCalendarGrid(session.year, session.month);
+            
+            if (getCurrentModalDateKey() === row.date_key) {
+                showDayDetail(row.date_key);
+            }
+        }
+    });
+
+    window.addEventListener('shifts-updated', () => {
+        if (state.currentChannel === 'calendar') {
+            const grid = document.getElementById('calendar-grid');
+            const session = getCalSession();
+            if (grid) grid.innerHTML = generateCalendarGrid(session.year, session.month);
+        }
+    });
+
+    window.addEventListener('gym-logs-updated', (e) => {
+        if (state.currentChannel === 'calendar') {
+            const grid = document.getElementById('calendar-grid');
+            const session = getCalSession();
+            if (grid) grid.innerHTML = generateCalendarGrid(session.year, session.month);
+            const targetDateKey = e?.detail?.dateKey || getCurrentModalDateKey();
+            if (targetDateKey) {
+                showDayDetail(targetDateKey);
+            }
+        }
+    });
+
+    calendarSyncSet = true;
+}
+
+export default {
+    renderCalendar,
+    setCalendarFilter,
+    setupCalendarSync,
+    attachWindowCalendar
+};

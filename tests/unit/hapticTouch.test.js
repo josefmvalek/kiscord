@@ -25,7 +25,7 @@ vi.mock('../../js/core/utils.js', () => ({
   triggerHaptic: vi.fn()
 }));
 
-import { HAPTIC_PRESETS, sendHapticPreset, handleIncomingHapticPulse } from '../../js/modules/hapticTouch.js';
+import { HAPTIC_PRESETS, sendHapticPreset, handleIncomingHapticPulse } from '../../js/domains/couple/haptic-touch.js';
 import { broadcastHapticPulse } from '../../js/core/sync.js';
 import { playHeartbeat } from '../../js/core/sound.js';
 import { state } from '../../js/core/state.js';

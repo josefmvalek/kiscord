@@ -11,7 +11,7 @@ vi.mock('../../js/core/supabase.js', () => {
   };
 });
 
-import { detectOverlaps, formatDateKey } from '../../js/modules/shifts.js';
+import { detectOverlaps, formatDateKey } from '../../js/domains/archive/shifts.js';
 import { state } from '../../js/core/state.js';
 
 describe('Shift Overlap Detector', () => {

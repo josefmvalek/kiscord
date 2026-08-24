@@ -50,7 +50,7 @@ import {
   saveBodyMeasurement,
   deleteBodyMeasurement,
   openTransformationSliderModal
-} from '../../js/modules/gym/bodyTracker.js';
+} from '../../js/domains/fitness/gym/bodyTracker.js';
 import { state } from '../../js/core/state.js';
 
 describe('Gym Body Tracker & Measurements', () => {

@@ -17,8 +17,12 @@ vi.mock('../../js/core/utils.js', () => ({
 }));
 
 vi.mock('../../js/core/sound.js', () => ({
-    playPageFlip: vi.fn()
+    playPageFlip: vi.fn(),
+    playServerPop: vi.fn(),
+    playSuccessChime: vi.fn(),
+    playHeartbeat: vi.fn()
 }));
+
 
 import { state } from '../../js/core/state.js';
 import {

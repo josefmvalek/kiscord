@@ -17,9 +17,9 @@ vi.mock('../../js/core/supabase.js', () => ({
   },
 }));
 
-import { PuzzleGame } from '../../js/modules/puzzle.js';
+import { PuzzleGame } from '../../js/domains/entertainment/puzzle.js';
 import { state } from '../../js/core/state.js';
-import { getPuzzleImageList } from '../../js/modules/games.js';
+import { getPuzzleImageList } from '../../js/domains/entertainment/games.js';
 
 describe('Puzzle Game Engine', () => {
   beforeEach(() => {

@@ -40,7 +40,7 @@ vi.mock('../../js/core/ui.js', () => ({
   renderInputGroup: () => '',
 }));
 
-import { filterModalExercises } from '../../js/modules/gym.js';
+import { filterModalExercises } from '../../js/domains/fitness/gym/index.js';
 
 describe('Gym Exercise Modal Search Filter', () => {
   beforeEach(() => {

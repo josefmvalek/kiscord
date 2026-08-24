@@ -187,7 +187,7 @@ describe('Mobile Gestures & Tiered Haptic Profiles (Phase M1)', () => {
     });
 
     it('should adjust weight on all non-completed sets via adjustActiveExerciseWeight', async () => {
-        const { adjustActiveExerciseWeight } = await import('../../js/modules/gym/activeWorkout.js');
+        const { adjustActiveExerciseWeight } = await import('../../js/domains/fitness/gym/activeWorkout.js');
         const mockWorkout = {
             name: 'Leg Day',
             startTime: new Date().toISOString(),

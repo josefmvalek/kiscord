@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 const createSelectChain = () => {
   const chain = {
@@ -41,11 +41,13 @@ import {
   getExerciseProgression,
   cloneTemplate,
   MUSCLE_CATEGORIES
-} from '../../js/modules/gym/analytics.js';
+} from '../../js/domains/fitness/gym/analytics.js';
 import { state } from '../../js/core/state.js';
 
 describe('Gym Analytics: Volume Load, Muscle Balance & Template Cloning', () => {
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-17T12:00:00Z'));
     state.currentUser = { id: 'user-jose', name: 'Jožka' };
     state.gymExercises = [
       { id: 'bench_press', name: 'Bench Press', category: 'Hrudník' },
@@ -83,6 +85,10 @@ describe('Gym Analytics: Volume Load, Muscle Balance & Template Cloning', () => 
         ]
       }
     ];
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe('Volume Load Calculation', () => {

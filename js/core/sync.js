@@ -171,6 +171,51 @@ export function setupRealtimeSync() {
                 detail: payload.payload 
             }));
         })
+        // A11. Handle Broadcasts (Thumbkiss Live Touch Coordinates)
+        .on('broadcast', { event: 'touch-pos' }, (payload) => {
+            if (payload.payload.from === state.currentUser?.id) return;
+            window.dispatchEvent(new CustomEvent('touch-pos-received', { 
+                detail: payload.payload 
+            }));
+        })
+        // A12. Handle Broadcasts (Gym Cheering Energy)
+        .on('broadcast', { event: 'gym-cheer' }, (payload) => {
+            if (payload.payload.from === state.currentUser?.id) return;
+            window.dispatchEvent(new CustomEvent('gym-cheer-received', { 
+                detail: payload.payload 
+            }));
+        })
+        // A13. Handle Broadcasts (Gym Shared Rest Timer Sync)
+        .on('broadcast', { event: 'gym-rest-sync' }, (payload) => {
+            if (payload.payload.from === state.currentUser?.id) return;
+            window.dispatchEvent(new CustomEvent('gym-rest-sync-received', { 
+                detail: payload.payload 
+            }));
+        })
+        // A14. Handle Broadcasts (Study Focus & Pomodoro Sync)
+        .on('broadcast', { event: 'study-focus' }, (payload) => {
+            if (payload.payload.from === state.currentUser?.id) return;
+            window.dispatchEvent(new CustomEvent('study-focus-received', { 
+                detail: payload.payload 
+            }));
+        })
+        // A15. Handle Broadcasts (Cycle Update)
+        .on('broadcast', { event: 'cycle-update' }, (payload) => {
+            if (payload.payload.from === state.currentUser?.id) return;
+            state.partnerCycleData = payload.payload.data;
+            window.dispatchEvent(new CustomEvent('cycle-updated', { 
+                detail: payload.payload 
+            }));
+        })
+        // A16. Handle Broadcasts (Step & Activity Update)
+        .on('broadcast', { event: 'step-update' }, (payload) => {
+            if (payload.payload.from === state.currentUser?.id) return;
+            window.dispatchEvent(new CustomEvent('steps-updated', { 
+                detail: payload.payload 
+            }));
+        })
+
+
         // B. Handle Database Changes (Health Data)
         .on('postgres_changes', { 
             event: '*', 
@@ -590,6 +635,10 @@ export async function broadcastHapticPulse(pulseData) {
  */
 export async function broadcastAmbientActivity(activityData) {
     if (!mainChannel) return;
+    const payload = typeof activityData === 'string' 
+        ? { channel: activityData, activity: getActivityLabelForChannel(activityData) }
+        : activityData;
+
     await mainChannel.send({
         type: 'broadcast',
         event: 'ambient-activity',
@@ -597,10 +646,310 @@ export async function broadcastAmbientActivity(activityData) {
             from: state.currentUser?.id,
             senderName: state.currentUser?.name,
             timestamp: Date.now(),
-            ...activityData
+            ...payload
         }
     });
 }
+
+export function getActivityLabelForChannel(channelId) {
+    const map = {
+        'dashboard': 'Prohlíží Můj Den ☀️',
+        'calendar': 'Plánuje v Kalendáři 📅',
+        'gym-tracker': 'Cvičí v Posilovně 🏋️‍♂️',
+        'nutrition': 'Zapisuje jídelníček 🥗',
+        'body-metrics': 'Sleduje tělesné míry ⚖️',
+        'schedule': 'Sleduje rozvrh FIT 📚',
+        'study-planner': 'Učí se na zkoušky 🎯',
+        'dorm-hub': 'Kolejní hub & prádelník 🏢',
+        'library': 'Vybírá filmy & hry 🍿',
+        'watchlist': 'Swipuje na Watchlistu 🎬',
+        'love-shop': 'Vybírá v Obchůdku 🎁',
+        'dotek': 'Přenáší tlukot srdce 🫀',
+        'dateplanner': 'Plánuje rande 🥂',
+        'bucketlist': 'Prohlíží Bucket List ✨',
+        'timeline': 'Prohlíží vzpomínky 🎞️',
+        'games-hub': 'Hraje v Herním Doupěti 🕹️',
+        'settings': 'Upravuje Nastavení ⚙️'
+    };
+    return map[channelId] || `Aktivní v #${channelId}`;
+}
+
+/**
+ * Renderuje interaktivní Live Rich Presence Hub v pravém panelu
+ */
+export function renderRichPresenceHub() {
+    const container = document.getElementById('rich-presence-members-container');
+    if (!container) return;
+
+    const isMeJose = state.currentUser?.name === 'Jožka' || state.currentUser?.id === state.user_ids?.jose;
+    const partnerName = isMeJose ? 'Klárka' : 'Jožka';
+    const myName = isMeJose ? 'Jožka' : 'Klárka';
+    const partnerAvatar = isMeJose ? "🦉" : "🦝";
+    const myAvatar = isMeJose ? "🦝" : "🦉";
+    const partnerColor = isMeJose ? "#eb459e" : "#5865F2";
+    const myColor = isMeJose ? "#5865F2" : "#eb459e";
+
+    const partnerActivity = state.partnerPresenceActivity || 'Online na Kiscordu';
+    const partnerMood = state.partnerHealthData?.mood;
+    const moodEmoji = partnerMood >= 4 ? '☀️' : (partnerMood >= 2 ? '⛅' : (partnerMood ? '🌧️' : '✨'));
+
+    container.innerHTML = `
+        <!-- Local User Card -->
+        <div class="flex items-center gap-2.5 p-2 rounded-xl bg-[var(--bg-primary)]/40 border border-[var(--border-subtle)] group">
+            <div class="relative flex-shrink-0">
+                <div class="w-9 h-9 rounded-full flex items-center justify-center text-lg border-2" style="border-color: ${myColor}; background: ${myColor}20;">
+                    ${myAvatar}
+                </div>
+                <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[var(--green)] rounded-full border-2 border-[var(--bg-secondary)]"></div>
+            </div>
+            <div class="min-w-0 flex-1">
+                <div class="font-bold text-[var(--text-header)] text-xs truncate flex items-center gap-1.5">
+                    <span>${myName}</span>
+                    <span class="text-[9px] font-black uppercase px-1 py-0.2 rounded bg-white/10 text-[var(--text-muted)]">Ty</span>
+                </div>
+                <div class="text-[10px] text-[var(--text-muted)] truncate flex items-center gap-1">
+                    <span class="text-[var(--green)]">●</span> <span>${getActivityLabelForChannel(state.currentChannel || 'dashboard')}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Partner Live Rich Presence Card -->
+        <div class="p-2.5 rounded-xl bg-gradient-to-br from-[var(--bg-primary)] to-[var(--bg-tertiary)] border border-[var(--border-default)] shadow-sm space-y-2 group hover:border-[var(--border-strong)] transition-all">
+            <div class="flex items-center gap-2.5">
+                <div class="relative flex-shrink-0">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center text-lg border-2 shadow-sm" style="border-color: ${partnerColor}; background: ${partnerColor}20;">
+                        ${partnerAvatar}
+                    </div>
+                    <div class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[var(--green)] rounded-full border-2 border-[var(--bg-secondary)] animate-pulse"></div>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="font-bold text-[var(--text-header)] text-xs truncate flex items-center justify-between">
+                        <span>${partnerName}</span>
+                        <span class="text-[11px]" title="Dnešní nálada">${moodEmoji}</span>
+                    </div>
+                    <div id="partner-presence-status" class="text-[10px] text-[var(--blurple)] font-medium truncate flex items-center gap-1">
+                        <i class="fas fa-sparkles text-[8px]"></i>
+                        <span>${partnerActivity}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Partner Live Focus / DND Indicator (if studying) -->
+            ${state.partnerStudyFocus?.status === 'focus' ? `
+                <div class="p-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-between text-[10px] text-emerald-300 font-bold animate-pulse">
+                    <span class="truncate flex items-center gap-1">
+                        <i class="fas fa-bell-slash text-[9px]"></i> <span>Fokus: ${state.partnerStudyFocus.taskName || 'Studium'}</span>
+                    </span>
+                    <span class="text-[9px] bg-emerald-500/20 px-1 rounded">${state.partnerStudyFocus.remainingMinutes || 25}m</span>
+                </div>
+            ` : ''}
+
+            <!-- Partner Quick Action Buttons -->
+            <div class="grid grid-cols-2 gap-1.5 pt-1 border-t border-[var(--border-subtle)]">
+                ${state.partnerPresenceActivity?.includes('Cvičí') || state.partnerPresenceActivity?.includes('Posilovně') ? `
+                    <button type="button" onclick="window.sendGymCheer && window.sendGymCheer()" 
+                            class="col-span-2 px-2 py-1.5 rounded-lg bg-gradient-to-r from-[#faa61a]/25 to-red-500/25 hover:from-[#faa61a]/35 hover:to-red-500/35 text-amber-300 border border-amber-500/40 text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-sm animate-pulse"
+                            title="Poslat energii a zafandit do série!">
+                        <i class="fas fa-fire text-orange-400"></i>
+                        <span>Zafandit do série! 🔥</span>
+                    </button>
+                ` : `
+                    <button type="button" onclick="window.sendHapticTouchPulse && window.sendHapticTouchPulse()" 
+                            class="px-2 py-1.5 rounded-lg bg-[#eb459e]/15 hover:bg-[#eb459e]/25 text-[#eb459e] border border-[#eb459e]/30 text-[10px] font-bold flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer select-none"
+                            title="Odeslat partnerovi haptický tlukot srdce">
+                        <i class="fas fa-heartbeat text-[10px]"></i>
+                        <span>Dotek</span>
+                    </button>
+                    <button type="button" onclick="window.sendSunlight && window.sendSunlight()" 
+                            class="px-2 py-1.5 rounded-lg bg-[#faa61a]/15 hover:bg-[#faa61a]/25 text-[#faa61a] border border-[#faa61a]/30 text-[10px] font-bold flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer select-none"
+                            title="Poslat partnerovi sluníčko a konfety">
+                        <i class="fas fa-sun text-[10px]"></i>
+                        <span>Sluníčko</span>
+                    </button>
+                `}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Odešle okamžitý haptický tlukot srdce partnerovi
+ */
+export async function sendHapticTouchPulse() {
+    await broadcastHapticPulse({ type: 'poke', strength: 'medium' });
+    import('./sound.js').then(s => s.playHeartbeat?.());
+    import('./utils.js').then(u => u.triggerHaptic?.('heartbeat'));
+    import('./theme.js').then(t => t.showNotification('Tlukot srdce byl odeslán partnerovi! 🫀❤️', 'love'));
+}
+
+/**
+ * Odešle sluneční paprsek a konfety partnerovi
+ */
+export async function sendSunlight() {
+    if (mainChannel) {
+        await mainChannel.send({
+            type: 'broadcast',
+            event: 'send-sunlight',
+            payload: { from: state.currentUser?.id, name: state.currentUser?.name }
+        });
+    }
+    import('./utils.js').then(u => {
+        u.triggerConfetti?.();
+        u.triggerHaptic?.('success');
+    });
+    import('./sound.js').then(s => s.playSuccessChime?.());
+    import('./theme.js').then(t => t.showNotification('Sluníčko bylo odesláno partnerovi! ☀️💛', 'info'));
+}
+
+/**
+ * Odešle fandící energii do série cvičícímu partnerovi
+ */
+export async function sendGymCheer() {
+    if (mainChannel) {
+        await mainChannel.send({
+            type: 'broadcast',
+            event: 'gym-cheer',
+            payload: { from: state.currentUser?.id, name: state.currentUser?.name }
+        });
+    }
+    import('./utils.js').then(u => {
+        u.triggerConfetti?.();
+        u.triggerHaptic?.('success');
+    });
+    import('./sound.js').then(s => s.playSuccessChime?.());
+    import('./theme.js').then(t => t.showNotification('Poslal/a jsi partnerovi energii do série! 🔥💪', 'success'));
+}
+
+/**
+ * Přenáší realtime souřadnice prstu v Thumbkiss ploše
+ */
+export async function broadcastTouchPosition({ x, y, active }) {
+    if (!mainChannel) return;
+    try {
+        await mainChannel.send({
+            type: 'broadcast',
+            event: 'touch-pos',
+            payload: { from: state.currentUser?.id, name: state.currentUser?.name, x, y, active }
+        });
+    } catch (err) {
+        console.warn('[Sync] Broadcast touch-pos error:', err);
+    }
+}
+
+/**
+ * Synchronizuje pauzovací časovač v posilovně
+ */
+export async function broadcastGymRestSync({ duration, startedAt }) {
+    if (!mainChannel) return;
+    try {
+        await mainChannel.send({
+            type: 'broadcast',
+            event: 'gym-rest-sync',
+            payload: { from: state.currentUser?.id, duration, startedAt }
+        });
+    } catch (err) {
+        console.warn('[Sync] Broadcast gym-rest-sync error:', err);
+    }
+}
+
+/**
+ * Synchronizuje Pomodoro focus a status studia
+ */
+export async function broadcastStudyFocus({ taskName, status, durationMinutes, startedAt }) {
+    if (!mainChannel) return;
+    try {
+        await mainChannel.send({
+            type: 'broadcast',
+            event: 'study-focus',
+            payload: { from: state.currentUser?.id, name: state.currentUser?.name, taskName, status, durationMinutes, startedAt }
+        });
+    } catch (err) {
+        console.warn('[Sync] Broadcast study-focus error:', err);
+    }
+}
+
+/**
+ * Synchronizuje změny cyklu a fází (respektuje nastavené filtry soukromí)
+ */
+export async function broadcastCycleUpdate(cycleData) {
+    if (!mainChannel) return;
+    try {
+        await mainChannel.send({
+            type: 'broadcast',
+            event: 'cycle-update',
+            payload: { from: state.currentUser?.id, data: cycleData }
+        });
+    } catch (err) {
+        console.warn('[Sync] Broadcast cycle-update error:', err);
+    }
+}
+
+/**
+ * Synchronizuje počet kroků a aktivitu pro párové výzvy
+ */
+export async function broadcastStepUpdate(stepData) {
+    if (!mainChannel) return;
+    try {
+        await mainChannel.send({
+            type: 'broadcast',
+            event: 'step-update',
+            payload: { from: state.currentUser?.id, data: stepData }
+        });
+    } catch (err) {
+        console.warn('[Sync] Broadcast step-update error:', err);
+    }
+}
+
+// Global exposure
+if (typeof window !== 'undefined') {
+    window.renderRichPresenceHub = renderRichPresenceHub;
+    window.sendHapticTouchPulse = sendHapticTouchPulse;
+    window.sendSunlight = sendSunlight;
+    window.sendGymCheer = sendGymCheer;
+    window.broadcastAmbientActivity = broadcastAmbientActivity;
+    window.broadcastTouchPosition = broadcastTouchPosition;
+    window.broadcastGymRestSync = broadcastGymRestSync;
+    window.broadcastStudyFocus = broadcastStudyFocus;
+    window.broadcastCycleUpdate = broadcastCycleUpdate;
+    window.broadcastStepUpdate = broadcastStepUpdate;
+
+
+    // Listen to real-time events for Live Presence
+    window.addEventListener('ambient-activity-received', (e) => {
+        if (e.detail?.activity) {
+            state.partnerPresenceActivity = e.detail.activity;
+            renderRichPresenceHub();
+        }
+    });
+
+    window.addEventListener('haptic-pulse-received', () => {
+        import('./sound.js').then(s => s.playHeartbeat?.());
+        import('./utils.js').then(u => u.triggerHaptic?.('heartbeat'));
+        import('./theme.js').then(t => t.showNotification('Přišel ti dotek na dálku od partnera! 🫀❤️', 'love'));
+    });
+
+    window.addEventListener('gym-cheer-received', (e) => {
+        const senderName = e.detail?.name || 'Partner';
+        import('./utils.js').then(u => {
+            u.triggerConfetti?.();
+            u.triggerHaptic?.('success');
+        });
+        import('./sound.js').then(s => s.playSuccessChime?.());
+        import('./theme.js').then(t => t.showNotification(`🔥 ${senderName} ti právě poslal/a energii a zafandil/a do série! 💪`, 'success'));
+        
+        // Dispatch event for workout HUD overlay
+        window.dispatchEvent(new CustomEvent('gym-cheer-overlay', { detail: e.detail }));
+    });
+
+    window.addEventListener('study-focus-received', (e) => {
+        state.partnerStudyFocus = e.detail;
+        renderRichPresenceHub();
+        if (e.detail?.status === 'focus') {
+            import('./theme.js').then(t => t.showNotification(`📚 ${e.detail.name || 'Partner'} zahájil/a studijní fokus: ${e.detail.taskName || 'Úkol'} (25 min)`, 'info'));
+        }
+    });
+}
+
 
 /**
  * Cleans up subscriptions (e.g., on sign out).
@@ -612,4 +961,5 @@ export function cleanupRealtimeSync() {
     }
     cachedPartnerId = null; // Reset cache při odhlášení
 }
+
 

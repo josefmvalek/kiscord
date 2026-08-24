@@ -16,7 +16,7 @@ vi.mock('../../js/core/state.js', () => {
   };
 });
 
-import { calculateSM2 } from '../../js/modules/spaced_repetition.js';
+import { calculateSM2 } from '../../js/domains/entertainment/spaced-repetition.js';
 
 describe('Spaced Repetition Algorithm (SM-2)', () => {
   it('should initialize stats when currentStats is undefined or empty', () => {

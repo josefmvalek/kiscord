@@ -36,7 +36,7 @@ vi.mock('../../js/core/offline.js', () => ({
 import { state } from '../../js/core/state.js';
 
 // Import settings module
-import { renderSettings } from '../../js/modules/settings.js';
+import { renderSettings } from '../../js/domains/system/settings/index.js';
 
 describe('Settings & Appearance Integration', () => {
   beforeEach(() => {

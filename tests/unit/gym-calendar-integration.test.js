@@ -80,9 +80,9 @@ vi.mock('../../js/core/theme.js', () => ({
 }));
 
 import { state } from '../../js/core/state.js';
-import { generateFilterButtons, generateCalendarGrid } from '../../js/modules/calendar/grid.js';
-import { showDayDetail, ensureModals, deleteGymLog, deleteGymPlan, openEditGymLog } from '../../js/modules/calendar/modals.js';
-import { saveScheduledTemplate, openManualLogModal, addManualSet, removeManualSet, saveManualLog, openEditGymLogModal, saveEditGymLog } from '../../js/modules/gym/templates.js';
+import { generateFilterButtons, generateCalendarGrid } from '../../js/domains/lifestyle/calendar/grid.js';
+import { showDayDetail, ensureModals, deleteGymLog, deleteGymPlan, openEditGymLog } from '../../js/domains/lifestyle/calendar/modals.js';
+import { saveScheduledTemplate, openManualLogModal, addManualSet, removeManualSet, saveManualLog, openEditGymLogModal, saveEditGymLog } from '../../js/domains/fitness/gym/templates.js';
 
 describe('Gym & Calendar Integration', () => {
   beforeEach(() => {

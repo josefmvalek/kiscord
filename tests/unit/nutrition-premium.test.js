@@ -28,12 +28,12 @@ vi.mock('../../js/core/theme.js', () => ({
 }));
 
 import { state } from '../../js/core/state.js';
-import { getFastingState, startFast, endFast, calculateFastingProgress, renderFastingCard } from '../../js/modules/nutrition/fastingTimer.js';
-import { calculateSmoothedWeightTrend, calculateAdaptiveTDEE, renderTDEECoachCard } from '../../js/modules/nutrition/tdeeCoach.js';
-import { parseFoodNaturalLanguage } from '../../js/modules/nutrition/nlpParser.js';
-import { calculateRecipeNutrition, renderRecipeBuilder } from '../../js/modules/nutrition/recipeBuilder.js';
-import { getWeeklyNutritionStats, renderWeeklyAnalytics } from '../../js/modules/nutrition/weeklyAnalytics.js';
-import { renderNutrition } from '../../js/modules/nutrition/index.js';
+import { getFastingState, startFast, endFast, calculateFastingProgress, renderFastingCard } from '../../js/domains/fitness/nutrition/fastingTimer.js';
+import { calculateSmoothedWeightTrend, calculateAdaptiveTDEE, renderTDEECoachCard } from '../../js/domains/fitness/nutrition/tdeeCoach.js';
+import { parseFoodNaturalLanguage } from '../../js/domains/fitness/nutrition/nlpParser.js';
+import { calculateRecipeNutrition, renderRecipeBuilder } from '../../js/domains/fitness/nutrition/recipeBuilder.js';
+import { getWeeklyNutritionStats, renderWeeklyAnalytics } from '../../js/domains/fitness/nutrition/weeklyAnalytics.js';
+import { renderNutrition } from '../../js/domains/fitness/nutrition/index.js';
 
 describe('Premium Nutrition & Macro Ecosystem (#výživa 2.0)', () => {
     beforeEach(() => {

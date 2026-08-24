@@ -101,9 +101,19 @@ export const serverDefinitions = [
         icon: '<i class="fas fa-dumbbell"></i>',
         color: '#3ba55c',
         gradient: 'linear-gradient(135deg, #3ba55c, #14b8a6)',
-        defaultChannel: 'gym-tracker',
-        description: 'Logování tréninků, maximálky, návyky a suplementy 🏋️‍♂️💪',
+        defaultChannel: 'health-engine',
+        description: 'All-in-One Health Engine, cyklus, krokoměr, biohacks, tréninky a výživa 🌿⚡',
         categories: [
+            {
+                name: '⚡ ALL-IN-ONE HUB',
+                items: [
+                    { id: 'health-engine', name: 'health-engine', icon: '<i class="fas fa-bolt"></i>', color: '#ec4899', desc: 'All-in-One Bento Grid Hub & Křížové korelace ⚡' },
+                    { id: 'sleep-tracker', name: 'spánek-a-sny', icon: '<i class="fas fa-moon"></i>', color: '#3b82f6', desc: 'Spánková efektivita, 90min cykly & párová synergie 🌙💤' },
+                    { id: 'cycle-tracker', name: 'menstruační-cyklus', icon: '<i class="fas fa-heart"></i>', color: '#ec4899', desc: 'Sledování cyklu, fází & párové soukromí 🌸' },
+                    { id: 'step-tracker', name: 'krokoměr', icon: '<i class="fas fa-shoe-prints"></i>', color: '#10b981', desc: 'Kroky, aktivní chůze & automatický sync 👟' },
+                    { id: 'biohacks', name: 'biohacks', icon: '<i class="fas fa-dna"></i>', color: '#8b5cf6', desc: 'Kofeinová křivka, půst & Recovery Index ☕⏳' }
+                ]
+            },
             {
                 name: '🏋️‍♂️ TRÉNINK & SÍLA',
                 items: [
@@ -297,6 +307,68 @@ export function getServerForChannel(channelId) {
 }
 
 /**
+ * Spočítá počet čekajících akcí / notifikací pro daný server
+ * Zobrazuje se pouze při reálné čekající události od partnera či urgentním termínu
+ * @param {string} serverId 
+ * @returns {number}
+ */
+export function getServerMentionCount(serverId) {
+    if (!state) return 0;
+    const todayKey = new Date().toISOString().split('T')[0];
+
+    try {
+        if (serverId === 'home') {
+            // Unanswered daily question for today
+            const hasAnsweredDaily = state.dailyAnswers?.[todayKey] || state.dailyQuestionsAnswers?.[todayKey];
+            if (state.dailyQuestion && !hasAnsweredDaily) return 1;
+            return 0;
+        }
+
+        if (serverId === 'love') {
+            // Partner odpověděl na otázku dne nebo poslal dopis/plán
+            const partnerAnswered = state.dailyQuestionsPartnerAnswered?.[todayKey];
+            const hasUnread = state.unreadLoveCount || (partnerAnswered ? 1 : 0);
+            return hasUnread;
+        }
+
+        if (serverId === 'fitness') {
+            // Check if water goal or workout is pending for today (if after 12:00)
+            const hour = new Date().getHours();
+            if (hour >= 12) {
+                const todayWater = state.healthData?.[todayKey]?.water || 0;
+                const hasGymLog = Array.isArray(state.gymLogs) && state.gymLogs.some(g => g && g.date_key === todayKey);
+                if (todayWater < 4 && !hasGymLog) return 1;
+            }
+            return 0;
+        }
+
+        if (serverId === 'fit') {
+            // Kontrola urgentních termínů končících do 48h
+            const upcomingWIS = (state.studyPlannerItems || []).filter(item => {
+                if (!item || !item.dueDate || item.completed) return false;
+                const diffHours = (new Date(item.dueDate).getTime() - Date.now()) / (1000 * 3600);
+                return diffHours > 0 && diffHours <= 48;
+            });
+            const upcomingDeadlines = (state.schoolDeadlines || []).filter(dl => {
+                if (!dl || !dl.deadline_date) return false;
+                const diffHours = (new Date(dl.deadline_date).getTime() - Date.now()) / (1000 * 3600);
+                return diffHours > 0 && diffHours <= 48;
+            });
+            return upcomingWIS.length + upcomingDeadlines.length;
+        }
+
+        if (serverId === 'media') {
+            // Nová shoda na filmu
+            return state.unreadMatchesCount || 0;
+        }
+    } catch (e) {
+        return 0;
+    }
+
+    return 0;
+}
+
+/**
  * Vyrenderuje ikony serverů do levé lišty (#servers-container)
  */
 export function renderServersList() {
@@ -310,6 +382,7 @@ export function renderServersList() {
     serverDefinitions.forEach((server, index) => {
         const isActive = server.id === currentServerId;
         const isHome = server.id === 'home';
+        const mentionCount = getServerMentionCount(server.id);
 
         html += `
             <div class="server-item-wrapper relative w-full flex items-center justify-center py-1 group" data-server="${server.id}">
@@ -328,6 +401,13 @@ export function renderServersList() {
                     </span>
                 </button>
 
+                <!-- Discord Red Mention Badge (Bottom-Right, unclipped) -->
+                ${mentionCount > 0 ? `
+                    <span class="server-badge" aria-label="${mentionCount} notifikací">
+                        ${mentionCount}
+                    </span>
+                ` : ''}
+
                 <!-- Discord Tooltip Bubble -->
                 <div class="server-tooltip hidden md:group-hover:flex absolute left-[78px] z-[100] px-3 py-1.5 rounded-lg bg-[#18191c]/95 backdrop-blur-md text-white text-xs font-bold whitespace-nowrap shadow-2xl border border-white/10 items-center pointer-events-none animate-fade-in">
                     <span>${server.name}</span>
@@ -335,6 +415,7 @@ export function renderServersList() {
                 </div>
             </div>
         `;
+
 
         // Add divider separator after Home/DM server
         if (isHome) {
@@ -390,3 +471,64 @@ export function updateServerActiveStates(activeServerId) {
         }
     });
 }
+
+/**
+ * Aplikuje dynamické CSS proměnné a ambientní záři podle aktivního serveru
+ * @param {string} serverId 
+ */
+export function applyServerAmbientTheme(serverId) {
+    const server = getServerById(serverId || state.currentServer || 'home');
+    if (!server) return;
+
+    const root = document.documentElement;
+    if (root) {
+        root.style.setProperty('--server-current-accent', server.color || '#5865F2');
+        root.style.setProperty('--server-current-glow', `${server.color}26`);
+        root.style.setProperty('--server-current-gradient', server.gradient || `linear-gradient(135deg, ${server.color}, #7289DA)`);
+    }
+
+    // Aktualizace drobečkového odznaku serveru v horní liště
+    const badgeEl = document.getElementById('header-server-badge');
+    const iconEl = document.getElementById('header-server-icon');
+    const nameEl = document.getElementById('header-server-name');
+
+    if (badgeEl) {
+        badgeEl.style.backgroundColor = `${server.color}22`;
+        badgeEl.style.borderColor = `${server.color}44`;
+    }
+    if (iconEl) iconEl.innerHTML = server.icon;
+    if (nameEl) nameEl.textContent = server.name;
+}
+
+/**
+ * Synchronizuje zůstatek Love Coins v hlavičce aplikace
+ */
+export function updateHeaderLoveCoins() {
+    const el = document.getElementById('header-love-coins-count');
+    if (!el || !state) return;
+
+    const isMeJose = state.currentUser?.id === state.user_ids?.jose;
+    const isMeKlarka = state.currentUser?.id === state.user_ids?.klarka;
+    const myCoins = isMeJose ? (state.loveCoins?.jose || 0) : (isMeKlarka ? (state.loveCoins?.klarka || 0) : (state.loveCoins?.jose || 0));
+
+    const prevVal = parseInt(el.textContent, 10) || 0;
+    el.textContent = myCoins;
+
+    const sidebarEl = document.getElementById('sidebar-coins-display');
+    if (sidebarEl) sidebarEl.textContent = myCoins;
+
+    if (myCoins !== prevVal) {
+        const btn = document.getElementById('header-love-coins-btn');
+        if (btn) {
+            btn.classList.remove('coin-bounce');
+            void btn.offsetWidth; // trigger reflow
+            btn.classList.add('coin-bounce');
+        }
+    }
+}
+
+if (typeof window !== 'undefined') {
+    window.updateHeaderLoveCoins = updateHeaderLoveCoins;
+}
+
+

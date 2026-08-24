@@ -278,8 +278,22 @@ export async function ensureFactsData(force = false) {
 export async function ensureTopicsData(force = false) {
     if (state._loaded.conv_topics && !force && !isStale('topics')) return;
     try {
-        const { data } = await supabase.from('conversation_topics').select('*');
+        if (!state.topicProgress) state.topicProgress = {};
+        const [{ data }, progressRes] = await Promise.all([
+            supabase.from('conversation_topics').select('*'),
+            state.currentUser?.id ? supabase.from('topic_progress').select('*').eq('user_id', state.currentUser.id) : Promise.resolve({ data: [] })
+        ]);
         if (data) state.conversationTopics = data.map(t => ({ id: t.id, title: t.title, icon: t.icon, color: t.color, desc: t.description, questions: t.questions }));
+        if (progressRes?.data) {
+            progressRes.data.forEach(row => {
+                state.topicProgress[row.topic_id] = {
+                    index: row.current_index || 0,
+                    completed: row.is_completed || false,
+                    bookmarks: row.bookmarks || [],
+                    doneIndices: row.completed_indices || []
+                };
+            });
+        }
         markLoaded('conv_topics');
         stateEvents.emit('topics');
     } catch (e) { console.error("Topics Load Error:", e); }
@@ -588,13 +602,18 @@ export async function ensureLoveShopData(force = false) {
             const { data: uCoupons, error: uError } = await supabase
                 .from('user_coupons')
                 .select('*, love_shop_items(*)')
-                .eq('owner_id', state.currentUser.id)
+                .or(`owner_id.eq.${state.currentUser.id},creator_id.eq.${state.currentUser.id}`)
+                .order('is_fulfilled', { ascending: true })
                 .order('is_redeemed', { ascending: true })
                 .order('has_star', { ascending: false })
                 .order('created_at', { ascending: false });
 
             if (uError) throw uError;
-            if (uCoupons) state.inventory = uCoupons;
+            if (uCoupons) {
+                state.userCoupons = uCoupons;
+                state.inventory = uCoupons.filter(c => c.owner_id === state.currentUser.id);
+                state.partnerObligations = uCoupons.filter(c => c.owner_id !== state.currentUser.id);
+            }
         }
 
         markLoaded('loveShop');
@@ -665,5 +684,89 @@ export async function ensureNutritionData(force = false) {
         console.warn("Nutrition Data Load fallback / offline:", e);
     }
 }
+
+export async function ensureCycleData(force = false) {
+    if (state._loaded.cycle && !force && !isStale('cycle')) return;
+    try {
+        const sixMonthsAgo = getMonthsAgoDateString(6);
+        const [logsRes, settingsRes] = await Promise.all([
+            supabase.from('cycle_logs').select('*').gte('date_key', sixMonthsAgo).order('date_key', { ascending: true }),
+            supabase.from('cycle_settings').select('*')
+        ]);
+
+        if (logsRes.data) {
+            state.cycleLogs = logsRes.data;
+        }
+        if (settingsRes.data && settingsRes.data.length > 0) {
+            const userSetting = settingsRes.data.find(s => s.user_id === state.currentUser?.id) || settingsRes.data[0];
+            if (userSetting) {
+                state.cycleSettings = { ...state.cycleSettings, ...userSetting };
+            }
+        }
+        markLoaded('cycle');
+        stateEvents.emit('cycle');
+    } catch (e) {
+        console.warn("Cycle data load fallback / offline:", e);
+    }
+}
+
+export async function ensureStepData(force = false) {
+    if (state._loaded.steps && !force && !isStale('steps')) return;
+    try {
+        const threeMonthsAgo = getMonthsAgoDateString(3);
+        const { data } = await supabase.from('activity_step_logs').select('*').gte('date_key', threeMonthsAgo).order('date_key', { ascending: true });
+        if (data) {
+            const grouped = {};
+            data.forEach(item => {
+                grouped[item.date_key] = item;
+            });
+            state.stepLogs = grouped;
+        }
+        markLoaded('steps');
+        stateEvents.emit('steps');
+    } catch (e) {
+        console.warn("Step data load fallback / offline:", e);
+    }
+}
+
+export async function ensureBiohacksData(force = false) {
+    if (state._loaded.biohacks && !force && !isStale('biohacks')) return;
+    try {
+        const threeMonthsAgo = getMonthsAgoDateString(3);
+        const { data } = await supabase.from('biohack_logs').select('*').gte('date_key', threeMonthsAgo).order('date_key', { ascending: true });
+        if (data) {
+            const grouped = {};
+            data.forEach(item => {
+                grouped[item.date_key] = item;
+            });
+            state.biohackLogs = grouped;
+        }
+        markLoaded('biohacks');
+        stateEvents.emit('biohacks');
+    } catch (e) {
+        console.warn("Biohacks data load fallback / offline:", e);
+    }
+}
+
+export async function ensureSleepData(force = false) {
+    if (state._loaded.sleep && !force && !isStale('sleep')) return;
+    try {
+        const threeMonthsAgo = getMonthsAgoDateString(3);
+        const { data } = await supabase.from('sleep_logs').select('*').gte('date_key', threeMonthsAgo).order('date_key', { ascending: true });
+        if (data) {
+            const grouped = {};
+            data.forEach(item => {
+                grouped[item.date_key] = item;
+            });
+            state.sleepLogs = grouped;
+        }
+        markLoaded('sleep');
+        stateEvents.emit('sleep');
+    } catch (e) {
+        console.warn("Sleep data load fallback / offline:", e);
+    }
+}
+
+
 
 

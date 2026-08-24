@@ -9,7 +9,7 @@ import {
     VOUCHER_PRICES,
     KEY_CHANNELS,
     recordChannelExploration
-} from '../../js/modules/manual.js';
+} from '../../js/domains/system/manual/index.js';
 
 describe('Manual Channel & Interactive Guide Module (#návod)', () => {
     beforeEach(() => {

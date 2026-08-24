@@ -283,6 +283,72 @@ export function playFanfare() {
     }
 }
 
+/**
+ * Plays a muted Discord-like server switch pop
+ */
+export function playServerPop() {
+    if (!isSoundEnabled()) return;
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        const osc = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(140, now + 0.08);
+
+        gainNode.gain.setValueAtTime(0.001, now);
+        gainNode.gain.linearRampToValueAtTime(0.12, now + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+        osc.connect(gainNode);
+        gainNode.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.09);
+    } catch (e) {
+        console.warn("[Sound] Failed to play server pop:", e);
+    }
+}
+
+/**
+ * Plays a triumphant success chord for achievements, workout done, coin awards
+ */
+export function playSuccessChime() {
+    if (!isSoundEnabled()) return;
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        // F-major triad: F5 (698.46), A5 (880.00), C6 (1046.50), F6 (1396.91)
+        const freqs = [698.46, 880.00, 1046.50, 1396.91];
+        freqs.forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.type = 'sine';
+            const startTime = now + idx * 0.05;
+            const endTime = startTime + 0.5;
+
+            osc.frequency.setValueAtTime(freq, startTime);
+
+            gain.gain.setValueAtTime(0.001, startTime);
+            gain.gain.linearRampToValueAtTime(0.1, startTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, endTime);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.start(startTime);
+            osc.stop(endTime + 0.05);
+        });
+    } catch (e) {
+        console.warn("[Sound] Failed to play success chime:", e);
+    }
+}
+
 // Global window event listener to resume AudioContext upon first interaction
 if (typeof window !== 'undefined') {
     const resumeContext = () => {
@@ -295,4 +361,5 @@ if (typeof window !== 'undefined') {
     window.addEventListener('click', resumeContext);
     window.addEventListener('keydown', resumeContext);
 }
+
 

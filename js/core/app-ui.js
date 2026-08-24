@@ -58,7 +58,7 @@ export function checkAppUpdate() {
 
 export function toggleUserPopout() {
     triggerHaptic('light');
-    import('../modules/profile.js').then(m => m.toggleUserPopout());
+    import('../domains/system/profile.js').then(m => m.toggleUserPopout());
 }
 
 export function toggleMobileMenu() {
@@ -366,6 +366,355 @@ export function setupMobileCollapsibleHeaders() {
         }
     }, { passive: true });
 }
+
+let pomodoroInterval = null;
+let pomodoroRemainingSeconds = 0;
+
+/**
+ * Spustí Pomodoro fokus časovač v Dynamic Island widgetu
+ * @param {number} [minutes=25] 
+ */
+export function startPomodoroTimer(minutes = 25) {
+    const bar = document.getElementById('global-workout-mini-bar');
+    if (!bar) return;
+
+    if (pomodoroInterval) {
+        clearInterval(pomodoroInterval);
+        pomodoroInterval = null;
+    }
+
+    pomodoroRemainingSeconds = minutes * 60;
+    triggerHaptic('success');
+
+    const icon = document.getElementById('mini-bar-icon');
+    const title = document.getElementById('mini-bar-title');
+    const subtitle = document.getElementById('mini-bar-subtitle');
+    const timer = document.getElementById('mini-bar-timer');
+    const badge = document.getElementById('mini-bar-set-badge');
+    const btnText = document.getElementById('mini-bar-btn-text');
+    const quickBtn = document.getElementById('mini-bar-quick-set-btn');
+
+    if (icon) icon.className = 'fas fa-brain text-blue-400';
+    if (title) title.textContent = 'Pomodoro Fokus';
+    if (subtitle) subtitle.textContent = 'Hluboké soustředění 📚';
+    if (badge) badge.textContent = `${minutes}m`;
+    if (btnText) btnText.textContent = 'Ukončit';
+
+    bar.className = bar.className.replace(/border-amber-500\/\d+/g, 'border-blue-500/40');
+    bar.classList.remove('hidden');
+    bar.classList.add('flex', 'mode-pomodoro');
+
+    if (quickBtn) {
+        quickBtn.onclick = (e) => {
+            e.stopPropagation();
+            stopPomodoroTimer();
+        };
+    }
+
+    const updateDisplay = () => {
+        const m = Math.floor(pomodoroRemainingSeconds / 60);
+        const s = pomodoroRemainingSeconds % 60;
+        if (timer) timer.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    };
+
+    updateDisplay();
+
+    pomodoroInterval = setInterval(() => {
+        pomodoroRemainingSeconds--;
+        if (pomodoroRemainingSeconds <= 0) {
+            clearInterval(pomodoroInterval);
+            pomodoroInterval = null;
+            import('./sound.js').then(s => s.playSuccessChime?.());
+            import('./utils.js').then(u => u.triggerConfetti?.());
+            import('./theme.js').then(t => t.showNotification('🎉 Pomodoro dokončeno! Skvělá práce, dej si 5 minut pauzu! ☕', 'success'));
+            triggerHaptic('pr_record');
+            stopPomodoroTimer();
+        } else {
+            updateDisplay();
+        }
+    }, 1000);
+}
+
+export function stopPomodoroTimer() {
+    if (pomodoroInterval) {
+        clearInterval(pomodoroInterval);
+        pomodoroInterval = null;
+    }
+    const bar = document.getElementById('global-workout-mini-bar');
+    if (bar) {
+        bar.classList.add('hidden');
+        bar.classList.remove('flex', 'mode-pomodoro');
+    }
+    triggerHaptic('light');
+}
+
+export function openBottomNavQuickActionSheet(channelId) {
+    triggerHaptic('medium');
+    const existing = document.getElementById('bottom-nav-quick-sheet');
+    if (existing) existing.remove();
+
+    let title = 'Rychlá akce';
+    let subtitle = 'Vyber okamžitou akci';
+    let actions = [];
+
+    if (channelId === 'gym-tracker' || channelId === 'nutrition' || channelId === 'sleep' || channelId === 'body-metrics') {
+        title = '⚡ Rychlý Fitness Zápis';
+        subtitle = 'Zdraví & Fitness';
+        actions = [
+            {
+                label: '💧 +250 ml Vody',
+                desc: 'Přidat sklenici vody do dnešního pitného režimu',
+                icon: '<i class="fas fa-tint text-sky-400"></i>',
+                run: () => {
+                    import('./state.js').then(s => {
+                        const today = new Date().toISOString().split('T')[0];
+                        if (!s.state.healthData) s.state.healthData = {};
+                        if (!s.state.healthData[today]) s.state.healthData[today] = { water: 0 };
+                        s.state.healthData[today].water = (s.state.healthData[today].water || 0) + 1;
+                        s.saveStateToCache();
+                        import('./theme.js').then(t => t.showNotification('💧 Vypito +250ml vody! (+10 XP)', 'success'));
+                        import('../domains/entertainment/levels.js').then(l => l.updateRelationshipXP(10));
+                    });
+                }
+            },
+            {
+                label: '🏋️ Nový Trénink',
+                desc: 'Otevřít logování tréninku',
+                icon: '<i class="fas fa-dumbbell text-amber-400"></i>',
+                run: () => {
+                    window.switchChannel('gym-tracker');
+                    setTimeout(() => {
+                        const btn = document.querySelector('[onclick*="openNewWorkoutModal"]') || document.getElementById('btn-new-workout');
+                        btn?.click();
+                    }, 300);
+                }
+            },
+            {
+                label: '⚖️ Zapsat Dnešní Váhu',
+                desc: 'Rychlý záznam tělesné hmotnosti',
+                icon: '<i class="fas fa-weight text-emerald-400"></i>',
+                run: () => {
+                    window.switchChannel('body-metrics');
+                }
+            }
+        ];
+    } else if (channelId === 'calendar' || channelId === 'dashboard') {
+        title = '📅 Rychlé Plánování';
+        subtitle = 'Společný kalendář & Můj Den';
+        actions = [
+            {
+                label: '➕ Přidat Událost do Kalendáře',
+                desc: 'Vytvořit novou schůzku nebo plán',
+                icon: '<i class="fas fa-calendar-plus text-indigo-400"></i>',
+                run: () => {
+                    window.switchChannel('calendar');
+                    setTimeout(() => {
+                        const btn = document.querySelector('[onclick*="openEventModal"]') || document.getElementById('btn-add-event');
+                        btn?.click();
+                    }, 300);
+                }
+            },
+            {
+                label: '🥂 Navrhnout Rande',
+                desc: 'Vybrat místo a čas pro společný večer',
+                icon: '<i class="fas fa-glass-cheers text-pink-400"></i>',
+                run: () => {
+                    window.switchChannel('dateplanner');
+                }
+            },
+            {
+                label: '⏱️ Spustit Pomodoro Fokus (25m)',
+                desc: 'Režim soustředění s mini panelem nahoře',
+                icon: '<i class="fas fa-brain text-amber-400"></i>',
+                run: () => {
+                    startPomodoroTimer(25);
+                }
+            }
+        ];
+    } else if (channelId === 'love-shop' || channelId === 'dateplanner' || channelId === 'timeline' || channelId === 'letters') {
+        title = '💖 Láska & Zážitky';
+        subtitle = 'Společné okamžiky';
+        actions = [
+            {
+                label: '🎁 Otevřít Moje Kupóny',
+                desc: 'Zobrazit zakoupené a platné kupóny',
+                icon: '<i class="fas fa-ticket-alt text-amber-400"></i>',
+                run: () => {
+                    window.switchChannel('love-shop');
+                }
+            },
+            {
+                label: '💌 Napsat Zamilovaný Dopis',
+                desc: 'Zanechat vzkaz pro partnera',
+                icon: '<i class="fas fa-envelope-open-text text-pink-400"></i>',
+                run: () => {
+                    window.switchChannel('letters');
+                }
+            },
+            {
+                label: '🫀 Poslat Tlukot Srdce',
+                desc: 'Haptický dotek na dálku',
+                icon: '<i class="fas fa-heartbeat text-rose-500"></i>',
+                run: () => {
+                    window.switchChannel('dotek');
+                }
+            }
+        ];
+    } else if (channelId === 'schedule' || channelId === 'study-planner' || channelId === 'dorm-hub' || channelId === 'finance-tracker') {
+        title = '🎓 VUT FIT & Studentský Hub';
+        subtitle = 'Škola, kolej a finance';
+        actions = [
+            {
+                label: '📚 Přidat Úkol / Zkoušku',
+                desc: 'Nový záznam do studijního plánu',
+                icon: '<i class="fas fa-tasks text-blue-400"></i>',
+                run: () => {
+                    window.switchChannel('study-planner');
+                }
+            },
+            {
+                label: '🏢 Časovač Pračky na Koleji',
+                desc: 'Nastavit odpočet praní na bloku',
+                icon: '<i class="fas fa-soap text-cyan-400"></i>',
+                run: () => {
+                    window.switchChannel('dorm-hub');
+                }
+            },
+            {
+                label: '💰 Zapsat Výdaj / Nákup',
+                desc: 'Rychlý zápis do rozpočtu',
+                icon: '<i class="fas fa-receipt text-yellow-400"></i>',
+                run: () => {
+                    window.switchChannel('finance-tracker');
+                }
+            }
+        ];
+    } else {
+        title = '⚡ Rychlé Nástroje';
+        subtitle = 'Kiscord Rychlá Volba';
+        actions = [
+            {
+                label: '🔍 Hledat cokoliv (Ctrl+K)',
+                desc: 'Otevřít vyhledávací Command Paletu',
+                icon: '<i class="fas fa-search text-indigo-400"></i>',
+                run: () => {
+                    window.openCommandPalette?.();
+                }
+            },
+            {
+                label: '🎨 Změnit Vzhled & Téma',
+                desc: 'Přepnout barevný motiv Kiscordu',
+                icon: '<i class="fas fa-palette text-pink-400"></i>',
+                run: () => {
+                    window.switchChannel('appearance');
+                }
+            }
+        ];
+    }
+
+    const backdrop = document.createElement('div');
+    backdrop.id = 'bottom-nav-quick-sheet';
+    backdrop.className = 'quick-action-sheet-backdrop flex items-end sm:items-center justify-center p-4';
+    backdrop.onclick = (e) => {
+        if (e.target === backdrop) backdrop.remove();
+    };
+
+    let actionsHtml = actions.map((act, i) => `
+        <button class="w-full text-left p-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] active:scale-[0.98] border border-white/5 hover:border-white/15 transition-all flex items-center gap-3.5 group select-none shadow-sm"
+                data-quick-idx="${i}">
+            <div class="w-10 h-10 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-lg flex-shrink-0 group-hover:scale-110 transition-transform">
+                ${act.icon}
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="font-black text-white text-xs tracking-tight">${act.label}</div>
+                <div class="text-[10px] text-gray-400 truncate">${act.desc}</div>
+            </div>
+            <i class="fas fa-chevron-right text-gray-500 text-xs group-hover:text-white transition-colors"></i>
+        </button>
+    `).join('');
+
+    backdrop.innerHTML = `
+        <div class="quick-action-sheet-card w-full max-w-sm rounded-3xl bg-[#1e1f22]/95 backdrop-blur-2xl border border-white/10 shadow-2xl p-5 flex flex-col gap-3 mb-16 sm:mb-0">
+            <div class="flex justify-between items-center pb-2 border-b border-white/10">
+                <div>
+                    <h3 class="font-black text-white text-sm tracking-tight">${title}</h3>
+                    <p class="text-[10px] text-gray-400 font-medium">${subtitle}</p>
+                </div>
+                <button onclick="document.getElementById('bottom-nav-quick-sheet')?.remove()" 
+                        class="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white text-xs transition">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="flex flex-col gap-2">
+                ${actionsHtml}
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(backdrop);
+
+    // Bind action clicks
+    backdrop.querySelectorAll('[data-quick-idx]').forEach(btn => {
+        btn.onclick = () => {
+            const idx = parseInt(btn.getAttribute('data-quick-idx'), 10);
+            triggerHaptic('light');
+            backdrop.remove();
+            actions[idx]?.run();
+        };
+    });
+}
+
+export function setupBottomNavLongPress() {
+    const nav = document.getElementById('mobile-bottom-nav');
+    if (!nav || nav.dataset.longPressBound) return;
+    nav.dataset.longPressBound = 'true';
+
+    let pressTimer = null;
+
+    const startPress = (el) => {
+        const channelId = el.getAttribute('data-nav-channel');
+        if (!channelId) return;
+
+        pressTimer = setTimeout(() => {
+            openBottomNavQuickActionSheet(channelId);
+            pressTimer = null;
+        }, 450);
+    };
+
+    const cancelPress = () => {
+        if (pressTimer) {
+            clearTimeout(pressTimer);
+            pressTimer = null;
+        }
+    };
+
+    nav.addEventListener('touchstart', (e) => {
+        const btn = e.target.closest('.mobile-nav-btn[data-nav-channel]');
+        if (btn) startPress(btn);
+    }, { passive: true });
+
+    nav.addEventListener('touchmove', cancelPress, { passive: true });
+    nav.addEventListener('touchend', cancelPress, { passive: true });
+    nav.addEventListener('touchcancel', cancelPress, { passive: true });
+
+    // Right-click / context menu support for desktop testing
+    nav.addEventListener('contextmenu', (e) => {
+        const btn = e.target.closest('.mobile-nav-btn[data-nav-channel]');
+        if (btn) {
+            e.preventDefault();
+            const channelId = btn.getAttribute('data-nav-channel');
+            openBottomNavQuickActionSheet(channelId);
+        }
+    });
+}
+
+if (typeof window !== 'undefined') {
+    window.startPomodoroTimer = startPomodoroTimer;
+    window.stopPomodoroTimer = stopPomodoroTimer;
+    window.openBottomNavQuickActionSheet = openBottomNavQuickActionSheet;
+    window.setupBottomNavLongPress = setupBottomNavLongPress;
+}
+
 
 
 

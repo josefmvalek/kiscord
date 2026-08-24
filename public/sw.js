@@ -117,11 +117,15 @@ self.addEventListener('notificationclick', (event) => {
                             url: targetUrl
                         });
                     }
-                    return;
-                }
-            }
-            // Pokud žádné okno neběží, otevři nové s query parametrem cílového kanálu
-            return clients.openWindow(targetUrl);
-        })
-    );
+// Periodic Background Sync Event — noční/ranní pre-fetch denních dat
+self.addEventListener('periodicsync', (event) => {
+    if (event.tag === 'kiscord-morning-sync') {
+        console.log('[SW] Periodic morning sync triggered.');
+        event.waitUntil(
+            caches.open(CACHE_NAME).then((cache) => {
+                return cache.addAll(ASSETS_TO_CACHE);
+            })
+        );
+    }
 });
+

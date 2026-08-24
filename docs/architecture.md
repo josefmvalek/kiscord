@@ -136,13 +136,29 @@ The app remains fully functional in airplanes, subways, or during connectivity d
 | File | Responsibility |
 |---|---|
 | [`js/core/auth.js`](../js/core/auth.js) | Supabase authentication, session handling, and user metadata |
-| [`js/core/router.js`](../js/core/router.js) | Dynamic module routing, channel categories, and View Transitions |
+| [`js/core/router.js`](../js/core/router.js) | Router Facade aggregating Channel Registry, Navigation and Module Loader |
+| [`js/core/module-lifecycle.js`](../js/core/module-lifecycle.js) | `AppModule` lifecycle contract, `CleanupCollector` and legacy adapter |
 | [`js/core/servers.js`](../js/core/servers.js) | Discord 7-server architecture, server switching, active state indicators |
-| [`js/core/state.js`](../js/core/state.js) | Global reactive state container, Pub/Sub event bus, cache persistence |
+| [`js/core/state.js`](../js/core/state.js) | Reactive state facade unifying Domain Store Slices and SWR cache |
+| [`js/core/state/`](../js/core/state/) | Dedicated domain store slices (auth, gym, health, couple, fit, media, settings, event-bus) |
+| [`js/core/repositories/`](../js/core/repositories/) | Data access layer (BaseRepository, GymRepository, HealthRepository, FinanceRepository, MediaRepository) |
 | [`js/core/idb.js`](../js/core/idb.js) | High-capacity IndexedDB async storage engine (keyval & media stores) |
 | [`js/core/loaders.js`](../js/core/loaders.js) | On-demand lazy data loaders for channels |
-| [`js/core/offline.js`](../js/core/offline.js) | Offline retry queue (`kiscord_sync_queue`) and safe write wrappers |
+| [`js/core/offline.js`](../js/core/offline.js) | Conflict-aware offline retry queue with exponential backoff (`kiscord_sync_queue`) |
+| [`js/core/security.js`](../js/core/security.js) | XSS sanitization and safe template tagging (`escapeHTML`, `safeHTML`) |
 | [`js/core/sync.js`](../js/core/sync.js) | Realtime WebSockets, mood synchronization, user presence, and live canvas |
 | [`js/core/theme.js`](../js/core/theme.js) | 7 visual themes engine (Dark, Light, Tetris, Valentines, Forest, Gold) |
 | [`js/core/sound.js`](../js/core/sound.js) | Audio effects and sound notifications |
 | [`js/core/ui.js`](../js/core/ui.js) | Global UI utilities (modals, toasts, confettis, confirmation dialogs) |
+
+---
+
+## 📑 Architecture Decision Records (ADR)
+
+Historie a zdůvodnění všech zásadních architektonických rozhodnutí jsou evidovány v adresáři **[`docs/adr/`](adr/README.md)**:
+* **[ADR-0001: Pure Vanilla JS Architecture with Dynamic ES Modules and SWR](adr/0001-vanilla-js-swr-architecture.md)**
+* **[ADR-0002: Supabase PostgreSQL Backend with Row Level Security (RLS)](adr/0002-supabase-postgresql-rls.md)**
+* **[ADR-0003: Modularize State Management into Domain Store Slices & Reactive Bus](adr/0003-domain-store-slices.md)**
+* **[ADR-0004: Standardized Module Lifecycle Interface & Router Decoupling](adr/0004-module-lifecycle-router-decoupling.md)**
+* **[ADR-0005: Conflict-Aware Offline Sync Queue with Exponential Backoff](adr/0005-resilient-offline-sync-conflict-detection.md)**
+

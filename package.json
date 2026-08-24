@@ -13,7 +13,8 @@
     "test:ui": "vitest --ui",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "typecheck": "tsc -p jsconfig.json"
+    "typecheck": "tsc -p jsconfig.json",
+    "types:db": "supabase gen types typescript --local > js/types/database.d.ts"
   },
   "repository": {
     "type": "git",
@@ -41,6 +42,7 @@
     "vitest": "^1.4.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
     "cwebp": "^3.2.0"
   }
 }

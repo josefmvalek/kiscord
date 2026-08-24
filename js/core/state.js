@@ -1,155 +1,75 @@
+/**
+ * Kiscord Reactive State Core & Domain Facade
+ * Provides unified access to all Domain Store Slices, Typed EventBus and SWR IndexedDB Cache.
+ */
+
 import { supabase } from './supabase.js';
 import { isJosef, isKlarka } from './auth.js';
-import { idbGet, idbSet, idbDelete } from './idb.js';
+import { eventBus, stateEvents } from './state/event-bus.js';
+import { saveStateToCache as saveToCache, loadStateFromCache as loadFromCache } from './state/store-persistence.js';
 
-// Cache buster: 2026-03-25-20-30
-const STATE_CACHE_KEY = 'kiscord_state_cache';
-const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
+import { initialAuthState } from './state/auth-store.js';
+import { initialGymState } from './state/gym-store.js';
+import { initialHealthState } from './state/health-store.js';
+import { initialCoupleState } from './state/couple-store.js';
+import { initialFitState } from './state/fit-store.js';
+import { initialMediaState } from './state/media-store.js';
+import { initialSettingsState } from './state/settings-store.js';
+
+import {
+    ensureCalendarData,
+    ensureLibraryData,
+    ensureTimelineData,
+    ensureMaturaData,
+    ensureBucketListData,
+    ensureMapData,
+    ensureAchievementsData,
+    ensureFactsData,
+    ensureTopicsData,
+    ensureGamesData,
+    ensureDrawStrokesData,
+    ensureDailyQuizData,
+    ensureDailyArchiveData,
+    ensureAllHealthData,
+    ensureRegeneraceData,
+    ensureAssetsData,
+    refreshMaturaTopics,
+    ensureShiftsData,
+    ensureFinancesData,
+    ensureChallengesData,
+    ensureDiaryData,
+    ensureGymData,
+    ensureLoveShopData,
+    ensureStudyData,
+    resetLazyLoaders
+} from './loaders.js';
 
 /** @type {import('../types/state.js').AppState} */
-const state = {
-    shifts: {},
-    tetris: { jose: 0, klarka: 0 },
+export const state = {
+    // Navigation & Global UI State
     currentServer: "home",
     currentChannel: "welcome",
     lastServerChannels: {},
-    topicProgress: {},
-    schoolEvents: [],
+    dateFilter: "all",
     calendarFilter: "all",
     isViewingBookmarks: false,
     currentTopicId: null,
     currentQuestionIndex: null,
     topicSessionHistory: [],
+    topicProgress: {},
     funFactProgress: {},
     pendingResetId: null,
-    startDate: "2025-12-24",
-    healthData: {},
-    dateFilter: "all",
     mapInstance: null,
-    quizAnswers: { score: 0, completed: false },
-    watchlist: [],
-    route: [],
-    ratings: {},
-    dateRatings: {},
-    dateRoute: [],
-    watchHistory: {},
-    plannedDates: {},
-    movieHistory: {}, // { 'yyyy-mm-dd': [{ media_id, rating, status }] }
-    currentUser: { name: 'Klárka', email: '' },
-    isValentine: false,
-    messageCount: 0, // Pro achievement Social Butterfly
-    factsLibrary: { octopus: [], owl: [], raccoon: [], fun: [], penis: [] },
-    factFavorites: [],
-    library: { movies: [], series: [], games: [] },
-    timelineEvents: [],
-    bucketList: [],
-    timelineHighlights: {},
-    dateLocations: [],
-    conversationTopics: [],
-    achievementCategories: [],
-    achievementDefinitions: [],
-    achievements: [],
-    dailyQuestion: null,
-    dailyAnswers: [],
-    gameQuestions: [],
-    gamePrompts: [],
-    gameVotes: [],
-    drawStrokes: [],
-    pinnedDrawing: null,
-    coopQuests: [],
-    brigadeFinances: [],
-    brigadeChallenges: [],
-    brigadeDiary: [],
-    gymExercises: [],
-    gymTemplates: [],
-    gymLogs: [],
-    gymPRs: [],
-    gymBodyMeasurements: [],
-    schoolDeadlines: [],
-    schoolSubjects: [],
-    scheduleItems: [],
-    loveCoins: { jose: 0, klarka: 0 },
-    inventory: [],
-    shopItems: [],
-    nutritionLogs: {},
-    nutritionTargets: {
-        josef: { calories: 2500, protein: 160, carbs: 290, fats: 75, fiber: 30 },
-        klarka: { calories: 1900, protein: 110, carbs: 220, fats: 60, fiber: 25 }
-    },
-    biometricsProfiles: {
-        josef: { gender: 'male', age: 24, height_cm: 184, activityLevel: 'moderate', goal: 'maintain', targetWeight_kg: 82.0 },
-        klarka: { gender: 'female', age: 23, height_cm: 168, activityLevel: 'moderate', goal: 'maintain', targetWeight_kg: 60.0 }
-    },
-    savedFoods: [],
-    user_ids: { jose: null, klarka: null },
-    loadError: false, // Track if initial load failed
-    maturaProgress: {}, // { item_id: { jose: { status, notes }, klarka: { status, notes } } }
-    maturaStreaks: { jose: 0, klarka: 0 },
-    maturaSchedule: [],
-    maturaAchievements: [],
-    maturaTopics: {}, // { category_id: [topics] }
-    maturaKBContent: {}, // { item_id: { content, updated_at } },
-    regeneraceContent: null, // { key: content_object }
-    assets: {}, // Dynamic mapping for Storage URLs
-    settings: {
-        theme: 'default',
-        glassmorphism: true,
-        blurIntensity: 10,
-        haptics: true,
-        soundEnabled: true,
-        timelineViewMode: 'list',
-        pinnedPhotos: [],
-        sidebar: {
-            hiddenChannels: [],
-            channelOrder: [],
-            categoryOrder: [],
-            channelCategoryMap: {},
-            collapsedCategories: ['📦 ARCHIV', '⚙️ SYSTÉM & INFO']
-        },
-        dashboardWidgets: {
-            loveShop: true,
-            health: true,
-            supplements: true,
-            schoolDorm: true,
-            dailyQuestion: true,
-            scheduleWidget: false,
-            studyPlannerWidget: false,
-            tetris: false,
-            quests: false,
-            funfacts: false,
-            memoryBoard: false,
-            alpskaHlidka: false,
-            austrianWord: false
-        },
+    loadError: false,
+    assets: {},
+    regeneraceContent: null,
 
-        notifications: {
-            nativeEnabled: false,
-            reminders: {
-                water: { enabled: true, interval: 120, haptic: true, sound: false },
-                pills: { enabled: true, reminders: [{ time: '08:00', label: 'Léky' }], haptic: true, sound: true },
-                bedtime: { enabled: true, time: '22:30', haptic: true, sound: false }
-            },
-            partner: {
-                sunlight: { enabled: true, haptic: true, sound: true },
-                dailyQuestions: { enabled: true, haptic: true, sound: true },
-                letters: { enabled: true, haptic: true, sound: true },
-                planning: { enabled: true, haptic: true, sound: true },
-                mood: { enabled: true, haptic: true, sound: true },
-                sleep: { enabled: true, haptic: true, sound: true }
-            },
-            system: {
-                quests: { enabled: true, haptic: true, sound: false },
-                dates: { enabled: true, haptic: true, sound: true }
-            }
-        }
-    },
-
-    // Lazy Load Flags
+    // Lazy load flags
     _loaded: {
         calendar: false,
         timeline: false,
         library: false,
-        matura: false, // Renamed from topics for clarity
+        matura: false,
         achievements: false,
         games: false,
         facts: false,
@@ -162,232 +82,29 @@ const state = {
         diary: false,
         gym: false,
         loveShop: false
-    }
+    },
+
+    // Domain State Slices
+    ...initialAuthState,
+    ...initialGymState,
+    ...initialHealthState,
+    ...initialCoupleState,
+    ...initialFitState,
+    ...initialMediaState,
+    ...structuredClone(initialSettingsState)
 };
 
-// --- PUB/SUB EVENT BUS ---
-// Lightweight reactive notifications for state changes.
-// Usage: stateEvents.on('bucketlist', () => re-render); stateEvents.emit('bucketlist');
-const _listeners = {};
-const stateEvents = {
-    on(event, callback) {
-        if (!_listeners[event]) _listeners[event] = [];
-        _listeners[event].push(callback);
-        // Return unsubscribe function
-        return () => {
-            _listeners[event] = _listeners[event].filter(cb => cb !== callback);
-        };
-    },
-    emit(event, data) {
-        (_listeners[event] || []).forEach(cb => {
-            try { cb(data); } catch (e) { console.error(`[stateEvents] Error in '${event}' listener:`, e); }
-        });
-    },
-    off(event, callback) {
-        if (_listeners[event]) {
-            _listeners[event] = _listeners[event].filter(cb => cb !== callback);
-        }
-    }
-};
-
-let _settingsSyncTimeout = null;
-
-/**
- * Save current application state to high-capacity IndexedDB cache.
- * @returns {Promise<boolean>}
- */
-async function saveStateToCache() {
-    const cacheData = {
-        shifts: state.shifts,
-        healthData: state.healthData,
-        timelineEvents: state.timelineEvents,
-        dateLocations: state.dateLocations,
-        achievements: state.achievements,
-        achievementCategories: state.achievementCategories,
-        achievementDefinitions: state.achievementDefinitions,
-        coopQuests: state.coopQuests,
-        dailyQuestion: state.dailyQuestion,
-        dailyAnswers: state.dailyAnswers,
-        tetris: state.tetris,
-        user_ids: state.user_ids,
-        settings: state.settings,
-        // Extended SWR Caching Keys
-        maturaProgress: state.maturaProgress,
-        maturaStreaks: state.maturaStreaks,
-        maturaSchedule: state.maturaSchedule,
-        maturaTopics: state.maturaTopics,
-        library: state.library,
-        watchlist: state.watchlist,
-        watchHistory: state.watchHistory,
-        regeneraceContent: state.regeneraceContent,
-        brigadeFinances: state.brigadeFinances,
-        brigadeChallenges: state.brigadeChallenges,
-        brigadeDiary: state.brigadeDiary,
-        gymExercises: state.gymExercises,
-        gymTemplates: state.gymTemplates,
-        gymLogs: state.gymLogs,
-        gymPRs: state.gymPRs,
-        loveCoins: state.loveCoins,
-        inventory: state.inventory,
-        shopItems: state.shopItems,
-        nutritionLogs: state.nutritionLogs,
-        nutritionTargets: state.nutritionTargets,
-        biometricsProfiles: state.biometricsProfiles,
-        savedFoods: state.savedFoods
-    };
-
-    // Save asynchronously to IndexedDB (non-blocking, multi-gigabyte capacity)
-    const success = await idbSet(STATE_CACHE_KEY, cacheData);
-
-    // Debounced sync of settings to Supabase profiles table
-    if (state.currentUser?.id) {
-        if (_settingsSyncTimeout) clearTimeout(_settingsSyncTimeout);
-        _settingsSyncTimeout = setTimeout(() => {
-            supabase.from('profiles').upsert({ 
-                id: state.currentUser.id,
-                username: state.currentUser.name || state.currentUser.email,
-                email: state.currentUser.email,
-                settings: state.settings 
-            }, { onConflict: 'id' })
-                .then(({ error }) => { if (error) console.error('[State] Failed to sync settings:', error); })
-                .catch(e => console.error('[State] Settings sync exception:', e));
-        }, 2000);
-    }
-
-    return success;
+export function saveStateToCache() {
+    return saveToCache(state);
 }
 
-/**
- * Hydrate state from IndexedDB (with transparent legacy localStorage migration).
- * @returns {Promise<boolean>}
- */
-async function loadStateFromCache() {
-    try {
-        // 1. Try to load from high-capacity IndexedDB
-        let data = await idbGet(STATE_CACHE_KEY);
-
-        // 2. Automated Migration: If not in IndexedDB yet, check legacy localStorage
-        if (!data) {
-            const legacyCached = localStorage.getItem(STATE_CACHE_KEY);
-            if (legacyCached) {
-                try {
-                    data = JSON.parse(legacyCached);
-                    // Silently migrate into IndexedDB and clean up legacy localStorage key
-                    await idbSet(STATE_CACHE_KEY, data);
-                    localStorage.removeItem(STATE_CACHE_KEY);
-                    console.log('[State] Successfully migrated cache from localStorage to IndexedDB.');
-                } catch (err) {
-                    console.warn('[State] Failed to parse legacy cache:', err);
-                }
-            }
-        }
-
-        if (data) {
-            // Deep merge safety for critical config objects
-            if (data.settings) {
-                data.settings = { ...state.settings, ...data.settings };
-                if (data.settings.dashboardWidgets) {
-                    data.settings.dashboardWidgets = { ...state.settings.dashboardWidgets, ...data.settings.dashboardWidgets };
-                } else {
-                    data.settings.dashboardWidgets = state.settings.dashboardWidgets;
-                }
-                if (data.settings.sidebar) {
-                    data.settings.sidebar = { ...state.settings.sidebar, ...data.settings.sidebar };
-                    if (data.settings.sidebar.channelCategoryMap) {
-                        data.settings.sidebar.channelCategoryMap = { ...state.settings.sidebar.channelCategoryMap, ...data.settings.sidebar.channelCategoryMap };
-                    } else {
-                        data.settings.sidebar.channelCategoryMap = state.settings.sidebar.channelCategoryMap;
-                    }
-                } else {
-                    data.settings.sidebar = state.settings.sidebar;
-                }
-                if (data.settings.notifications) {
-                    if (data.settings.notifications.reminders) delete data.settings.notifications.reminders.movement;
-                    if (data.settings.notifications.partner) {
-                        delete data.settings.notifications.partner.confessions;
-                        delete data.settings.notifications.partner.mood;
-                    }
-
-                    if (data.settings.notifications.reminders?.pills) {
-                        const p = data.settings.notifications.reminders.pills;
-                        if (p.time && !p.times && !p.reminders) {
-                            p.times = [p.time];
-                            delete p.time;
-                        }
-                        if (p.times && !p.reminders) {
-                            p.reminders = p.times.map(t => ({ time: t, label: 'Léky' }));
-                            delete p.times;
-                        }
-                        if (!p.reminders) p.reminders = [{ time: '08:00', label: 'Léky' }];
-                    }
-
-                    data.settings.notifications = {
-                        nativeEnabled: data.settings.notifications.nativeEnabled ?? state.settings.notifications.nativeEnabled,
-                        reminders: { ...state.settings.notifications.reminders, ...data.settings.notifications.reminders },
-                        partner: { ...state.settings.notifications.partner, ...data.settings.notifications.partner },
-                        system: { ...state.settings.notifications.system, ...data.settings.notifications.system }
-                    };
-                } else {
-                    data.settings.notifications = state.settings.notifications;
-                }
-            }
-
-            // Deep merge safety for extended objects
-            if (data.library) {
-                data.library = { movies: [], series: [], games: [], ...data.library };
-            }
-            if (data.maturaStreaks) {
-                data.maturaStreaks = { jose: 0, klarka: 0, ...data.maturaStreaks };
-            }
-            if (data.maturaProgress) {
-                data.maturaProgress = { ...data.maturaProgress };
-            }
-            if (data.maturaTopics) {
-                data.maturaTopics = { ...data.maturaTopics };
-            }
-            if (data.watchHistory) {
-                data.watchHistory = { ...data.watchHistory };
-            }
-            if (data.loveCoins) {
-                data.loveCoins = { jose: 0, klarka: 0, ...data.loveCoins };
-            }
-            if (data.inventory) {
-                data.inventory = [ ...data.inventory ];
-            }
-            if (data.shopItems) {
-                data.shopItems = [ ...data.shopItems ];
-            }
-            if (data.nutritionLogs) {
-                data.nutritionLogs = { ...data.nutritionLogs };
-            }
-            if (data.nutritionTargets) {
-                data.nutritionTargets = { ...data.nutritionTargets };
-            }
-            if (data.biometricsProfiles) {
-                data.biometricsProfiles = { ...data.biometricsProfiles };
-            }
-            if (data.savedFoods) {
-                data.savedFoods = [ ...data.savedFoods ];
-            }
-
-            delete data.currentChannel;
-            delete data.currentServer;
-            delete data.lastServerChannels;
-
-            Object.assign(state, data);
-            return true;
-        }
-    } catch (e) {
-        console.error("Cache load error:", e);
-    }
-    return false;
+export function loadStateFromCache() {
+    return loadFromCache(state);
 }
 
-async function initializeState() {
+export async function initializeState() {
     const hasCached = await loadStateFromCache();
 
-    // SWR Strategy: If we have cache, resolve immediately to show UI.
-    // The actual fetch happens as a background "revalidate" process.
     const revalidate = async () => {
         if (!navigator.onLine && hasCached) return;
 
@@ -395,7 +112,6 @@ async function initializeState() {
 
         try {
             console.log("[State] Revalidating state from Supabase...");
-            // Essential Dashboard Data (minimal fetch)
             const [
                 { data: healthHistory },
                 { data: todayDates },
@@ -417,8 +133,6 @@ async function initializeState() {
             if (pinnedData?.data) state.pinnedDrawing = pinnedData.data.drawings;
 
             if (healthHistory && Array.isArray(healthHistory)) {
-                // Clear old keys to avoid ghosts if entries were deleted in DB
-                // state.healthData = {}; // Optional: might cause flicker
                 healthHistory.forEach(row => {
                     state.healthData[row.date_key] = {
                         water: row.water, sleep: row.sleep, mood: row.mood,
@@ -453,17 +167,21 @@ async function initializeState() {
                 }
             }
 
-            // 2. Fetch profiles to map IDs and load settings for the current user
             try {
-                const { data: pData, error: pError } = await supabase.from('profiles').select('id, username, email, settings');
+                const { data: pData, error: pError } = await supabase.from('profiles').select('id, username, email, settings, love_coins');
                 if (!pError && pData) {
                     pData.forEach(p => {
                         const lowerName = (p.username || "").toLowerCase();
                         const lowerEmail = (p.email || "").toLowerCase();
-                        if (lowerName.includes('josef') || lowerName.includes('jozk') || lowerEmail === 'jozkavalek@email.cz' || lowerEmail.includes('josef')) state.user_ids.jose = p.id;
-                        if (lowerName.includes('klara') || lowerName.includes('vyslouzil') || lowerEmail === 'vyslouzilova.klara07@gmail.com' || lowerEmail.includes('klara')) state.user_ids.klarka = p.id;
+                        if (lowerName.includes('josef') || lowerName.includes('jozk') || lowerEmail === 'jozkavalek@email.cz' || lowerEmail.includes('josef')) {
+                            state.user_ids.jose = p.id;
+                            if (typeof p.love_coins === 'number') state.loveCoins.jose = p.love_coins;
+                        }
+                        if (lowerName.includes('klara') || lowerName.includes('vyslouzil') || lowerEmail === 'vyslouzilova.klara07@gmail.com' || lowerEmail.includes('klara')) {
+                            state.user_ids.klarka = p.id;
+                            if (typeof p.love_coins === 'number') state.loveCoins.klarka = p.love_coins;
+                        }
                         
-                        // Load cloud settings for current user if present
                         if (state.currentUser?.id && p.id === state.currentUser.id && p.settings) {
                             const mergedSettings = { ...state.settings, ...p.settings };
                             if (p.settings.dashboardWidgets) {
@@ -482,7 +200,7 @@ async function initializeState() {
                                 const collapsed = Array.isArray(p.settings.sidebar.collapsedCategories)
                                     ? p.settings.sidebar.collapsedCategories
                                     : (state.settings.sidebar.collapsedCategories || ['📦 ARCHIV', '⚙️ SYSTÉM & INFO']);
-                                mergedSettings.sidebar = { hiddenChannels: hidden, channelOrder: order, categoryOrder: catOrder, channelCategoryMap: catMap, collapsedCategories: collapsed };
+                                mergedSettings.sidebar = { hiddenChannels: hidden, channelOrder: order, categoryOrder: catOrder, collapsedCategories: collapsed };
                             }
                             if (p.settings.notifications) {
                                 mergedSettings.notifications = {
@@ -495,6 +213,7 @@ async function initializeState() {
                             state.settings = mergedSettings;
                         }
                     });
+                    stateEvents.emit('love_coins');
                 }
             } catch (err) { console.warn('[State] Profile fetch failed:', err); }
 
@@ -516,7 +235,6 @@ async function initializeState() {
             state.loadError = false;
             saveStateToCache();
 
-            // Notify UI that data is fresh
             stateEvents.emit('dashboard');
             stateEvents.emit('health');
             stateEvents.emit('settings_changed');
@@ -525,10 +243,9 @@ async function initializeState() {
             }
             console.log("[State] Revalidation complete.");
 
-            // Background load non-critical data
             if (typeof window.requestIdleCallback === 'function') {
                 window.requestIdleCallback(() => {
-                    ensureAssetsData(); // Load custom asset mapping
+                    ensureAssetsData();
                     ensureFactsData();
                     ensureAchievementsData();
                 });
@@ -540,40 +257,12 @@ async function initializeState() {
     };
 
     if (hasCached) {
-        // Kick off revalidation in background, but return immediately
         revalidate();
         return Promise.resolve();
     } else {
-        // Must wait for first fetch if nothing in cache
         return revalidate();
     }
-}export {
-    ensureCalendarData,
-    ensureLibraryData,
-    ensureTimelineData,
-    ensureMaturaData,
-    ensureBucketListData,
-    ensureMapData,
-    ensureAchievementsData,
-    ensureFactsData,
-    ensureTopicsData,
-    ensureGamesData,
-    ensureDrawStrokesData,
-    ensureDailyQuizData,
-    ensureDailyArchiveData,
-    ensureAllHealthData,
-    ensureRegeneraceData,
-    ensureAssetsData,
-    refreshMaturaTopics,
-    ensureShiftsData,
-    ensureFinancesData,
-    ensureChallengesData,
-    ensureDiaryData,
-    ensureGymData,
-    ensureLoveShopData,
-    ensureStudyData,
-    resetLazyLoaders
-} from './loaders.js';
+}
 
 /**
  * Awards Love Coins to the current user, plays sound, updates state and shows toast.
@@ -613,18 +302,38 @@ export async function awardLoveCoinsToCurrentUser(amount, reason = '') {
         }
 
         window.dispatchEvent(new CustomEvent('love-shop-updated'));
-        import('../modules/levels.js').then(m => m.renderLevelUI?.()).catch(() => {});
+        import('../domains/entertainment/levels.js').then(m => m.renderLevelUI?.()).catch(() => {});
     } catch (e) {
         console.warn("[Coins] Failed to award love coins:", e);
     }
 }
 
 export {
-    state,
+    eventBus,
     stateEvents,
-    saveStateToCache,
-    loadStateFromCache,
-    initializeState
+    ensureCalendarData,
+    ensureLibraryData,
+    ensureTimelineData,
+    ensureMaturaData,
+    ensureBucketListData,
+    ensureMapData,
+    ensureAchievementsData,
+    ensureFactsData,
+    ensureTopicsData,
+    ensureGamesData,
+    ensureDrawStrokesData,
+    ensureDailyQuizData,
+    ensureDailyArchiveData,
+    ensureAllHealthData,
+    ensureRegeneraceData,
+    ensureAssetsData,
+    refreshMaturaTopics,
+    ensureShiftsData,
+    ensureFinancesData,
+    ensureChallengesData,
+    ensureDiaryData,
+    ensureGymData,
+    ensureLoveShopData,
+    ensureStudyData,
+    resetLazyLoaders
 };
-
-

@@ -65,7 +65,7 @@ vi.mock('../../js/core/ui.js', () => ({
 
 import { state } from '../../js/core/state.js';
 import { showConfirmDialog } from '../../js/core/theme.js';
-import { filterTabExercises, openEditExerciseModal, deleteExercise, startWorkout, onSetInputChange, updateGlobalWorkoutBadge } from '../../js/modules/gym.js';
+import { filterTabExercises, openEditExerciseModal, deleteExercise, startWorkout, onSetInputChange, updateGlobalWorkoutBadge } from '../../js/domains/fitness/gym/index.js';
 
 describe('Gym Exercises Management', () => {
   beforeEach(() => {
@@ -217,7 +217,7 @@ describe('Gym Exercises Management', () => {
 
   describe('Pokročilé logování sérií a Časovač odpočinku', () => {
     it('should pre-fill sets with type Normal and support set type cycling', async () => {
-      const { cycleSetType } = await import('../../js/modules/gym.js');
+      const { cycleSetType } = await import('../../js/domains/fitness/gym/index.js');
       startWorkout('temp-1');
 
       // The workout should have 4 sets of Bench Press by default, all 'N' type
@@ -248,7 +248,7 @@ describe('Gym Exercises Management', () => {
     });
 
     it('should dynamically append a new ad-hoc exercise during active workout', async () => {
-      const { addExerciseToActiveWorkout } = await import('../../js/modules/gym.js');
+      const { addExerciseToActiveWorkout } = await import('../../js/domains/fitness/gym/index.js');
       
       // Start initial workout
       state.gymTemplates = [
@@ -269,7 +269,7 @@ describe('Gym Exercises Management', () => {
 
   describe('Vizuální prvky cviků & Průvodce technikou', () => {
     it('should generate image thumbnail when image_url exists and emoji fallback when absent', async () => {
-      const { getExerciseThumbnailHtml, getCategoryEmoji } = await import('../../js/modules/gym.js');
+      const { getExerciseThumbnailHtml, getCategoryEmoji } = await import('../../js/domains/fitness/gym/index.js');
 
       expect(getCategoryEmoji('Hrudník')).toBe('🦍');
       expect(getCategoryEmoji('Záda')).toBe('🦅');
@@ -285,7 +285,7 @@ describe('Gym Exercises Management', () => {
     });
 
     it('should render technique guide modal with instructions and personal record', async () => {
-      const { openExerciseGuideModal } = await import('../../js/modules/gym.js');
+      const { openExerciseGuideModal } = await import('../../js/domains/fitness/gym/index.js');
 
       state.gymExercises.push({
         id: 'guide_ex',
@@ -314,7 +314,7 @@ describe('Gym Exercises Management', () => {
     });
 
     it('should prefill create exercise form inputs from preset template', async () => {
-      const { applyExercisePreset, POPULAR_EXERCISE_PRESETS } = await import('../../js/modules/gym.js');
+      const { applyExercisePreset, POPULAR_EXERCISE_PRESETS } = await import('../../js/domains/fitness/gym/index.js');
 
       expect(POPULAR_EXERCISE_PRESETS.length).toBeGreaterThan(5);
 
@@ -339,7 +339,7 @@ describe('Gym Exercises Management', () => {
 
   describe('Phase 3: Couple Challenges & Advanced Workout Modes', () => {
     it('correctly detects sync workout day when both users trained', async () => {
-      const { isSyncWorkoutDay, getAllSyncDays } = await import('../../js/modules/gym/coupleGym.js');
+      const { isSyncWorkoutDay, getAllSyncDays } = await import('../../js/domains/fitness/gym/coupleGym.js');
       state.currentUser = { id: 'user-1' };
       state.gymLogs = [
         { id: 'log-1', user_id: 'user-1', date_key: '2026-08-19' },
@@ -351,7 +351,7 @@ describe('Gym Exercises Management', () => {
     });
 
     it('returns false for sync day if only one user trained', async () => {
-      const { isSyncWorkoutDay, getAllSyncDays } = await import('../../js/modules/gym/coupleGym.js');
+      const { isSyncWorkoutDay, getAllSyncDays } = await import('../../js/domains/fitness/gym/coupleGym.js');
       state.currentUser = { id: 'user-1' };
       state.gymLogs = [
         { id: 'log-1', user_id: 'user-1', date_key: '2026-08-19' }
@@ -362,20 +362,26 @@ describe('Gym Exercises Management', () => {
     });
 
     it('calculates couple weekly streak correctly', async () => {
-      const { calculateCoupleStreak } = await import('../../js/modules/gym/coupleGym.js');
-      state.currentUser = { id: 'user-1' };
-      state.gymLogs = [
-        { id: 'log-1', user_id: 'user-1', date_key: '2026-08-19', logged_at: '2026-08-19T10:00:00Z' },
-        { id: 'log-2', user_id: 'user-2', date_key: '2026-08-19', logged_at: '2026-08-19T11:00:00Z' }
-      ];
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-08-19T12:00:00Z'));
+      try {
+        const { calculateCoupleStreak } = await import('../../js/domains/fitness/gym/coupleGym.js');
+        state.currentUser = { id: 'user-1' };
+        state.gymLogs = [
+          { id: 'log-1', user_id: 'user-1', date_key: '2026-08-19', logged_at: '2026-08-19T10:00:00Z' },
+          { id: 'log-2', user_id: 'user-2', date_key: '2026-08-19', logged_at: '2026-08-19T11:00:00Z' }
+        ];
 
-      const streak = calculateCoupleStreak();
-      expect(streak.currentStreakWeeks).toBeGreaterThanOrEqual(1);
-      expect(streak.thisWeekCompleted).toBe(true);
+        const streak = calculateCoupleStreak();
+        expect(streak.currentStreakWeeks).toBeGreaterThanOrEqual(1);
+        expect(streak.thisWeekCompleted).toBe(true);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it('initializes Circuit mode with rounds count and supports round increments', async () => {
-      const { incrementWorkoutRound, getActiveWorkout } = await import('../../js/modules/gym/activeWorkout.js');
+      const { incrementWorkoutRound, getActiveWorkout } = await import('../../js/domains/fitness/gym/activeWorkout.js');
       state.currentUser = { id: 'user-1' };
       state.gymTemplates = [
         {
@@ -402,7 +408,7 @@ describe('Gym Exercises Management', () => {
     });
 
     it('initializes AMRAP mode and supports round counting', async () => {
-      const { incrementWorkoutRound, decrementWorkoutRound, getActiveWorkout } = await import('../../js/modules/gym/activeWorkout.js');
+      const { incrementWorkoutRound, decrementWorkoutRound, getActiveWorkout } = await import('../../js/domains/fitness/gym/activeWorkout.js');
       state.currentUser = { id: 'user-1' };
       state.gymTemplates = [
         {
@@ -431,7 +437,7 @@ describe('Gym Exercises Management', () => {
     });
 
     it('preserves superset_group from template and allows cycling', async () => {
-      const { toggleExerciseSuperset, getActiveWorkout } = await import('../../js/modules/gym/activeWorkout.js');
+      const { toggleExerciseSuperset, getActiveWorkout } = await import('../../js/domains/fitness/gym/activeWorkout.js');
       state.currentUser = { id: 'user-1' };
       state.gymTemplates = [
         {
@@ -462,7 +468,7 @@ describe('Gym Exercises Management', () => {
 
   describe('Phase 4: Muscle Heat Map, REST MODE, Share Card & Wrapped', () => {
     it('calculates muscle heatmap sets and volume by muscle groups', async () => {
-      const { calculateMuscleHeatmap, renderMuscleHeatMapCard } = await import('../../js/modules/gym/muscleMap.js');
+      const { calculateMuscleHeatmap, renderMuscleHeatMapCard } = await import('../../js/domains/fitness/gym/muscleMap.js');
       state.currentUser = { id: 'user-1' };
       state.gymLogs = [
         {
@@ -502,7 +508,7 @@ describe('Gym Exercises Management', () => {
     });
 
     it('calculates fitness wrapped statistics with comparisons', async () => {
-      const { calculateFitnessWrapped } = await import('../../js/modules/gym/annualWrapped.js');
+      const { calculateFitnessWrapped } = await import('../../js/domains/fitness/gym/annualWrapped.js');
       state.currentUser = { id: 'user-1' };
       state.gymLogs = [
         {
@@ -535,7 +541,7 @@ describe('Gym Exercises Management', () => {
     });
 
     it('supports fullscreen rest mode controls and adjustment', async () => {
-      const { openRestModeOverlay, adjustRestTime, skipRestTimer } = await import('../../js/modules/gym/activeWorkout.js');
+      const { openRestModeOverlay, adjustRestTime, skipRestTimer } = await import('../../js/domains/fitness/gym/activeWorkout.js');
       state.currentUser = { id: 'user-1' };
       
       openRestModeOverlay();
@@ -551,7 +557,7 @@ describe('Gym Exercises Management', () => {
     });
 
     it('finds last exercise history for ghost performance data (Phase 5.1)', async () => {
-      const { getLastExerciseHistory } = await import('../../js/modules/gym/analytics.js');
+      const { getLastExerciseHistory } = await import('../../js/domains/fitness/gym/analytics.js');
       state.currentUser = { id: 'user-1' };
       state.gymLogs = [
         {
@@ -579,7 +585,7 @@ describe('Gym Exercises Management', () => {
     });
 
     it('supports free workout start without template (Phase 5.1)', async () => {
-      const { startFreeWorkout, getActiveWorkout } = await import('../../js/modules/gym/activeWorkout.js');
+      const { startFreeWorkout, getActiveWorkout } = await import('../../js/domains/fitness/gym/activeWorkout.js');
       startFreeWorkout();
       const active = getActiveWorkout();
       expect(active).not.toBeNull();
@@ -590,7 +596,7 @@ describe('Gym Exercises Management', () => {
     });
 
     it('supports exercise reordering up and down (Phase 5.2)', async () => {
-      const { startFreeWorkout, addExerciseToActiveWorkout, moveExerciseUp, moveExerciseDown, getActiveWorkout } = await import('../../js/modules/gym/activeWorkout.js');
+      const { startFreeWorkout, addExerciseToActiveWorkout, moveExerciseUp, moveExerciseDown, getActiveWorkout } = await import('../../js/domains/fitness/gym/activeWorkout.js');
       startFreeWorkout();
       addExerciseToActiveWorkout('bench_press');
       addExerciseToActiveWorkout('squat');
@@ -609,7 +615,7 @@ describe('Gym Exercises Management', () => {
     });
 
     it('supports swapping exercise alternative and saving machine notes (Phase 5.2)', async () => {
-      const { startFreeWorkout, addExerciseToActiveWorkout, swapExercise, saveExerciseNotes, getActiveWorkout } = await import('../../js/modules/gym/activeWorkout.js');
+      const { startFreeWorkout, addExerciseToActiveWorkout, swapExercise, saveExerciseNotes, getActiveWorkout } = await import('../../js/domains/fitness/gym/activeWorkout.js');
       startFreeWorkout();
       addExerciseToActiveWorkout('bench_press');
 
@@ -625,7 +631,7 @@ describe('Gym Exercises Management', () => {
     });
 
     it('supports cycling RIR and toggling checklist items (Phase 5.5)', async () => {
-      const { startFreeWorkout, addExerciseToActiveWorkout, cycleSetRir, toggleWorkoutChecklistItem, getActiveWorkout } = await import('../../js/modules/gym/activeWorkout.js');
+      const { startFreeWorkout, addExerciseToActiveWorkout, cycleSetRir, toggleWorkoutChecklistItem, getActiveWorkout } = await import('../../js/domains/fitness/gym/activeWorkout.js');
       startFreeWorkout();
       addExerciseToActiveWorkout('bench_press');
 

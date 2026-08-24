@@ -28,7 +28,7 @@ import {
   renderPlateBarbellVisual,
   STANDARD_PLATES,
   BAR_TYPES
-} from '../../js/modules/gym/tools.js';
+} from '../../js/domains/fitness/gym/tools.js';
 import { state } from '../../js/core/state.js';
 
 describe('Gym Tools: 1RM, Plate Calculator & Warm-up Generator', () => {

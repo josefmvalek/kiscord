@@ -25,7 +25,7 @@ vi.mock('../../js/core/sound.js', () => ({
 }));
 
 import { state } from '../../js/core/state.js';
-import { calculateCoupleWrapped } from '../../js/modules/coupleWrapped.js';
+import { calculateCoupleWrapped } from '../../js/domains/couple/wrapped/index.js';
 
 describe('Spotify-Style Couple Wrapped Analytics Engine', () => {
   beforeEach(() => {
