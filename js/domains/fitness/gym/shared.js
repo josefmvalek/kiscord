@@ -73,7 +73,7 @@ export function getPartnerEmoji() {
 export const defaultExercises = [
     {
         id: "bench_press",
-        name: "Bench Press s Velkou Činkou",
+        name: "Barbell Bench Press",
         category: "Hrudník",
         secondary_muscles: ["Triceps","Přední ramena"],
         instructions: "Lehněte si na rovnou lavici, lopatky stáhněte k sobě a dolů. Osu spusťte kontrolovaně ke spodní části hrudníku a s výdechem plynule vytlačte nahoru.",
@@ -83,7 +83,7 @@ export const defaultExercises = [
     },
     {
         id: "dumbbell_bench_press",
-        name: "Bench Press s Jednoručkami",
+        name: "Dumbbell Bench Press",
         category: "Hrudník",
         secondary_muscles: ["Triceps","Přední ramena"],
         instructions: "Lehněte si na rovnou lavici. Spouštějte jednoručky kontrolovaně do úrovně hrudníku s roztažením prsních svalů a plynule vytlačte zpět.",
@@ -93,7 +93,7 @@ export const defaultExercises = [
     },
     {
         id: "incline_barbell_bench",
-        name: "Tlaky na šikmé lavici s VČ",
+        name: "Incline Barbell Bench Press",
         category: "Hrudník",
         secondary_muscles: ["Horní hrudník","Přední ramena","Triceps"],
         instructions: "Lavici nastavte na úhel 30–45°. Osu spouštějte k horní části hrudníku (klíční kosti) a vytlačujte nahoru bez propínání loktů.",
@@ -103,7 +103,7 @@ export const defaultExercises = [
     },
     {
         id: "incline_dumbbell_press",
-        name: "Tlaky na šikmé lavici s JČ",
+        name: "Incline Dumbbell Press",
         category: "Hrudník",
         secondary_muscles: ["Horní hrudník","Přední ramena","Triceps"],
         instructions: "Na lavici se sklonem 30–45° spouštějte jednoručky po stranách hrudníku a vytlačujte je nahoru do jemného dotyku nad horními prsy.",
@@ -113,7 +113,7 @@ export const defaultExercises = [
     },
     {
         id: "decline_barbell_bench",
-        name: "Tlaky na negativně šikmé lavici s VČ",
+        name: "Decline Barbell Bench Press",
         category: "Hrudník",
         secondary_muscles: ["Spodní hrudník","Triceps"],
         instructions: "V leže hlavou dolů spouštějte činku ke spodní linii prsou. Skvělý cvik na plnost a spodní okraj prsních svalů.",
@@ -123,7 +123,7 @@ export const defaultExercises = [
     },
     {
         id: "decline_dumbbell_press",
-        name: "Tlaky na negativně šikmé lavici s JČ",
+        name: "Decline Dumbbell Press",
         category: "Hrudník",
         secondary_muscles: ["Spodní hrudník","Triceps"],
         instructions: "Hlavou dolů kontrolovaně spouštějte jednoručky a silou spodních prsou vytlačujte nahoru.",
@@ -133,7 +133,7 @@ export const defaultExercises = [
     },
     {
         id: "dumbbell_flys",
-        name: "Rozpažování s Jednoručkami na rovné lavici",
+        name: "Flat Dumbbell Flys",
         category: "Hrudník",
         secondary_muscles: ["Přední ramena"],
         instructions: "S mírně pokrčenými lokty spouštějte jednoručky do stran, dokud neucítíte intenzivní protažení prsních svalů, poté stáhněte zpět.",
@@ -143,7 +143,7 @@ export const defaultExercises = [
     },
     {
         id: "incline_dumbbell_flys",
-        name: "Rozpažování na šikmé lavici s JČ",
+        name: "Incline Dumbbell Flys",
         category: "Hrudník",
         secondary_muscles: ["Horní hrudník","Přední ramena"],
         instructions: "Na šikmé lavici rozpažujte paže obloukem do stran a v horní pozici zatněte horní část prsních svalů.",
@@ -153,7 +153,7 @@ export const defaultExercises = [
     },
     {
         id: "decline_dumbbell_flys",
-        name: "Rozpažování na negativní lavici s JČ",
+        name: "Decline Dumbbell Flys",
         category: "Hrudník",
         secondary_muscles: ["Spodní hrudník"],
         instructions: "Rozpažujte činky na negativně skloněné lavici s důrazem na protažení a zacílení spodních vláken prsního svalu.",
@@ -163,7 +163,7 @@ export const defaultExercises = [
     },
     {
         id: "cable_crossover",
-        name: "Protisměrné horní kladky (Cable Crossover)",
+        name: "Cable Crossover (High to Low)",
         category: "Hrudník",
         secondary_muscles: ["Vnitřní hrudník","Přední ramena"],
         instructions: "Stůjte mírně nakloněni dopředu mezi kladkami. Plynule stahujte madla před tělo a v dolní fázi zkřižte zápěstí pro maximální stisk.",
@@ -173,7 +173,7 @@ export const defaultExercises = [
     },
     {
         id: "cable_incline_fly",
-        name: "Spodní protisměrné kladky na horní prsa",
+        name: "Low Cable Flys (Upper Chest)",
         category: "Hrudník",
         secondary_muscles: ["Horní hrudník","Přední ramena"],
         instructions: "Z dolní polohy kladek táhněte madla obloukem zespodu nahoru před hrudník se silným zatnutím klíční části prsních svalů.",
@@ -183,7 +183,7 @@ export const defaultExercises = [
     },
     {
         id: "chest_dips",
-        name: "Kliky na bradlech (Dips) na hrudník",
+        name: "Chest Dips",
         category: "Hrudník",
         secondary_muscles: ["Triceps","Přední ramena"],
         instructions: "Předkloňte trup dopředu a lokty držte mírně od těla. Klesejte do pravého úhlu v loktech a vytlačte se nahoru.",
@@ -193,7 +193,7 @@ export const defaultExercises = [
     },
     {
         id: "push_ups",
-        name: "Kliky na zemi (Push-ups)",
+        name: "Push-ups",
         category: "Hrudník",
         secondary_muscles: ["Triceps","Střed těla","Přední ramena"],
         instructions: "Dlaně na šířku ramen, tělo jako struna. Klesejte hrudníkem k zemi a silou prsou a paží se vytlačte nahoru.",
@@ -203,7 +203,7 @@ export const defaultExercises = [
     },
     {
         id: "diamond_push_ups",
-        name: "Diamantové kliky (Diamond Push-ups)",
+        name: "Diamond Push-ups",
         category: "Hrudník",
         secondary_muscles: ["Triceps","Vnitřní hrudník"],
         instructions: "Spojte palce a ukazováčky pod hrudníkem do tvaru diamantu. Výborný cvik na triceps a středovou část prsou.",
@@ -213,7 +213,7 @@ export const defaultExercises = [
     },
     {
         id: "pec_deck",
-        name: "Pec-Deck / Butterfly na stroji",
+        name: "Pec Deck Machine (Butterfly)",
         category: "Hrudník",
         secondary_muscles: ["Přední ramena"],
         instructions: "Pevně opřete záda o lavičku stroje. Plynule svírejte ramena stroje před hrudníkem a na 1 sekundu stlačte prsa k sobě.",
@@ -223,7 +223,7 @@ export const defaultExercises = [
     },
     {
         id: "chest_press_machine",
-        name: "Chest Press na pákovém stroji",
+        name: "Machine Chest Press",
         category: "Hrudník",
         secondary_muscles: ["Triceps","Přední ramena"],
         instructions: "Nastavte výšku sedáku tak, aby madla byla v úrovni prsou. Vytlačujte zátěž dopředu s plnou kontrolou.",
@@ -233,7 +233,7 @@ export const defaultExercises = [
     },
     {
         id: "smith_bench_press",
-        name: "Bench Press na Multipressu (Smith Machine)",
+        name: "Smith Machine Bench Press",
         category: "Hrudník",
         secondary_muscles: ["Triceps","Přední ramena"],
         instructions: "Vedená dráha činky umožňuje bezpečné zacílení prsních svalů i bez sparingpartnera až do absolutního selhání.",
@@ -243,7 +243,7 @@ export const defaultExercises = [
     },
     {
         id: "smith_incline_press",
-        name: "Šikmé tlaky na Multipressu",
+        name: "Smith Machine Incline Press",
         category: "Hrudník",
         secondary_muscles: ["Horní hrudník","Přední ramena","Triceps"],
         instructions: "Nastavte lavičku do multipressu a zaměřte se na horní prsa s perfektní kontrolou tempa.",
@@ -253,7 +253,7 @@ export const defaultExercises = [
     },
     {
         id: "deadlift",
-        name: "Klasický Mrtvý Tah s Velkou Činkou",
+        name: "Barbell Conventional Deadlift",
         category: "Záda",
         secondary_muscles: ["Hýždě","Hamstringy","Trapézy","Vzpřimovače páteře"],
         instructions: "Osa nad středy chodidel, rovná záda, zpevněný trup. Zvedejte osu plynulým tahem nohou a pánve.",
@@ -263,7 +263,7 @@ export const defaultExercises = [
     },
     {
         id: "sumo_deadlift",
-        name: "Sumo Mrtvý Tah s VČ",
+        name: "Barbell Sumo Deadlift",
         category: "Záda",
         secondary_muscles: ["Hýždě","Vnitřní stehna","Spodní záda"],
         instructions: "Široký postoj, špičky vytočené do stran. Vzpřímený trup zapojuje více nohy a hýždě s menším zatížením beder.",
@@ -273,7 +273,7 @@ export const defaultExercises = [
     },
     {
         id: "pull_ups",
-        name: "Shyby na hrazdě nadhmatem",
+        name: "Pull-ups (Overhand Grip)",
         category: "Záda",
         secondary_muscles: ["Biceps","Zadní ramena","Předloktí"],
         instructions: "Široký úchop nadhmatem. Z plného visu táhněte hrudník k hrazdě, lokty stahujte k tělu a lopatky k sobě.",
@@ -283,7 +283,7 @@ export const defaultExercises = [
     },
     {
         id: "chin_ups",
-        name: "Shyby na hrazdě podhmatem (Chin-ups)",
+        name: "Chin-ups (Underhand Grip)",
         category: "Záda",
         secondary_muscles: ["Biceps","Široký zádový sval"],
         instructions: "Úchop podhmatem na šířku ramen. Masivně zapojuje bicepsy i spodní zádové svaly.",
@@ -293,7 +293,7 @@ export const defaultExercises = [
     },
     {
         id: "lat_pulldown",
-        name: "Stahování horní kladky nadhmatem",
+        name: "Wide-Grip Lat Pulldown",
         category: "Záda",
         secondary_muscles: ["Biceps","Zadní ramena"],
         instructions: "Mírný záklon, hrudník vypnutý. Tyč stahujte k horní části hrudníku a v dolní pozici zatněte křídla.",
@@ -303,7 +303,7 @@ export const defaultExercises = [
     },
     {
         id: "lat_pulldown_close",
-        name: "Stahování horní kladky s V-adaptérem",
+        name: "Cable Straight Arm Pulldown",
         category: "Záda",
         secondary_muscles: ["Biceps","Mezilopatkové svaly"],
         instructions: "Úzký neutrální úchop. Adaptér stahujte ke klíčním kostem pro hluboké protažení a šířku zad.",
@@ -313,7 +313,7 @@ export const defaultExercises = [
     },
     {
         id: "barbell_rows",
-        name: "Přítahy Velké Činky v předklonu (Bent Over Row)",
+        name: "Barbell Bent-Over Row",
         category: "Záda",
         secondary_muscles: ["Biceps","Trapézy","Zadní ramena"],
         instructions: "Předklon 45° s rovnými zády. Přitahujte osu k pupku, lokty veďte těsně podél těla.",
@@ -323,7 +323,7 @@ export const defaultExercises = [
     },
     {
         id: "pendlay_row",
-        name: "Pendlay Row (Přítahy VČ z podlahy)",
+        name: "Pendlay Row",
         category: "Záda",
         secondary_muscles: ["Trapézy","Biceps","Vzpřimovače páteře"],
         instructions: "Trup rovnoběžně se zemí. Každé opakování začíná z podlahy výbušným přitažením k hrudníku.",
@@ -333,7 +333,7 @@ export const defaultExercises = [
     },
     {
         id: "dumbbell_row_one_arm",
-        name: "Přítahy jednoručky s oporou o lavičku",
+        name: "Dumbbell One Arm Bent-over Row",
         category: "Záda",
         secondary_muscles: ["Biceps","Zadní ramena"],
         instructions: "Jedno koleno a dlaň na lavičce. Přitahujte činku obloukem k boku a stáhněte lopatku.",
@@ -343,7 +343,7 @@ export const defaultExercises = [
     },
     {
         id: "seated_cable_row",
-        name: "Přítahy spodní kladky v sedě (Seated Cable Row)",
+        name: "Seated Cable Row",
         category: "Záda",
         secondary_muscles: ["Biceps","Mezilopatkové svaly","Zadní ramena"],
         instructions: "Sedněte si rovně, hrudník dopředu. Táhněte madlo k pasu a silně stiskněte mezilopatkové svaly.",
@@ -353,7 +353,7 @@ export const defaultExercises = [
     },
     {
         id: "t_bar_row",
-        name: "Přítahy T-osy s oporou / ve stoji (T-Bar Row)",
+        name: "T-Bar Row",
         category: "Záda",
         secondary_muscles: ["Trapézy","Biceps","Střed těla"],
         instructions: "Pevný postoj v předklonu. Zvedejte T-osu k hrudníku pro budování maximální tloušťky zad.",
@@ -363,7 +363,7 @@ export const defaultExercises = [
     },
     {
         id: "chest_supported_row",
-        name: "Přítahy jednoruček na šikmé lavici s oporou hrudníku",
+        name: "Chest-Supported Incline Row",
         category: "Záda",
         secondary_muscles: ["Zadní ramena","Biceps","Mezilopatkové svaly"],
         instructions: "Lehněte si břichem na šikmou lavici. Eliminujete zatížení spodních zad a čistě izolujete mezilopatkové svaly.",
@@ -373,7 +373,7 @@ export const defaultExercises = [
     },
     {
         id: "straight_arm_pulldown",
-        name: "Stahování kladky s nataženými pažemi (Pullover na kladce)",
+        name: "Straight-Arm Cable Pullover",
         category: "Záda",
         secondary_muscles: ["Dlouhá hlava tricepsu","Pilovitý sval"],
         instructions: "S lehkým pokrčením v loktech stlačujte tyč obloukem dolů ke stehnům pro izolaci latissimů.",
@@ -383,7 +383,7 @@ export const defaultExercises = [
     },
     {
         id: "dumbbell_pullover",
-        name: "Pullover s jednoručkou přes lavičku",
+        name: "Dumbbell Pullover",
         category: "Záda",
         secondary_muscles: ["Hrudník","Triceps","Pilovitý sval"],
         instructions: "Lehněte si horní částí zad napříč přes lavici. Spouštějte činku za hlavu do hlubokého protažení.",
@@ -393,7 +393,7 @@ export const defaultExercises = [
     },
     {
         id: "hyperextension",
-        name: "Hyperextenze (Zanožování na římské lavici)",
+        name: "Hyperextension (on Bench)",
         category: "Záda",
         secondary_muscles: ["Hýždě","Hamstringy","Vzpřimovače páteře"],
         instructions: "Na šikmé lavici klesejte trupem dolů a plynule se narovnejte do roviny bez nadměrného prohnutí v bedrech.",
@@ -403,7 +403,7 @@ export const defaultExercises = [
     },
     {
         id: "good_mornings",
-        name: "Good Mornings s Velkou Činkou",
+        name: "Barbell Good Mornings",
         category: "Záda",
         secondary_muscles: ["Hamstringy","Hýždě","Vzpřimovače páteře"],
         instructions: "Činka na trapézech. S lehkým pokrčením kolen tlačte boky dozadu a předklánějte se v kyčlích.",
@@ -413,7 +413,7 @@ export const defaultExercises = [
     },
     {
         id: "shrugs_barbell",
-        name: "Krčení ramen s VČ (Barbell Shrugs)",
+        name: "Barbell Shrug",
         category: "Záda",
         secondary_muscles: ["Horní trapézy"],
         instructions: "Ve stoji zvedejte ramena přímo vzhůru k uším bez rotace ramen a nahoře zatněte trapézy.",
@@ -423,7 +423,7 @@ export const defaultExercises = [
     },
     {
         id: "shrugs_dumbbell",
-        name: "Krčení ramen s jednoručkami (Dumbbell Shrugs)",
+        name: "Dumbbell Shrug",
         category: "Záda",
         secondary_muscles: ["Horní trapézy"],
         instructions: "Držte jednoručky podél těla a zvedejte ramena nahoru s 1sekundovou výdrží v kontrakci.",
@@ -433,7 +433,7 @@ export const defaultExercises = [
     },
     {
         id: "military_press",
-        name: "Military Press / OHP ve stoje s VČ",
+        name: "Barbell Overhead Press (OHP)",
         category: "Ramena",
         secondary_muscles: ["Přední ramena","Triceps","Střed těla"],
         instructions: "Stůjte pevně, zpevněte břicho i hýždě. Vytlačte osu z klíčních kostí přímo nad hlavu.",
@@ -443,7 +443,7 @@ export const defaultExercises = [
     },
     {
         id: "shoulder_press_dumbbell",
-        name: "Tlaky na ramena s JČ v sedě",
+        name: "Seated Dumbbell Shoulder Press",
         category: "Ramena",
         secondary_muscles: ["Přední ramena","Triceps","Horní hrudník"],
         instructions: "Sedněte si s oporou zad. Vytlačujte jednoručky nad hlavu do jemného dotyku nahoře.",
@@ -453,7 +453,7 @@ export const defaultExercises = [
     },
     {
         id: "arnold_press",
-        name: "Arnoldovy tlaky s JČ",
+        name: "Arnold Press",
         category: "Ramena",
         secondary_muscles: ["Přední a střední ramena","Triceps"],
         instructions: "Začněte s dlaněmi k obličeji. Během tlaku vzhůru vytáčejte dlaně dopředu a nahoře propněte.",
@@ -463,7 +463,7 @@ export const defaultExercises = [
     },
     {
         id: "lateral_raises",
-        name: "Upažování s Jednoručkami ve stoje (Lateral Raise)",
+        name: "Dumbbell Lateral Raises",
         category: "Ramena",
         secondary_muscles: ["Trapézy"],
         instructions: "Mírný předklon, lokty lehce pokrčené. Zvedejte paže do stran do úrovně ramen, malíčky mírně nahoru.",
@@ -473,7 +473,7 @@ export const defaultExercises = [
     },
     {
         id: "seated_lateral_raises",
-        name: "Upažování s JČ v sedě",
+        name: "Seated Dumbbell Lateral Raises",
         category: "Ramena",
         secondary_muscles: ["Střední ramena"],
         instructions: "Sedněte si na lavičku, eliminujte kmitání nohou a čistě zvedejte činky do stran do roviny ramen.",
@@ -483,7 +483,7 @@ export const defaultExercises = [
     },
     {
         id: "cable_lateral_raise",
-        name: "Upažování na spodní kladce",
+        name: "Cable Lateral Raise",
         category: "Ramena",
         secondary_muscles: ["Střední ramena"],
         instructions: "Tahem lanka do strany udržujte konstantní tenzi ve svalu po celé dráze pohybu.",
@@ -493,7 +493,7 @@ export const defaultExercises = [
     },
     {
         id: "incline_lateral_raise",
-        name: "Upažování v leže na šikmé lavici na boku",
+        name: "Incline Lying Lateral Raise",
         category: "Ramena",
         secondary_muscles: ["Střední ramena"],
         instructions: "Lehněte si na bok na šikmou lavici. Extrémní zatížení středního deltového svalu v natažené pozici.",
@@ -503,7 +503,7 @@ export const defaultExercises = [
     },
     {
         id: "front_raises_dumbbell",
-        name: "Předpažování s jednoručkami",
+        name: "Dumbbell Full Can Lateral Raise",
         category: "Ramena",
         secondary_muscles: ["Přední ramena"],
         instructions: "Střídavě zvedejte činky přímo před sebe do výšky očí s mírně pokrčenými lokty.",
@@ -513,7 +513,7 @@ export const defaultExercises = [
     },
     {
         id: "front_barbell_raise",
-        name: "Předpažování s Velkou Činkou",
+        name: "Barbell Front Raise",
         category: "Ramena",
         secondary_muscles: ["Přední ramena","Horní hrudník"],
         instructions: "Uchopte osu nadhmatem a plynule zvedejte před sebe do úrovně ramen.",
@@ -523,7 +523,7 @@ export const defaultExercises = [
     },
     {
         id: "face_pulls",
-        name: "Face Pulls na horní kladce s lanem",
+        name: "Face Pulls (Rope Cable)",
         category: "Ramena",
         secondary_muscles: ["Zadní ramena","Rotátorová manžeta","Trapézy"],
         instructions: "Táhněte lano k očím/čelu s roztažením loktů a vnější rotací ramen pro zdravá a kulatá ramena.",
@@ -533,7 +533,7 @@ export const defaultExercises = [
     },
     {
         id: "rear_delt_fly_dumbbell",
-        name: "Zapažování s JČ v předklonu (Rear Delt Fly)",
+        name: "Dumbbell Reverse Fly",
         category: "Ramena",
         secondary_muscles: ["Zadní ramena","Mezilopatkové svaly"],
         instructions: "V hlubokém předklonu zvedejte činky do stran a soustřeďte se na izolaci zadní hlavy deltů.",
@@ -543,7 +543,7 @@ export const defaultExercises = [
     },
     {
         id: "reverse_pec_deck",
-        name: "Reverse Pec-Deck na zadní ramena",
+        name: "Reverse Pec Deck (Rear Delts)",
         category: "Ramena",
         secondary_muscles: ["Zadní ramena","Trapézy"],
         instructions: "Sedněte si čelem k opěrce stroje. Tlačte ramena stroje dozadu s lehkým pokrčením v loktech.",
@@ -553,7 +553,7 @@ export const defaultExercises = [
     },
     {
         id: "cable_rear_delt_fly",
-        name: "Křížové zapažování na kladkách na zadní ramena",
+        name: "Cross-Cable Rear Delt Fly",
         category: "Ramena",
         secondary_muscles: ["Zadní ramena","Mezilopatkové svaly"],
         instructions: "Uchopte protilehlá lanka bez madel a táhněte paže křížem do stran a dozadu.",
@@ -563,7 +563,7 @@ export const defaultExercises = [
     },
     {
         id: "upright_row_barbell",
-        name: "Přítahy činky k bradě (Upright Row s VČ)",
+        name: "Barbell Upright Row V. 2",
         category: "Ramena",
         secondary_muscles: ["Střední ramena","Trapézy"],
         instructions: "Osu tahejte podél těla nahoru k hrudníku, lokty vedou pohyb a směřují vzhůru.",
@@ -573,7 +573,7 @@ export const defaultExercises = [
     },
     {
         id: "upright_row_cable",
-        name: "Přítahy spodní kladky k bradě",
+        name: "Cable Wrist Curl",
         category: "Ramena",
         secondary_muscles: ["Střední ramena","Trapézy"],
         instructions: "Kladka udržuje plynulý odpor. Táhněte tyč podél trupu k bradě s lokty nahoře.",
@@ -583,7 +583,7 @@ export const defaultExercises = [
     },
     {
         id: "landmine_press",
-        name: "Landmine Press (Tlaky s ukotvenou osou)",
+        name: "Landmine Shoulder Press",
         category: "Ramena",
         secondary_muscles: ["Horní hrudník","Triceps","Střed těla"],
         instructions: "Jednoručně vytlačujte konec osy nahoru a dopředu. Šetrné k ramenním kloubům.",
@@ -593,7 +593,7 @@ export const defaultExercises = [
     },
     {
         id: "squat",
-        name: "Klasický Dřep s Velkou Činkou vzadu (Back Squat)",
+        name: "Barbell Back Squat",
         category: "Nohy",
         secondary_muscles: ["Hýždě","Hamstringy","Spodní záda"],
         instructions: "Osa na trapézech, nohy na šířku ramen. Klesejte boky dolů pod úroveň kolen, váha na celých chodidlech.",
@@ -603,7 +603,7 @@ export const defaultExercises = [
     },
     {
         id: "front_squat",
-        name: "Čelní Dřep (Front Squat s VČ)",
+        name: "Barbell Front Squat",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Střed těla","Hýždě"],
         instructions: "Osa leží na předních ramenech. Trup držte maximálně vzpřímený pro intenzivní zatížení kvadricepsů.",
@@ -613,7 +613,7 @@ export const defaultExercises = [
     },
     {
         id: "goblet_squat",
-        name: "Goblet Dřep s jednoručkou / kettlebellem",
+        name: "Goblet Squat (Dumbbell/Kettlebell)",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hýždě","Břicho"],
         instructions: "Činku držte oběma rukama u hrudníku. Dřepujte mezi kolena s rovnými zády a zpevněným břichem.",
@@ -623,7 +623,7 @@ export const defaultExercises = [
     },
     {
         id: "bulgarian_split_squat",
-        name: "Bulharské dřepy s JČ (Bulgarian Split Squat)",
+        name: "Bulgarian Split Squats",
         category: "Nohy",
         secondary_muscles: ["Hýždě","Kvadricepsy","Hamstringy"],
         instructions: "Jedna noha opřená vzadu o lavičku. Klesejte předním kolenem do pravého úhlu s důrazem na hýždě.",
@@ -633,7 +633,7 @@ export const defaultExercises = [
     },
     {
         id: "leg_press",
-        name: "Leg Press na šikmém stroji 45°",
+        name: "Leg Press 45°",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hýždě"],
         instructions: "Chodidla na šířku ramen na středu desky. Spouštějte závaží do 90° v kolenou a plynule vytlačte přes paty.",
@@ -643,7 +643,7 @@ export const defaultExercises = [
     },
     {
         id: "hack_squat",
-        name: "Hacken Dřep na stroji (Hack Squat)",
+        name: "Hack Squat Machine",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hýždě"],
         instructions: "Opřete se zády o opěrku stroje a klesejte do hlubokého dřepu pro maximální napumpování předních stehen.",
@@ -653,7 +653,7 @@ export const defaultExercises = [
     },
     {
         id: "leg_extensions",
-        name: "Předkopávání na stroji v sedě (Leg Extension)",
+        name: "Leg Extensions",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy"],
         instructions: "V sedě zvedejte nohy do úplného propnutí kolen a nahoře na 1 sekundu zatněte kvadricepsy.",
@@ -663,7 +663,7 @@ export const defaultExercises = [
     },
     {
         id: "lying_leg_curls",
-        name: "Zakopávání v leže na stroji (Lying Leg Curl)",
+        name: "Lying Leg Curls",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Lýtka"],
         instructions: "Lehněte si na břicho, pánev tlačte do podložky a přitahujte válec k hýždím se zatnutím hamstringů.",
@@ -673,7 +673,7 @@ export const defaultExercises = [
     },
     {
         id: "seated_leg_curls",
-        name: "Zakopávání v sedě na stroji (Seated Leg Curl)",
+        name: "Seated Leg Curls",
         category: "Nohy",
         secondary_muscles: ["Hamstringy"],
         instructions: "V sedě stlačujte válec pod kolena se silným zatnutím zadní strany stehen v plném rozsahu.",
@@ -683,7 +683,7 @@ export const defaultExercises = [
     },
     {
         id: "romanian_deadlift",
-        name: "Rumunský Mrtvý Tah s Velkou Činkou (RDL)",
+        name: "Barbell Romanian Deadlift (RDL)",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Hýždě","Spodní záda"],
         instructions: "Mírně pokrčená kolena. Tlačte boky dozadu a spouštějte osu pod kolena do plného protažení hamstringů.",
@@ -693,7 +693,7 @@ export const defaultExercises = [
     },
     {
         id: "dumbbell_rdl",
-        name: "Rumunský Mrtvý Tah s jednoručkami",
+        name: "Dumbbell Romanian Deadlift (RDL)",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Hýždě"],
         instructions: "S jednoručkami u stehen se předklánějte v kyčlích a plynulým tahem hýždí a hamstringů se vracejte nahoru.",
@@ -703,7 +703,7 @@ export const defaultExercises = [
     },
     {
         id: "hip_thrust_barbell",
-        name: "Hip Thrust s Velkou Činkou na lavičce",
+        name: "Isometric Wipers",
         category: "Nohy",
         secondary_muscles: ["Hýždě","Hamstringy"],
         instructions: "Lopatky opřené o lavičku, osa na bocích. Vytlačujte pánev nahoru do plného propnutí a zatnutí hýždí.",
@@ -713,7 +713,7 @@ export const defaultExercises = [
     },
     {
         id: "glute_bridge",
-        name: "Zvedání pánve na zemi (Glute Bridge)",
+        name: "Glute Bridge",
         category: "Nohy",
         secondary_muscles: ["Hýždě","Hamstringy"],
         instructions: "Lehněte si na záda s pokrčenými koleny a zvedejte pánev nahoru se silným stiskem hýždí.",
@@ -723,7 +723,7 @@ export const defaultExercises = [
     },
     {
         id: "walking_lunges",
-        name: "Výpady v chůzi s jednoručkami",
+        name: "Walking Dumbbell Lunges",
         category: "Nohy",
         secondary_muscles: ["Hýždě","Kvadricepsy","Hamstringy"],
         instructions: "Dělejte dlouhé kroky dopředu, zadní koleno těsně nad zem. Plynulý krok a rovný trup.",
@@ -733,7 +733,7 @@ export const defaultExercises = [
     },
     {
         id: "reverse_lunges",
-        name: "Výpady vzad s Velkou Činkou",
+        name: "Reverse Lunges",
         category: "Nohy",
         secondary_muscles: ["Hýždě","Kvadricepsy"],
         instructions: "Z výchozího stoje ukročte jednou nohou vzad a klesejte kolenem k zemi. Šetrnější ke kolenům.",
@@ -743,7 +743,7 @@ export const defaultExercises = [
     },
     {
         id: "standing_calf_raise",
-        name: "Výpony na lýtka ve stoje (Standing Calf Raise)",
+        name: "Barbell Standing Calf Raise",
         category: "Nohy",
         secondary_muscles: ["Dvojhlavý sval lýtkový (Gastrocnemius)"],
         instructions: "Z plného protažení paty dolů se zvedněte na špičky a podržte vrcholnou kontrakci na 1 sekundu.",
@@ -753,7 +753,7 @@ export const defaultExercises = [
     },
     {
         id: "seated_calf_raise",
-        name: "Výpony na lýtka v sedě (Seated Calf Raise)",
+        name: "Barbell Seated Calf Raise",
         category: "Nohy",
         secondary_muscles: ["Šikmý sval lýtkový (Soleus)"],
         instructions: "V sedě na stroji zvedejte špičky s důrazem na hloubku lýtka a plný rozsah pohybu.",
@@ -763,7 +763,7 @@ export const defaultExercises = [
     },
     {
         id: "abductor_machine",
-        name: "Roznožování na stroji v sedě (Abdukce)",
+        name: "Lever Seated Hip Abduction",
         category: "Nohy",
         secondary_muscles: ["Střední hýžďový sval"],
         instructions: "V sedě tlačte kolena od sebe do stran s krátkou výdrží v maximálním roznožení.",
@@ -773,7 +773,7 @@ export const defaultExercises = [
     },
     {
         id: "adductor_machine",
-        name: "Snožování na stroji v sedě (Addukce)",
+        name: "Lever Seated Hip Adduction",
         category: "Nohy",
         secondary_muscles: ["Přitahovače stehen (Vnitřní stehna)"],
         instructions: "Tlačte kolena plynule k sobě a zatněte vnitřní stranu stehen.",
@@ -783,7 +783,7 @@ export const defaultExercises = [
     },
     {
         id: "step_ups",
-        name: "Vystupování na lavičku / bednu s JČ (Step-ups)",
+        name: "Dumbbell Step-Ups",
         category: "Nohy",
         secondary_muscles: ["Hýždě","Kvadricepsy","Lýtka"],
         instructions: "Střídavě vystupujte celým chodidlem na lavičku a zvedejte tělo silou přední nohy.",
@@ -793,7 +793,7 @@ export const defaultExercises = [
     },
     {
         id: "barbell_curl",
-        name: "Bicepsový zdvih s Velkou Činkou ve stoje",
+        name: "Barbell Bicep Curl",
         category: "Ruce",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Stůjte vzpřímeně, lokty u těla. Zvedejte činku k hrudníku plynulým obloukem bez houpání tělem.",
@@ -803,7 +803,7 @@ export const defaultExercises = [
     },
     {
         id: "ez_bar_curl",
-        name: "Bicepsový zdvih s EZ osou",
+        name: "EZ-Bar Bicep Curl",
         category: "Ruce",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "EZ osa šetří zápěstí a lokty. Fixujte lokty u těla a táhněte činku silou bicepsů.",
@@ -813,7 +813,7 @@ export const defaultExercises = [
     },
     {
         id: "dumbbell_curl",
-        name: "Bicepsový zdvih s JČ se supinací",
+        name: "Dumbbell Biceps Curl",
         category: "Ruce",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Při zvedání vytáčejte malíček nahoru (supinace) pro maximální vrchol kontrakce bicepsu.",
@@ -823,7 +823,7 @@ export const defaultExercises = [
     },
     {
         id: "hammer_curls",
-        name: "Kladivové zdvihy s JČ (Hammer Curls)",
+        name: "Dumbbell Hammer Curls",
         category: "Ruce",
         secondary_muscles: ["Hluboký sval pažní (Brachialis)","Předloktí"],
         instructions: "Dlaně směřují k sobě po celou dobu. Buduje tloušťku paže a sílu úchopu.",
@@ -833,7 +833,7 @@ export const defaultExercises = [
     },
     {
         id: "incline_dumbbell_curl",
-        name: "Bicepsový zdvih na šikmé lavici s JČ",
+        name: "Incline Dumbbell Bicep Curl",
         category: "Ruce",
         secondary_muscles: ["Dlouhá hlava bicepsu"],
         instructions: "Na lavici s úhlem 45° nechte paže viset kolmo dolů pro extrémní protažení dlouhé hlavy bicepsu.",
@@ -843,7 +843,7 @@ export const defaultExercises = [
     },
     {
         id: "preacher_curl",
-        name: "Scottova lavice s EZ osou (Preacher Curl)",
+        name: "Preacher Curl (Scott Bench)",
         category: "Ruce",
         secondary_muscles: ["Krátká hlava bicepsu"],
         instructions: "Opřete nadloktí o šikmou opěrku a eliminujte jakýkoliv souhyb těla pro čistou izolaci bicepsu.",
@@ -853,7 +853,7 @@ export const defaultExercises = [
     },
     {
         id: "concentration_curl",
-        name: "Koncentrovaný bicepsový zdvih s JČ",
+        name: "Dumbbell Concentration Curl",
         category: "Ruce",
         secondary_muscles: ["Biceps"],
         instructions: "Loket opřený o vnitřní stranu stehna. Pomalu a čistě zvedejte činku k rameni se zatnutím.",
@@ -863,7 +863,7 @@ export const defaultExercises = [
     },
     {
         id: "cable_bicep_curl",
-        name: "Bicepsový zdvih na spodní kladce",
+        name: "Low Cable Bicep Curl",
         category: "Ruce",
         secondary_muscles: ["Biceps"],
         instructions: "Kladka poskytuje nepřetržité svalové napětí po celé dráze pohybu.",
@@ -873,7 +873,7 @@ export const defaultExercises = [
     },
     {
         id: "cable_high_biceps_curl",
-        name: "Biceps na horních protisměrných kladkách",
+        name: "Cable Lying Close-grip Curl",
         category: "Ruce",
         secondary_muscles: ["Biceps"],
         instructions: "Stůjte uprostřed s rozpaženými pažemi a přitahujte madla k uším do vrcholné kontrakce.",
@@ -883,7 +883,7 @@ export const defaultExercises = [
     },
     {
         id: "reverse_barbell_curl",
-        name: "Bicepsový zdvih nadhmatem s VČ",
+        name: "Reverse Grip Barbell Curl (Forearms)",
         category: "Ruce",
         secondary_muscles: ["Vřetenní sval (Brachioradialis)","Předloktí"],
         instructions: "Úchop nadhmatem. Extrémně účinný cvik na horní stranu předloktí a sílu úchopu.",
@@ -893,7 +893,7 @@ export const defaultExercises = [
     },
     {
         id: "tricep_rope_pushdown",
-        name: "Stahování kladky na triceps s lanem",
+        name: "Triceps Rope Pushdown",
         category: "Ruce",
         secondary_muscles: ["Vnější hlava tricepsu"],
         instructions: "Lokty u těla. V dolní fázi roztáhněte konce lana od sebe a propněte paže.",
@@ -903,7 +903,7 @@ export const defaultExercises = [
     },
     {
         id: "tricep_bar_pushdown",
-        name: "Stahování kladky s rovnou / V-tyčí",
+        name: "Cable Pushdown (with Rope Attachment)",
         category: "Ruce",
         secondary_muscles: ["Triceps"],
         instructions: "Tlačte tyč přímo dolů do plného uzamčení loktů a na vteřinu zatněte triceps.",
@@ -913,7 +913,7 @@ export const defaultExercises = [
     },
     {
         id: "skull_crushers_ez",
-        name: "Francouzský tlak s EZ osou v leže (Skull Crushers)",
+        name: "Barbell Lying Triceps Extension Skull Crusher",
         category: "Ruce",
         secondary_muscles: ["Dlouhá hlava tricepsu"],
         instructions: "V leže na lavici spouštějte osu k čelu a silou tricepsů vytlačte zpět nahoru.",
@@ -923,7 +923,7 @@ export const defaultExercises = [
     },
     {
         id: "overhead_dumbbell_extension",
-        name: "Tricepsový tlak s JČ obouruč za hlavou",
+        name: "Overhead Seated Dumbbell Triceps Extension",
         category: "Ruce",
         secondary_muscles: ["Dlouhá hlava tricepsu"],
         instructions: "Činku držte oběma rukama nad hlavou a spouštějte za krk do hlubokého protažení.",
@@ -933,7 +933,7 @@ export const defaultExercises = [
     },
     {
         id: "cable_overhead_triceps",
-        name: "Tricepsové extenze s lanem za hlavou na kladce",
+        name: "Cable Overhead Triceps Extension (rope Attachment)",
         category: "Ruce",
         secondary_muscles: ["Dlouhá hlava tricepsu"],
         instructions: "Stůjte zády ke kladce, lano táhněte zpoza hlavy dopředu do plného propnutí paží.",
@@ -943,7 +943,7 @@ export const defaultExercises = [
     },
     {
         id: "close_grip_bench_press",
-        name: "Úzký Bench Press na triceps (Close Grip)",
+        name: "Close-Grip Bench Press",
         category: "Ruce",
         secondary_muscles: ["Triceps","Hrudník","Přední ramena"],
         instructions: "Úchop na šířku ramen, lokty podél těla. Špičkový objemový cvik na tricepsy.",
@@ -953,7 +953,7 @@ export const defaultExercises = [
     },
     {
         id: "dips_triceps",
-        name: "Kliky na bradlech na triceps",
+        name: "Side Hip Abduction",
         category: "Ruce",
         secondary_muscles: ["Triceps","Hrudník"],
         instructions: "Držte trup vzpřímeně a lokty u těla pro maximální přenesení zátěže na triceps.",
@@ -963,7 +963,7 @@ export const defaultExercises = [
     },
     {
         id: "bench_dips",
-        name: "Kliky na lavičce vzad (Bench Dips)",
+        name: "Bench Dips",
         category: "Ruce",
         secondary_muscles: ["Triceps","Přední ramena"],
         instructions: "Ruce opřené za zády o lavičku, nohy před sebou. Klesejte hýžděmi těsně podél lavice.",
@@ -973,7 +973,7 @@ export const defaultExercises = [
     },
     {
         id: "tricep_kickback_dumbbell",
-        name: "Tricepsový kickback s jednoručkou v předklonu",
+        name: "Dumbbell Incline Twisted Flyes",
         category: "Ruce",
         secondary_muscles: ["Triceps"],
         instructions: "Trup v předklonu, loket vysoko u těla. Zanožujte předloktí dozadu do úplného propnutí.",
@@ -983,7 +983,7 @@ export const defaultExercises = [
     },
     {
         id: "wrist_curls_barbell",
-        name: "Klopení zápěstí s činkou podhmatem na předloktí",
+        name: "Barbell Wrist Curl V. 2",
         category: "Ruce",
         secondary_muscles: ["Ohybače předloktí"],
         instructions: "Předloktí položte na lavičku a ohýbejte pouze zápěstí nahoru a dolů.",
@@ -993,7 +993,7 @@ export const defaultExercises = [
     },
     {
         id: "plank",
-        name: "Plank (Statická výdrž na předloktí)",
+        name: "Standard Plank (Forearm)",
         category: "Břicho",
         secondary_muscles: ["Střed těla","Ramena","Hýždě"],
         instructions: "Tělo tvoří rovnou přímku. Zpevněte břicho, hýždě i stehna a klidně dýchejte na čas.",
@@ -1003,7 +1003,7 @@ export const defaultExercises = [
     },
     {
         id: "side_plank",
-        name: "Boční plank (Side Plank na čas)",
+        name: "Side Plank",
         category: "Břicho",
         secondary_muscles: ["Šikmé břišní svaly","Hýždě"],
         instructions: "Opřete se o jedno předloktí, tělo v přímce. Držte boky nahoře a nepropadejte k zemi.",
@@ -1013,7 +1013,7 @@ export const defaultExercises = [
     },
     {
         id: "hanging_leg_raise",
-        name: "Přednožování ve visu na hrazdě (Leg Raise)",
+        name: "Hanging Leg Raises",
         category: "Břicho",
         secondary_muscles: ["Spodní břicho","Ohybače kyčlí"],
         instructions: "Z plného visu zvedejte rovné nohy k hrazdě bez houpání trupem.",
@@ -1023,7 +1023,7 @@ export const defaultExercises = [
     },
     {
         id: "hanging_knee_raise",
-        name: "Přítahy kolen ve visu na hrazdě (Knee Raise)",
+        name: "Hanging Knee Raises",
         category: "Břicho",
         secondary_muscles: ["Spodní břicho"],
         instructions: "Ve visu přitahujte pokrčená kolena k hrudníku se stlačením spodního břicha.",
@@ -1033,7 +1033,7 @@ export const defaultExercises = [
     },
     {
         id: "crunches",
-        name: "Zkracovačky na podložce (Crunches)",
+        name: "Crunch Floor",
         category: "Břicho",
         secondary_muscles: ["Přímý sval břišní"],
         instructions: "Zvedejte pouze lopatky ze země s výdechem a silným zatnutím břišních svalů.",
@@ -1043,7 +1043,7 @@ export const defaultExercises = [
     },
     {
         id: "cable_crunch",
-        name: "Stahování horní kladky v kleče (Modlitba)",
+        name: "Cable Kneeling Crunch",
         category: "Břicho",
         secondary_muscles: ["Přímý sval břišní"],
         instructions: "V kleče držte lano u spánků a sbalujte trup směrem ke kolenům silou břicha.",
@@ -1053,7 +1053,7 @@ export const defaultExercises = [
     },
     {
         id: "ab_wheel_rollout",
-        name: "Kolečko na břicho (Ab Wheel Rollout)",
+        name: "Ab Wheel Rollout",
         category: "Břicho",
         secondary_muscles: ["Hluboký stabilizační systém","Latissimy","Ramena"],
         instructions: "Z kleku se pomalu natahujte dopředu a silou břicha se sbalte zpět do výchozí pozice.",
@@ -1063,7 +1063,7 @@ export const defaultExercises = [
     },
     {
         id: "russian_twist",
-        name: "Ruský twist s kotoučem / medicinbalem",
+        name: "Russian Twist",
         category: "Břicho",
         secondary_muscles: ["Šikmé břišní svaly"],
         instructions: "V mírném záklonu se zvednutýma nohama rotujte trupem a dotýkejte se kotoučem stran.",
@@ -1073,7 +1073,7 @@ export const defaultExercises = [
     },
     {
         id: "bicycle_crunches",
-        name: "Kolo na zemi (Bicycle Crunches)",
+        name: "Bicycle Crunches",
         category: "Břicho",
         secondary_muscles: ["Šikmé břišní svaly","Spodní břicho"],
         instructions: "Střídavě přitahujte protilehlý loket ke kolenu s plynulou rotací trupu.",
@@ -1083,7 +1083,7 @@ export const defaultExercises = [
     },
     {
         id: "mountain_climbers",
-        name: "Horolezec na zemi (Mountain Climbers)",
+        name: "Mountain Climbers",
         category: "Břicho",
         secondary_muscles: ["Střed těla","Kardio","Ramena"],
         instructions: "V pozici vzporu dynamicky přitahujte kolena střídavě k hrudníku.",
@@ -1093,7 +1093,7 @@ export const defaultExercises = [
     },
     {
         id: "v_ups",
-        name: "Sklapovačky do V (V-Ups)",
+        name: "V-Ups",
         category: "Břicho",
         secondary_muscles: ["Celé břicho"],
         instructions: "V leže na zádech současně zvedejte rovné nohy i trup a dotkněte se prstů u nohou.",
@@ -1103,7 +1103,7 @@ export const defaultExercises = [
     },
     {
         id: "lying_leg_raise",
-        name: "Zvedání nohou v leže na zádech (Lying Leg Raise)",
+        name: "Lying Floor Leg Raises",
         category: "Břicho",
         secondary_muscles: ["Spodní břicho"],
         instructions: "Pevně přitiskněte bedra k podložce a zvedejte nohy do kolmice.",
@@ -1113,7 +1113,7 @@ export const defaultExercises = [
     },
     {
         id: "decline_sit_ups",
-        name: "Sedy-lehy na šikmé lavici (Decline Sit-ups)",
+        name: "Decline Bench Sit-ups",
         category: "Břicho",
         secondary_muscles: ["Přímý sval břišní","Ohybače kyčlí"],
         instructions: "Zaklesněte nohy na šikmé lavici a zvedejte trup s plynulým zatnutím břicha.",
@@ -1123,7 +1123,7 @@ export const defaultExercises = [
     },
     {
         id: "woodchopper_cable",
-        name: "Dřevorubec na kladce (Cable Woodchopper / Twist)",
+        name: "Cable Twist",
         category: "Břicho",
         secondary_muscles: ["Šikmé břišní svaly","Ramena"],
         instructions: "Táhněte kladku úhlopříčně přes tělo shora dolů s rotací boků a trupu.",
@@ -1133,7 +1133,7 @@ export const defaultExercises = [
     },
     {
         id: "burpees",
-        name: "Angličáky (Burpees)",
+        name: "Burpees",
         category: "Kardio",
         secondary_muscles: ["Celé tělo","Kardiovaskulární systém"],
         instructions: "Z dřepu do kliku na zemi, odraz zpět do dřepu a výskok s tlesknutím nad hlavou.",
@@ -1143,7 +1143,7 @@ export const defaultExercises = [
     },
     {
         id: "jump_rope",
-        name: "Skákání přes švihadlo (Jump Rope)",
+        name: "Jump Rope",
         category: "Kardio",
         secondary_muscles: ["Lýtka","Ramena","Koordinace"],
         instructions: "Skákejte na špičkách s lehkým dopadem a plynulým točením švihadla ze zápěstí.",
@@ -1153,7 +1153,7 @@ export const defaultExercises = [
     },
     {
         id: "kettlebell_swing",
-        name: "Kettlebell Swing (Kettlebell švih)",
+        name: "Kettlebell Swing",
         category: "Kardio",
         secondary_muscles: ["Hýždě","Hamstringy","Spodní záda","Ramena"],
         instructions: "Švih vychází z výbušného pohybu kyčlí dopředu, nikoliv z tahu paží.",
@@ -1163,7 +1163,7 @@ export const defaultExercises = [
     },
     {
         id: "box_jump",
-        name: "Výskoky na bednu (Box Jumps)",
+        name: "Standing Behind Neck Press",
         category: "Kardio",
         secondary_muscles: ["Kvadricepsy","Hýždě","Lýtka"],
         instructions: "Z podřepu výbušně vyskočte oběma nohama na bednu a měkce dopadněte na celé chodidlo.",
@@ -1173,7 +1173,7 @@ export const defaultExercises = [
     },
     {
         id: "jumping_jacks",
-        name: "Jumping Jacks (Panák)",
+        name: "Jumping Jacks",
         category: "Kardio",
         secondary_muscles: ["Lýtka","Ramena","Kardio"],
         instructions: "Dynamické roznožování s tlesknutím paží nad hlavou v rychlém tempu.",
@@ -1183,7 +1183,7 @@ export const defaultExercises = [
     },
     {
         id: "high_knees",
-        name: "Běh na místě s vysokými koleny (High Knees)",
+        name: "High Knees",
         category: "Kardio",
         secondary_muscles: ["Ohybače kyčlí","Lýtka","Břicho"],
         instructions: "Běhejte na špičkách a zvedejte kolena do výšky pasu s energickým souhybem paží.",
@@ -1193,7 +1193,7 @@ export const defaultExercises = [
     },
     {
         id: "treadmill_running",
-        name: "Běh na běžeckém pásu",
+        name: "Triceps Dip",
         category: "Kardio",
         secondary_muscles: ["Nohy","Kardiovaskulární systém"],
         instructions: "Plynulý běžecký krok, vzpřímený trup a pravidelné dýchání na zvolenou rychlost a sklon.",
@@ -1203,7 +1203,7 @@ export const defaultExercises = [
     },
     {
         id: "stationary_bike",
-        name: "Jízda na rotopedu / Airbike",
+        name: "Stationary Bike",
         category: "Kardio",
         secondary_muscles: ["Kvadricepsy","Kardio"],
         instructions: "Šlapání s nastaveným odporem pro šetrné a účinné kardio bez nárazů na klouby.",
@@ -1213,7 +1213,7 @@ export const defaultExercises = [
     },
     {
         id: "air_bike_sprint",
-        name: "Air Bike / Assault Bike sprinty",
+        name: "Air Bike",
         category: "Kardio",
         secondary_muscles: ["Celé tělo","Kvadricepsy","Kardio"],
         instructions: "Zapojte současně nohy i paže pro maximální kalorický výdej a anaerobní kapacitu.",
@@ -1223,7 +1223,7 @@ export const defaultExercises = [
     },
     {
         id: "battle_ropes",
-        name: "Vlnění s bojovými lany (Battle Ropes)",
+        name: "Battle Ropes",
         category: "Kardio",
         secondary_muscles: ["Ramena","Ruce","Střed těla"],
         instructions: "V mírném podřepu střídavě či současně vytvářejte vlnění lany s maximální intenzitou.",
@@ -1233,7 +1233,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_archer_push_up",
-        name: "Lukostřelecké kliky (Archer Push-up)",
+        name: "Archer Push Up",
         category: "Hrudník",
         secondary_muscles: ["Triceps","Ramena","Střed těla"],
         instructions: "Start in a push-up position with your hands slightly wider than shoulder-width apart. Extend one arm straight out to the side, parallel to the ground. Lower your body by bending your elbows, keeping your back straight and core engaged.",
@@ -1243,7 +1243,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_assisted_chest_dip_kneeling",
-        name: "Assisted chest Kliky na bradlech (v kleče)",
+        name: "Assisted Chest Dip (kneeling)",
         category: "Hrudník",
         secondary_muscles: ["Triceps","Ramena"],
         instructions: "Adjust the machine to your desired height and secure your knees on the pad. Grasp the handles with your palms facing down and your arms fully extended. Lower your body by bending your elbows until your upper arms are parallel to the floor.",
@@ -1253,7 +1253,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_assisted_wide_grip_chest_dip_kneeling",
-        name: "Assisted širokým úchopem chest Kliky na bradlech (v kleče)",
+        name: "Assisted Wide-grip Chest Dip (kneeling)",
         category: "Hrudník",
         secondary_muscles: ["Triceps","Ramena"],
         instructions: "Adjust the machine to your desired height and secure your knees on the pad. Grasp the handles with a wide grip and keep your elbows slightly bent. Lower your body by bending your elbows until your upper arms are parallel to the floor.",
@@ -1263,7 +1263,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_decline_pullover",
-        name: "S Velkou činkou (VČ) hlavou dolů Pullover",
+        name: "Barbell Decline Pullover",
         category: "Hrudník",
         secondary_muscles: ["Triceps","Ramena"],
         instructions: "Lie down on a decline bench with your head lower than your hips and your feet secured. Hold the barbell with a pronated grip (palms facing away from you) and your hands slightly wider than shoulder-width apart. Extend your arms above your chest, keeping a slight bend in your elbows.",
@@ -1273,7 +1273,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_decline_wide_grip_press",
-        name: "S Velkou činkou (VČ) hlavou dolů širokým úchopem Tlaky",
+        name: "Barbell Decline Wide-grip Press",
         category: "Hrudník",
         secondary_muscles: ["Triceps","Ramena"],
         instructions: "Lie on a decline bench with your feet secured and your head lower than your hips. Grasp the barbell with a wide grip, slightly wider than shoulder-width apart. Lower the barbell to your chest, keeping your elbows out to the sides.",
@@ -1283,7 +1283,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_front_raise_and_pullover",
-        name: "S Velkou činkou (VČ) Předpažování a Pullover",
+        name: "Barbell Front Raise and Pullover",
         category: "Hrudník",
         secondary_muscles: ["Ramena","Triceps"],
         instructions: "Stand with your feet shoulder-width apart and hold a barbell with an overhand grip, palms facing down. Keep your arms straight and raise the barbell in front of you until it reaches shoulder height. Pause for a moment at the top, then slowly lower the barbell back down to the starting position.",
@@ -1293,7 +1293,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_guillotine_bench_press",
-        name: "Gilotinový bench press (k hrdlu)",
+        name: "Barbell Guillotine Bench Press",
         category: "Hrudník",
         secondary_muscles: ["Ramena","Triceps"],
         instructions: "Lie flat on a bench with your feet flat on the ground and your back pressed against the bench. Grasp the barbell with an overhand grip, slightly wider than shoulder-width apart. Lower the barbell slowly towards your neck, keeping your elbows pointed outwards.",
@@ -1303,7 +1303,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_reverse_grip_decline_bench_press",
-        name: "S Velkou činkou (VČ) podhmatem hlavou dolů Bench Press",
+        name: "Barbell Reverse Grip Decline Bench Press",
         category: "Hrudník",
         secondary_muscles: ["Triceps","Ramena"],
         instructions: "Lie on a decline bench with your feet secured and your head lower than your hips. Grasp the barbell with a reverse grip, slightly wider than shoulder-width apart. Unrack the barbell and lower it slowly towards your chest, keeping your elbows tucked in.",
@@ -1313,7 +1313,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_reverse_grip_incline_bench_press",
-        name: "S Velkou činkou (VČ) podhmatem šikmo nahoru Bench Press",
+        name: "Barbell Reverse Grip Incline Bench Press",
         category: "Hrudník",
         secondary_muscles: ["Triceps","Ramena"],
         instructions: "Set up an incline bench at a 45-degree angle. Lie down on the bench with your feet flat on the ground. Grasp the barbell with a reverse grip, hands slightly wider than shoulder-width apart.",
@@ -1323,7 +1323,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_wide_bench_press",
-        name: "S Velkou činkou (VČ) širokým úchopem Bench Press",
+        name: "Barbell Wide Bench Press",
         category: "Hrudník",
         secondary_muscles: ["Ramena","Triceps"],
         instructions: "Lie flat on a bench with your feet flat on the ground and your back pressed against the bench. Grasp the barbell with a wide grip, slightly wider than shoulder-width apart. Lift the barbell off the rack and hold it directly above your chest with your arms fully extended.",
@@ -1333,7 +1333,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_wide_reverse_grip_bench_press",
-        name: "S Velkou činkou (VČ) širokým úchopem podhmatem Bench Press",
+        name: "Barbell Wide Reverse Grip Bench Press",
         category: "Hrudník",
         secondary_muscles: ["Triceps","Ramena"],
         instructions: "Lie flat on a bench with your feet flat on the ground and your back pressed against the bench. Grasp the barbell with a wide reverse grip, slightly wider than shoulder-width apart. Lift the barbell off the rack and hold it directly above your chest with your arms fully extended.",
@@ -1343,7 +1343,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_bench_press",
-        name: "Na kladce Bench Press",
+        name: "Cable Bench Press",
         category: "Hrudník",
         secondary_muscles: ["Triceps","Ramena"],
         instructions: "Adjust the cable machine to chest height and attach the handles. Stand facing away from the machine with your feet shoulder-width apart. Grasp the handles with an overhand grip and step forward to create tension in the cables.",
@@ -1353,7 +1353,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_cross_over_variation",
-        name: "Na kladce křížení kladek variace",
+        name: "Cable Cross-over Variation",
         category: "Hrudník",
         secondary_muscles: ["Ramena","Triceps"],
         instructions: "Adjust the cable pulleys to chest height. Stand in the center of the cable machine with one foot in front of the other. Grasp the handles with your palms facing down and your arms extended out to the sides.",
@@ -1363,7 +1363,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_decline_fly",
-        name: "Na kladce hlavou dolů Rozpažování",
+        name: "Cable Decline Fly",
         category: "Hrudník",
         secondary_muscles: ["Ramena","Triceps"],
         instructions: "Adjust the cable machine to a decline position. Stand facing away from the machine with your feet shoulder-width apart. Hold the handles with your palms facing forward and your arms extended straight out in front of you.",
@@ -1373,7 +1373,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_decline_one_arm_press",
-        name: "Na kladce hlavou dolů jednoruč Tlaky",
+        name: "Cable Decline One Arm Press",
         category: "Hrudník",
         secondary_muscles: ["Triceps","Ramena"],
         instructions: "Adjust the cable machine to a decline position. Stand facing away from the machine and grab the handle with one hand. Position yourself with your back against the decline bench and your arm extended straight in front of you.",
@@ -1383,7 +1383,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_decline_press",
-        name: "Na kladce hlavou dolů Tlaky",
+        name: "Cable Decline Press",
         category: "Hrudník",
         secondary_muscles: ["Triceps","Ramena"],
         instructions: "Adjust the cable machine to a decline position. Sit on the decline bench facing the cable machine. Grasp the handles with an overhand grip and position them at chest level.",
@@ -1393,7 +1393,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_incline_bench_press",
-        name: "Na kladce šikmo nahoru Bench Press",
+        name: "Cable Incline Bench Press",
         category: "Hrudník",
         secondary_muscles: ["Ramena","Triceps"],
         instructions: "Adjust the bench to a 45-degree incline. Attach the cable handles to the high pulleys. Sit on the bench facing the cable machine with your feet flat on the ground.",
@@ -1403,7 +1403,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_incline_fly",
-        name: "Na kladce šikmo nahoru Rozpažování",
+        name: "Cable Incline Fly",
         category: "Hrudník",
         secondary_muscles: ["Ramena","Triceps"],
         instructions: "Adjust the cable machine to a low position and attach the handles. Sit on an incline bench with your back against the pad and feet flat on the floor. Grasp the handles with an overhand grip and extend your arms straight out in front of you.",
@@ -1413,7 +1413,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_lying_fly",
-        name: "Na kladce v leže Rozpažování",
+        name: "Cable Lying Fly",
         category: "Hrudník",
         secondary_muscles: ["Ramena","Triceps"],
         instructions: "Attach the handles to the cables and lie flat on a bench with your feet flat on the ground. Hold the handles with your palms facing each other and your arms extended straight above your chest. Keeping a slight bend in your elbows, lower your arms out to the sides in a wide arc until you feel a stretch in your chest.",
@@ -1423,7 +1423,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_middle_fly",
-        name: "Na kladce na střední část Rozpažování",
+        name: "Cable Middle Fly",
         category: "Hrudník",
         secondary_muscles: ["Ramena","Triceps"],
         instructions: "Attach cables to both sides of a cable machine at chest height. Stand in the center of the machine with one foot slightly in front of the other. Grasp the handles with an overhand grip and extend your arms out to the sides.",
@@ -1433,7 +1433,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_one_arm_decline_chest_fly",
-        name: "Na kladce jednoruč hlavou dolů chest Rozpažování",
+        name: "Cable One Arm Decline Chest Fly",
         category: "Hrudník",
         secondary_muscles: ["Ramena","Triceps"],
         instructions: "Attach a D-handle to a low pulley cable machine and set the bench to a decline angle. Lie down on the bench with your head towards the machine and grab the handle with your right hand. Extend your arm straight up above your chest, keeping a slight bend in your elbow.",
@@ -1443,7 +1443,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_one_arm_fly_on_exercise_ball",
-        name: "Na kladce jednoruč Rozpažování on exercise ball",
+        name: "Cable One Arm Fly on Exercise Ball",
         category: "Hrudník",
         secondary_muscles: ["Ramena","Triceps"],
         instructions: "Sit on an exercise ball with your feet flat on the ground and your back straight. Hold a cable handle in one hand and extend your arm out to the side, parallel to the ground. Keep your elbow slightly bent and your palm facing forward.",
@@ -1453,7 +1453,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_one_arm_incline_fly_on_exercise_ball",
-        name: "Na kladce jednoruč šikmo nahoru Rozpažování on exercise ball",
+        name: "Cable One Arm Incline Fly on Exercise Ball",
         category: "Hrudník",
         secondary_muscles: ["Ramena","Triceps"],
         instructions: "Sit on an exercise ball with your feet flat on the ground and your back against an incline bench. Hold a cable handle in one hand with your arm extended and palm facing inward. Keeping a slight bend in your elbow, slowly lower your arm out to the side until your hand is in line with your shoulder.",
@@ -1463,7 +1463,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_one_arm_incline_press",
-        name: "Na kladce jednoruč šikmo nahoru Tlaky",
+        name: "Cable One Arm Incline Press",
         category: "Hrudník",
         secondary_muscles: ["Ramena","Triceps"],
         instructions: "Adjust the cable machine to a low pulley position. Sit on an incline bench facing away from the cable machine. Grasp the handle with one hand and bring it up to shoulder height.",
@@ -1473,7 +1473,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_one_arm_incline_press_on_exercise_ball",
-        name: "Na kladce jednoruč šikmo nahoru Tlaky on exercise ball",
+        name: "Cable One Arm Incline Press on Exercise Ball",
         category: "Hrudník",
         secondary_muscles: ["Ramena","Triceps"],
         instructions: "Sit on an exercise ball with your feet flat on the ground and your back resting against an incline bench. Hold a cable handle in one hand and position your arm at a 90-degree angle with your elbow bent. Press the cable handle forward and upward, extending your arm fully.",
@@ -1483,7 +1483,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_one_arm_lateral_bent_over",
-        name: "Na kladce jednoruč lateral bent-over",
+        name: "Cable One Arm Lateral Bent-over",
         category: "Hrudník",
         secondary_muscles: ["Ramena","trapezius"],
         instructions: "Stand with your feet shoulder-width apart, facing a cable machine. Grasp the handle with one hand and step back to create tension on the cable. Bend forward at the waist, keeping your back straight and your core engaged.",
@@ -1493,7 +1493,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_one_arm_press_on_exercise_ball",
-        name: "Na kladce jednoruč Tlaky on exercise ball",
+        name: "Cable One Arm Press on Exercise Ball",
         category: "Hrudník",
         secondary_muscles: ["Ramena","Triceps"],
         instructions: "Sit on an exercise ball with your feet flat on the ground and your back straight. Hold a cable handle in one hand and position your arm at chest height, elbow bent. Place your other hand on your hip for stability.",
@@ -1503,7 +1503,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_press_on_exercise_ball",
-        name: "Na kladce Tlaky on exercise ball",
+        name: "Cable Press on Exercise Ball",
         category: "Hrudník",
         secondary_muscles: ["Ramena","Triceps"],
         instructions: "Sit on an exercise ball with your feet flat on the ground and your knees at a 90-degree angle. Hold the cable handles at chest height with your palms facing down and your elbows bent. Engage your core and press the cable handles forward until your arms are fully extended.",
@@ -1513,7 +1513,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_seated_chest_press",
-        name: "Na kladce v sedě Tlaky na prsa",
+        name: "Cable Seated Chest Press",
         category: "Hrudník",
         secondary_muscles: ["Ramena","Triceps"],
         instructions: "Adjust the seat height and cable handles to a comfortable position. Sit on the bench with your back straight and feet flat on the floor. Grasp the cable handles with an overhand grip at shoulder height.",
@@ -1523,7 +1523,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_standing_up_straight_crossovers",
-        name: "Na kladce ve stoje up straight crossovers",
+        name: "Cable Standing Up Straight Crossovers",
         category: "Hrudník",
         secondary_muscles: ["Ramena","Triceps"],
         instructions: "Stand in the middle of a cable machine with your feet shoulder-width apart. Hold the handles of the cables with your palms facing down and your arms extended straight out to the sides. Keeping your arms straight, bring your hands together in front of your body, crossing them over each other.",
@@ -1533,7 +1533,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_alternate_lateral_pulldown",
-        name: "Alternate lateral Stahování horní kladky",
+        name: "Alternate Lateral Pulldown",
         category: "Záda",
         secondary_muscles: ["Biceps","rhomboids"],
         instructions: "Sit on the cable machine with your back straight and feet flat on the ground. Grasp the handles with an overhand grip, slightly wider than shoulder-width apart. Lean back slightly and pull the handles towards your chest, squeezing your shoulder blades together.",
@@ -1543,7 +1543,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_archer_pull_up",
-        name: "Lukostřelecké shyby (Archer Pull-up)",
+        name: "Archer Pull Up",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Start by hanging from a pull-up bar with an overhand grip, slightly wider than shoulder-width apart. Engage your core and pull your shoulder blades down and back. As you pull yourself up, bend one arm and bring your elbow towards your side, while keeping the other arm straight.",
@@ -1553,7 +1553,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_assisted_parallel_close_grip_pull_up",
-        name: "Assisted parallel úzkým úchopem Shyby",
+        name: "Assisted Parallel Close Grip Pull-up",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Adjust the machine to your desired weight and height. Place your hands on the parallel bars with a close grip, palms facing each other. Hang from the bars with your arms fully extended and your feet off the ground.",
@@ -1563,7 +1563,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_assisted_pull_up",
-        name: "Assisted Shyby",
+        name: "Assisted Pull-up",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Adjust the machine to your desired weight and height settings. Grasp the handles with an overhand grip, slightly wider than shoulder-width apart. Hang with your arms fully extended and your feet off the ground.",
@@ -1573,7 +1573,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_assisted_standing_chin_up",
-        name: "Assisted ve stoje Shyby podhmatem",
+        name: "Assisted Standing Chin-up",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Adjust the machine to your desired assistance level. Stand on the foot platform and grip the handles with an overhand grip, slightly wider than shoulder-width apart. Keep your chest up and shoulders back, engage your core, and slightly bend your knees.",
@@ -1583,7 +1583,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_assisted_standing_pull_up",
-        name: "Assisted ve stoje Shyby",
+        name: "Assisted Standing Pull-up",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Adjust the machine to your desired weight and height settings. Stand facing the machine with your feet shoulder-width apart. Grasp the handles with an overhand grip, slightly wider than shoulder-width apart.",
@@ -1593,7 +1593,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_back_lever",
-        name: "Back lever",
+        name: "Back Lever",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí","Střed těla"],
         instructions: "Start by hanging from a pull-up bar with an overhand grip, hands slightly wider than shoulder-width apart. Engage your core and pull your shoulder blades down and back. Bend your knees and tuck them towards your chest.",
@@ -1603,7 +1603,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_back_pec_stretch",
-        name: "Back pec stretch",
+        name: "Back Pec Stretch",
         category: "Záda",
         secondary_muscles: ["Ramena","Hrudník"],
         instructions: "Stand tall with your feet shoulder-width apart. Extend your arms straight out in front of you, parallel to the ground. Cross your arms in front of your body, with your right arm over your left arm.",
@@ -1613,7 +1613,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_bent_arm_pullover",
-        name: "S Velkou činkou (VČ) bent arm Pullover",
+        name: "Barbell Bent Arm Pullover",
         category: "Záda",
         secondary_muscles: ["Triceps","Hrudník"],
         instructions: "Lie flat on a bench with your head at one end and your feet on the floor. Hold a barbell with a shoulder-width grip and extend your arms straight above your chest. Lower the barbell behind your head while keeping your arms slightly bent.",
@@ -1623,7 +1623,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_decline_bent_arm_pullover",
-        name: "S Velkou činkou (VČ) hlavou dolů bent arm Pullover",
+        name: "Barbell Decline Bent Arm Pullover",
         category: "Záda",
         secondary_muscles: ["Triceps","Hrudník"],
         instructions: "Lie down on a decline bench with your head lower than your hips and your feet secured. Hold a barbell with a pronated grip (palms facing away from you) and extend your arms straight above your chest. Lower the barbell behind your head in a controlled manner, keeping your arms slightly bent.",
@@ -1633,7 +1633,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_decline_wide_grip_pullover",
-        name: "S Velkou činkou (VČ) hlavou dolů širokým úchopem Pullover",
+        name: "Barbell Decline Wide-grip Pullover",
         category: "Záda",
         secondary_muscles: ["Triceps","Hrudník"],
         instructions: "Lie on a decline bench with your head lower than your hips and your feet secured. Hold a barbell with a wide grip and extend your arms straight above your chest. Lower the barbell behind your head in a controlled manner, keeping your arms straight.",
@@ -1643,7 +1643,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_incline_row",
-        name: "S Velkou činkou (VČ) šikmo nahoru Přítahy",
+        name: "Barbell Incline Row",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Set up an incline bench at a 45-degree angle. Lie face down on the bench with your chest against the pad and your feet flat on the ground. Grasp the barbell with an overhand grip, slightly wider than shoulder-width apart.",
@@ -1653,7 +1653,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_one_arm_bent_over_row",
-        name: "S Velkou činkou (VČ) jednoruč Přítahy v předklonu",
+        name: "Barbell One Arm Bent Over Row",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Stand with your feet shoulder-width apart, knees slightly bent, and hold a barbell with one hand using an overhand grip. Bend forward at the hips, keeping your back straight and your head in a neutral position. Pull the barbell up towards your chest, keeping your elbow close to your body and squeezing your shoulder blades together.",
@@ -1663,7 +1663,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_pendlay_row",
-        name: "Pendlay přítahy z podlahy",
+        name: "Barbell Pendlay Row",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Stand with your feet shoulder-width apart and your knees slightly bent. Bend forward at the hips, keeping your back straight and your chest up. Grasp the barbell with an overhand grip, slightly wider than shoulder-width apart.",
@@ -1673,7 +1673,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_pullover",
-        name: "S Velkou činkou (VČ) Pullover",
+        name: "Barbell Pullover",
         category: "Záda",
         secondary_muscles: ["Hrudník","Triceps"],
         instructions: "Lie flat on a bench with your head at one end and your feet on the floor. Hold a barbell with a shoulder-width grip and extend your arms straight above your chest. Keeping your arms straight, lower the barbell behind your head in a controlled manner until you feel a stretch in your lats.",
@@ -1683,7 +1683,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_pullover_to_press",
-        name: "S Velkou činkou (VČ) Pullover to Tlaky",
+        name: "Barbell Pullover to Press",
         category: "Záda",
         secondary_muscles: ["Triceps","Hrudník","Ramena"],
         instructions: "Lie flat on a bench with your head at one end and your feet on the ground. Hold the barbell with a pronated grip (palms facing away from you) and extend your arms straight above your chest. Keeping your arms straight, lower the barbell behind your head in an arc-like motion until you feel a stretch in your lats.",
@@ -1693,7 +1693,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_reverse_grip_incline_bench_row",
-        name: "S Velkou činkou (VČ) podhmatem šikmo nahoru bench Přítahy",
+        name: "Barbell Reverse Grip Incline Bench Row",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Set up an incline bench at a 45-degree angle. Sit on the bench facing the backrest with your chest against it. Grab the barbell with a reverse grip (palms facing down) and hands slightly wider than shoulder-width apart.",
@@ -1703,7 +1703,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_bench_pull_ups",
-        name: "Bench Shyby",
+        name: "Bench Pull-ups",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Position yourself under a bar or a sturdy horizontal surface that is at chest height. Grab the bar or surface with an overhand grip, slightly wider than shoulder-width apart. Hang with your arms fully extended and your body straight.",
@@ -1713,7 +1713,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_bodyweight_squatting_row",
-        name: "Bodyweight squatting Přítahy",
+        name: "Bodyweight Squatting Row",
         category: "Záda",
         secondary_muscles: ["Biceps","Ramena"],
         instructions: "Stand with your feet shoulder-width apart, holding onto a sturdy object or suspension trainer with your arms extended. Lower your body into a squat position, keeping your back straight and your knees behind your toes. From the squat position, pull your body up towards the object or suspension trainer, squeezing your shoulder blades together.",
@@ -1723,7 +1723,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_bodyweight_standing_close_grip_one_arm_row",
-        name: "Bodyweight ve stoje úzkým úchopem jednoruč Přítahy",
+        name: "Bodyweight Standing Close-grip One Arm Row",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Stand with your feet shoulder-width apart, knees slightly bent, and hold a dumbbell in one hand with a neutral grip. Bend forward at the hips, keeping your back straight and your core engaged. Pull the dumbbell up towards your chest, keeping your elbow close to your body and squeezing your shoulder blades together.",
@@ -1733,7 +1733,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_bodyweight_standing_close_grip_row",
-        name: "Bodyweight ve stoje úzkým úchopem Přítahy",
+        name: "Bodyweight Standing Close-grip Row",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Stand with your feet shoulder-width apart and knees slightly bent. Bend forward at the waist, keeping your back straight and your core engaged. Extend your arms straight in front of you, gripping the bar or handles with a close grip.",
@@ -1743,7 +1743,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_bodyweight_standing_one_arm_row",
-        name: "Bodyweight ve stoje jednoruč Přítahy",
+        name: "Bodyweight Standing One Arm Row",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Stand with your feet shoulder-width apart, knees slightly bent, and hold a dumbbell in one hand. Bend forward at the hips, keeping your back straight and your core engaged. Let the dumbbell hang straight down in front of you, with your arm fully extended.",
@@ -1753,7 +1753,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_bodyweight_standing_row",
-        name: "Bodyweight ve stoje Přítahy",
+        name: "Bodyweight Standing Row",
         category: "Záda",
         secondary_muscles: ["Biceps","Ramena"],
         instructions: "Stand with your feet shoulder-width apart and knees slightly bent. Grasp a bar or handles with an overhand grip, palms facing down. Keep your back straight and core engaged.",
@@ -1763,7 +1763,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_bar_lateral_pulldown",
-        name: "Na kladce bar lateral Stahování horní kladky",
+        name: "Cable Bar Lateral Pulldown",
         category: "Záda",
         secondary_muscles: ["Biceps","rhomboids","rear deltoids"],
         instructions: "Adjust the cable pulley to a high position and attach a straight bar. Sit facing the cable machine with your feet flat on the ground and your knees slightly bent. Grasp the bar with an overhand grip, slightly wider than shoulder-width apart.",
@@ -1773,7 +1773,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_cross_over_lateral_pulldown",
-        name: "Na kladce křížení kladek lateral Stahování horní kladky",
+        name: "Cable Cross-over Lateral Pulldown",
         category: "Záda",
         secondary_muscles: ["Biceps","rhomboids","rear deltoids"],
         instructions: "Attach a cable handle to each side of a cable machine at shoulder height. Stand in the middle of the machine with your feet shoulder-width apart. Grasp the handles with an overhand grip and step back to create tension in the cables.",
@@ -1783,7 +1783,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_decline_seated_wide_grip_row",
-        name: "Na kladce hlavou dolů v sedě širokým úchopem Přítahy",
+        name: "Cable Decline Seated Wide-grip Row",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Sit on the decline bench facing the cable machine with your feet securely placed on the footrests. Grasp the cable attachment with a wide overhand grip, palms facing down. Lean back slightly, keeping your back straight and your core engaged.",
@@ -1793,7 +1793,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_floor_seated_wide_grip_row",
-        name: "Na kladce floor v sedě širokým úchopem Přítahy",
+        name: "Cable Floor Seated Wide-grip Row",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Sit on the floor with your legs extended and your back straight. Attach a cable handle to a low pulley and position the cable machine behind you. Grasp the handle with a wide overhand grip, palms facing down.",
@@ -1803,7 +1803,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_high_row_kneeling",
-        name: "Na kladce high Přítahy (v kleče)",
+        name: "Cable High Row (kneeling)",
         category: "Záda",
         secondary_muscles: ["Biceps","Ramena"],
         instructions: "Attach a straight bar to a cable machine at chest height. Kneel down in front of the cable machine and grab the bar with an overhand grip, hands shoulder-width apart. Sit back on your heels, keeping your back straight and your core engaged.",
@@ -1813,7 +1813,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_incline_bench_row",
-        name: "Na kladce šikmo nahoru bench Přítahy",
+        name: "Cable Incline Bench Row",
         category: "Záda",
         secondary_muscles: ["Biceps","rear deltoids"],
         instructions: "Set up an incline bench at a 45-degree angle and attach a cable handle to the low pulley. Sit on the bench facing the cable machine with your feet flat on the floor and your knees slightly bent. Grasp the cable handle with an overhand grip and extend your arms fully in front of you.",
@@ -1823,7 +1823,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_incline_pushdown",
-        name: "Na kladce šikmo nahoru Stahování kladky",
+        name: "Cable Incline Pushdown",
         category: "Záda",
         secondary_muscles: ["Triceps","Ramena"],
         instructions: "Attach a straight bar to a high pulley cable machine. Stand facing away from the machine with your feet shoulder-width apart. Grasp the bar with an overhand grip, hands slightly wider than shoulder-width apart.",
@@ -1833,7 +1833,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_lat_pulldown_full_range_of_motion",
-        name: "Na kladce Stahování horní kladky na záda full range of motion",
+        name: "Cable Lat Pulldown Full Range Of Motion",
         category: "Záda",
         secondary_muscles: ["Biceps","rhomboids","rear deltoids"],
         instructions: "Sit on the lat pulldown machine with your knees positioned under the pads. Grasp the cable bar with an overhand grip, slightly wider than shoulder-width apart. Lean back slightly and keep your chest up, maintaining a slight arch in your lower back.",
@@ -1843,7 +1843,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_lateral_pulldown_with_rope_attachment",
-        name: "Na kladce lateral Stahování horní kladky (with rope attachment)",
+        name: "Cable Lateral Pulldown (with Rope Attachment)",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Attach a rope attachment to the cable machine at a high position. Stand facing the machine with your feet shoulder-width apart. Grasp the rope with an overhand grip, palms facing each other.",
@@ -1853,7 +1853,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_lateral_pulldown_with_v_bar",
-        name: "Na kladce lateral Stahování horní kladky with v-bar",
+        name: "Cable Lateral Pulldown with V-Bar",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Sit down on the cable pulldown machine and grab the v-bar attachment with an overhand grip. Adjust the knee pad so that your thighs are secured under it. Keep your back straight and lean back slightly.",
@@ -1863,7 +1863,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_lying_extension_pullover_with_rope_attachment",
-        name: "Na kladce v leže Extenze Pullover (with rope attachment)",
+        name: "Cable Lying Extension Pullover (with Rope Attachment)",
         category: "Záda",
         secondary_muscles: ["Triceps","Ramena"],
         instructions: "Attach a rope to a cable machine and set the pulley at the highest position. Lie down on a bench with your head towards the cable machine. Hold the rope with both hands and extend your arms straight up above your chest.",
@@ -1873,7 +1873,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_one_arm_bent_over_row",
-        name: "Na kladce jednoruč Přítahy v předklonu",
+        name: "Cable One Arm Bent Over Row",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Stand facing a cable machine with your feet shoulder-width apart. Bend your knees slightly and hinge forward at the hips, keeping your back straight. Grasp the cable handle with one hand, palm facing inward, and extend your arm fully.",
@@ -1883,7 +1883,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_one_arm_pulldown",
-        name: "Na kladce jednoruč Stahování horní kladky",
+        name: "Cable One Arm Pulldown",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Attach a single handle to a high pulley cable machine. Stand facing the machine with your feet shoulder-width apart. Grasp the handle with an overhand grip and extend your arm fully.",
@@ -1893,7 +1893,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_one_arm_straight_back_high_row_kneeling",
-        name: "Na kladce jednoruč straight back high Přítahy (v kleče)",
+        name: "Cable One Arm Straight Back High Row (kneeling)",
         category: "Záda",
         secondary_muscles: ["Biceps","Ramena"],
         instructions: "Attach a handle to a cable machine at waist height. Kneel down facing the cable machine and grab the handle with one hand. Keep your back straight and your core engaged.",
@@ -1903,7 +1903,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_palm_rotational_row",
-        name: "Na kladce palm rotational Přítahy",
+        name: "Cable Palm Rotational Row",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Attach a handle to a cable machine at waist height. Stand facing the machine with your feet shoulder-width apart. Grasp the handle with an overhand grip, palms facing down.",
@@ -1913,7 +1913,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_pulldown_pro_lat_bar",
-        name: "Na kladce Stahování horní kladky (pro lat bar)",
+        name: "Cable Pulldown (pro Lat Bar)",
         category: "Záda",
         secondary_muscles: ["Biceps","Předloktí"],
         instructions: "Adjust the seat height so that your thighs are parallel to the ground and your feet are flat on the floor. Grasp the lat bar with an overhand grip, slightly wider than shoulder-width apart. Sit down and lean back slightly, keeping your chest up and your back straight.",
@@ -1923,7 +1923,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_pushdown_straight_arm_v_2",
-        name: "Na kladce Stahování kladky (straight arm) v. 2",
+        name: "Cable Pushdown (straight Arm) V. 2",
         category: "Záda",
         secondary_muscles: ["Triceps","Ramena"],
         instructions: "Attach a straight bar to a high pulley cable machine. Stand facing the machine with your feet shoulder-width apart and a slight bend in your knees. Grasp the bar with an overhand grip, keeping your arms straight and your palms facing down.",
@@ -1933,7 +1933,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_one_arm_snatch",
-        name: "S Velkou činkou (VČ) jednoruč snatch",
+        name: "Barbell One Arm Snatch",
         category: "Ramena",
         secondary_muscles: ["Trapézy","Předloktí","Střed těla"],
         instructions: "Stand with your feet shoulder-width apart, toes pointing slightly outwards. Hold the barbell with an overhand grip, hands slightly wider than shoulder-width apart. Bend your knees and lower your hips into a squat position, keeping your back straight and chest up.",
@@ -1943,7 +1943,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_rear_delt_raise",
-        name: "S Velkou činkou (VČ) na zadní delty raise",
+        name: "Barbell Rear Delt Raise",
         category: "Ramena",
         secondary_muscles: ["Trapézy","rhomboids"],
         instructions: "Stand with your feet shoulder-width apart and hold a barbell with an overhand grip, palms facing down. Bend your knees slightly and hinge forward at the hips, keeping your back straight. Raise the barbell out to the sides, keeping your arms straight, until they are parallel to the ground.",
@@ -1953,7 +1953,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_rear_delt_row",
-        name: "S Velkou činkou (VČ) na zadní delty Přítahy",
+        name: "Barbell Rear Delt Row",
         category: "Ramena",
         secondary_muscles: ["trapezius","rhomboids","Biceps"],
         instructions: "Stand with your feet shoulder-width apart and knees slightly bent. Hold a barbell with an overhand grip, hands slightly wider than shoulder-width apart. Bend forward at the hips, keeping your back straight and chest up.",
@@ -1963,7 +1963,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_seated_behind_head_military_press",
-        name: "S Velkou činkou (VČ) v sedě behind head military Tlaky",
+        name: "Barbell Seated Behind Head Military Press",
         category: "Ramena",
         secondary_muscles: ["Triceps","Mezilopatkové svaly"],
         instructions: "Sit on a bench with your back straight and feet flat on the ground. Hold the barbell with an overhand grip, slightly wider than shoulder-width apart. Lift the barbell off the rack and bring it down to shoulder level, behind your head.",
@@ -1973,7 +1973,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_seated_bradford_rocky_press",
-        name: "S Velkou činkou (VČ) v sedě bradford rocky Tlaky",
+        name: "Barbell Seated Bradford Rocky Press",
         category: "Ramena",
         secondary_muscles: ["Triceps","Mezilopatkové svaly"],
         instructions: "Sit on a bench with your back straight and feet flat on the ground. Hold the barbell with an overhand grip, slightly wider than shoulder-width apart. Lift the barbell to shoulder height, keeping your elbows slightly bent and pointing forward.",
@@ -1983,7 +1983,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_skier",
-        name: "S Velkou činkou (VČ) skier",
+        name: "Barbell Skier",
         category: "Ramena",
         secondary_muscles: ["Triceps","Střed těla"],
         instructions: "Stand with your feet shoulder-width apart and hold a barbell in front of your thighs with an overhand grip. Bend your knees slightly and hinge forward at the hips, keeping your back straight and chest up. Simultaneously lift the barbell up towards your shoulders while jumping slightly off the ground.",
@@ -1993,7 +1993,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_standing_bradford_press",
-        name: "S Velkou činkou (VČ) ve stoje bradford Tlaky",
+        name: "Barbell Standing Bradford Press",
         category: "Ramena",
         secondary_muscles: ["Triceps","Mezilopatkové svaly"],
         instructions: "Stand with your feet shoulder-width apart and hold the barbell in front of your shoulders with an overhand grip. Press the barbell overhead, fully extending your arms. Lower the barbell back down to the starting position.",
@@ -2003,7 +2003,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_standing_close_grip_military_press",
-        name: "S Velkou činkou (VČ) ve stoje úzkým úchopem military Tlaky",
+        name: "Barbell Standing Close Grip Military Press",
         category: "Ramena",
         secondary_muscles: ["Triceps","Mezilopatkové svaly"],
         instructions: "Stand with your feet shoulder-width apart and hold the barbell with an overhand grip, hands slightly closer than shoulder-width apart. Lift the barbell to shoulder height, keeping your elbows close to your body. Press the barbell overhead, extending your arms fully.",
@@ -2013,7 +2013,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_standing_front_raise_over_head",
-        name: "S Velkou činkou (VČ) ve stoje Předpažování over head",
+        name: "Barbell Standing Front Raise Over Head",
         category: "Ramena",
         secondary_muscles: ["Triceps","Mezilopatkové svaly"],
         instructions: "Stand with your feet shoulder-width apart, holding a barbell in front of your thighs with an overhand grip. Keep your back straight and engage your core. Slowly raise the barbell in front of you, keeping your arms straight and your palms facing down.",
@@ -2023,7 +2023,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_standing_wide_military_press",
-        name: "S Velkou činkou (VČ) ve stoje širokým úchopem military Tlaky",
+        name: "Barbell Standing Wide Military Press",
         category: "Ramena",
         secondary_muscles: ["Triceps","Mezilopatkové svaly"],
         instructions: "Stand with your feet shoulder-width apart and hold the barbell with an overhand grip, slightly wider than shoulder-width. Lift the barbell to shoulder height, keeping your elbows slightly in front of the bar. Press the barbell overhead, extending your arms fully.",
@@ -2033,7 +2033,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_thruster",
-        name: "S Velkou činkou (VČ) thruster",
+        name: "Barbell Thruster",
         category: "Ramena",
         secondary_muscles: ["Kvadricepsy","Hýždě","Hamstringy"],
         instructions: "Start by standing with your feet shoulder-width apart, holding a barbell at shoulder height with an overhand grip. Lower into a squat position by bending your knees and pushing your hips back. As you reach the bottom of the squat, explosively drive through your heels to stand up, simultaneously pressing the barbell overhead.",
@@ -2043,7 +2043,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_upright_row",
-        name: "S Velkou činkou (VČ) upright Přítahy",
+        name: "Barbell Upright Row",
         category: "Ramena",
         secondary_muscles: ["Trapézy","Biceps"],
         instructions: "Stand with your feet shoulder-width apart and hold a barbell with an overhand grip, hands slightly wider than shoulder-width apart. Let the barbell hang in front of your thighs, arms fully extended. Keeping your back straight and core engaged, exhale and lift the barbell straight up towards your chin, leading with your elbows.",
@@ -2053,7 +2053,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_upright_row_v_3",
-        name: "S Velkou činkou (VČ) upright Přítahy v. 3",
+        name: "Barbell Upright Row V. 3",
         category: "Ramena",
         secondary_muscles: ["Trapézy","Biceps"],
         instructions: "Stand with your feet shoulder-width apart and hold a barbell with an overhand grip, hands slightly wider than shoulder-width apart. Let the barbell hang in front of your thighs, arms fully extended. Keeping your core engaged and back straight, exhale as you lift the barbell straight up towards your chin, leading with your elbows.",
@@ -2063,7 +2063,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_wide_grip_upright_row",
-        name: "S Velkou činkou (VČ) širokým úchopem upright Přítahy",
+        name: "Barbell Wide-grip Upright Row",
         category: "Ramena",
         secondary_muscles: ["Trapézy","Biceps"],
         instructions: "Stand with your feet shoulder-width apart and hold a barbell with an overhand grip, hands wider than shoulder-width apart. Let the barbell hang in front of your thighs, arms fully extended. Keeping your back straight, exhale and lift the barbell straight up towards your chin, leading with your elbows.",
@@ -2073,7 +2073,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_alternate_shoulder_press",
-        name: "Na kladce alternate Tlaky na ramena",
+        name: "Cable Alternate Shoulder Press",
         category: "Ramena",
         secondary_muscles: ["Triceps","Mezilopatkové svaly"],
         instructions: "Stand with your feet shoulder-width apart and grasp the handles of the cable machine with an overhand grip. Position your hands at shoulder height, with your palms facing forward. Keep your core engaged and your back straight.",
@@ -2083,7 +2083,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_cross_over_revers_fly",
-        name: "Na kladce křížení kladek revers Rozpažování",
+        name: "Cable Cross-over Revers Fly",
         category: "Ramena",
         secondary_muscles: ["rhomboids","trapezius"],
         instructions: "Attach a D-handle to each low pulley cable and stand in the middle of the cable crossover machine. Grasp the handles with a pronated grip (palms facing down) and take a step forward, positioning your feet shoulder-width apart. Bend your knees slightly and lean forward at the waist, keeping your back straight and your abs engaged.",
@@ -2093,7 +2093,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_forward_raise",
-        name: "Na kladce forward raise",
+        name: "Cable Forward Raise",
         category: "Ramena",
         secondary_muscles: ["Triceps","Předloktí"],
         instructions: "Stand with your feet shoulder-width apart and your knees slightly bent. Hold the cable handle with an overhand grip, palms facing down, and your arms fully extended in front of you. Keeping your arms straight, raise the cable handle up to shoulder level.",
@@ -2103,7 +2103,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_front_raise",
-        name: "Na kladce Předpažování",
+        name: "Cable Front Raise",
         category: "Ramena",
         secondary_muscles: ["Triceps","Předloktí"],
         instructions: "Stand with your feet shoulder-width apart and grasp the cable handle with an overhand grip. Keep your back straight and your core engaged. Raise the cable handle in front of you, keeping your arms straight and your palms facing down.",
@@ -2113,7 +2113,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_kneeling_rear_delt_row_with_rope_male",
-        name: "Na kladce v kleče na zadní delty Přítahy (with rope) (male)",
+        name: "Cable Kneeling Rear Delt Row (with Rope) (male)",
         category: "Ramena",
         secondary_muscles: ["trapezius","rhomboids","Biceps"],
         instructions: "Attach a rope handle to a low cable pulley and kneel down facing the machine. Grasp the rope with a neutral grip (palms facing each other) and extend your arms fully in front of you. Keeping your back straight and core engaged, pull the rope towards your body by retracting your shoulder blades.",
@@ -2123,7 +2123,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_lateral_raise",
-        name: "Na kladce Upažování na ramena",
+        name: "Cable Lateral Raise",
         category: "Ramena",
         secondary_muscles: ["Trapézy","Triceps"],
         instructions: "Stand with your feet shoulder-width apart and grasp the cable handles with an overhand grip. Keep your arms straight and your core engaged. Raise your arms out to the sides until they are parallel to the floor.",
@@ -2133,7 +2133,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_one_arm_lateral_raise",
-        name: "Na kladce jednoruč Upažování na ramena",
+        name: "Cable One Arm Lateral Raise",
         category: "Ramena",
         secondary_muscles: ["Trapézy","Triceps"],
         instructions: "Stand with your feet shoulder-width apart, facing the cable machine. Hold the cable handle with one hand, palm facing down, and stand far enough away from the machine so that there is tension on the cable. Keep your arm straight and slowly raise it out to the side until it is parallel to the ground.",
@@ -2143,7 +2143,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_rear_delt_row_stirrups",
-        name: "Na kladce na zadní delty Přítahy (stirrups)",
+        name: "Cable Rear Delt Row (stirrups)",
         category: "Ramena",
         secondary_muscles: ["trapezius","rhomboids","Biceps"],
         instructions: "Attach a stirrup handle to a low cable pulley and stand facing the machine. Grasp the handle with your left hand and take a step back with your right foot, positioning your body at a slight angle. Bend your knees slightly and hinge forward at the hips, keeping your back straight and your core engaged.",
@@ -2153,7 +2153,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_rear_delt_row_with_rope",
-        name: "Na kladce na zadní delty Přítahy (with rope)",
+        name: "Cable Rear Delt Row (with Rope)",
         category: "Ramena",
         secondary_muscles: ["trapezius","rhomboids","Biceps"],
         instructions: "Attach a rope handle to a low pulley cable machine. Stand facing the machine with your feet shoulder-width apart. Grasp the rope handle with an overhand grip, palms facing each other.",
@@ -2163,7 +2163,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_seated_rear_lateral_raise",
-        name: "Na kladce v sedě rear Upažování na ramena",
+        name: "Cable Seated Rear Lateral Raise",
         category: "Ramena",
         secondary_muscles: ["Trapézy","rhomboids"],
         instructions: "Sit on a bench facing the cable machine with your feet flat on the ground. Grasp the cable handles with an overhand grip and extend your arms straight in front of you. Keeping your arms straight, slowly raise them out to the sides until they are parallel to the floor.",
@@ -2173,7 +2173,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_seated_shoulder_internal_rotation",
-        name: "Na kladce v sedě shoulder internal rotation",
+        name: "Cable Seated Shoulder Internal Rotation",
         category: "Ramena",
         secondary_muscles: ["rotator cuff","Triceps"],
         instructions: "Sit on a bench or chair facing the cable machine with your feet flat on the ground. Hold the cable handle with your arm extended straight out in front of you, parallel to the ground. Keep your elbow slightly bent and your shoulder blades pulled back and down.",
@@ -2183,7 +2183,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_shoulder_press",
-        name: "Na kladce Tlaky na ramena",
+        name: "Cable Shoulder Press",
         category: "Ramena",
         secondary_muscles: ["Triceps","Mezilopatkové svaly"],
         instructions: "Adjust the cable machine so that the handles are at shoulder height. Stand facing away from the machine with your feet shoulder-width apart. Grasp the handles with an overhand grip and bring them up to shoulder level, with your elbows bent and pointing outwards.",
@@ -2193,7 +2193,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_standing_rear_delt_row_with_rope",
-        name: "Na kladce ve stoje na zadní delty Přítahy (with rope)",
+        name: "Cable Standing Rear Delt Row (with Rope)",
         category: "Ramena",
         secondary_muscles: ["trapezius","rhomboids","Biceps"],
         instructions: "Stand facing a cable machine with your feet shoulder-width apart. Hold the cable attachment with both hands, palms facing each other, and step back to create tension in the cable. Keep your back straight and your core engaged.",
@@ -2203,7 +2203,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_standing_shoulder_external_rotation",
-        name: "Na kladce ve stoje shoulder external rotation",
+        name: "Cable Standing Shoulder External Rotation",
         category: "Ramena",
         secondary_muscles: ["rotator cuff","trapezius"],
         instructions: "Stand with your feet shoulder-width apart and your knees slightly bent. Hold the cable handle with your arm extended in front of you, parallel to the ground. Keep your elbow slightly bent and your shoulder blades pulled back.",
@@ -2213,7 +2213,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_supine_reverse_fly",
-        name: "Na kladce supine reverse Rozpažování",
+        name: "Cable Supine Reverse Fly",
         category: "Ramena",
         secondary_muscles: ["trapezius","rhomboids"],
         instructions: "Attach a D-handle to a low pulley cable machine and lie face down on a flat bench. Grasp the D-handle with each hand, palms facing down, and extend your arms straight out in front of you. Keeping your arms straight, raise them out to the sides until they are parallel to the floor.",
@@ -2223,7 +2223,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_upright_row",
-        name: "Na kladce upright Přítahy",
+        name: "Cable Upright Row",
         category: "Ramena",
         secondary_muscles: ["Trapézy","Biceps"],
         instructions: "Stand with your feet shoulder-width apart, knees slightly bent, and hold the cable attachment with an overhand grip. Keep your back straight and your core engaged throughout the exercise. Pull the cable attachment straight up towards your chin, leading with your elbows.",
@@ -2233,7 +2233,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_dumbbell_arnold_press",
-        name: "S Jednoručkou (JČ) arnold Tlaky",
+        name: "Dumbbell Arnold Press",
         category: "Ramena",
         secondary_muscles: ["Triceps","upper chest"],
         instructions: "Sit on a bench with back support and hold a dumbbell in each hand at shoulder level, palms facing your body and elbows bent. Press the dumbbells upward until your arms are fully extended and your palms are facing forward. Rotate your wrists as you lift, so that your palms are facing forward at the top of the movement.",
@@ -2243,7 +2243,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_dumbbell_arnold_press_v_2",
-        name: "S Jednoručkou (JČ) arnold Tlaky v. 2",
+        name: "Dumbbell Arnold Press V. 2",
         category: "Ramena",
         secondary_muscles: ["Triceps","upper chest"],
         instructions: "Sit on a bench with back support and hold a dumbbell in each hand at shoulder level, palms facing your body and elbows bent. Press the dumbbells upward until your arms are fully extended and your palms are facing forward. Rotate your wrists as you lift, so that your palms end up facing forward at the top of the movement.",
@@ -2253,7 +2253,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_all_fours_squad_stretch",
-        name: "All fours squad stretch",
+        name: "All Fours Squad Stretch",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Hýždě"],
         instructions: "Start on all fours with your hands directly under your shoulders and your knees directly under your hips. Extend one leg straight back, keeping your knee bent and your foot flexed. Slowly lower your hips towards the ground, feeling a stretch in your quads.",
@@ -2263,7 +2263,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_ankle_circles",
-        name: "Ankle circles",
+        name: "Ankle Circles",
         category: "Nohy",
         secondary_muscles: ["ankle stabilizers"],
         instructions: "Sit on the ground with your legs extended in front of you. Lift one leg off the ground and rotate your ankle in a circular motion. Perform the desired number of circles in one direction, then switch to the other direction.",
@@ -2273,7 +2273,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_arms_apart_circular_toe_touch_male",
-        name: "Arms apart circular toe touch (male)",
+        name: "Arms Apart Circular Toe Touch (male)",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Kvadricepsy","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart and arms extended to the sides. Keeping your legs straight, bend forward at the waist and reach down towards your toes with your right hand. As you reach down, simultaneously lift your left leg straight up behind you, maintaining balance.",
@@ -2283,7 +2283,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_backward_jump",
-        name: "Backward jump",
+        name: "Backward Jump",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Hýždě","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart. Bend your knees slightly and jump backwards, pushing off with both feet. Land softly on the balls of your feet, bending your knees to absorb the impact.",
@@ -2293,7 +2293,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_balance_board",
-        name: "Balance board",
+        name: "Balance Board",
         category: "Nohy",
         secondary_muscles: ["Lýtka","Hamstringy","Hýždě"],
         instructions: "Place the balance board on a flat surface. Step onto the balance board with one foot, ensuring it is centered. Slowly shift your weight onto the foot on the balance board, keeping your core engaged.",
@@ -2303,7 +2303,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_bench_front_squat",
-        name: "S Velkou činkou (VČ) bench front Dřep",
+        name: "Barbell Bench Front Squat",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Hýždě","Lýtka"],
         instructions: "Start by standing with your feet shoulder-width apart and the barbell resting on your upper chest, just below your collarbone. Hold the barbell with an overhand grip, keeping your elbows up and your upper arms parallel to the ground. Lower your body down into a squat position by bending at the knees and hips, keeping your back straight and your chest up.",
@@ -2313,7 +2313,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_bench_squat",
-        name: "S Velkou činkou (VČ) bench Dřep",
+        name: "Barbell Bench Squat",
         category: "Nohy",
         secondary_muscles: ["Hýždě","Hamstringy","Lýtka"],
         instructions: "Set up a barbell on a squat rack at chest height. Stand facing away from the rack, with your feet shoulder-width apart. Bend your knees and lower your body down into a squat position, keeping your back straight and chest up.",
@@ -2323,7 +2323,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_clean_and_press",
-        name: "S Velkou činkou (VČ) clean a Tlaky",
+        name: "Barbell Clean and Press",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Hýždě","Ramena"],
         instructions: "Stand with your feet shoulder-width apart and the barbell on the floor in front of you. Bend your knees and hinge at the hips to lower down and grip the barbell with an overhand grip, hands slightly wider than shoulder-width apart. Drive through your heels and extend your hips and knees to lift the barbell off the floor, keeping it close to your body.",
@@ -2333,7 +2333,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_clean_grip_front_squat",
-        name: "S Velkou činkou (VČ) clean-grip front Dřep",
+        name: "Barbell Clean-grip Front Squat",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Start by standing with your feet shoulder-width apart and the barbell resting on your upper chest, with your elbows pointing forward. Lower your body by bending your knees and pushing your hips back, as if you are sitting back into a chair. Keep your chest up and your back straight as you lower down, making sure your knees do not go past your toes.",
@@ -2343,7 +2343,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_floor_calf_raise",
-        name: "S Velkou činkou (VČ) floor Výpony na lýtka",
+        name: "Barbell Floor Calf Raise",
         category: "Nohy",
         secondary_muscles: ["Hamstringy"],
         instructions: "Place a barbell on the floor in front of you. Stand with the balls of your feet on the edge of the barbell, with your heels hanging off. Hold onto a stable object for balance if needed.",
@@ -2353,7 +2353,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_front_squat",
-        name: "S Velkou činkou (VČ) front Dřep",
+        name: "Barbell Front Squat",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Start by standing with your feet shoulder-width apart, toes slightly turned out. Hold the barbell in front of your shoulders, resting it on your collarbone and shoulders. Engage your core and keep your chest up as you lower your body down into a squat position, pushing your hips back and bending your knees.",
@@ -2363,7 +2363,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_full_squat_back_pov",
-        name: "S Velkou činkou (VČ) full Dřep (back pov)",
+        name: "Barbell Full Squat (back Pov)",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart, toes slightly turned out. Hold the barbell across your upper back, resting it on your traps or rear delts. Engage your core and keep your chest up as you begin to lower your body down.",
@@ -2373,7 +2373,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_full_squat_side_pov",
-        name: "S Velkou činkou (VČ) full Dřep (side pov)",
+        name: "Barbell Full Squat (side Pov)",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart, toes slightly turned out. Hold the barbell across your upper back, resting it on your traps or rear delts. Engage your core and keep your chest up as you begin to lower your body down.",
@@ -2383,7 +2383,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_full_zercher_squat",
-        name: "Zercher dřep (činka v loktech)",
+        name: "Barbell Full Zercher Squat",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart and toes slightly turned out. Hold the barbell in the crooks of your elbows, with your hands gripping the barbell for stability. Engage your core and keep your chest lifted as you lower your hips back and down into a squat position.",
@@ -2393,7 +2393,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_glute_bridge",
-        name: "S Velkou činkou (VČ) Most na hýždě (Glute bridge)",
+        name: "Barbell Glute Bridge",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Spodní záda"],
         instructions: "Start by lying flat on your back on the ground with your knees bent and feet flat on the floor. Place a barbell across your hips, holding it securely with both hands. Engage your glutes and core muscles, then lift your hips off the ground until your body forms a straight line from your knees to your shoulders.",
@@ -2403,7 +2403,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_glute_bridge_two_legs_on_bench_male",
-        name: "S Velkou činkou (VČ) Most na hýždě (Glute bridge) two legs on bench (male)",
+        name: "Barbell Glute Bridge Two Legs on Bench (male)",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Střed těla"],
         instructions: "Start by sitting on the edge of a bench with your upper back resting against it and your feet flat on the ground, hip-width apart. Place a barbell across your hips, holding it securely with both hands. Engage your glutes and core muscles, then press through your heels to lift your hips off the bench, creating a straight line from your knees to your shoulders.",
@@ -2413,7 +2413,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_hack_squat",
-        name: "Hacken dřep na stroji",
+        name: "Barbell Hack Squat",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Start by standing with your feet shoulder-width apart and your toes slightly turned out. Hold the barbell behind your legs, resting it on your upper thighs. Lower your body by bending at the knees and hips, keeping your back straight and your chest up.",
@@ -2423,7 +2423,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_high_bar_squat",
-        name: "S Velkou činkou (VČ) high bar Dřep",
+        name: "Barbell High Bar Squat",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart, toes slightly turned out. Place the barbell on your upper back, resting it on your traps. Engage your core and keep your chest up as you begin to squat down, pushing your hips back and bending your knees.",
@@ -2433,7 +2433,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_jefferson_squat",
-        name: "S Velkou činkou (VČ) jefferson Dřep",
+        name: "Barbell Jefferson Squat",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart and toes slightly turned out. Hold the barbell with an overhand grip, resting it on the front of your body, just below your waist. Step your left foot forward and your right foot back, keeping your feet shoulder-width apart.",
@@ -2443,7 +2443,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_jump_squat",
-        name: "S Velkou činkou (VČ) jump Dřep",
+        name: "Barbell Jump Squat",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Start by standing with your feet shoulder-width apart, holding a barbell across your upper back. Lower your body into a squat position by bending your knees and pushing your hips back. Once you reach the bottom of the squat, explode upwards by jumping off the ground.",
@@ -2453,7 +2453,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_lateral_lunge",
-        name: "S Velkou činkou (VČ) lateral Výpad",
+        name: "Barbell Lateral Lunge",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart, holding a barbell across your upper back. Take a big step to the side with your right foot, keeping your left foot planted. Bend your right knee and lower your body down into a lunge position, keeping your left leg straight.",
@@ -2463,7 +2463,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_low_bar_squat",
-        name: "S Velkou činkou (VČ) low bar Dřep",
+        name: "Barbell Low Bar Squat",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart and the barbell resting on your upper back. Keeping your chest up and core engaged, slowly lower your body by bending your knees and pushing your hips back. Continue lowering until your thighs are parallel to the ground or slightly below.",
@@ -2473,7 +2473,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_lunge",
-        name: "S Velkou činkou (VČ) Výpad",
+        name: "Barbell Lunge",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Start by standing with your feet shoulder-width apart and a barbell resting on your upper back. Take a step forward with your right foot, keeping your torso upright. Lower your body by bending your right knee until your thigh is parallel to the ground.",
@@ -2483,7 +2483,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_lying_lifting_on_hip",
-        name: "S Velkou činkou (VČ) v leže lifting (on hip)",
+        name: "Barbell Lying Lifting (on Hip)",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Kvadricepsy"],
         instructions: "Lie flat on your back on a bench with your feet flat on the ground and your knees bent. Hold the barbell with an overhand grip and position it on your hips. Engaging your glutes, lift your hips off the bench until your body forms a straight line from your knees to your shoulders.",
@@ -2493,7 +2493,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_narrow_stance_squat",
-        name: "S Velkou činkou (VČ) narrow stance Dřep",
+        name: "Barbell Narrow Stance Squat",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart and toes pointing slightly outward. Hold the barbell across your upper back, resting it on your traps or rear delts. Engage your core and keep your chest up as you slowly lower your body by bending your knees and pushing your hips back.",
@@ -2503,7 +2503,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_one_arm_side_deadlift",
-        name: "S Velkou činkou (VČ) jednoruč side Mrtvý tah",
+        name: "Barbell One Arm Side Deadlift",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Kvadricepsy","Spodní záda"],
         instructions: "Stand with your feet shoulder-width apart, holding a barbell in one hand with an overhand grip. Keep your back straight and your core engaged. Bend at the hips and lower the barbell towards the outside of your leg, keeping your arm straight and your chest up.",
@@ -2513,7 +2513,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_one_leg_squat",
-        name: "S Velkou činkou (VČ) one leg Dřep",
+        name: "Barbell One Leg Squat",
         category: "Nohy",
         secondary_muscles: ["Hýždě","Hamstringy","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart and hold a barbell across your upper back. Lift one foot off the ground and extend it forward, keeping it parallel to the ground. Bend your standing leg and lower your body down as if sitting back into a chair, keeping your chest up and your back straight.",
@@ -2523,7 +2523,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_rack_pull",
-        name: "S Velkou činkou (VČ) rack pull",
+        name: "Barbell Rack Pull",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Spodní záda"],
         instructions: "Set up a barbell on a rack at knee height. Stand with your feet shoulder-width apart, toes pointing slightly outwards. Bend at the hips and knees to lower yourself down and grip the barbell with an overhand grip, hands shoulder-width apart.",
@@ -2533,7 +2533,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_rear_lunge_v_2",
-        name: "S Velkou činkou (VČ) rear Výpad v. 2",
+        name: "Barbell Rear Lunge V. 2",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart and hold a barbell across your upper back. Take a step backward with your right foot, landing on the ball of your foot. Bend both knees to lower your body until your left thigh is parallel to the ground.",
@@ -2543,7 +2543,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_seated_calf_raise",
-        name: "S Velkou činkou (VČ) v sedě Výpony na lýtka",
+        name: "Barbell Seated Calf Raise",
         category: "Nohy",
         secondary_muscles: ["Hamstringy"],
         instructions: "Sit on a bench with your feet flat on the floor and a barbell resting on your thighs. Place the balls of your feet on a raised platform, such as a block or step. Lower your heels as far as possible, feeling a stretch in your calves.",
@@ -2553,7 +2553,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_seated_good_morning",
-        name: "S Velkou činkou (VČ) v sedě good morning",
+        name: "Barbell Seated Good Morning",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Spodní záda"],
         instructions: "Sit on a bench with your feet flat on the ground and a barbell resting on your upper back. Keep your back straight and your chest up. Slowly hinge forward at the hips, lowering your torso towards the ground.",
@@ -2563,7 +2563,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_side_split_squat",
-        name: "S Velkou činkou (VČ) side split Dřep",
+        name: "Barbell Side Split Squat",
         category: "Nohy",
         secondary_muscles: ["Hýždě","Hamstringy","Lýtka"],
         instructions: "Stand with your feet wider than shoulder-width apart, toes pointing slightly outward. Hold a barbell across your upper back, resting it on your traps. Engage your core and keep your chest up as you lower your body down into a squat position, bending at the knees and hips.",
@@ -2573,7 +2573,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_side_split_squat_v_2",
-        name: "S Velkou činkou (VČ) side split Dřep v. 2",
+        name: "Barbell Side Split Squat V. 2",
         category: "Nohy",
         secondary_muscles: ["Hýždě","Hamstringy","Lýtka"],
         instructions: "Stand with your feet wider than shoulder-width apart, toes pointing slightly outwards. Hold a barbell across your upper back, resting it on your shoulders. Take a big step to the side with your right foot, keeping your left foot planted.",
@@ -2583,7 +2583,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_single_leg_deadlift",
-        name: "S Velkou činkou (VČ) jednonož Mrtvý tah",
+        name: "Barbell Single Leg Deadlift",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Spodní záda"],
         instructions: "Stand with your feet hip-width apart, holding a barbell in front of your thighs with an overhand grip. Shift your weight onto your left foot and lift your right foot slightly off the ground. Hinge forward at the hips, keeping your back straight and your right leg extended behind you for balance.",
@@ -2593,7 +2593,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_speed_squat",
-        name: "S Velkou činkou (VČ) speed Dřep",
+        name: "Barbell Speed Squat",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart, toes slightly turned out. Hold the barbell across your upper back, resting it on your traps or rear delts. Engage your core and keep your chest up as you lower your hips back and down, as if sitting into a chair.",
@@ -2603,7 +2603,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_split_squat_v_2",
-        name: "S Velkou činkou (VČ) split Dřep v. 2",
+        name: "Barbell Split Squat V. 2",
         category: "Nohy",
         secondary_muscles: ["Hýždě","Hamstringy","Lýtka"],
         instructions: "Start by standing with your feet shoulder-width apart, holding a barbell across your upper back. Take a large step forward with your right foot, keeping your torso upright. Lower your body by bending your knees and hips until your right thigh is parallel to the ground.",
@@ -2613,7 +2613,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_squat_on_knees",
-        name: "S Velkou činkou (VČ) Dřep (on knees)",
+        name: "Barbell Squat (on Knees)",
         category: "Nohy",
         secondary_muscles: ["Hýždě","Hamstringy","Lýtka"],
         instructions: "Start by kneeling on the ground with your knees hip-width apart and your toes pointing forward. Place a barbell across your shoulders, gripping it with an overhand grip and your hands slightly wider than shoulder-width apart. Engage your core and keep your chest lifted as you slowly lower your body down by bending your knees, keeping your back straight.",
@@ -2623,7 +2623,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_squat_jump_step_rear_lunge",
-        name: "S Velkou činkou (VČ) Dřep jump step rear Výpad",
+        name: "Barbell Squat Jump Step Rear Lunge",
         category: "Nohy",
         secondary_muscles: ["Hýždě","Hamstringy","Lýtka"],
         instructions: "Start by standing with your feet shoulder-width apart, holding a barbell across your upper back. Lower your body into a squat position by bending your knees and pushing your hips back. Explode upwards, jumping off the ground as high as you can.",
@@ -2633,7 +2633,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_standing_leg_calf_raise",
-        name: "S Velkou činkou (VČ) ve stoje leg Výpony na lýtka",
+        name: "Barbell Standing Leg Calf Raise",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Hýždě"],
         instructions: "Stand with your feet shoulder-width apart and place a barbell across your upper back. Raise your heels off the ground as high as possible, using your calves. Pause for a moment at the top, then slowly lower your heels back down to the starting position.",
@@ -2643,7 +2643,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_standing_rocking_leg_calf_raise",
-        name: "S Velkou činkou (VČ) ve stoje rocking leg Výpony na lýtka",
+        name: "Barbell Standing Rocking Leg Calf Raise",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Kvadricepsy"],
         instructions: "Stand with your feet shoulder-width apart and hold a barbell across your upper back. Raise your heels off the ground as high as possible, balancing on the balls of your feet. Slowly lower your heels back down to the starting position.",
@@ -2653,7 +2653,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_step_up",
-        name: "S Velkou činkou (VČ) Vystupování na bednu (Step-up)",
+        name: "Barbell Step-up",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Stand in front of a bench or step with a barbell resting on your upper back. Place one foot on the bench or step, ensuring your entire foot is in contact with the surface. Push through your heel and step up onto the bench or step, fully extending your hip and knee.",
@@ -2663,7 +2663,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_stiff_leg_good_morning",
-        name: "S Velkou činkou (VČ) stiff leg good morning",
+        name: "Barbell Stiff Leg Good Morning",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Spodní záda"],
         instructions: "Stand with your feet shoulder-width apart and your knees slightly bent. Hold the barbell across your upper back, resting it on your traps. Keeping your back straight, hinge forward at the hips, pushing your glutes back.",
@@ -2673,7 +2673,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_straight_leg_deadlift",
-        name: "S Velkou činkou (VČ) straight leg Mrtvý tah",
+        name: "Barbell Straight Leg Deadlift",
         category: "Nohy",
         secondary_muscles: ["Hýždě","Spodní záda"],
         instructions: "Stand with your feet shoulder-width apart and your toes pointing forward. Hold the barbell with an overhand grip, hands slightly wider than shoulder-width apart. Bend at your hips and lower the barbell towards the ground, keeping your back straight and your knees slightly bent.",
@@ -2683,7 +2683,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_sumo_deadlift",
-        name: "S Velkou činkou (VČ) sumo Mrtvý tah",
+        name: "Barbell Sumo Deadlift",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Kvadricepsy","Spodní záda"],
         instructions: "Stand with your feet wider than shoulder-width apart, toes pointing outwards. Place a barbell on the ground in front of you, centered between your feet. Bend your knees and lower your hips, keeping your back straight and chest up, to grip the barbell with an overhand grip.",
@@ -2693,7 +2693,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_wide_squat",
-        name: "S Velkou činkou (VČ) širokým úchopem Dřep",
+        name: "Barbell Wide Squat",
         category: "Nohy",
         secondary_muscles: ["Hýždě","Hamstringy","Lýtka"],
         instructions: "Stand with your feet wider than shoulder-width apart, toes pointing slightly outward. Hold the barbell across your upper back, resting it on your traps or rear delts. Engage your core and keep your chest up as you lower your body down into a squat, pushing your hips back and bending your knees.",
@@ -2703,7 +2703,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_zercher_squat",
-        name: "Zercher dřep (činka v loktech)",
+        name: "Barbell Zercher Squat",
         category: "Nohy",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart and toes slightly turned out. Hold the barbell in the crooks of your elbows, with your hands gripping the bar for stability. Engage your core and keep your chest lifted as you lower your hips back and down into a squat position.",
@@ -2713,7 +2713,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_basic_toe_touch_male",
-        name: "Basic toe touch (male)",
+        name: "Basic Toe Touch (male)",
         category: "Nohy",
         secondary_muscles: ["Hamstringy","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart and your arms by your sides. Bend forward at the waist, keeping your back straight and your knees slightly bent. Reach down towards your toes with your hands, keeping your legs as straight as possible.",
@@ -2723,7 +2723,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_bench_hip_extension",
-        name: "Bench hip Extenze",
+        name: "Bench Hip Extension",
         category: "Nohy",
         secondary_muscles: ["Hamstringy"],
         instructions: "Sit on a bench with your back against the bench and your feet flat on the ground. Place your hands on the bench for support. Engage your glutes and hamstrings, then lift your hips off the bench until your body forms a straight line from your knees to your shoulders.",
@@ -2733,7 +2733,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_assisted_triceps_dip_kneeling",
-        name: "Assisted triceps Kliky na bradlech (v kleče)",
+        name: "Assisted Triceps Dip (kneeling)",
         category: "Ruce",
         secondary_muscles: ["Hrudník","Ramena"],
         instructions: "Adjust the machine to your desired weight and height. Kneel down on the pad facing the machine, with your hands gripping the handles. Lower your body by bending your elbows, keeping your back straight and close to the machine.",
@@ -2743,7 +2743,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_alternate_biceps_curl",
-        name: "S Velkou činkou (VČ) alternate biceps Bicepsový zdvih",
+        name: "Barbell Alternate Biceps Curl",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Stand up straight with your feet shoulder-width apart and hold a barbell in each hand, palms facing forward. Keep your upper arms stationary and exhale as you curl the weights while contracting your biceps. Continue to raise the barbells until your biceps are fully contracted and the barbells are at shoulder level.",
@@ -2753,7 +2753,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_biceps_curl_with_arm_blaster",
-        name: "S Velkou činkou (VČ) biceps Bicepsový zdvih (with arm blaster)",
+        name: "Barbell Biceps Curl (with Arm Blaster)",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Stand up straight with your feet shoulder-width apart and hold a barbell with an underhand grip, palms facing up. Place your upper arms against the arm blaster, keeping your elbows close to your torso. Keeping your upper arms stationary, exhale and curl the weights while contracting your biceps.",
@@ -2763,7 +2763,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_decline_close_grip_to_skull_press",
-        name: "S Velkou činkou (VČ) hlavou dolů úzkým úchopem to skull Tlaky",
+        name: "Barbell Decline Close Grip to Skull Press",
         category: "Ruce",
         secondary_muscles: ["Hrudník","Ramena"],
         instructions: "Lie on a decline bench with your head lower than your feet and hold a barbell with a close grip. Lower the barbell towards your forehead by bending your elbows, keeping your upper arms stationary. Pause for a moment, then extend your arms to press the barbell back up to the starting position.",
@@ -2773,7 +2773,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_drag_curl",
-        name: "S Velkou činkou (VČ) drag Bicepsový zdvih",
+        name: "Barbell Drag Curl",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Stand with your feet shoulder-width apart and hold a barbell with an underhand grip, palms facing up. Let the barbell hang at arm's length in front of your thighs. Keeping your upper arms stationary, curl the barbell up towards your chest by contracting your biceps.",
@@ -2783,7 +2783,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_incline_close_grip_bench_press",
-        name: "S Velkou činkou (VČ) šikmo nahoru úzkým úchopem Bench Press",
+        name: "Barbell Incline Close Grip Bench Press",
         category: "Ruce",
         secondary_muscles: ["Hrudník","Ramena"],
         instructions: "Set up an incline bench at a 45-degree angle. Lie down on the bench with your feet flat on the ground. Grasp the barbell with a close grip, slightly narrower than shoulder-width apart.",
@@ -2793,7 +2793,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_incline_reverse_grip_press",
-        name: "S Velkou činkou (VČ) šikmo nahoru reverse-grip Tlaky",
+        name: "Barbell Incline Reverse-grip Press",
         category: "Ruce",
         secondary_muscles: ["Hrudník","Ramena"],
         instructions: "Set up an incline bench at a 45-degree angle. Lie back on the bench and grasp the barbell with a reverse grip, hands slightly wider than shoulder-width apart. Unrack the barbell and lower it towards your upper chest, keeping your elbows tucked in.",
@@ -2803,7 +2803,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_jm_bench_press",
-        name: "S Velkou činkou (VČ) jm Bench Press",
+        name: "Barbell Jm Bench Press",
         category: "Ruce",
         secondary_muscles: ["Hrudník","Ramena"],
         instructions: "Lie flat on a bench with your feet flat on the ground and your back pressed against the bench. Grasp the barbell with an overhand grip, slightly wider than shoulder-width apart. Lower the barbell to your chest, keeping your elbows tucked in close to your body.",
@@ -2813,7 +2813,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_lying_back_of_the_head_tricep_extension",
-        name: "S Velkou činkou (VČ) v leže back of the head tricep Extenze",
+        name: "Barbell Lying Back Of The Head Tricep Extension",
         category: "Ruce",
         secondary_muscles: ["Ramena"],
         instructions: "Lie flat on a bench with your feet flat on the ground and your head at the end of the bench. Hold a barbell with an overhand grip, hands shoulder-width apart, and extend your arms straight up over your chest. Keeping your upper arms stationary, slowly lower the barbell behind your head by bending your elbows.",
@@ -2823,7 +2823,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_lying_close_grip_press",
-        name: "S Velkou činkou (VČ) v leže úzkým úchopem Tlaky",
+        name: "Barbell Lying Close-grip Press",
         category: "Ruce",
         secondary_muscles: ["Hrudník","Ramena"],
         instructions: "Lie flat on a bench with your feet flat on the ground and your back pressed against the bench. Grasp the barbell with a close grip, hands shoulder-width apart, palms facing towards your feet. Lift the barbell off the rack and hold it directly above your chest with your arms fully extended.",
@@ -2833,7 +2833,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_lying_close_grip_triceps_extension",
-        name: "S Velkou činkou (VČ) v leže úzkým úchopem Tricepsové extenze",
+        name: "Barbell Lying Close-grip Triceps Extension",
         category: "Ruce",
         secondary_muscles: ["Ramena"],
         instructions: "Lie flat on a bench with your feet flat on the ground and your head at the end of the bench. Grasp the barbell with a close grip, hands shoulder-width apart, palms facing up. Extend your arms fully, lifting the barbell above your chest.",
@@ -2843,7 +2843,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_lying_extension",
-        name: "S Velkou činkou (VČ) v leže Extenze",
+        name: "Barbell Lying Extension",
         category: "Ruce",
         secondary_muscles: ["Ramena"],
         instructions: "Lie flat on a bench with your feet flat on the ground and your head at the end of the bench. Hold the barbell with an overhand grip, hands shoulder-width apart, and extend your arms straight up over your chest. Keeping your upper arms stationary, slowly lower the barbell towards your forehead by bending your elbows.",
@@ -2853,7 +2853,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_lying_preacher_curl",
-        name: "S Velkou činkou (VČ) v leže preacher Bicepsový zdvih",
+        name: "Barbell Lying Preacher Curl",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Sit on a preacher bench with your chest against the pad and your arms extended over the edge, holding a barbell with an underhand grip. Keeping your upper arms stationary, exhale and curl the weights while contracting your biceps. Continue to raise the bar until your biceps are fully contracted and the bar is at shoulder level.",
@@ -2863,7 +2863,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_lying_triceps_extension",
-        name: "S Velkou činkou (VČ) v leže Tricepsové extenze",
+        name: "Barbell Lying Triceps Extension",
         category: "Ruce",
         secondary_muscles: ["Ramena"],
         instructions: "Lie flat on a bench with your feet flat on the ground and your head at the end of the bench. Hold the barbell with an overhand grip, hands shoulder-width apart, and extend your arms straight up over your chest. Keeping your upper arms stationary, slowly lower the barbell towards your forehead by bending your elbows.",
@@ -2873,7 +2873,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_one_arm_floor_press",
-        name: "S Velkou činkou (VČ) jednoruč floor Tlaky",
+        name: "Barbell One Arm Floor Press",
         category: "Ruce",
         secondary_muscles: ["Hrudník","Ramena"],
         instructions: "Lie flat on your back on the floor with your knees bent and feet flat on the ground. Hold the barbell with one hand, palm facing up, and extend your arm straight up over your chest. Slowly lower the barbell towards your chest, keeping your elbow close to your body.",
@@ -2883,7 +2883,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_palms_down_wrist_curl_over_a_bench",
-        name: "S Velkou činkou (VČ) palms down wrist Bicepsový zdvih over a bench",
+        name: "Barbell Palms Down Wrist Curl Over a Bench",
         category: "Ruce",
         secondary_muscles: ["Biceps","Hluboký sval pažní"],
         instructions: "Sit on a bench with your feet flat on the ground and your forearms resting on your thighs, palms facing down. Hold a barbell with an overhand grip, hands shoulder-width apart. Lower the barbell towards the ground by flexing your wrists, keeping your forearms stationary.",
@@ -2893,7 +2893,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_palms_up_wrist_curl_over_a_bench",
-        name: "S Velkou činkou (VČ) palms up wrist Bicepsový zdvih over a bench",
+        name: "Barbell Palms Up Wrist Curl Over a Bench",
         category: "Ruce",
         secondary_muscles: ["Biceps","Ramena"],
         instructions: "Sit on a bench with your feet flat on the ground and hold a barbell with an underhand grip, palms facing up. Rest your forearms on the bench, allowing your wrists to hang off the edge. Keeping your forearms stationary, exhale and curl your wrists upwards as far as possible.",
@@ -2903,7 +2903,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_pin_presses",
-        name: "S Velkou činkou (VČ) pin Tlaky",
+        name: "Barbell Pin Presses",
         category: "Ruce",
         secondary_muscles: ["Ramena"],
         instructions: "Set up a barbell on a power rack at chest height. Stand facing the barbell and position yourself underneath it, with your feet shoulder-width apart. Grip the barbell with an overhand grip, slightly wider than shoulder-width apart.",
@@ -2913,7 +2913,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_preacher_curl",
-        name: "S Velkou činkou (VČ) preacher Bicepsový zdvih",
+        name: "Barbell Preacher Curl",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Sit on a preacher bench with your upper arms resting on the pad and your chest against the support. Grasp the barbell with an underhand grip, slightly wider than shoulder-width apart. Keeping your upper arms stationary, exhale and curl the barbell up towards your shoulders.",
@@ -2923,7 +2923,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_prone_incline_curl",
-        name: "S Velkou činkou (VČ) prone šikmo nahoru Bicepsový zdvih",
+        name: "Barbell Prone Incline Curl",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Set up an incline bench at a 45-degree angle. Lie face down on the bench with your chest and stomach resting against it. Hold a barbell with an underhand grip, shoulder-width apart.",
@@ -2933,7 +2933,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_revers_wrist_curl_v_2",
-        name: "S Velkou činkou (VČ) revers wrist Bicepsový zdvih v. 2",
+        name: "Barbell Revers Wrist Curl V. 2",
         category: "Ruce",
         secondary_muscles: ["Biceps","Hluboký sval pažní"],
         instructions: "Sit on a bench with your feet flat on the ground and your knees bent. Hold a barbell with an overhand grip, palms facing down, and your hands shoulder-width apart. Rest your forearms on your thighs, allowing your wrists to hang off the edge.",
@@ -2943,7 +2943,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_reverse_close_grip_bench_press",
-        name: "S Velkou činkou (VČ) reverse úzkým úchopem Bench Press",
+        name: "Barbell Reverse Close-grip Bench Press",
         category: "Ruce",
         secondary_muscles: ["Hrudník","Ramena"],
         instructions: "Lie flat on a bench with your feet flat on the ground and your back pressed against the bench. Grasp the barbell with a reverse grip, hands shoulder-width apart. Lift the barbell off the rack and hold it directly above your chest with your arms fully extended.",
@@ -2953,7 +2953,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_reverse_grip_skullcrusher",
-        name: "S Velkou činkou (VČ) podhmatem skullcrusher",
+        name: "Barbell Reverse Grip Skullcrusher",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Lie flat on a bench with your feet flat on the ground and your head at the end of the bench. Hold the barbell with a reverse grip, palms facing towards your face, and your hands shoulder-width apart. Extend your arms straight up over your chest, keeping your elbows in and your wrists straight.",
@@ -2963,7 +2963,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_reverse_preacher_curl",
-        name: "S Velkou činkou (VČ) reverse preacher Bicepsový zdvih",
+        name: "Barbell Reverse Preacher Curl",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Sit on a preacher bench with your chest against the pad and your arms extended straight down, holding a barbell with an overhand grip. Keeping your upper arms stationary, exhale and curl the barbell upward while contracting your biceps. Continue to raise the barbell until your biceps are fully contracted and the barbell is at shoulder level.",
@@ -2973,7 +2973,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_reverse_wrist_curl",
-        name: "S Velkou činkou (VČ) reverse wrist Bicepsový zdvih",
+        name: "Barbell Reverse Wrist Curl",
         category: "Ruce",
         secondary_muscles: ["Biceps","Hluboký sval pažní"],
         instructions: "Sit on a bench with your feet flat on the ground and hold a barbell with an overhand grip, palms facing down. Rest your forearms on your thighs, allowing your wrists to hang off the edge. Slowly curl your wrists upward, bringing the barbell towards your body.",
@@ -2983,7 +2983,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_seated_close_grip_behind_neck_triceps_extension",
-        name: "S Velkou činkou (VČ) v sedě úzkým úchopem behind neck Tricepsové extenze",
+        name: "Barbell Seated Close Grip Behind Neck Triceps Extension",
         category: "Ruce",
         secondary_muscles: ["Ramena"],
         instructions: "Sit on a bench with your back straight and feet flat on the ground. Hold the barbell with a close grip behind your neck, palms facing forward. Keep your elbows close to your head and slowly lower the barbell towards the back of your head.",
@@ -2993,7 +2993,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_seated_close_grip_concentration_curl",
-        name: "S Velkou činkou (VČ) v sedě úzkým úchopem concentration Bicepsový zdvih",
+        name: "Barbell Seated Close-grip Concentration Curl",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Sit on a bench with your feet flat on the floor and hold a barbell with an underhand grip, hands shoulder-width apart. Rest your upper arms against your inner thighs, just above your knees, and let the barbell hang down in front of you. Keeping your upper arms stationary, exhale and curl the barbell up towards your shoulders, contracting your biceps.",
@@ -3003,7 +3003,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_seated_overhead_triceps_extension",
-        name: "S Velkou činkou (VČ) v sedě overhead Tricepsové extenze",
+        name: "Barbell Seated Overhead Triceps Extension",
         category: "Ruce",
         secondary_muscles: ["Ramena"],
         instructions: "Sit on a bench with your back straight and feet flat on the ground. Hold a barbell with an overhand grip, hands shoulder-width apart, and raise it overhead. Lower the barbell behind your head by bending your elbows, keeping your upper arms close to your head.",
@@ -3013,7 +3013,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_standing_back_wrist_curl",
-        name: "S Velkou činkou (VČ) ve stoje back wrist Bicepsový zdvih",
+        name: "Barbell Standing Back Wrist Curl",
         category: "Ruce",
         secondary_muscles: ["Biceps","Ramena"],
         instructions: "Stand up straight with your feet shoulder-width apart and hold a barbell with an overhand grip. Rest the barbell on the back of your hands with your palms facing down and your fingers pointing towards your body. Keeping your upper arms stationary, exhale and curl your wrists upwards as far as possible.",
@@ -3023,7 +3023,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_standing_close_grip_curl",
-        name: "S Velkou činkou (VČ) ve stoje úzkým úchopem Bicepsový zdvih",
+        name: "Barbell Standing Close Grip Curl",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Stand up straight with your feet shoulder-width apart and hold a barbell with an underhand grip, hands close together. Keep your elbows close to your torso and your upper arms stationary throughout the movement. Exhale as you curl the weights while contracting your biceps. Continue to raise the bar until your biceps are fully contracted and the bar is at shoulder level.",
@@ -3033,7 +3033,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_standing_concentration_curl",
-        name: "S Velkou činkou (VČ) ve stoje concentration Bicepsový zdvih",
+        name: "Barbell Standing Concentration Curl",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Stand with your feet shoulder-width apart and hold a barbell in one hand, palm facing up. Rest your opposite hand on your thigh for support. Keeping your upper arm stationary, exhale and curl the weight up towards your shoulder.",
@@ -3043,7 +3043,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_standing_overhead_triceps_extension",
-        name: "S Velkou činkou (VČ) ve stoje overhead Tricepsové extenze",
+        name: "Barbell Standing Overhead Triceps Extension",
         category: "Ruce",
         secondary_muscles: ["Ramena"],
         instructions: "Stand with your feet shoulder-width apart and hold a barbell with an overhand grip. Raise the barbell overhead, fully extending your arms. Keeping your upper arms close to your head, slowly lower the barbell behind your head by bending your elbows.",
@@ -3053,7 +3053,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_standing_reverse_grip_curl",
-        name: "S Velkou činkou (VČ) ve stoje podhmatem Bicepsový zdvih",
+        name: "Barbell Standing Reverse Grip Curl",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Stand up straight with your feet shoulder-width apart and hold a barbell with an underhand grip, palms facing up. Keep your elbows close to your torso and your upper arms stationary. Exhale and curl the weights while contracting your biceps, bringing the barbell as close to your shoulders as possible.",
@@ -3063,7 +3063,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_standing_wide_grip_biceps_curl",
-        name: "S Velkou činkou (VČ) ve stoje širokým úchopem biceps Bicepsový zdvih",
+        name: "Barbell Standing Wide Grip Biceps Curl",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Stand with your feet shoulder-width apart and hold a barbell with an underhand grip, hands wider than shoulder-width apart. Keep your back straight and your elbows close to your torso. Exhale and curl the barbell up towards your shoulders, keeping your upper arms stationary.",
@@ -3073,7 +3073,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_standing_wide_grip_curl",
-        name: "S Velkou činkou (VČ) ve stoje širokým úchopem Bicepsový zdvih",
+        name: "Barbell Standing Wide-grip Curl",
         category: "Ruce",
         secondary_muscles: ["Předloktí","Ramena"],
         instructions: "Stand up straight with your feet shoulder-width apart and hold a barbell with an overhand grip, hands wider than shoulder-width apart. Let the barbell hang at arm's length in front of your thighs, with your palms facing away from your body. Keeping your upper arms stationary, exhale and curl the barbell upward by contracting your biceps.",
@@ -3083,7 +3083,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_wrist_curl",
-        name: "S Velkou činkou (VČ) wrist Bicepsový zdvih",
+        name: "Barbell Wrist Curl",
         category: "Ruce",
         secondary_muscles: ["Biceps","Hluboký sval pažní"],
         instructions: "Sit on a bench with your feet flat on the ground and your forearms resting on your thighs, holding a barbell with an underhand grip. Allow the barbell to roll down to your fingertips, keeping your wrists straight. Slowly curl the barbell up towards your forearms by flexing your wrists.",
@@ -3093,7 +3093,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_bench_dip_knees_bent",
-        name: "Bench Kliky na bradlech (knees bent)",
+        name: "Bench Dip (knees Bent)",
         category: "Ruce",
         secondary_muscles: ["Hrudník","Ramena"],
         instructions: "Sit on the edge of a bench or chair with your hands gripping the edge next to your hips. Slide your butt off the bench and straighten your legs in front of you, keeping your heels on the ground. Bend your elbows and lower your body towards the ground, keeping your back close to the bench.",
@@ -3103,7 +3103,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_bench_dip_on_floor",
-        name: "Bench Kliky na bradlech on floor",
+        name: "Bench Dip on Floor",
         category: "Ruce",
         secondary_muscles: ["Hrudník","Ramena"],
         instructions: "Sit on the edge of a bench or chair with your hands gripping the edge, fingers pointing forward. Slide your butt off the bench, supporting your weight with your hands. Lower your body by bending your elbows until your upper arms are parallel to the floor.",
@@ -3113,7 +3113,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_biceps_leg_concentration_curl",
-        name: "Biceps leg concentration Bicepsový zdvih",
+        name: "Biceps Leg Concentration Curl",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Sit on a bench with your legs spread apart and your feet flat on the ground. Hold a dumbbell in one hand and place your elbow on the inside of your thigh, just above the knee. With your palm facing up, curl the dumbbell towards your shoulder while keeping your upper arm stationary.",
@@ -3123,7 +3123,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_biceps_pull_up",
-        name: "Biceps Shyby",
+        name: "Biceps Pull-up",
         category: "Ruce",
         secondary_muscles: ["Předloktí","Ramena"],
         instructions: "Hang from a pull-up bar with your palms facing away from you and your hands shoulder-width apart. Engage your core and pull yourself up by bending your elbows, bringing your chest towards the bar. Pause at the top of the movement, then slowly lower yourself back down to the starting position.",
@@ -3143,7 +3143,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_bodyweight_kneeling_triceps_extension",
-        name: "Bodyweight v kleče Tricepsové extenze",
+        name: "Bodyweight Kneeling Triceps Extension",
         category: "Ruce",
         secondary_muscles: ["Ramena","Hrudník"],
         instructions: "Kneel down on the ground with your knees hip-width apart. Place your hands on the ground in front of you, shoulder-width apart, fingers pointing forward. Extend your legs straight behind you, balancing on your toes and hands, forming a straight line from head to heels.",
@@ -3153,7 +3153,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_bodyweight_side_lying_biceps_curl",
-        name: "Bodyweight side v leže biceps Bicepsový zdvih",
+        name: "Bodyweight Side Lying Biceps Curl",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Lie on your side with your legs extended and your head supported by your arm. Hold your upper arm against your side and bend your elbow to curl your forearm towards your shoulder. Pause for a moment at the top, then slowly lower your forearm back down to the starting position.",
@@ -3163,7 +3163,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_alternate_triceps_extension",
-        name: "Na kladce alternate Tricepsové extenze",
+        name: "Cable Alternate Triceps Extension",
         category: "Ruce",
         secondary_muscles: ["Ramena"],
         instructions: "Stand facing the cable machine with your feet shoulder-width apart. Hold the cable handle with your right hand and bring your arm up so that your upper arm is parallel to the ground and your elbow is bent at a 90-degree angle. Keep your upper arm stationary and extend your forearm backward, fully straightening your arm.",
@@ -3173,7 +3173,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_close_grip_curl",
-        name: "Na kladce úzkým úchopem Bicepsový zdvih",
+        name: "Cable Close Grip Curl",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Attach a straight bar to a low pulley cable machine. Stand facing the machine with your feet shoulder-width apart and your knees slightly bent. Grasp the bar with an underhand grip, hands shoulder-width apart.",
@@ -3183,7 +3183,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_concentration_curl",
-        name: "Na kladce concentration Bicepsový zdvih",
+        name: "Cable Concentration Curl",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Sit on a bench or chair with your feet flat on the floor and your knees slightly bent. Hold the cable handle with an underhand grip and rest your elbow against the inside of your thigh. Keeping your upper arm stationary, exhale and curl the cable handle towards your shoulder while contracting your biceps.",
@@ -3193,7 +3193,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_concentration_extension_on_knee",
-        name: "Na kladce concentration Extenze (on knee)",
+        name: "Cable Concentration Extension (on Knee)",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Sit on a bench or chair with your knees bent and feet flat on the ground. Hold the cable handle with your right hand and place your elbow on the inside of your right knee. Extend your arm fully, keeping your elbow stationary and close to your knee.",
@@ -3203,7 +3203,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_curl",
-        name: "Na kladce Bicepsový zdvih",
+        name: "Cable Curl",
         category: "Ruce",
         secondary_muscles: ["Předloktí"],
         instructions: "Stand facing the cable machine with your feet shoulder-width apart. Grasp the cable attachment with an underhand grip, palms facing up. Keep your elbows close to your sides and your upper arms stationary.",
@@ -3213,7 +3213,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_3_4_sit_up",
-        name: "3/4 sit-up",
+        name: "Three-quarter Sit-up",
         category: "Břicho",
         secondary_muscles: ["Ohybače kyčlí","Spodní záda"],
         instructions: "Lie flat on your back with your knees bent and feet flat on the ground. Place your hands behind your head with your elbows pointing outwards. Engaging your abs, slowly lift your upper body off the ground, curling forward until your torso is at a 45-degree angle.",
@@ -3223,7 +3223,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_45_side_bend",
-        name: "45° side bend",
+        name: "45° Side Bend",
         category: "Břicho",
         secondary_muscles: ["obliques"],
         instructions: "Stand with your feet shoulder-width apart and your arms extended straight down by your sides. Keeping your back straight and your core engaged, slowly bend your torso to one side, lowering your hand towards your knee. Pause for a moment at the bottom, then slowly return to the starting position.",
@@ -3233,7 +3233,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_alternate_heel_touchers",
-        name: "Alternate heel touchers",
+        name: "Alternate Heel Touchers",
         category: "Břicho",
         secondary_muscles: ["obliques"],
         instructions: "Lie flat on your back with your knees bent and feet flat on the ground. Extend your arms straight out to the sides, parallel to the ground. Engaging your abs, lift your shoulders off the ground and reach your right hand towards your right heel.",
@@ -3243,7 +3243,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_arm_slingers_hanging_bent_knee_legs",
-        name: "Arm slingers hanging bent knee legs",
+        name: "Arm Slingers Hanging Bent Knee Legs",
         category: "Břicho",
         secondary_muscles: ["Ramena","back"],
         instructions: "Hang from a pull-up bar with your arms fully extended and your knees bent at a 90-degree angle. Engage your core and lift your knees towards your chest, bringing them as close to your elbows as possible. Slowly lower your legs back down to the starting position.",
@@ -3253,7 +3253,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_arm_slingers_hanging_straight_legs",
-        name: "Arm slingers hanging straight legs",
+        name: "Arm Slingers Hanging Straight Legs",
         category: "Břicho",
         secondary_muscles: ["Ramena","back"],
         instructions: "Hang from a pull-up bar with your arms fully extended and your legs straight down. Engage your core and lift your legs up in front of you until they are parallel to the ground. Hold for a moment at the top, then slowly lower your legs back down to the starting position.",
@@ -3263,7 +3263,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_arms_overhead_full_sit_up_male",
-        name: "Arms overhead full sit-up (male)",
+        name: "Arms Overhead Full Sit-up (male)",
         category: "Břicho",
         secondary_muscles: ["Ohybače kyčlí","Spodní záda"],
         instructions: "Lie flat on your back with your knees bent and feet flat on the ground. Extend your arms overhead, keeping them straight. Engaging your abs, slowly lift your upper body off the ground, curling forward until your torso is upright.",
@@ -3273,7 +3273,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_press_sit_up",
-        name: "S Velkou činkou (VČ) Tlaky sit-up",
+        name: "Barbell Press Sit-up",
         category: "Břicho",
         secondary_muscles: ["Ramena","Hrudník"],
         instructions: "Lie flat on your back on a mat with your knees bent and feet flat on the ground. Hold the barbell with an overhand grip, resting it on your chest. Engaging your abs, slowly lift your upper body off the ground, curling forward until your torso is at a 45-degree angle.",
@@ -3283,7 +3283,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_seated_twist",
-        name: "S Velkou činkou (VČ) v sedě twist",
+        name: "Barbell Seated Twist",
         category: "Břicho",
         secondary_muscles: ["obliques","Spodní záda"],
         instructions: "Sit on a flat bench with your feet flat on the ground and your knees bent. Hold a barbell with both hands in front of your chest, keeping your elbows slightly bent. Engage your core and slowly twist your torso to one side, keeping your back straight.",
@@ -3293,7 +3293,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_side_bent_v_2",
-        name: "S Velkou činkou (VČ) side bent v. 2",
+        name: "Barbell Side Bent V. 2",
         category: "Břicho",
         secondary_muscles: ["obliques","Spodní záda"],
         instructions: "Stand with your feet shoulder-width apart and hold a barbell with both hands, palms facing down. Keep your back straight and core engaged throughout the exercise. Slowly bend your torso to the right side, lowering the barbell towards your right knee.",
@@ -3303,7 +3303,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_sitted_alternate_leg_raise",
-        name: "S Velkou činkou (VČ) sitted alternate Zvedání nohou",
+        name: "Barbell Sitted Alternate Leg Raise",
         category: "Břicho",
         secondary_muscles: ["Ohybače kyčlí"],
         instructions: "Sit on a bench with your back straight and hold a barbell across your thighs. Keeping your legs straight, lift one leg up as high as possible while keeping the other leg on the ground. Lower the raised leg back down and repeat with the other leg.",
@@ -3313,7 +3313,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_sitted_alternate_leg_raise_female",
-        name: "S Velkou činkou (VČ) sitted alternate Zvedání nohou (female)",
+        name: "Barbell Sitted Alternate Leg Raise (female)",
         category: "Břicho",
         secondary_muscles: ["Ohybače kyčlí","Kvadricepsy"],
         instructions: "Sit on a bench with your back straight and hold a barbell across your thighs. Place your hands on the sides of the bench for support. Keeping your legs straight, lift one leg up as high as possible while keeping it parallel to the ground.",
@@ -3323,7 +3323,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_barbell_standing_twist",
-        name: "S Velkou činkou (VČ) ve stoje twist",
+        name: "Barbell Standing Twist",
         category: "Břicho",
         secondary_muscles: ["obliques","Spodní záda"],
         instructions: "Stand with your feet shoulder-width apart and hold a barbell in front of your chest with both hands, palms facing down. Engage your core and keep your back straight throughout the exercise. Slowly twist your torso to the right, pivoting on your feet and hips, while keeping your lower body stable.",
@@ -3343,7 +3343,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_bridge_mountain_climber_cross_body",
-        name: "Horolezec na podložce",
+        name: "Bridge - Mountain Climber (cross Body)",
         category: "Břicho",
         secondary_muscles: ["Hýždě","Kvadricepsy","Hamstringy"],
         instructions: "Start in a high plank position with your hands directly under your shoulders and your body in a straight line. Engage your core and lift your right foot off the ground, bringing your right knee towards your left elbow. Return your right foot to the starting position and repeat the movement with your left foot towards your right elbow.",
@@ -3363,7 +3363,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_judo_flip",
-        name: "Na kladce judo flip",
+        name: "Cable Judo Flip",
         category: "Břicho",
         secondary_muscles: ["obliques","Ramena"],
         instructions: "Stand facing the cable machine with your feet shoulder-width apart. Hold the cable handle with both hands at chest level, palms facing down. Engage your core and rotate your torso to the right, pulling the cable across your body.",
@@ -3373,7 +3373,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_reverse_crunch",
-        name: "Na kladce reverse Zkracovačky na břicho",
+        name: "Cable Reverse Crunch",
         category: "Břicho",
         secondary_muscles: ["Ohybače kyčlí"],
         instructions: "Attach a cable to a low pulley and lie down facing up on a mat. Hold the cable with both hands and extend your arms straight up towards the ceiling. Bend your knees and lift your legs up, bringing your thighs towards your chest.",
@@ -3383,7 +3383,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_seated_crunch",
-        name: "Na kladce v sedě Zkracovačky na břicho",
+        name: "Cable Seated Crunch",
         category: "Břicho",
         secondary_muscles: ["obliques"],
         instructions: "Sit on a cable machine with your feet flat on the ground and your knees bent. Hold the cable handle with both hands and position it behind your head. Engage your abs and slowly curl your upper body forward, bringing your chest towards your knees.",
@@ -3393,7 +3393,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_seated_twist",
-        name: "Na kladce v sedě twist",
+        name: "Cable Seated Twist",
         category: "Břicho",
         secondary_muscles: ["obliques"],
         instructions: "Sit on a cable machine with your feet flat on the ground and your knees slightly bent. Hold the cable handle with both hands and extend your arms straight in front of you. Keeping your core engaged, slowly rotate your torso to one side, pulling the cable across your body.",
@@ -3403,7 +3403,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_side_bend",
-        name: "Na kladce side bend",
+        name: "Cable Side Bend",
         category: "Břicho",
         secondary_muscles: ["obliques"],
         instructions: "Stand with your feet shoulder-width apart and grasp the cable handle with one hand. Keep your back straight and your core engaged. Slowly bend sideways at the waist, lowering the cable handle towards your knee.",
@@ -3413,7 +3413,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_side_crunch",
-        name: "Na kladce side Zkracovačky na břicho",
+        name: "Cable Side Crunch",
         category: "Břicho",
         secondary_muscles: ["obliques"],
         instructions: "Attach a cable handle to a low pulley and stand sideways to the machine. Grasp the handle with the hand furthest from the machine and place your other hand on your hip. Keep your feet shoulder-width apart and your knees slightly bent.",
@@ -3423,7 +3423,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_standing_crunch",
-        name: "Na kladce ve stoje Zkracovačky na břicho",
+        name: "Cable Standing Crunch",
         category: "Břicho",
         secondary_muscles: ["obliques"],
         instructions: "Attach a cable handle to a high pulley and stand facing away from the machine. Hold the handle with both hands and place it behind your head, keeping your elbows bent. Stand with your feet shoulder-width apart and your knees slightly bent.",
@@ -3433,7 +3433,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_standing_crunch_with_rope_attachment",
-        name: "Na kladce ve stoje Zkracovačky na břicho (with rope attachment)",
+        name: "Cable Standing Crunch (with Rope Attachment)",
         category: "Břicho",
         secondary_muscles: ["obliques"],
         instructions: "Attach a rope to a cable machine at chest height. Stand facing away from the machine with your feet shoulder-width apart. Hold the rope with both hands and bring it behind your head, keeping your elbows bent.",
@@ -3443,7 +3443,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_standing_lift",
-        name: "Na kladce ve stoje lift",
+        name: "Cable Standing Lift",
         category: "Břicho",
         secondary_muscles: ["obliques","Spodní záda"],
         instructions: "Stand facing the cable machine with your feet shoulder-width apart. Hold the cable handle with both hands and position it at waist height. Engage your core and maintain a straight back throughout the exercise.",
@@ -3453,7 +3453,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_tuck_reverse_crunch",
-        name: "Na kladce tuck reverse Zkracovačky na břicho",
+        name: "Cable Tuck Reverse Crunch",
         category: "Břicho",
         secondary_muscles: ["Ohybače kyčlí"],
         instructions: "Attach a cable to a low pulley and lie down on a mat facing up. Hold the cable with both hands and extend your arms straight up above your chest. Bend your knees and lift your legs up, bringing your knees towards your chest.",
@@ -3463,7 +3463,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cable_twist_up_down",
-        name: "Na kladce twist (up-down)",
+        name: "Cable Twist (up-down)",
         category: "Břicho",
         secondary_muscles: ["obliques","Spodní záda"],
         instructions: "Stand with your feet shoulder-width apart, facing the cable machine. Hold the cable handle with both hands in front of your chest, keeping your arms slightly bent. Engage your core and slowly rotate your torso to one side, keeping your hips and legs stable.",
@@ -3473,7 +3473,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_captains_chair_straight_leg_raise",
-        name: "Captains chair straight Zvedání nohou",
+        name: "Captains Chair Straight Leg Raise",
         category: "Břicho",
         secondary_muscles: ["Ohybače kyčlí"],
         instructions: "Sit on the captain's chair with your back against the backrest and your forearms resting on the arm pads. Keep your upper body stable and your back straight. Engage your abs and lift your legs up in front of you, keeping them straight.",
@@ -3493,7 +3493,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_crab_twist_toe_touch",
-        name: "Crab twist toe touch",
+        name: "Crab Twist Toe Touch",
         category: "Břicho",
         secondary_muscles: ["obliques","Ohybače kyčlí"],
         instructions: "Start by sitting on the ground with your knees bent and feet flat on the floor. Place your hands behind you, fingers pointing towards your feet, and lift your hips off the ground. Extend one leg straight out in front of you while simultaneously reaching your opposite hand towards your toes.",
@@ -3503,7 +3503,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cross_body_crunch",
-        name: "Cross body Zkracovačky na břicho",
+        name: "Cross Body Crunch",
         category: "Břicho",
         secondary_muscles: ["obliques"],
         instructions: "Lie flat on your back with your knees bent and feet flat on the ground. Place your hands behind your head with your elbows pointing outwards. Engaging your abs, lift your upper body off the ground and twist to bring your right elbow towards your left knee.",
@@ -3513,7 +3513,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_crunch_hands_overhead",
-        name: "Zkracovačky na břicho (hands overhead)",
+        name: "Crunch (hands Overhead)",
         category: "Břicho",
         secondary_muscles: ["Ohybače kyčlí"],
         instructions: "Lie flat on your back with your knees bent and feet flat on the ground. Extend your arms straight above your head. Engaging your abs, lift your upper body off the ground, curling forward towards your knees.",
@@ -3523,7 +3523,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_curl_up",
-        name: "Bicepsový zdvih-up",
+        name: "Curl-up",
         category: "Břicho",
         secondary_muscles: ["Ohybače kyčlí"],
         instructions: "Lie flat on your back with your knees bent and feet flat on the ground. Place your hands behind your head with your elbows pointing outwards. Engaging your abs, slowly lift your upper body off the ground, curling forward until your torso is at a 45-degree angle.",
@@ -3533,7 +3533,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_dead_bug",
-        name: "Dead bug",
+        name: "Dead Bug",
         category: "Břicho",
         secondary_muscles: ["Ohybače kyčlí","Spodní záda"],
         instructions: "Lie flat on your back with your arms extended towards the ceiling. Bend your knees and lift your legs off the ground, creating a 90-degree angle at your hips and knees. Engage your core and lower back to press your lower back into the ground.",
@@ -3543,7 +3543,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_decline_crunch",
-        name: "Hlavou dolů Zkracovačky na břicho",
+        name: "Decline Crunch",
         category: "Břicho",
         secondary_muscles: ["Ohybače kyčlí"],
         instructions: "Lie on a decline bench with your feet secured and your knees bent at a 90-degree angle. Place your hands behind your head or across your chest. Engage your abs and lift your upper body towards your knees, curling your torso.",
@@ -3553,7 +3553,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_astride_jumps_male",
-        name: "Astride jumps (male)",
+        name: "Astride Jumps (male)",
         category: "Kardio",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart. Bend your knees and lower your body into a squat position. Jump explosively upwards, extending your legs and arms.",
@@ -3563,7 +3563,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_back_and_forth_step",
-        name: "Back a forth step",
+        name: "Back and Forth Step",
         category: "Kardio",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Hýždě"],
         instructions: "Stand with your feet shoulder-width apart. Step forward with your right foot, bending your knee and lowering your body into a lunge position. Push off with your right foot and step back to the starting position.",
@@ -3573,7 +3573,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_bear_crawl",
-        name: "Bear crawl",
+        name: "Bear Crawl",
         category: "Kardio",
         secondary_muscles: ["Střed těla","Ramena","Triceps"],
         instructions: "Start on all fours with your hands directly under your shoulders and your knees directly under your hips. Lift your knees slightly off the ground, keeping your back flat and your core engaged. Move your right hand and left foot forward simultaneously, followed by your left hand and right foot.",
@@ -3583,7 +3583,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_burpee",
-        name: "Angličáky (Burpees)",
+        name: "Burpee",
         category: "Kardio",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Start in a standing position with your feet shoulder-width apart. Lower your body into a squat position by bending your knees and placing your hands on the floor in front of you. Kick your feet back into a push-up position.",
@@ -3593,7 +3593,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_cycle_cross_trainer",
-        name: "Cycle cross trainer",
+        name: "Cycle Cross Trainer",
         category: "Kardio",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Hýždě"],
         instructions: "Adjust the seat height and position yourself on the cycle cross trainer. Place your feet on the pedals and grip the handlebars. Start pedaling in a smooth and controlled motion.",
@@ -3603,7 +3603,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_dumbbell_burpee",
-        name: "Angličáky (Burpees)",
+        name: "Dumbbell Burpee",
         category: "Kardio",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Start in a standing position with your feet shoulder-width apart and a dumbbell in each hand. Lower your body into a squat position, placing the dumbbells on the ground in front of you. Kick your feet back into a push-up position, keeping your body in a straight line.",
@@ -3613,7 +3613,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_half_knee_bends_male",
-        name: "Half knee bends (male)",
+        name: "Half Knee Bends (male)",
         category: "Kardio",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Hýždě"],
         instructions: "Stand with your feet shoulder-width apart. Bend your knees and lower your body down as if you were sitting back into a chair. Keep your chest up and your weight in your heels.",
@@ -3623,7 +3623,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_high_knee_against_wall",
-        name: "High knee against wall",
+        name: "High Knee Against Wall",
         category: "Kardio",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Hýždě"],
         instructions: "Stand facing a wall with your feet hip-width apart. Place your hands on the wall for support. Engage your core and lift your right knee up towards your chest, while keeping your left foot on the ground.",
@@ -3633,7 +3633,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_jack_burpee",
-        name: "Angličáky (Burpees)",
+        name: "Jack Burpee",
         category: "Kardio",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Start in a standing position with your feet shoulder-width apart. Lower your body into a squat position, placing your hands on the ground in front of you. Kick your feet back, landing in a push-up position.",
@@ -3643,7 +3643,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_jack_jump_male",
-        name: "Jack jump (male)",
+        name: "Jack Jump (male)",
         category: "Kardio",
         secondary_muscles: ["Kvadricepsy","Lýtka"],
         instructions: "Stand with your feet together and your arms by your sides. Jump up, spreading your feet apart and raising your arms above your head. As you land, quickly jump back to the starting position.",
@@ -3653,7 +3653,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_push_to_run",
-        name: "Push to run",
+        name: "Push to Run",
         category: "Kardio",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Start in a push-up position with your hands shoulder-width apart and your body in a straight line. Lower your chest towards the ground by bending your elbows, keeping your body straight. Push through your hands to extend your arms and return to the starting position.",
@@ -3683,7 +3683,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_scissor_jumps_male",
-        name: "Scissor jumps (male)",
+        name: "Scissor Jumps (male)",
         category: "Kardio",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart. Jump off the ground and simultaneously cross your right leg in front of your left leg. As you land, quickly switch legs, crossing your left leg in front of your right leg.",
@@ -3693,7 +3693,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_semi_squat_jump_male",
-        name: "Semi Dřep jump (male)",
+        name: "Semi Squat Jump (male)",
         category: "Kardio",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart. Bend your knees and lower your body into a squat position. Jump explosively, extending your hips and knees while swinging your arms for momentum.",
@@ -3703,7 +3703,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_short_stride_run",
-        name: "Short stride run",
+        name: "Short Stride Run",
         category: "Kardio",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Find an open space or a treadmill to perform the exercise. Stand tall with your feet hip-width apart. Start jogging in place, lifting your knees high and pumping your arms.",
@@ -3713,7 +3713,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_skater_hops",
-        name: "Skater hops",
+        name: "Skater Hops",
         category: "Kardio",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Hýždě"],
         instructions: "Stand with your feet shoulder-width apart. Bend your knees slightly and jump to the right, landing on your right foot. As you land, swing your left leg behind your right leg and tap the ground with your left toes.",
@@ -3723,7 +3723,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_ski_step",
-        name: "Ski step",
+        name: "Ski Step",
         category: "Kardio",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Hýždě"],
         instructions: "Stand with your feet shoulder-width apart. Bend your knees slightly and keep your back straight. Jump to the right, landing on your right foot while swinging your left leg behind your right leg.",
@@ -3733,7 +3733,7 @@ export const defaultExercises = [
     },
     {
         id: "ex_star_jump_male",
-        name: "Star jump (male)",
+        name: "Star Jump (male)",
         category: "Kardio",
         secondary_muscles: ["Kvadricepsy","Hamstringy","Lýtka"],
         instructions: "Stand with your feet shoulder-width apart and your arms by your sides. Bend your knees slightly and jump up explosively. As you jump, spread your legs and extend your arms out to the sides, forming a star shape with your body.",
