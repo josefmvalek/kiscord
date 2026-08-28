@@ -1,72 +1,84 @@
 /* ==========================================================
-   ANIMATIONS.CSS — All @keyframes & Animation Utilities
+   ANIMATIONS.CSS — Luxury & Minimalist Motion System
    ========================================================== */
 
-/* --- FADE IN --- */
+/* --- FADE IN (Optimized Spring & Alpha) --- */
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
+.animate-fade-in { 
+  animation: fade-in var(--dur-normal, 240ms) var(--ease-spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)) forwards; 
+  will-change: transform, opacity;
+}
 
-/* Subtile Staggered Entrance (Optimized for Speed) */
+/* Subtle Staggered Entrance (Optimized for Speed) */
 @keyframes entrance-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .stagger-item {
   opacity: 0;
-  animation: entrance-up 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  animation: entrance-up var(--dur-normal, 240ms) var(--ease-spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+  will-change: transform, opacity;
 }
 
 /* Alias used in premium card system */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from { opacity: 0; transform: scale(0.99); }
+  to   { opacity: 1; transform: scale(1); }
 }
-.animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
 
 /* --- SLIDE UP --- */
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.animate-slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-slide-up { 
+  animation: slideUp var(--dur-moderate, 320ms) var(--ease-spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)) forwards; 
+  will-change: transform, opacity;
+}
 
-/* --- SLIDE DOWN (Offline Banner) --- */
+/* --- SLIDE DOWN (Offline Banner / Alert HUD) --- */
 @keyframes slide-down {
   from { transform: translateY(-100%); opacity: 0; }
   to   { transform: translateY(0); opacity: 1; }
 }
-.animate-slide-down { animation: slide-down 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; }
+.animate-slide-down { animation: slide-down var(--dur-moderate, 320ms) var(--ease-spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)) forwards; }
 
 @keyframes slide-up-out {
   from { transform: translateY(0); opacity: 1; }
   to   { transform: translateY(-100%); opacity: 0; }
 }
-.animate-banner-up { animation: slide-up-out 0.4s ease-in forwards; }
+.animate-banner-up { animation: slide-up-out var(--dur-normal, 240ms) var(--ease-out-quint) forwards; }
 
 /* --- SCALE IN --- */
 @keyframes scale-in {
-  from { transform: scale(0.95); opacity: 0; }
-  to   { transform: scale(1); opacity: 1; }
+  from { transform: scale(0.95) translateY(4px); opacity: 0; }
+  to   { transform: scale(1) translateY(0); opacity: 1; }
 }
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to   { opacity: 1; transform: scale(1); }
+  from { transform: scale(0.95) translateY(4px); opacity: 0; }
+  to   { transform: scale(1) translateY(0); opacity: 1; }
 }
-.animate-scale-in { animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.animate-scale-in { 
+  animation: scaleIn var(--dur-normal, 240ms) var(--ease-spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)) forwards; 
+  will-change: transform, opacity;
+}
 
 /* --- FADE IN UP (Cards) --- */
 @keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-.animate-fade-in-up { animation: fade-in-up 0.4s ease-out forwards; }
+.animate-fade-in-up { 
+  animation: fade-in-up var(--dur-normal, 240ms) var(--ease-spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)) forwards; 
+  will-change: transform, opacity;
+}
 
 /* --- BOUNCE --- */
 @keyframes bounce-short {
@@ -315,10 +327,10 @@ button:active i.fa-tint { animation: waterSplash 0.3s ease-out; }
 }
 
 /* ==========================================================
-   SKELETON SHIMMER & NEXT-LEVEL MICRO-INTERACTIONS
+   SKELETON SHIMMER & LUXURY LOADING PLACEHOLDERS
    ========================================================== */
 
-/* --- SHIMMER ANIMATION (Zero CLS Perceived Performance) --- */
+/* --- LUXURY SPECULAR SHIMMER (Linear / Raycast Style) --- */
 @keyframes shimmer-wave {
   0% {
     background-position: -200% 0;
@@ -328,19 +340,54 @@ button:active i.fa-tint { animation: waterSplash 0.3s ease-out; }
   }
 }
 
+@keyframes skeleton-breathe {
+  0%, 100% {
+    opacity: 0.82;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.kiscord-skeleton-container {
+  animation: skeleton-breathe 2.4s ease-in-out infinite;
+}
+
 .animate-pulse-shimmer,
 .kiscord-skeleton-shimmer {
   background: linear-gradient(
-    90deg,
-    var(--bg-secondary) 0%,
-    var(--bg-modifier-active) 35%,
-    var(--bg-modifier-hover) 50%,
-    var(--bg-modifier-active) 65%,
-    var(--bg-secondary) 100%
+    110deg,
+    rgba(255, 255, 255, 0.035) 0%,
+    rgba(255, 255, 255, 0.035) 30%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.035) 70%,
+    rgba(255, 255, 255, 0.035) 100%
   ) !important;
-  background-size: 250% 100% !important;
-  animation: shimmer-wave 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+  background-size: 200% 100% !important;
+  animation: shimmer-wave 2s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+  will-change: background-position;
 }
+
+.theme-light .animate-pulse-shimmer,
+.theme-light .kiscord-skeleton-shimmer {
+  background: linear-gradient(
+    110deg,
+    rgba(0, 0, 0, 0.04) 0%,
+    rgba(0, 0, 0, 0.04) 30%,
+    rgba(0, 0, 0, 0.11) 50%,
+    rgba(0, 0, 0, 0.04) 70%,
+    rgba(0, 0, 0, 0.04) 100%
+  ) !important;
+  background-size: 200% 100% !important;
+}
+
+/* Staggered Shimmer Wave Offsets for Fluid Rhythm */
+.kiscord-skeleton-card:nth-child(1) .kiscord-skeleton-shimmer { animation-delay: 0ms !important; }
+.kiscord-skeleton-card:nth-child(2) .kiscord-skeleton-shimmer { animation-delay: 120ms !important; }
+.kiscord-skeleton-card:nth-child(3) .kiscord-skeleton-shimmer { animation-delay: 240ms !important; }
+.kiscord-skeleton-card:nth-child(4) .kiscord-skeleton-shimmer { animation-delay: 360ms !important; }
+.kiscord-skeleton-card:nth-child(5) .kiscord-skeleton-shimmer { animation-delay: 480ms !important; }
+.kiscord-skeleton-card:nth-child(6) .kiscord-skeleton-shimmer { animation-delay: 600ms !important; }
 
 /* --- SPRING SCALE IN (Apple-like Snappy Entrance) --- */
 @keyframes scale-spring {
@@ -409,5 +456,232 @@ button:active i.fa-tint { animation: waterSplash 0.3s ease-out; }
   animation: pulse-glow-pink 1.8s ease-in-out infinite;
 }
 
+/* ==========================================================
+   CALENDAR 3.0 SPATIAL ZEN & MOTION SYSTEM
+   ========================================================== */
 
+/* 1. Staggered 3D Month Cell Pop-In */
+@keyframes calCellPopIn {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
 
+/* 2. Navigation Slide Transitions */
+@keyframes calSlideNext {
+  0% {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes calSlidePrev {
+  0% {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes calViewSwitch {
+  0% {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.cal-anim-slide-next {
+  animation: calSlideNext 220ms var(--cal-spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+
+.cal-anim-slide-prev {
+  animation: calSlidePrev 220ms var(--cal-spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+
+.cal-anim-view-switch {
+  animation: calViewSwitch 200ms var(--cal-spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+
+/* 3. Live Now Indicator Laser & Beacon */
+@keyframes calLaserBeaconPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(88, 101, 242, 0.7), 0 0 12px rgba(88, 101, 242, 0.9);
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 5px rgba(88, 101, 242, 0), 0 0 20px rgba(88, 101, 242, 1);
+  }
+}
+
+.cal-laser-beacon {
+  animation: calLaserBeaconPulse 2s ease-in-out infinite;
+}
+
+/* 4. Romantic Gap Shimmer */
+@keyframes calRomanticShimmer {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 100% 100%;
+  }
+}
+
+.cal-romantic-gap-shimmer {
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(236, 72, 153, 0.08),
+    rgba(236, 72, 153, 0.08) 10px,
+    rgba(236, 72, 153, 0.15) 10px,
+    rgba(236, 72, 153, 0.15) 20px
+  );
+  background-size: 200% 200%;
+  animation: calRomanticShimmer 12s linear infinite;
+}
+
+/* 5. Zen Peek HUD Floating Popover */
+@keyframes calZenPeekIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.94) translateY(-6px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.cal-zen-peek-anim {
+  animation: calZenPeekIn 160ms var(--cal-spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+
+/* ==========================================================
+   STAGGERED REVEAL SYSTEM (Cascading Micro-delights)
+   ========================================================== */
+.stagger-in > * {
+  opacity: 0;
+  animation: entrance-up var(--dur-normal, 240ms) var(--ease-spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+  will-change: transform, opacity;
+}
+.stagger-in > *:nth-child(1)  { animation-delay: 20ms; }
+.stagger-in > *:nth-child(2)  { animation-delay: 45ms; }
+.stagger-in > *:nth-child(3)  { animation-delay: 70ms; }
+.stagger-in > *:nth-child(4)  { animation-delay: 95ms; }
+.stagger-in > *:nth-child(5)  { animation-delay: 120ms; }
+.stagger-in > *:nth-child(6)  { animation-delay: 145ms; }
+.stagger-in > *:nth-child(7)  { animation-delay: 170ms; }
+.stagger-in > *:nth-child(8)  { animation-delay: 195ms; }
+.stagger-in > *:nth-child(9)  { animation-delay: 220ms; }
+.stagger-in > *:nth-child(10) { animation-delay: 245ms; }
+.stagger-in > *:nth-child(11) { animation-delay: 270ms; }
+.stagger-in > *:nth-child(12) { animation-delay: 295ms; }
+
+/* ==========================================================
+   FLUID CHANNEL CONTENT TRANSITIONS (Linear & Raycast Inspired)
+   Luxurious, silky cross-fade without harsh jumping or flashing
+   ========================================================== */
+#messages-container {
+  view-transition-name: main-content;
+}
+
+@keyframes channelContentEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.channel-content-enter {
+  animation: channelContentEnter var(--dur-fast, 160ms) var(--ease-spring-smooth, cubic-bezier(0.32, 0.72, 0, 1)) forwards;
+}
+
+.channel-content-fading {
+  opacity: 0.4 !important;
+  transition: opacity 100ms ease !important;
+  pointer-events: none !important;
+}
+
+::view-transition-group(main-content) {
+  animation-duration: 220ms;
+  animation-timing-function: var(--ease-spring-smooth, cubic-bezier(0.32, 0.72, 0, 1));
+}
+
+::view-transition-old(main-content) {
+  animation: 120ms ease both fade-out-subtle;
+}
+
+::view-transition-new(main-content) {
+  animation: 200ms var(--ease-spring-smooth, cubic-bezier(0.32, 0.72, 0, 1)) both fade-in-subtle;
+}
+
+@keyframes fade-out-subtle {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-3px); }
+}
+
+@keyframes fade-in-subtle {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================
+   TACTILE MICRO-PRESS & LUXE HOVER LIFT
+   ========================================================== */
+.active-pop,
+.btn-press,
+button:not(:disabled):active,
+.channel-link:active,
+.server-item-wrapper:active,
+.kiscord-card-interactive:active {
+  transform: scale(0.975) translateZ(0) !important;
+  transition: transform 0.08s cubic-bezier(0.2, 0.9, 0.3, 1.2) !important;
+}
+
+.hover-lift {
+  transition: transform var(--dur-fast, 160ms) var(--ease-spring-snappy),
+              box-shadow var(--dur-fast, 160ms) var(--ease-spring-snappy);
+}
+.hover-lift:hover {
+  transform: translateY(-2px) translateZ(0);
+}
+
+/* ==========================================================
+   ACCESSIBILITY: PREFERS-REDUCED-MOTION
+   ========================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  ::view-transition-group(root),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}

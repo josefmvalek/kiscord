@@ -6,6 +6,7 @@ import { state } from '@core/state.js';
 import { triggerHaptic, getTodayKey } from '@core/utils.js';
 import { showConfirmDialog, showNotification } from '@core/theme.js';
 import { supabase } from '@core/supabase.js';
+import { getActiveSplitForDay } from '@domains/fitness/gym/splits.js';
 
 export async function openGymLog(dateKey) {
     const { closeDayModal } = await import('./day-modal.js');
@@ -250,7 +251,47 @@ export function renderGymSectionHtml(dateKey) {
         `;
     }
 
-    const emptyHtml = (!gymLogs.length && !isPlannedGym) ? `
+    const splitConfig = getActiveSplitForDay(dateKey);
+    let splitHtml = '';
+    if (gymLogs.length === 0 && !isPlannedGym && splitConfig) {
+        if (!splitConfig.isRest) {
+            splitHtml = `
+                <div class="bg-gradient-to-br from-[#faa61a]/15 via-[#faa61a]/5 to-transparent border border-[#faa61a]/40 border-dashed rounded-xl p-3 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-lg">⚡</span>
+                        <div>
+                            <div class="text-[9px] font-black text-amber-400 uppercase tracking-wider">Tréninkový Split (${splitConfig.splitTitle || 'Můj Split'})</div>
+                            <div class="text-xs font-bold text-white">${splitConfig.splitName}${splitConfig.template ? ` • ${splitConfig.template.name}` : ''}</div>
+                            ${splitConfig.preferredTime ? `<div class="text-[10px] text-gray-400 font-mono"><i class="far fa-clock text-[#faa61a] mr-1"></i>${splitConfig.preferredTime}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        ${isToday ? `
+                            <button onclick="Calendar.closeDayModal(); window.switchChannel('gym-tracker'); if (window.Gym) window.Gym.startSplitWorkout('${splitConfig.templateId || ''}');" 
+                                    class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black text-[10px] font-black uppercase tracking-wider transition shadow-md shadow-amber-500/20 flex items-center gap-1">
+                                <i class="fas fa-play text-[9px]"></i> Začít
+                            </button>
+                        ` : ''}
+                        <button onclick="if (window.Gym) { window.Gym.shiftActiveSplitDays(1); Calendar.showDayDetail('${dateKey}'); }" class="w-7 h-7 rounded-lg flex items-center justify-center text-white/40 hover:text-amber-400 hover:bg-white/5 transition" title="Posunout split o +1 den">
+                            <i class="fas fa-forward text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else {
+            splitHtml = `
+                <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 flex items-center gap-2.5">
+                    <span class="text-lg">🛌</span>
+                    <div>
+                        <div class="text-[9px] font-black text-blue-300 uppercase tracking-wider">Tréninkový Split</div>
+                        <div class="text-xs font-bold text-white">Volno / Rest Day (Regenerace)</div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    const emptyHtml = (!gymLogs.length && !isPlannedGym && !splitConfig) ? `
         <div class="bg-black/10 border border-white/5 rounded-xl p-3 text-center">
             <p class="text-xs text-gray-400 font-medium">V tento den nebyl zaznamenán žádný trénink.</p>
         </div>
@@ -272,7 +313,9 @@ export function renderGymSectionHtml(dateKey) {
 
             ${logsHtml}
             ${planHtml}
+            ${splitHtml}
             ${emptyHtml}
+
 
             <div class="flex flex-wrap gap-2 pt-1">
                 ${isToday ? `

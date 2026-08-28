@@ -4,6 +4,8 @@ export const initialGymState = {
     gymLogs: [],
     gymPRs: [],
     gymBodyMeasurements: [],
+    trainingSplits: [],
+    activeTrainingSplit: null,
     activeWorkout: null
 };
 
@@ -14,6 +16,8 @@ export class GymStore {
         this.gymLogs = [];
         this.gymPRs = [];
         this.gymBodyMeasurements = [];
+        this.trainingSplits = [];
+        this.activeTrainingSplit = null;
         this.activeWorkout = null;
     }
 
@@ -37,7 +41,16 @@ export class GymStore {
         this.gymBodyMeasurements = Array.isArray(measurements) ? measurements : [];
     }
 
+    setTrainingSplits(splits) {
+        this.trainingSplits = Array.isArray(splits) ? splits : [];
+    }
+
+    setActiveTrainingSplit(split) {
+        this.activeTrainingSplit = split || null;
+    }
+
     setActiveWorkout(workout) {
         this.activeWorkout = workout;
     }
 }
+

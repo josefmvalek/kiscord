@@ -3,6 +3,9 @@ import { state, awardLoveCoinsToCurrentUser } from '@core/state.js';
 import { triggerHaptic, triggerConfetti } from '@core/utils.js';
 import { showNotification } from '@core/theme.js';
 import { renderModal } from '@core/ui.js';
+import { safeUpsert } from '@core/offline.js';
+import { setSelectedDateLocation, getSelectedCountry } from '../state.js';
+import { switchCountry, renderLocationList, renderMarkers } from '../leaflet.js';
 
 export function isSecretDateLocked(plan, currentUserName) {
     if (!plan || !plan.is_secret) return false;

@@ -1,4 +1,5 @@
 export const initialCoupleState = {
+    relationshipXP: 0,
     loveCoins: { jose: 0, klarka: 0 },
     inventory: [],
     partnerObligations: [],
@@ -30,6 +31,7 @@ export const initialCoupleState = {
 
 export class CoupleStore {
     constructor() {
+        this.relationshipXP = initialCoupleState.relationshipXP;
         this.loveCoins = { ...initialCoupleState.loveCoins };
         this.inventory = [];
         this.shopItems = [];

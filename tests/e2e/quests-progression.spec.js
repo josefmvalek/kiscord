@@ -1,98 +1,44 @@
 import { test, expect } from '@playwright/test';
+import { setupMockAuthSession, setupDefaultApiRoutes } from '../fixtures/playwright-helpers.js';
 
 test.describe('Cooperative Quests Progression E2E', () => {
   test.beforeEach(async ({ page }) => {
-    // 1. Mock the Supabase Auth session in localStorage to bypass the login screen
-    await page.addInitScript(() => {
-      const makeMockJWT = (usr) => {
-        const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-        const payload = btoa(JSON.stringify({
-          sub: usr.id,
-          email: usr.email,
-          role: usr.role || 'authenticated',
-          exp: Math.floor(Date.now() / 1000) + 3600,
-        }));
-        return `${header}.${payload}.mocksignature`;
-      };
-      
-      const user = {
-        id: 'jose-id-123',
-        email: 'jozkavalek@email.cz',
-        role: 'authenticated',
-      };
-      
-      const session = {
-        access_token: makeMockJWT(user),
-        token_type: 'bearer',
-        expires_in: 3600,
-        refresh_token: 'fake-refresh-token',
-        user: user,
-        expires_at: Math.floor(Date.now() / 1000) + 3600,
-      };
-
-      window.localStorage.setItem('sb-nnrorazsiyiedwomgidf-auth-token', JSON.stringify(session));
-    });
+    // 1. Mock session
+    await setupMockAuthSession(page);
 
     // 2. Intercept and mock Supabase API HTTP requests
-    await page.route('**/auth/v1/user*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          id: 'jose-id-123',
-          email: 'jozkavalek@email.cz',
-          role: 'authenticated',
-          aud: 'authenticated',
-        }),
-      });
-    });
-
-    // Capture POST requests to coop_quests
-    page.route('**/rest/v1/**', async (route) => {
-      const url = route.request().url();
-      const method = route.request().method();
-
-      if (url.includes('/coop_quests')) {
-        if (method === 'POST') {
-          await route.fulfill({
-            status: 201,
-            contentType: 'application/json',
-            body: JSON.stringify([{ id: 'mock-quest-uuid' }]),
-          });
-        } else {
-          await route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify([
-              {
-                id: 'quest-1',
-                title: '💶 Spořiví Mývalové',
-                description: 'Vydělejte společně 5000 EUR na brigádě. Každá odpracovaná směna se počítá jako 100 EUR! 💪',
-                icon: '💶',
-                color: 'from-emerald-400 to-teal-600',
-                goal: 5000,
-                unit: 'EUR',
-                type: 'austria_euro',
-                is_active: true
-              }
-            ]),
-          });
+    await setupDefaultApiRoutes(page, {
+      customRestHandler: async (route, url) => {
+        const method = route.request().method();
+        if (url.includes('/coop_quests')) {
+          if (method === 'POST') {
+            await route.fulfill({
+              status: 201,
+              contentType: 'application/json',
+              body: JSON.stringify([{ id: 'mock-quest-uuid' }]),
+            });
+          } else {
+            await route.fulfill({
+              status: 200,
+              contentType: 'application/json',
+              body: JSON.stringify([
+                {
+                  id: 'quest-1',
+                  title: '💶 Spořiví Mývalové',
+                  description: 'Vydělejte společně 5000 EUR na brigádě. Každá odpracovaná směna se počítá jako 100 EUR! 💪',
+                  icon: '💶',
+                  color: 'from-emerald-400 to-teal-600',
+                  goal: 5000,
+                  unit: 'EUR',
+                  type: 'austria_euro',
+                  is_active: true
+                }
+              ]),
+            });
+          }
+          return true;
         }
-      } else if (url.includes('/profiles')) {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify([
-            { id: 'jose-id-123', email: 'jozkavalek@email.cz', username: 'Jožka' },
-            { id: 'klarka-id-456', email: 'vyslouzilova.klara07@gmail.com', username: 'Klárka' },
-          ]),
-        });
-      } else {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: '[]',
-        });
+        return false;
       }
     });
   });

@@ -141,7 +141,7 @@ The app remains fully functional in airplanes, subways, or during connectivity d
 | [`js/core/servers.js`](../js/core/servers.js) | Discord 7-server architecture, server switching, active state indicators |
 | [`js/core/state.js`](../js/core/state.js) | Reactive state facade unifying Domain Store Slices and SWR cache |
 | [`js/core/state/`](../js/core/state/) | Dedicated domain store slices (auth, gym, health, couple, fit, media, settings, event-bus) |
-| [`js/core/repositories/`](../js/core/repositories/) | Data access layer (BaseRepository, GymRepository, HealthRepository, FinanceRepository, MediaRepository) |
+| [`js/core/repositories/`](../js/core/repositories/) | Data access layer (BaseRepository, GymRepository, HealthRepository, FinanceRepository, CoupleRepository, UniversityRepository, MediaRepository) |
 | [`js/core/idb.js`](../js/core/idb.js) | High-capacity IndexedDB async storage engine (keyval & media stores) |
 | [`js/core/loaders.js`](../js/core/loaders.js) | On-demand lazy data loaders for channels |
 | [`js/core/offline.js`](../js/core/offline.js) | Conflict-aware offline retry queue with exponential backoff (`kiscord_sync_queue`) |
@@ -161,4 +161,9 @@ Historie a zdůvodnění všech zásadních architektonických rozhodnutí jsou 
 * **[ADR-0003: Modularize State Management into Domain Store Slices & Reactive Bus](adr/0003-domain-store-slices.md)**
 * **[ADR-0004: Standardized Module Lifecycle Interface & Router Decoupling](adr/0004-module-lifecycle-router-decoupling.md)**
 * **[ADR-0005: Conflict-Aware Offline Sync Queue with Exponential Backoff](adr/0005-resilient-offline-sync-conflict-detection.md)**
+* **[ADR-0006: Lightweight Reactive Signals Engine (~60 LOC Vanilla JS)](adr/0006-reactive-signals-engine.md)**
+* **[ADR-0007: WebRTC Peer-to-Peer Direct Intimacy Channel (Sub-10ms)](adr/0007-webrtc-peer-to-peer-channel.md)**
+* **[ADR-0008: Client-Side AES-GCM Encrypted Backup & Restore (.kiscord)](adr/0008-client-side-aes-gcm-encrypted-backup.md)**
+* **[ADR-0009: Discord Slash Commands & Smart Voice Logging Engine](adr/0009-discord-slash-commands-voice-logging.md)**
+* **[ADR-0010: Database Performance Optimization & Unified Dashboard Bootstrap](adr/0010-database-performance-and-unified-bootstrap.md)**
 

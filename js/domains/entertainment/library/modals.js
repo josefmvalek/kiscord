@@ -1,4 +1,6 @@
-import { triggerHaptic } from '@core/utils.js';
+import { triggerHaptic, triggerConfetti } from '@core/utils.js';
+import { showNotification } from '@core/theme.js';
+import { closeModal } from '@core/ui.js';
 import { getAssetUrl } from '@core/assets.js';
 import { state } from '@core/state.js';
 import { safeInsert } from '@core/offline.js';
@@ -241,10 +243,10 @@ export async function confirmLibraryPlan() {
     await safeInsert('planned_dates', newPlan);
 
     if (window.closeModal) window.closeModal("planning-modal");
-    else document.getElementById("planning-modal").style.display = "none";
+    else document.getElementById("planning-modal")?.remove();
 
-    if (window.showNotification) window.showNotification(`📅 Naplánováno: ${currentPlanData.title}`, "success");
-    if (typeof window.triggerConfetti === 'function') window.triggerConfetti();
+    showNotification(`📅 Naplánováno: ${currentPlanData.title}`, "success");
+    triggerConfetti();
 }
 
 export function renderManual() {

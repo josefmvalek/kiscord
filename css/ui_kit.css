@@ -7,31 +7,35 @@
 /* --- 1. GLASSMORPHISM & CARDS --- */
 .glass-card,
 .kiscord-card {
-    background: var(--glass-bg);
-    backdrop-filter: blur(var(--glass-blur, 12px));
-    -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
-    border: 1px solid var(--border-subtle);
+    background: var(--luxe-glass-bg, rgba(32, 34, 37, 0.72));
+    backdrop-filter: blur(var(--glass-blur, 14px));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 14px));
+    border: 1px solid var(--luxe-glass-border, rgba(255, 255, 255, 0.08));
     border-radius: var(--border-radius-lg, 16px);
-    box-shadow: var(--card-shadow);
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-                box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-                border-color 0.25s ease,
-                background-color 0.25s ease;
+    box-shadow: var(--luxe-glass-highlight, inset 0 1px 0 0 rgba(255, 255, 255, 0.10)),
+                var(--luxe-card-shadow, 0 10px 30px -10px rgba(0, 0, 0, 0.5));
+    transition: transform var(--dur-normal, 240ms) var(--ease-spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)),
+                box-shadow var(--dur-normal, 240ms) var(--ease-spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)),
+                border-color var(--dur-fast, 160ms) ease,
+                background-color var(--dur-fast, 160ms) ease;
+    will-change: transform, box-shadow;
 }
 
 .glass-card:hover,
 .kiscord-card-hover:hover {
-    background: var(--bg-modifier-hover, rgba(255, 255, 255, 0.08));
-    border-color: var(--border-default);
-    transform: translateY(-2px);
-    box-shadow: 0 14px 30px -4px rgba(0, 0, 0, 0.4);
+    background: var(--luxe-glass-bg-hover, rgba(255, 255, 255, 0.07));
+    border-color: var(--luxe-glass-border-hover, rgba(255, 255, 255, 0.16));
+    transform: translateY(-2px) translateZ(0);
+    box-shadow: var(--luxe-glass-highlight, inset 0 1px 0 0 rgba(255, 255, 255, 0.15)),
+                var(--luxe-card-hover-shadow, 0 16px 36px -10px rgba(0, 0, 0, 0.5));
 }
 
 .kiscord-card-interactive {
     cursor: pointer;
+    user-select: none;
 }
 .kiscord-card-interactive:active {
-    transform: scale(0.985);
+    transform: scale(0.98) translateZ(0);
 }
 
 /* --- 2. STANDARDIZED BUTTONS --- */
@@ -41,7 +45,7 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 10px 18px;
+    padding: 9px 18px;
     border-radius: var(--border-radius-md, 12px);
     font-size: 13px;
     font-weight: 700;
@@ -51,9 +55,10 @@
     user-select: none;
     position: relative;
     overflow: hidden;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: all var(--dur-fast, 160ms) var(--ease-spring-snappy, cubic-bezier(0.16, 1, 0.3, 1));
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.18), 0 4px 12px rgba(0, 0, 0, 0.25);
     border: 1px solid transparent;
+    will-change: transform, box-shadow;
 }
 
 /* Premium shimmer light-sweep */
@@ -62,34 +67,36 @@
     content: '';
     position: absolute;
     top: -50%;
-    left: -60%;
+    left: -70%;
     width: 200%;
     height: 200%;
-    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.12), transparent);
-    transform: rotate(45deg);
-    transition: 0.6s ease;
+    background: linear-gradient(60deg, transparent 30%, rgba(255, 255, 255, 0.16) 50%, transparent 70%);
+    transform: rotate(25deg);
+    transition: transform 0.65s var(--ease-out-quint);
     pointer-events: none;
 }
 
 .kiscord-btn:hover::after,
 .btn-premium:hover::after {
-    left: 120%;
+    transform: translateX(110%) rotate(25deg);
 }
 
 .kiscord-btn:active,
 .btn-premium:active {
-    transform: scale(0.96);
+    transform: scale(0.97) translateZ(0);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Button Variants */
 .kiscord-btn-primary {
     background-color: var(--blurple);
     color: #ffffff !important;
-    border-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.16);
 }
 .kiscord-btn-primary:hover {
     background-color: var(--blurple-hover);
-    box-shadow: 0 6px 20px rgba(88, 101, 242, 0.4);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.25), 0 8px 24px rgba(88, 101, 242, 0.45);
+    transform: translateY(-1px) translateZ(0);
 }
 
 .kiscord-btn-secondary {
@@ -101,42 +108,47 @@
     background-color: var(--bg-modifier-active, rgba(255, 255, 255, 0.14));
     color: #ffffff !important;
     border-color: var(--border-strong);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.1), 0 6px 18px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px) translateZ(0);
 }
 
 .kiscord-btn-accent {
     background: linear-gradient(135deg, var(--pink) 0%, #ff1493 100%);
     color: #ffffff !important;
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.25);
 }
 .kiscord-btn-accent:hover {
-    box-shadow: 0 6px 20px rgba(235, 69, 158, 0.4);
-    filter: brightness(1.05);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.3), 0 8px 24px rgba(235, 69, 158, 0.45);
+    filter: brightness(1.06);
+    transform: translateY(-1px) translateZ(0);
 }
 
 .kiscord-btn-success {
     background-color: var(--green);
     color: #ffffff !important;
-    border-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.16);
 }
 .kiscord-btn-success:hover {
     background-color: var(--green-hover);
-    box-shadow: 0 6px 20px rgba(59, 165, 92, 0.4);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.25), 0 8px 24px rgba(59, 165, 92, 0.45);
+    transform: translateY(-1px) translateZ(0);
 }
 
 .kiscord-btn-danger {
     background-color: var(--red);
     color: #ffffff !important;
-    border-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.18);
 }
 .kiscord-btn-danger:hover {
     background-color: var(--red-hover);
-    box-shadow: 0 6px 20px rgba(237, 66, 69, 0.4);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.25), 0 8px 24px rgba(237, 66, 69, 0.45);
+    transform: translateY(-1px) translateZ(0);
 }
 
 .kiscord-btn-warning {
     background-color: var(--yellow);
     color: #ffffff !important;
-    border-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.18);
 }
 .kiscord-btn-warning:hover {
     background-color: var(--yellow-hover);
@@ -526,7 +538,7 @@ input[type=range].kiscord-slider::-webkit-slider-thumb:hover {
    8. SKELETON LOADERS (Standardized UI Kit Zero-CLS)
    ========================================================== */
 .kiscord-skeleton {
-    background: var(--bg-secondary);
+    background: rgba(255, 255, 255, 0.05);
     border-radius: var(--border-radius-md, 12px);
     overflow: hidden;
     position: relative;
@@ -536,44 +548,48 @@ input[type=range].kiscord-slider::-webkit-slider-thumb:hover {
 
 .kiscord-skeleton-shimmer {
     background: linear-gradient(
-        90deg,
-        var(--bg-secondary) 0%,
-        var(--bg-modifier-active) 35%,
-        var(--bg-modifier-hover) 50%,
-        var(--bg-modifier-active) 65%,
-        var(--bg-secondary) 100%
+        110deg,
+        rgba(255, 255, 255, 0.035) 0%,
+        rgba(255, 255, 255, 0.035) 30%,
+        rgba(255, 255, 255, 0.12) 50%,
+        rgba(255, 255, 255, 0.035) 70%,
+        rgba(255, 255, 255, 0.035) 100%
     );
-    background-size: 250% 100%;
-    animation: shimmer-wave 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    background-size: 200% 100%;
+    animation: shimmer-wave 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 .kiscord-skeleton-card {
-    background: var(--glass-bg, rgba(47, 49, 54, 0.65));
-    border: 1px solid var(--border-subtle);
+    background: var(--luxe-glass-bg, rgba(32, 34, 37, 0.65));
+    border: 1px solid var(--luxe-glass-border, rgba(255, 255, 255, 0.08));
     border-radius: var(--border-radius-lg, 16px);
     padding: var(--space-5, 20px);
     display: flex;
     flex-direction: column;
     gap: var(--space-3, 12px);
+    box-shadow: var(--luxe-glass-highlight, inset 0 1px 0 0 rgba(255, 255, 255, 0.08)),
+                0 10px 30px -8px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .kiscord-skeleton-avatar {
     width: 40px;
     height: 40px;
     border-radius: var(--border-radius-full, 9999px);
-    background: var(--bg-modifier-active);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .kiscord-skeleton-line {
     height: 12px;
     border-radius: var(--border-radius-xs, 4px);
-    background: var(--bg-modifier-active);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .kiscord-skeleton-btn {
     height: 38px;
     border-radius: var(--border-radius-md, 12px);
-    background: var(--bg-modifier-active);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 /* ==========================================================
@@ -587,27 +603,30 @@ input[type=range].kiscord-slider::-webkit-slider-thumb:hover {
 }
 
 .kiscord-bento-card {
-    background: var(--glass-bg);
-    backdrop-filter: blur(var(--glass-blur, 12px));
-    -webkit-backdrop-filter: blur(var(--glass-blur, 12px));
-    border: 1px solid var(--border-subtle);
+    background: var(--luxe-glass-bg, rgba(32, 34, 37, 0.72));
+    backdrop-filter: blur(var(--glass-blur, 14px));
+    -webkit-backdrop-filter: blur(var(--glass-blur, 14px));
+    border: 1px solid var(--luxe-glass-border, rgba(255, 255, 255, 0.08));
     border-radius: var(--border-radius-xl, 20px);
     padding: var(--space-5, 20px);
-    box-shadow: var(--card-shadow);
-    transition: transform 0.25s var(--ease-spring-snappy),
-                box-shadow 0.25s ease,
-                border-color 0.25s ease;
+    box-shadow: var(--luxe-glass-highlight, inset 0 1px 0 0 rgba(255, 255, 255, 0.10)),
+                var(--luxe-card-shadow, 0 10px 30px -10px rgba(0, 0, 0, 0.5));
+    transition: transform var(--dur-normal, 240ms) var(--ease-spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)),
+                box-shadow var(--dur-normal, 240ms) var(--ease-spring-snappy, cubic-bezier(0.16, 1, 0.3, 1)),
+                border-color var(--dur-fast, 160ms) ease;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     position: relative;
     overflow: hidden;
+    will-change: transform, box-shadow;
 }
 
 .kiscord-bento-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--border-strong);
+    transform: translateY(-3px) translateZ(0);
+    box-shadow: var(--luxe-glass-highlight, inset 0 1px 0 0 rgba(255, 255, 255, 0.18)),
+                var(--luxe-card-hover-shadow, 0 20px 45px -12px rgba(0, 0, 0, 0.65));
+    border-color: var(--luxe-glass-border-hover, rgba(255, 255, 255, 0.16));
 }
 
 .kiscord-bento-card::before {
@@ -617,7 +636,7 @@ input[type=range].kiscord-slider::-webkit-slider-thumb:hover {
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
     pointer-events: none;
 }
 

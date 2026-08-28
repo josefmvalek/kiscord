@@ -143,10 +143,11 @@ describe('Date Planner & Advanced Features Engine', () => {
 
     describe('Secret Date (Tajné rande) Logic', () => {
         it('identifies locked secret date for partner before unlock threshold', () => {
+            const futureYear = new Date().getFullYear() + 2;
             const secretPlan = {
                 is_secret: true,
                 created_by: 'Josef',
-                date_key: '2026-08-25',
+                date_key: `${futureYear}-08-25`,
                 time: '19:00',
                 secret_hint: 'Bude to sladké...',
                 secret_dress_code: 'Pohodlné boty',

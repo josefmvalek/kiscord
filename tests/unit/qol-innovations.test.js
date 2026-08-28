@@ -45,7 +45,7 @@ import {
 } from '../../js/core/servers.js';
 import { renderLevelUI } from '../../js/domains/entertainment/levels.js';
 import { getTodayEventsSummary } from '../../js/domains/lifestyle/calendar/grid.js';
-import { getAllSearchableItems } from '../../js/core/commandPalette.js';
+import { getAllSearchableItems } from '../../js/core/command-palette.js';
 import { startPomodoroTimer, stopPomodoroTimer } from '../../js/core/app-ui.js';
 
 describe('Kiscord UI/UX & QoL Innovations Test Suite', () => {

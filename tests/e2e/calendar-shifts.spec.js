@@ -1,93 +1,42 @@
 import { test, expect } from '@playwright/test';
+import { setupMockAuthSession, setupDefaultApiRoutes } from '../fixtures/playwright-helpers.js';
 
 test.describe('Calendar & Shifts Integration E2E', () => {
   test.beforeEach(async ({ page }) => {
     page.on('console', msg => console.log(`[Browser] ${msg.type()}: ${msg.text()}`));
-    // 1. Mock the Supabase Auth session in localStorage to bypass the login screen
-    await page.addInitScript(() => {
-      const makeMockJWT = (usr) => {
-        const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-        const payload = btoa(JSON.stringify({
-          sub: usr.id,
-          email: usr.email,
-          role: usr.role || 'authenticated',
-          exp: Math.floor(Date.now() / 1000) + 3600,
-        }));
-        return `${header}.${payload}.mocksignature`;
-      };
-      
-      const user = {
-        id: 'jose-id-123',
-        email: 'jozkavalek@email.cz',
-        role: 'authenticated',
-      };
-      
-      const session = {
-        access_token: makeMockJWT(user),
-        token_type: 'bearer',
-        expires_in: 3600,
-        refresh_token: 'fake-refresh-token',
-        user: user,
-        expires_at: Math.floor(Date.now() / 1000) + 3600,
-      };
+    
+    // 1. Mock session
+    await setupMockAuthSession(page);
 
-      window.localStorage.setItem('sb-nnrorazsiyiedwomgidf-auth-token', JSON.stringify(session));
-    });
-
-    // 2. Intercept and mock all Supabase API HTTP requests
-    await page.route('**/auth/v1/user*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          id: 'jose-id-123',
-          email: 'jozkavalek@email.cz',
-          role: 'authenticated',
-          aud: 'authenticated',
-        }),
-      });
-    });
-
-    await page.route('**/rest/v1/**', async (route) => {
-      const url = route.request().url();
-      if (url.includes('/brigade_shifts')) {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify([
-            {
-              id: 'shift-1',
-              date_key: '2026-06-01',
-              user_id: 'jose-id-123',
-              shift_type: 'ranni',
-              time_start: '06:00',
-              time_end: '14:00',
-            },
-            {
-              id: 'shift-2',
-              date_key: '2026-06-01',
-              user_id: 'klarka-id-456',
-              shift_type: 'volno',
-              time_start: '00:00',
-              time_end: '24:00',
-            },
-          ]),
-        });
-      } else if (url.includes('/profiles')) {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify([
-            { id: 'jose-id-123', email: 'jozkavalek@email.cz', username: 'Jožka' },
-            { id: 'klarka-id-456', email: 'vyslouzilova.klara07@gmail.com', username: 'Klárka' },
-          ]),
-        });
-      } else {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: '[]',
-        });
+    // 2. Intercept and mock API requests
+    await setupDefaultApiRoutes(page, {
+      customRestHandler: async (route, url) => {
+        if (url.includes('/brigade_shifts')) {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify([
+              {
+                id: 'shift-1',
+                date_key: '2026-06-01',
+                user_id: 'jose-id-123',
+                shift_type: 'ranni',
+                time_start: '06:00',
+                time_end: '14:00',
+              },
+              {
+                id: 'shift-2',
+                date_key: '2026-06-01',
+                user_id: 'klarka-id-456',
+                shift_type: 'volno',
+                time_start: '00:00',
+                time_end: '24:00',
+              },
+            ]),
+          });
+          return true;
+        }
+        return false;
       }
     });
   });

@@ -8,15 +8,12 @@ import { generateFitAndDormDashboardWidget } from '../../js/domains/lifestyle/da
 import { generateLoveAndLevelsWidget } from '../../js/domains/lifestyle/dashboard/love-levels-widget.js';
 import { generateDailyQuestionCard } from '../../js/domains/lifestyle/dashboard/daily-question-widget.js';
 
-vi.mock('../../js/core/supabase.js', () => ({
-    supabase: {
-        from: vi.fn(() => ({
-            insert: vi.fn(() => Promise.resolve({ data: null, error: null })),
-            select: vi.fn(() => Promise.resolve({ data: [], error: null }))
-        })),
-        rpc: vi.fn(() => Promise.resolve({ data: {}, error: null }))
-    }
-}));
+vi.mock('../../js/core/supabase.js', async () => {
+    const { createMockSupabase } = await import('../fixtures/mock-supabase.js');
+    return {
+        supabase: createMockSupabase()
+    };
+});
 
 vi.mock('../../js/core/theme.js', () => ({
     showNotification: vi.fn()

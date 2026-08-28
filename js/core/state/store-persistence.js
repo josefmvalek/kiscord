@@ -44,6 +44,7 @@ export async function saveStateToCache(state) {
         gymLogs: state.gymLogs,
         gymPRs: state.gymPRs,
         loveCoins: state.loveCoins,
+        relationshipXP: state.relationshipXP,
         inventory: state.inventory,
         shopItems: state.shopItems,
         nutritionLogs: state.nutritionLogs,

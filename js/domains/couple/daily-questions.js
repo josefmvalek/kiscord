@@ -1,7 +1,8 @@
 import { supabase } from '@core/supabase.js';
 import { state, saveStateToCache, awardLoveCoinsToCurrentUser } from '@core/state.js';
 import { safeInsert } from '@core/offline.js';
-import { triggerHaptic } from '@core/utils.js';
+import { triggerHaptic, triggerConfetti } from '@core/utils.js';
+import { showNotification } from '@core/theme.js';
 
 let subscription = null;
 

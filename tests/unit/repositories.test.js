@@ -39,9 +39,11 @@ describe('Data Access Repositories', () => {
         const healthRepo = new HealthRepository();
         const financeRepo = new FinanceRepository();
 
-        expect(gymRepo.tableName).toBe('gym_workouts');
+        expect(gymRepo.tableName).toBe('gym_logs');
         expect(typeof gymRepo.getWorkoutHistory).toBe('function');
-        expect(typeof gymRepo.saveWorkoutWithSets).toBe('function');
+        expect(typeof gymRepo.getPRs).toBe('function');
+        expect(typeof gymRepo.getExercises).toBe('function');
+        expect(typeof gymRepo.saveLog).toBe('function');
 
         expect(healthRepo.tableName).toBe('health_data');
         expect(typeof healthRepo.getHistory).toBe('function');

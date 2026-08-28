@@ -1,113 +1,65 @@
 import { test, expect } from '@playwright/test';
+import { setupMockAuthSession, setupDefaultApiRoutes } from '../fixtures/playwright-helpers.js';
 
 test.describe('Milostné dopisy - Časový zámek E2E', () => {
   test.beforeEach(async ({ page }) => {
-    // Mock partner Klárka session in localStorage
-    await page.addInitScript(() => {
-      const makeMockJWT = (usr) => {
-        const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-        const payload = btoa(JSON.stringify({
-          sub: usr.id,
-          email: usr.email,
-          role: usr.role || 'authenticated',
-          exp: Math.floor(Date.now() / 1000) + 3600,
-        }));
-        return `${header}.${payload}.mocksignature`;
-      };
-      
-      const user = {
-        id: 'klarka-id-456',
-        email: 'vyslouzilova.klara07@gmail.com',
-        role: 'authenticated',
-      };
-      
-      const session = {
-        access_token: makeMockJWT(user),
-        token_type: 'bearer',
-        expires_in: 3600,
-        refresh_token: 'fake-refresh-token',
-        user: user,
-        expires_at: Math.floor(Date.now() / 1000) + 3600,
-      };
+    const klarkaUser = {
+      id: 'klarka-id-456',
+      email: 'vyslouzilova.klara07@gmail.com',
+      role: 'authenticated',
+    };
 
-      window.localStorage.setItem('sb-nnrorazsiyiedwomgidf-auth-token', JSON.stringify(session));
-    });
+    // Mock partner Klárka session in localStorage
+    await setupMockAuthSession(page, klarkaUser);
+
+    const mockLetters = [
+      {
+        id: 'letter-locked-1',
+        sender_id: 'jose-id-123',
+        recipient_id: 'klarka-id-456',
+        title: 'Dopis k narozeninám',
+        content: 'Tohle je tajný, budoucí vzkaz plný lásky!',
+        unlock_at: '2030-06-01T12:00:00.000Z',
+        is_read: false,
+        image_url: null,
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: 'letter-unlocked-2',
+        sender_id: 'jose-id-123',
+        recipient_id: 'klarka-id-456',
+        title: 'První společný den',
+        content: 'Vítej na brigádě! Užijeme si to spolu.',
+        unlock_at: '2020-05-20T12:00:00.000Z',
+        is_read: false,
+        image_url: null,
+        created_at: new Date().toISOString(),
+      },
+    ];
 
     // Mock API requests
-    await page.route('**/auth/v1/user*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          id: 'klarka-id-456',
-          email: 'vyslouzilova.klara07@gmail.com',
-          role: 'authenticated',
-          aud: 'authenticated',
-        }),
-      });
-    });
-
-    await page.route('**/rest/v1/**', async (route) => {
-      const url = route.request().url();
-
-      const mockLetters = [
-        {
-          id: 'letter-locked-1',
-          sender_id: 'jose-id-123',
-          recipient_id: 'klarka-id-456',
-          title: 'Dopis k narozeninám',
-          content: 'Tohle je tajný, budoucí vzkaz plný lásky!',
-          unlock_at: '2030-06-01T12:00:00.000Z',
-          is_read: false,
-          image_url: null,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: 'letter-unlocked-2',
-          sender_id: 'jose-id-123',
-          recipient_id: 'klarka-id-456',
-          title: 'První společný den',
-          content: 'Vítej na brigádě! Užijeme si to spolu.',
-          unlock_at: '2020-05-20T12:00:00.000Z',
-          is_read: false,
-          image_url: null,
-          created_at: new Date().toISOString(),
-        },
-      ];
-
-      if (url.includes('/love_letters')) {
-        // Single-record fetch (openLetter uses .eq('id', id) -> ?id=eq.<id>)
-        const idMatch = url.match(/[?&]id=eq\.([^&]+)/);
-        if (idMatch) {
-          const found = mockLetters.find(l => l.id === idMatch[1]);
-          await route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify(found ? [found] : []),
-          });
-        } else {
-          // List fetch (renderLetters)
-          await route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify(mockLetters),
-          });
+    await setupDefaultApiRoutes(page, {
+      user: klarkaUser,
+      customRestHandler: async (route, url) => {
+        if (url.includes('/love_letters')) {
+          const idMatch = url.match(/[?&]id=eq\.([^&]+)/);
+          if (idMatch) {
+            const found = mockLetters.find(l => l.id === idMatch[1]);
+            await route.fulfill({
+              status: 200,
+              contentType: 'application/json',
+              body: JSON.stringify(found ? [found] : []),
+            });
+          } else {
+            await route.fulfill({
+              status: 200,
+              contentType: 'application/json',
+              body: JSON.stringify(mockLetters),
+            });
+          }
+          return true;
         }
-      } else if (url.includes('/profiles')) {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify([
-            { id: 'jose-id-123', email: 'jozkavalek@email.cz', username: 'Jožka' },
-            { id: 'klarka-id-456', email: 'vyslouzilova.klara07@gmail.com', username: 'Klárka' },
-          ]),
-        });
-      } else {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: '[]',
-        });
+        return false;
       }
     });
   });

@@ -1,7 +1,8 @@
-import { state } from '@core/state.js';
+import { state, stateEvents } from '@core/state.js';
 import { supabase } from '@core/supabase.js';
 import { triggerHaptic } from '@core/utils.js';
 import { isKlarka, isJosef } from '@core/auth.js';
+import { ensureLibraryData } from '@core/loaders.js';
 import * as TMDB from '@core/tmdb.js';
 import { renderNetflixMatcher } from '@domains/entertainment/netflix-matcher.js';
 
@@ -9,8 +10,9 @@ let activeCategoryFilter = 'all'; // 'all', 'movie', 'series', 'game'
 
 // --- MODERN WATCHLIST HUB ---
 
-export async function renderWatchlist(cat = null) {
-    if (cat && ['all', 'movie', 'series', 'game'].includes(cat)) {
+export function renderWatchlist(cat = null) {
+    state.currentChannel = 'watchlist';
+    if (typeof cat === 'string' && ['all', 'movie', 'series', 'game'].includes(cat)) {
         activeCategoryFilter = cat;
     }
 
@@ -32,6 +34,13 @@ export async function renderWatchlist(cat = null) {
     const partnerIcon = isKlarka(user) ? "🤴" : "👸";
     const partnerColor = isKlarka(user) ? "#5865F2" : "#f47fff";
     const libTarget = activeCategoryFilter === 'game' ? 'games' : (activeCategoryFilter === 'series' ? 'series' : 'movies');
+
+    const allMedia = [
+        ...(state.library?.movies || []),
+        ...(state.library?.series || []),
+        ...(state.library?.games || [])
+    ];
+    const hasCachedData = (state.watchlist || []).length > 0 && allMedia.length > 0;
 
     container.innerHTML = `
         <div class="flex flex-col h-full animate-fade-in bg-[#36393f] relative overflow-hidden text-white">
@@ -98,12 +107,12 @@ export async function renderWatchlist(cat = null) {
             </div>
 
             <!-- WATCHLIST CONTENT -->
-            <div id="wl-loading" class="flex-1 flex flex-col items-center justify-center p-12">
+            <div id="wl-loading" class="flex-1 flex flex-col items-center justify-center p-12 ${hasCachedData ? 'hidden' : ''}">
                  <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#eb459e] mb-3"></div>
                  <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">Hledám společná přání...</p>
             </div>
             
-            <div id="wl-container" class="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8 hidden">
+            <div id="wl-container" class="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8 ${hasCachedData ? '' : 'hidden'}">
                 <div class="max-w-7xl mx-auto space-y-12 pb-24">
                     
                     <!-- SPOLU-SEZNAM (Together Mode) -->
@@ -167,7 +176,11 @@ export async function renderWatchlist(cat = null) {
             </div>
         </div>`;
 
-    await fetchAndRenderWatchlist();
+    if (hasCachedData) {
+        renderWatchlistDOM(state.watchlist, allMedia);
+    }
+
+    fetchAndRenderWatchlist();
 }
 
 export function setCategoryFilter(cat) {
@@ -185,110 +198,195 @@ export function setCategoryFilter(cat) {
         }
     });
 
+    const allMedia = [
+        ...(state.library?.movies || []),
+        ...(state.library?.series || []),
+        ...(state.library?.games || [])
+    ];
+    if (state.watchlist && allMedia.length > 0) {
+        renderWatchlistDOM(state.watchlist, allMedia);
+    }
     fetchAndRenderWatchlist();
 }
 
-async function fetchAndRenderWatchlist() {
-    try {
-        const { data: watchlistData, error: wlError } = await supabase
-            .from('library_watchlist')
-            .select('*, library_content(*)');
+function renderWatchlistDOM(watchlistEntries, allMedia) {
+    if (state.currentChannel !== 'watchlist') return;
+    const loading = document.getElementById('wl-loading');
+    const container = document.getElementById('wl-container');
+    if (loading) loading.style.display = 'none';
+    if (container) container.classList.remove('hidden');
+    if (!container) return;
 
-        if (wlError) throw wlError;
+    const togetherGrid = document.getElementById('wl-together-grid');
+    const myGrid = document.getElementById('wl-my-grid');
+    const herGrid = document.getElementById('wl-her-grid');
+    const togetherSection = document.getElementById('wl-together-section');
+    const counterEl = document.getElementById('wl-stats-counter');
+    const myCountEl = document.getElementById('wl-my-count');
+    const herCountEl = document.getElementById('wl-her-count');
 
-        const loading = document.getElementById('wl-loading');
-        const container = document.getElementById('wl-container');
-        if (loading) loading.style.display = 'none';
-        if (container) container.classList.remove('hidden');
+    if (!watchlistEntries || watchlistEntries.length === 0) {
+        if (counterEl) counterEl.innerText = "0 přání";
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center p-16 text-center animate-fade-in">
+                <div class="text-6xl mb-4 opacity-50">💔</div>
+                <h3 class="text-lg font-black text-white mb-1">Zatím tu nemáte žádná přání...</h3>
+                <p class="text-xs text-gray-400 mb-6 max-w-sm">Projděte Knihovnu nebo spusťte Tinder Matcher a klikněte na srdíčko u filmů, seriálů nebo her, které vás zaujmou!</p>
+                <button onclick="window.switchChannel ? window.switchChannel('knihovna') : (window.Library ? window.Library.renderLibrary('movies') : window.loadModule('library').then(m => m.renderLibrary('movies'))); triggerHaptic('light')" class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-6 py-2.5 rounded-xl font-bold text-xs shadow-lg flex items-center gap-2">
+                    <i class="fas fa-film"></i> Přejít do Knihovny
+                </button>
+            </div>
+        `;
+        return;
+    }
 
-        const togetherGrid = document.getElementById('wl-together-grid');
-        const myGrid = document.getElementById('wl-my-grid');
-        const herGrid = document.getElementById('wl-her-grid');
-        const togetherSection = document.getElementById('wl-together-section');
-        const counterEl = document.getElementById('wl-stats-counter');
-        const myCountEl = document.getElementById('wl-my-count');
-        const herCountEl = document.getElementById('wl-her-count');
+    // Map items
+    const itemMap = {};
+    watchlistEntries.forEach(entry => {
+        const mediaId = entry.media_id || entry.id;
+        if (!mediaId) return;
+        const item = (allMedia || []).find(m => String(m.id) === String(mediaId));
+        if (!item) return;
 
-        if (!watchlistData || watchlistData.length === 0) {
-            if (counterEl) counterEl.innerText = "0 přání";
-            container.innerHTML = `
-                <div class="flex flex-col items-center justify-center p-16 text-center animate-fade-in">
-                    <div class="text-6xl mb-4 opacity-50">💔</div>
-                    <h3 class="text-lg font-black text-white mb-1">Zatím tu nemáte žádná přání...</h3>
-                    <p class="text-xs text-gray-400 mb-6 max-w-sm">Projděte Knihovnu nebo spusťte Tinder Matcher a klikněte na srdíčko u filmů, seriálů nebo her, které vás zaujmou!</p>
-                    <button onclick="window.switchChannel('library'); triggerHaptic('light')" class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-6 py-2.5 rounded-xl font-bold text-xs shadow-lg flex items-center gap-2">
-                        <i class="fas fa-film"></i> Přejít do Knihovny
-                    </button>
-                </div>
-            `;
-            return;
+        if (!itemMap[item.id]) {
+            const detectedType = state.library?.games?.some(g => String(g.id) === String(item.id)) ? 'game' : (state.library?.series?.some(s => String(s.id) === String(item.id)) ? 'series' : 'movie');
+            itemMap[item.id] = { ...item, users: [], type: entry.type || item.type || detectedType };
         }
+        const addedBy = entry.added_by || entry.user_id;
+        if (addedBy && !itemMap[item.id].users.includes(addedBy)) {
+            itemMap[item.id].users.push(addedBy);
+        }
+    });
 
-        // Map items
-        const itemMap = {};
-        watchlistData.forEach(entry => {
-            const item = entry.library_content;
-            if (!item) return;
-            if (!itemMap[item.id]) {
-                itemMap[item.id] = { ...item, users: [], type: entry.type || item.type || 'movie' };
-            }
-            itemMap[item.id].users.push(entry.added_by);
+    let items = Object.values(itemMap);
+
+    // Apply filter
+    if (activeCategoryFilter !== 'all') {
+        items = items.filter(i => {
+            if (activeCategoryFilter === 'movie') return i.type === 'movie' || i.type === 'movies';
+            if (activeCategoryFilter === 'series') return i.type === 'series';
+            if (activeCategoryFilter === 'game') return i.type === 'game' || i.type === 'games';
+            return true;
         });
+    }
 
-        let items = Object.values(itemMap);
+    const currentUserId = state.currentUser?.id;
+    const togetherItems = items.filter(i => new Set(i.users).size >= 2);
+    const myEntries = items.filter(i => (currentUserId ? i.users.includes(currentUserId) : true) && !togetherItems.includes(i));
+    const herEntries = items.filter(i => (currentUserId ? !i.users.includes(currentUserId) : false));
 
-        // Apply filter
-        if (activeCategoryFilter !== 'all') {
-            items = items.filter(i => {
-                if (activeCategoryFilter === 'movie') return i.type === 'movie' || i.type === 'movies';
-                if (activeCategoryFilter === 'series') return i.type === 'series';
-                if (activeCategoryFilter === 'game') return i.type === 'game' || i.type === 'games';
-                return true;
-            });
-        }
+    if (counterEl) {
+        counterEl.innerHTML = `Spolu: <span class="text-[#eb459e] font-black">${togetherItems.length}</span> | Celkem: <span class="text-white font-black">${items.length}</span>`;
+    }
+    if (myCountEl) myCountEl.innerText = String(myEntries.length);
+    if (herCountEl) herCountEl.innerText = String(herEntries.length);
 
-        const togetherItems = items.filter(i => new Set(i.users).size >= 2);
-        const myEntries = items.filter(i => i.users.includes(state.currentUser?.id) && !togetherItems.includes(i));
-        const herEntries = items.filter(i => !i.users.includes(state.currentUser?.id));
-
-        if (counterEl) {
-            counterEl.innerHTML = `Spolu: <span class="text-[#eb459e] font-black">${togetherItems.length}</span> | Celkem: <span class="text-white font-black">${items.length}</span>`;
-        }
-        if (myCountEl) myCountEl.innerText = String(myEntries.length);
-        if (herCountEl) herCountEl.innerText = String(herEntries.length);
-
-        // Render Together Mode
+    // Render Together Mode
+    if (togetherSection && togetherGrid) {
         if (togetherItems.length > 0) {
             togetherSection.classList.remove('hidden');
             togetherGrid.innerHTML = togetherItems.map(item => renderWlCard(item, true)).join('');
         } else {
             togetherSection.classList.add('hidden');
         }
+    }
 
-        // Render Mine
-        if (myGrid) {
-            myGrid.innerHTML = myEntries.length > 0
-                ? myEntries.map(item => renderWlCard(item, false, true)).join('')
-                : '<div class="col-span-full py-8 text-center text-xs text-gray-500 italic">V této kategorii zatím nemáš žádné vlastní přání.</div>';
+    // Render Mine
+    if (myGrid) {
+        myGrid.innerHTML = myEntries.length > 0
+            ? myEntries.map(item => renderWlCard(item, false, true)).join('')
+            : '<div class="col-span-full py-8 text-center text-xs text-gray-500 italic">V této kategorii zatím nemáš žádné vlastní přání.</div>';
+    }
+
+    // Render Hers
+    if (herGrid) {
+        const partnerEmptyText = isKlarka(state.currentUser) ? "Jožka tu v této kategorii zatím nic nemá." : "Klárka tu v této kategorii zatím nic nemá.";
+        herGrid.innerHTML = herEntries.length > 0
+            ? herEntries.map(item => renderWlCard(item, false, false)).join('')
+            : `<div class="col-span-full py-8 text-center text-xs text-gray-500 italic">${partnerEmptyText}</div>`;
+    }
+
+    // Render Memories
+    renderMemories();
+}
+
+async function fetchAndRenderWatchlist() {
+    if (state.currentChannel !== 'watchlist') return;
+    const loading = document.getElementById('wl-loading');
+    const container = document.getElementById('wl-container');
+
+    try {
+        let timeoutId;
+        const timeoutPromise = new Promise((_, reject) => {
+            timeoutId = setTimeout(() => reject(new Error('Watchlist timeout')), 3500);
+        });
+        await Promise.race([
+            ensureLibraryData().finally(() => clearTimeout(timeoutId)),
+            timeoutPromise
+        ]).catch(e => console.warn('[Watchlist] ensureLibraryData fetch error/timeout:', e));
+
+        if (state.currentChannel !== 'watchlist') return;
+
+        let watchlistEntries = [];
+        try {
+            let wlTimeoutId;
+            const timeoutQuery = new Promise((_, reject) => {
+                wlTimeoutId = setTimeout(() => reject(new Error('Supabase watchlist timeout')), 3000);
+            });
+            const { data: wlData, error: wlError } = await Promise.race([
+                Promise.resolve(supabase.from('library_watchlist').select('*')).finally(() => clearTimeout(wlTimeoutId)),
+                timeoutQuery
+            ]);
+
+            if (!wlError && Array.isArray(wlData) && wlData.length > 0) {
+                watchlistEntries = wlData;
+                state.watchlist = wlData.map(row => ({ id: parseInt(row.media_id || row.id), type: row.type, user_id: row.added_by }));
+            } else {
+                watchlistEntries = (state.watchlist || []).map(w => ({
+                    media_id: w.id,
+                    added_by: w.user_id,
+                    type: w.type
+                }));
+            }
+        } catch (e) {
+            watchlistEntries = (state.watchlist || []).map(w => ({
+                media_id: w.id,
+                added_by: w.user_id,
+                type: w.type
+            }));
         }
 
-        // Render Hers
-        if (herGrid) {
-            const partnerEmptyText = isKlarka(state.currentUser) ? "Jožka tu v této kategorii zatím nic nemá." : "Klárka tu v této kategorii zatím nic nemá.";
-            herGrid.innerHTML = herEntries.length > 0
-                ? herEntries.map(item => renderWlCard(item, false, false)).join('')
-                : `<div class="col-span-full py-8 text-center text-xs text-gray-500 italic">${partnerEmptyText}</div>`;
-        }
+        if (state.currentChannel !== 'watchlist') return;
 
-        // Render Memories
-        renderMemories();
+        const allMedia = [
+            ...(state.library?.movies || []),
+            ...(state.library?.series || []),
+            ...(state.library?.games || [])
+        ];
+
+        renderWatchlistDOM(watchlistEntries, allMedia);
 
     } catch (err) {
         console.error("Watchlist Fetch Error:", err);
-        const loading = document.getElementById('wl-loading');
-        if (loading) loading.style.display = 'none';
-        const container = document.getElementById('wl-container');
-        if (container) container.classList.remove('hidden');
+        if (state.currentChannel === 'watchlist' && container && (!state.watchlist || state.watchlist.length === 0)) {
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center p-16 text-center animate-fade-in">
+                    <div class="text-6xl mb-4 opacity-70">🦉❄️</div>
+                    <h3 class="text-lg font-black text-white mb-1">Nepodařilo se načíst Watchlist</h3>
+                    <p class="text-xs text-gray-400 mb-6 max-w-sm">Zkontrolujte připojení k internetu nebo zkuste načtení zopakovat.</p>
+                    <button onclick="window.Watchlist.renderWatchlist(); triggerHaptic('light')" class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-6 py-2.5 rounded-xl font-bold text-xs shadow-lg flex items-center gap-2">
+                        <i class="fas fa-sync-alt"></i> Zkusit znovu
+                    </button>
+                </div>
+            `;
+        }
+    } finally {
+        if (state.currentChannel === 'watchlist') {
+            const currentLoading = document.getElementById('wl-loading');
+            const currentContainer = document.getElementById('wl-container');
+            if (currentLoading) currentLoading.style.display = 'none';
+            if (currentContainer) currentContainer.classList.remove('hidden');
+        }
     }
 }
 
@@ -440,17 +538,37 @@ export async function startTinder(cat = activeCategoryFilter) {
 
 export async function rollTheDice() {
     triggerHaptic('medium');
+    await ensureLibraryData();
 
-    const { data: watchlistData } = await supabase
+    let watchlistEntries = [];
+    const { data: wlData } = await supabase
         .from('library_watchlist')
-        .select('*, library_content(*)');
+        .select('*');
+
+    if (wlData) {
+        watchlistEntries = wlData;
+    } else {
+        watchlistEntries = (state.watchlist || []).map(w => ({
+            media_id: w.id,
+            added_by: w.user_id,
+            type: w.type
+        }));
+    }
+
+    const allMedia = [
+        ...(state.library?.movies || []),
+        ...(state.library?.series || []),
+        ...(state.library?.games || [])
+    ];
 
     const itemMap = {};
-    (watchlistData || []).forEach(entry => {
-        const item = entry.library_content;
+    watchlistEntries.forEach(entry => {
+        const mediaId = entry.media_id || entry.id;
+        if (!mediaId) return;
+        const item = allMedia.find(m => String(m.id) === String(mediaId));
         if (!item) return;
-        if (!itemMap[item.id]) itemMap[item.id] = { ...item, users: new Set() };
-        itemMap[item.id].users.add(entry.added_by);
+        if (!itemMap[item.id]) itemMap[item.id] = { ...item, users: new Set(), type: entry.type || item.type || 'movie' };
+        if (entry.added_by) itemMap[item.id].users.add(entry.added_by);
     });
 
     const pool = Object.values(itemMap).filter(i => i.users.size >= 2);
@@ -506,4 +624,27 @@ function showWinnerModal(item, isMutual = true) {
     `;
     document.body.appendChild(modal);
     if (typeof window.triggerConfetti === 'function') window.triggerConfetti();
+}
+
+if (typeof stateEvents !== 'undefined' && stateEvents.on) {
+    stateEvents.on('library', () => {
+        if (state.currentChannel === 'watchlist') {
+            const allMedia = [
+                ...(state.library?.movies || []),
+                ...(state.library?.series || []),
+                ...(state.library?.games || [])
+            ];
+            renderWatchlistDOM(state.watchlist, allMedia);
+        }
+    });
+    stateEvents.on('watchlist', () => {
+        if (state.currentChannel === 'watchlist') {
+            const allMedia = [
+                ...(state.library?.movies || []),
+                ...(state.library?.series || []),
+                ...(state.library?.games || [])
+            ];
+            renderWatchlistDOM(state.watchlist, allMedia);
+        }
+    });
 }

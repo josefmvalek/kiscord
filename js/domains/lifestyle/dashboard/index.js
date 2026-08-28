@@ -332,7 +332,10 @@ export async function syncDashboardData(forceRefresh = false) {
     if (indicator) indicator.classList.remove("hidden");
 
     try {
-        const { data, error } = await supabase.rpc('get_dashboard_data', { p_user_id: state.currentUser?.id, p_date: todayKey });
+        const { data, error } = await supabase.rpc('get_full_dashboard_bootstrap', { 
+            p_user_id: state.currentUser?.id, 
+            p_date_key: todayKey 
+        });
         if (error) throw error;
 
         state.dashboardFetched = true;
@@ -344,17 +347,39 @@ export async function syncDashboardData(forceRefresh = false) {
         if (dashData.partner_health) {
             state.partnerHealthData = dashData.partner_health;
         }
+        if (dashData.pinned_drawing) {
+            state.pinnedDrawing = dashData.pinned_drawing;
+        }
+        if (dashData.tetris) {
+            state.tetris = { ...state.tetris, ...dashData.tetris };
+        }
+        if (dashData.next_event && dashData.next_event.date_key) {
+            state.plannedDates[dashData.next_event.date_key] = dashData.next_event;
+        }
+        if (dashData.active_quests) {
+            state.coopQuests = dashData.active_quests;
+        }
+        if (dashData.relationship_xp !== undefined && dashData.relationship_xp !== null) {
+            state.relationshipXP = dashData.relationship_xp;
+            const { setLevelXP } = await import('@domains/entertainment/levels.js');
+            if (typeof setLevelXP === 'function') {
+                setLevelXP(dashData.relationship_xp, false);
+            }
+        }
 
-        saveStateToCache();
-
-        import('../habits.js').then(m => m.loadHabitsData().then(() => {
+        // Hydrate Habits directly from bootstrap without extra network calls
+        if (dashData.habits || dashData.habit_logs) {
+            const { setHabitsFromBootstrap } = await import('../habits.js');
+            setHabitsFromBootstrap(dashData.habits || [], dashData.habit_logs || []);
             if (state.currentChannel === 'dashboard') {
                 const widgetContainer = document.querySelector('[data-dashboard-habits-container]');
                 if (widgetContainer) {
                     widgetContainer.outerHTML = generateHabitsDashboardWidget();
                 }
             }
-        }));
+        }
+
+        saveStateToCache();
 
         if (state.currentChannel === 'dashboard') {
             updateSunflowersDOM();
@@ -366,7 +391,33 @@ export async function syncDashboardData(forceRefresh = false) {
             updateSleep(getTodayData().sleep);
         }
     } catch (err) {
-        console.warn("[Dashboard] Background Sync Error:", err);
+        console.warn("[Dashboard] Bootstrap RPC Error, falling back to direct table sync:", err);
+        try {
+            const { syncWithSupabase } = await import('@core/state.js');
+            await syncWithSupabase();
+            const habitsModule = await import('../habits.js');
+            if (typeof habitsModule.ensureHabitsData === 'function') {
+                await habitsModule.ensureHabitsData(true);
+            } else if (typeof habitsModule.loadHabitsData === 'function') {
+                await habitsModule.loadHabitsData();
+            }
+            
+            if (state.currentChannel === 'dashboard') {
+                updateSunflowersDOM();
+                updateWaterVisuals();
+                updateMovementVisuals();
+                updatePillsVisuals();
+                updateSupplementsVisuals();
+                updateMoodVisuals(getTodayData().mood);
+                updateSleep(getTodayData().sleep);
+                const widgetContainer = document.querySelector('[data-dashboard-habits-container]');
+                if (widgetContainer) {
+                    widgetContainer.outerHTML = generateHabitsDashboardWidget();
+                }
+            }
+        } catch (fallbackErr) {
+            console.error("[Dashboard] Fallback direct sync failed:", fallbackErr);
+        }
     } finally {
         if (indicator) indicator.classList.add("hidden");
     }

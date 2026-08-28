@@ -11,16 +11,33 @@ import { renderGymSectionHtml } from '../../js/domains/lifestyle/calendar/sectio
 import { cyclePlanStatus, toggleChecklistItem } from '../../js/domains/lifestyle/calendar/sections-plans.js';
 
 // Mock Supabase
-vi.mock('../../js/core/supabase.js', () => ({
-    supabase: {
-        from: vi.fn(() => ({
-            update: vi.fn().mockReturnThis(),
-            delete: vi.fn().mockReturnThis(),
-            upsert: vi.fn(() => Promise.resolve({ data: null, error: null })),
-            eq: vi.fn(() => Promise.resolve({ data: null, error: null }))
-        }))
-    }
-}));
+vi.mock('../../js/core/supabase.js', () => {
+    const createQueryBuilder = () => {
+        const builder = {
+            select: vi.fn(() => builder),
+            upsert: vi.fn(() => builder),
+            insert: vi.fn(() => builder),
+            update: vi.fn(() => builder),
+            delete: vi.fn(() => builder),
+            eq: vi.fn(() => builder),
+            neq: vi.fn(() => builder),
+            gte: vi.fn(() => builder),
+            lte: vi.fn(() => builder),
+            order: vi.fn(() => builder),
+            limit: vi.fn(() => builder),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+            then: (resolve) => resolve({ data: [], error: null })
+        };
+        return builder;
+    };
+
+    return {
+        supabase: {
+            from: vi.fn(() => createQueryBuilder())
+        }
+    };
+});
 
 // Mock theme confirm dialog
 vi.mock('../../js/core/theme.js', () => ({

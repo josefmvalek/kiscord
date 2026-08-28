@@ -1,4 +1,4 @@
-import { state, ensureLibraryData } from '@core/state.js';
+import { state, ensureLibraryData, stateEvents } from '@core/state.js';
 import { triggerHaptic } from '@core/utils.js';
 import { isKlarka } from '@core/auth.js';
 import * as TMDB from '@core/tmdb.js';
@@ -43,7 +43,9 @@ import {
     toggleWatchlist, 
     playTrailer, 
     exportWatchlist, 
-    clearWatchlist 
+    clearWatchlist,
+    getGameStatus,
+    setGameStatus
 } from './catalog.js';
 
 export { 
@@ -76,7 +78,9 @@ export {
     toggleWatchlist, 
     playTrailer, 
     exportWatchlist, 
-    clearWatchlist 
+    clearWatchlist,
+    getGameStatus,
+    setGameStatus
 };
 
 let currentCategory = 'movies';
@@ -88,14 +92,27 @@ export function setGameFilter(filter) {
     renderLibrary('games');
 }
 
-export function renderLibrary(category = 'movies') {
+export async function renderLibrary(category = 'movies') {
     if (category === 'watchlist') {
         renderWatchlist();
         return;
     }
 
-    if (!category || category === 'library') category = 'movies';
+    if (!category || typeof category !== 'string' || !['movies', 'series', 'games'].includes(category)) {
+        category = 'movies';
+    }
     currentCategory = category;
+    if (state.currentChannel !== 'watchlist') {
+        state.currentChannel = 'library';
+    }
+
+    if (!state._loaded?.library && (!state.library?.movies?.length && !state.library?.series?.length && !state.library?.games?.length)) {
+        try {
+            await ensureLibraryData();
+        } catch (e) {
+            console.error("[Library] Failed to load data:", e);
+        }
+    }
 
     // Expose API to window for inline HTML onclick handlers
     window.Library = { 
@@ -125,6 +142,8 @@ export function renderLibrary(category = 'movies') {
         updateMedia: (id, cat) => updateMedia(id, cat, renderLibrary), 
         deleteMedia: (id, cat) => deleteMedia(id, cat, renderLibrary),
         setGameFilter, 
+        getGameStatus,
+        setGameStatus: (id, status) => setGameStatus(id, status, () => renderLibrary(currentCategory)),
         toggleGameFrequent: (id) => toggleGameFrequent(id, renderLibrary), 
         handleLiveSearch
     };
@@ -161,14 +180,14 @@ export function renderLibrary(category = 'movies') {
 
     const targetWlFilter = category === 'games' ? 'game' : (category === 'series' ? 'series' : 'movie');
 
-    const frequentGames = allGames.filter(g => g.is_frequent || (g.mood_tags || []).includes('stálice') || g.cat === 'Stálice');
-    const seenGames = allGames.filter(g => state.watchHistory[g.id]?.status === 'seen');
-    const backlogGames = allGames.filter(g => !frequentGames.includes(g) && !seenGames.includes(g));
+    const mameGames = allGames.filter(g => getGameStatus(g) === 'máme');
+    const chcemeGames = allGames.filter(g => getGameStatus(g) === 'chceme');
+    const dohranoGames = allGames.filter(g => getGameStatus(g) === 'dohráno');
 
     if (category === 'games') {
-        if (activeGameFilter === 'frequent') items = frequentGames;
-        else if (activeGameFilter === 'backlog') items = backlogGames;
-        else if (activeGameFilter === 'seen') items = seenGames;
+        if (activeGameFilter === 'máme') items = mameGames;
+        else if (activeGameFilter === 'chceme') items = chcemeGames;
+        else if (activeGameFilter === 'dohráno') items = dohranoGames;
         else items = allGames;
     }
 
@@ -199,9 +218,8 @@ export function renderLibrary(category = 'movies') {
             <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 class="text-2xl font-black text-white flex items-center gap-3 tracking-tight">
-                        <i class="fas fa-film text-[#5865F2]"></i> Náš Entertainment & Knihovna
+                        <i class="fas fa-film text-[#5865F2]"></i> Knihovna
                     </h1>
-                    <p class="text-gray-400 text-xs mt-1">Filmy, seriály a hry pro společné chvíle 🍿🎮</p>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
@@ -245,17 +263,17 @@ export function renderLibrary(category = 'movies') {
             ${category === 'games' ? `
             <div class="max-w-7xl mx-auto flex items-center gap-2 mt-3 pt-3 border-t border-white/5 overflow-x-auto no-scrollbar">
                 <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-1">Režim:</span>
-                <button onclick="Library.setGameFilter('all')" class="px-3 py-1.5 rounded-xl text-xs font-black transition-all ${activeGameFilter === 'all' ? 'bg-[#5865F2] text-white shadow-md' : 'bg-[#202225] text-gray-400 hover:text-white'}">
+                <button onclick="Library.setGameFilter('all')" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all ${activeGameFilter === 'all' ? 'bg-[#5865F2] text-white shadow-md' : 'bg-[#202225] text-gray-400 hover:text-white'}">
                     Všechny (${allGames.length})
                 </button>
-                <button onclick="Library.setGameFilter('frequent')" class="px-3 py-1.5 rounded-xl text-xs font-black transition-all ${activeGameFilter === 'frequent' ? 'bg-[#faa61a] text-black shadow-md font-extrabold' : 'bg-[#202225] text-yellow-400 hover:bg-[#faa61a]/10'}">
-                    ⚡ Naše stálice (${frequentGames.length})
+                <button onclick="Library.setGameFilter('máme')" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all ${activeGameFilter === 'máme' ? 'bg-[#3ba55c] text-white shadow-md' : 'bg-[#202225] text-emerald-400 hover:bg-[#3ba55c]/10'}">
+                    🎮 Máme (${mameGames.length})
                 </button>
-                <button onclick="Library.setGameFilter('backlog')" class="px-3 py-1.5 rounded-xl text-xs font-black transition-all ${activeGameFilter === 'backlog' ? 'bg-[#3ba55c] text-white shadow-md' : 'bg-[#202225] text-emerald-400 hover:bg-[#3ba55c]/10'}">
-                    🌟 Novinky v plánu (${backlogGames.length})
+                <button onclick="Library.setGameFilter('chceme')" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all ${activeGameFilter === 'chceme' ? 'bg-[#faa61a] text-black shadow-md font-extrabold' : 'bg-[#202225] text-yellow-400 hover:bg-[#faa61a]/10'}">
+                    🌟 Chceme (${chcemeGames.length})
                 </button>
-                <button onclick="Library.setGameFilter('seen')" class="px-3 py-1.5 rounded-xl text-xs font-black transition-all ${activeGameFilter === 'seen' ? 'bg-purple-600 text-white shadow-md' : 'bg-[#202225] text-purple-400 hover:bg-purple-600/10'}">
-                    🏆 Dohráno (${seenGames.length})
+                <button onclick="Library.setGameFilter('dohráno')" class="px-3.5 py-1.5 rounded-xl text-xs font-black transition-all ${activeGameFilter === 'dohráno' ? 'bg-purple-600 text-white shadow-md' : 'bg-[#202225] text-purple-400 hover:bg-purple-600/10'}">
+                    🏆 Dohráno (${dohranoGames.length})
                 </button>
             </div>
             ` : ''}
@@ -291,13 +309,35 @@ export function renderLibrary(category = 'movies') {
         </div>
 
         ${items.length === 0 ? `
-            <div class="flex flex-col items-center justify-center p-12 text-center text-gray-500 animate-fade-in">
-                <i class="fas ${category === 'games' ? 'fa-gamepad' : 'fa-film'} text-5xl mb-4 opacity-40"></i>
-                <p class="text-sm font-bold text-white mb-2">V této kategorii zatím nic není...</p>
-                <p class="text-xs text-gray-400 mb-6">Přidejte první ${category === 'games' ? 'hru' : (category === 'series' ? 'seriál' : 'film')} nebo vyzkoušejte Tinder Matcher!</p>
-                <button onclick="Library.showAddMediaModal('${category}')" class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-6 py-2.5 rounded-xl font-bold text-xs">
-                    <i class="fas fa-plus mr-1"></i> Přidat položku
-                </button>
+            <div class="flex flex-col items-center justify-center p-12 text-center text-gray-400 animate-fade-in bg-[#2f3136]/50 rounded-2xl border border-white/5 mx-4 lg:mx-6 my-6 shadow-inner">
+                <div class="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-3xl mb-4 text-[#5865F2]">
+                    <i class="fas ${category === 'games' ? 'fa-gamepad' : (category === 'series' ? 'fa-tv' : 'fa-film')}"></i>
+                </div>
+                <h3 class="text-base font-bold text-white mb-1.5">
+                    ${category === 'games' && activeGameFilter !== 'all' 
+                        ? `Žádné hry ve filtru "${activeGameFilter === 'máme' ? 'Máme' : (activeGameFilter === 'chceme' ? 'Chceme' : 'Dohráno')}"` 
+                        : `V kategorii ${category === 'games' ? 'Hry' : (category === 'series' ? 'Seriály' : 'Filmy')} zatím nic není...`}
+                </h3>
+                <p class="text-xs text-gray-400 mb-6 max-w-sm">
+                    ${category === 'games' && activeGameFilter !== 'all'
+                        ? 'Zkuste přepnout filtr na všechny hry nebo u některé hry změňte stav kliknutím na příslušné tlačítko na kartě.'
+                        : `Přidejte svůj první ${category === 'games' ? 'oblíbený herní titul' : (category === 'series' ? 'seriál do společného seznamu' : 'film')} nebo vyzkoušejte Matcher!`}
+                </p>
+                <div class="flex flex-wrap items-center justify-center gap-3">
+                    ${category === 'games' && activeGameFilter !== 'all' ? `
+                        <button onclick="Library.setGameFilter('all')" class="bg-[#202225] hover:bg-[#2f3136] text-white border border-white/10 px-5 py-2.5 rounded-xl font-bold text-xs transition active:scale-95 flex items-center gap-2">
+                            <i class="fas fa-list"></i> Zobrazit všechny hry
+                        </button>
+                    ` : ''}
+                    <button onclick="Library.showAddMediaModal('${category}')" class="bg-[#5865F2] hover:bg-[#4752c4] text-white px-6 py-2.5 rounded-xl font-bold text-xs shadow-lg shadow-[#5865F2]/20 transition transform hover:scale-105 active:scale-95 flex items-center gap-2">
+                        <i class="fas fa-plus"></i> Přidat ${category === 'games' ? 'hru' : (category === 'series' ? 'seriál' : 'film')}
+                    </button>
+                    ${category !== 'games' ? `
+                        <button onclick="Library.searchTMDBInModal('${category}')" class="bg-[#202225] hover:bg-[#2f3136] text-gray-300 hover:text-white border border-white/10 px-4 py-2.5 rounded-xl font-bold text-xs transition active:scale-95 flex items-center gap-2">
+                            <i class="fas fa-globe"></i> Hledat na TMDB
+                        </button>
+                    ` : ''}
+                </div>
             </div>
         ` : `
         <div class="p-6 pb-20 animate-fade-in space-y-10">
@@ -323,7 +363,7 @@ export function renderLibrary(category = 'movies') {
                 const watchlist = state.watchlist || [];
                 const isBookmarked = watchlist.some((w) => String(w.id) === String(item.id) && w.user_id === state.currentUser?.id);
                 const partnerWish = watchlist.some((w) => String(w.id) === String(item.id) && w.user_id && w.user_id !== state.currentUser?.id);
-                const isGameFrequent = item.is_frequent || (item.mood_tags || []).includes('stálice') || item.cat === 'Stálice';
+                const itemGameStatus = category === 'games' ? getGameStatus(item) : null;
 
                 const hasPoster = !!item.poster_path;
                 const posterUrl = hasPoster ? TMDB.getTMDBImageUrl(item.poster_path, 'w342') : null;
@@ -338,10 +378,20 @@ export function renderLibrary(category = 'movies') {
                 const cardTags = (item.mood_tags || []).join(' ');
 
                 let statusBadge = "";
-                if (status === "seen")
-                    statusBadge = '<span class="absolute top-2 left-2 bg-green-500 text-white text-[10px] px-2 py-0.5 rounded font-bold shadow-md z-10"><i class="fas fa-check"></i> VIDĚNO</span>';
-                else if (status === "watching")
-                    statusBadge = '<span class="absolute top-2 left-2 bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded font-bold shadow-md z-10"><i class="fas fa-play"></i> ROZKOUKÁNO</span>';
+                if (category === 'games') {
+                    if (itemGameStatus === 'dohráno') {
+                        statusBadge = '<span class="absolute top-2 left-2 bg-purple-600 text-white text-[10px] px-2 py-0.5 rounded font-bold shadow-md z-10 flex items-center gap-1"><i class="fas fa-trophy text-[8px]"></i> DOHRÁNO</span>';
+                    } else if (itemGameStatus === 'chceme') {
+                        statusBadge = '<span class="absolute top-2 left-2 bg-[#faa61a] text-black text-[10px] px-2 py-0.5 rounded font-black shadow-md z-10 flex items-center gap-1"><i class="fas fa-star text-[8px]"></i> CHCEME</span>';
+                    } else {
+                        statusBadge = '<span class="absolute top-2 left-2 bg-[#3ba55c] text-white text-[10px] px-2 py-0.5 rounded font-bold shadow-md z-10 flex items-center gap-1"><i class="fas fa-gamepad text-[8px]"></i> MÁME</span>';
+                    }
+                } else {
+                    if (status === "seen")
+                        statusBadge = '<span class="absolute top-2 left-2 bg-green-500 text-white text-[10px] px-2 py-0.5 rounded font-bold shadow-md z-10"><i class="fas fa-check"></i> VIDĚNO</span>';
+                    else if (status === "watching")
+                        statusBadge = '<span class="absolute top-2 left-2 bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded font-bold shadow-md z-10"><i class="fas fa-play"></i> ROZKOUKÁNO</span>';
+                }
 
                 html += `
                       <div class="library-card-wrapper library-card media-card-hover group relative bg-[var(--bg-secondary)] rounded-2xl overflow-hidden border border-[var(--border-subtle)] hover:border-[var(--blurple)] transition-all shadow-lg flex flex-col w-full"
@@ -377,12 +427,25 @@ export function renderLibrary(category = 'movies') {
                           <div class="p-3 flex flex-col flex-1">
                               <div class="flex flex-wrap gap-1 mb-2 items-center">
                                   ${category === 'games' ? `
-                                    <button onclick="event.stopPropagation(); window.Library.toggleGameFrequent(${item.id})" 
-                                            class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider transition border flex items-center gap-1 ${isGameFrequent ? 'bg-[#faa61a] text-black border-[#faa61a]' : 'bg-[#202225] text-gray-400 hover:text-yellow-400 border-white/5'}">
-                                        <i class="fas fa-bolt ${isGameFrequent ? 'text-black' : 'text-[#faa61a]'}"></i> ${isGameFrequent ? 'Stálice' : '+ Stálice'}
-                                    </button>
+                                    <div class="flex items-center gap-1 bg-[#202225] p-1 rounded-xl border border-white/5 w-full justify-between" onclick="event.stopPropagation()">
+                                        <button onclick="window.Library.setGameStatus(${item.id}, 'máme')" 
+                                                class="flex-1 py-1 px-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1 ${itemGameStatus === 'máme' ? 'bg-[#3ba55c] text-white shadow-sm' : 'text-gray-400 hover:text-white'}"
+                                                title="Přesunout do: Máme">
+                                            🎮 Máme
+                                        </button>
+                                        <button onclick="window.Library.setGameStatus(${item.id}, 'chceme')" 
+                                                class="flex-1 py-1 px-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1 ${itemGameStatus === 'chceme' ? 'bg-[#faa61a] text-black shadow-sm font-extrabold' : 'text-gray-400 hover:text-white'}"
+                                                title="Přesunout do: Chceme">
+                                            🌟 Chceme
+                                        </button>
+                                        <button onclick="window.Library.setGameStatus(${item.id}, 'dohráno')" 
+                                                class="flex-1 py-1 px-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1 ${itemGameStatus === 'dohráno' ? 'bg-purple-600 text-white shadow-sm' : 'text-gray-400 hover:text-white'}"
+                                                title="Přesunout do: Dohráno">
+                                            🏆 Dohráno
+                                        </button>
+                                    </div>
                                   ` : ''}
-                                  ${(item.mood_tags || []).filter(t => t !== 'stálice').map(tag => `<span class="text-[9px] bg-[#5865F2]/20 text-[#5865F2] px-1.5 py-0.5 rounded border border-[#5865F2]/20 font-bold">${tag}</span>`).join('')}
+                                  ${(item.mood_tags || []).filter(t => !['stálice', 'máme', 'chceme', 'dohráno'].includes(t)).map(tag => `<span class="text-[9px] bg-[#5865F2]/20 text-[#5865F2] px-1.5 py-0.5 rounded border border-[#5865F2]/20 font-bold">${tag}</span>`).join('')}
                               </div>
                               <h3 class="font-bold text-white text-sm leading-tight mb-1 group-hover:text-[#5865F2] transition line-clamp-2" title="${item.title}">${item.title}</h3>
                               <div class="mt-auto pt-3 border-t border-[#202225] flex justify-between items-center gap-1">
@@ -407,9 +470,17 @@ export function renderLibrary(category = 'movies') {
     container.innerHTML = html;
 }
 
+if (typeof stateEvents !== 'undefined' && stateEvents.on) {
+    stateEvents.on('library', () => {
+        if (['movies', 'series', 'games', 'knihovna', 'library'].includes(state.currentChannel)) {
+            renderLibrary(currentCategory);
+        }
+    });
+}
+
 window.addEventListener('library-updated', async () => {
     await ensureLibraryData(true);
-    if (['movies', 'series', 'games', 'watchlist', 'library'].includes(state.currentChannel)) {
+    if (['movies', 'series', 'games', 'knihovna', 'library'].includes(state.currentChannel)) {
         renderLibrary(currentCategory);
     }
 });

@@ -3,6 +3,13 @@ import { state } from '@core/state.js';
 import { triggerHaptic, triggerConfetti } from '@core/utils.js';
 import { showNotification } from '@core/theme.js';
 import { renderModal } from '@core/ui.js';
+import { setupRealtime, renderDuelStatusBar } from './duel.js';
+
+export let activeTierList = null;
+
+export function setActiveTierList(val) {
+    activeTierList = val;
+}
 
 export async function openEditor(id) {
     const container = document.getElementById("messages-container");
@@ -18,9 +25,10 @@ export async function openEditor(id) {
         setupRealtime(id);
         renderEditorUI();
     } catch (err) {
-
         console.error("Open editor error:", err);
-        renderTierList();
+        if (window.TierList?.renderTierList) {
+            window.TierList.renderTierList();
+        }
     }
 }
 
@@ -93,17 +101,17 @@ export function renderEditorUI() {
 }
 
 export function renderTierRow(tier) {
-    const user = state.currentUser.name?.toLowerCase().includes('klárka') ? 'klarka' : 'jose';
+    const user = state.currentUser?.name?.toLowerCase().includes('klárka') ? 'klarka' : 'jose';
     const isRevealed = activeTierList.duel_data?.revealed;
     
     let displayItems = tier.items || [];
 
     if (activeTierList.is_duel) {
         if (!isRevealed) {
-            displayItems = activeTierList.duel_data[user]?.tiers?.find(t => t.id === tier.id)?.items || [];
+            displayItems = activeTierList.duel_data?.[user]?.tiers?.find(t => t.id === tier.id)?.items || [];
         } else {
-            const joseItems = activeTierList.duel_data.jose?.tiers?.find(t => t.id === tier.id)?.items || [];
-            const klarkaItems = activeTierList.duel_data.klarka?.tiers?.find(t => t.id === tier.id)?.items || [];
+            const joseItems = activeTierList.duel_data?.jose?.tiers?.find(t => t.id === tier.id)?.items || [];
+            const klarkaItems = activeTierList.duel_data?.klarka?.tiers?.find(t => t.id === tier.id)?.items || [];
             
             // Items in BOTH (Matches)
             const matches = joseItems.filter(ji => klarkaItems.find(ki => ki.id === ji.id));
@@ -167,7 +175,6 @@ export function renderItem(item, badge = null) {
     `;
 }
 
-
 export function initSortable() {
     if (typeof Sortable === 'undefined') {
         console.error("SortableJS not loaded");
@@ -211,7 +218,8 @@ export function updateInternalState() {
     });
 
     if (activeTierList.is_duel && !activeTierList.duel_data?.revealed) {
-        const user = state.currentUser.name?.toLowerCase().includes('klárka') ? 'klarka' : 'jose';
+        const user = state.currentUser?.name?.toLowerCase().includes('klárka') ? 'klarka' : 'jose';
+        if (!activeTierList.duel_data) activeTierList.duel_data = {};
         activeTierList.duel_data[user] = newData;
     } else {
         activeTierList.data = newData;
@@ -219,11 +227,12 @@ export function updateInternalState() {
 }
 
 export function findItemInCurrentState(id) {
-    let item = activeTierList.data.pool.find(i => i.id == id);
+    if (!activeTierList?.data) return null;
+    let item = activeTierList.data.pool?.find(i => i.id == id);
     if (item) return item;
     
-    for (const tier of activeTierList.data.tiers) {
-        item = tier.items.find(i => i.id == id);
+    for (const tier of (activeTierList.data.tiers || [])) {
+        item = tier.items?.find(i => i.id == id);
         if (item) return item;
     }
     return null;
@@ -242,11 +251,10 @@ export async function saveTierList() {
 
         const { error } = await supabase.from('tier_lists').update(payload).eq('id', activeTierList.id);
         if (error) throw error;
-        window.showNotification("Žebříček uložen! 💾", "success");
+        showNotification("Žebříček uložen! 💾", "success");
         if (!activeTierList.is_duel) triggerConfetti();
     } catch (err) {
         console.error("Save error:", err);
-        window.showNotification("Chyba při ukládání.", "error");
+        showNotification("Chyba při ukládání.", "error");
     }
 }
-

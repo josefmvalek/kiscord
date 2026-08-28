@@ -1,6 +1,6 @@
 import { state } from '@core/state.js';
 import { calculateDailyNutrition } from './macroCalculator.js';
-import { renderTDEECoachCard } from './tdeeCoach.js';
+import { renderTDEECoachCard } from './tdee-coach.js';
 
 /**
  * Gathers 7-day weekly statistics ending on the provided date.

@@ -19,12 +19,25 @@ export const LEVEL_MILESTONES = [
     { level: 10, minXP: 3200, nextXP: 4000, name: "Legendární pár 🏆", color: "from-yellow-400 to-orange-500", theme: "gold", reward: "Téma Gold 👑" },
     { level: 12, minXP: 4000, nextXP: 5500, name: "Hvězdní společníci 🌟", color: "from-purple-400 to-pink-600", reward: "+20 Love Coinů" },
     { level: 15, minXP: 5500, nextXP: 8000, name: "Nesmrtelné pouto 💖", color: "from-rose-400 to-red-600", reward: "+30 Love Coinů" },
-    { level: 20, minXP: 8000, nextXP: 12000, name: "Páni Vesmíru 👑", color: "from-amber-300 via-pink-500 to-purple-600", reward: "+50 Love Coinů" },
     { level: 25, minXP: 12000, nextXP: 999999, name: "Nekonečná láska ♾️", color: "from-yellow-300 via-red-500 to-pink-500", reward: "Věčná sláva 💫" }
 ];
 
-let currentXP = 0;
-let currentLevelData = calculateLevelFromXP(0);
+function getInitialCachedXP() {
+    if (typeof state !== 'undefined' && typeof state.relationshipXP === 'number' && state.relationshipXP > 0) {
+        return state.relationshipXP;
+    }
+    if (typeof localStorage !== 'undefined') {
+        const cached = localStorage.getItem('kiscord_cached_xp');
+        if (cached !== null) {
+            const parsed = parseInt(cached, 10);
+            if (!isNaN(parsed) && parsed >= 0) return parsed;
+        }
+    }
+    return 0;
+}
+
+let currentXP = getInitialCachedXP();
+let currentLevelData = calculateLevelFromXP(currentXP);
 let cachedBreakdown = null;
 
 export function calculateLevelFromXP(xp) {
@@ -65,18 +78,49 @@ export function calculateLevelFromXP(xp) {
     };
 }
 
+export function setLevelXP(newXP, shouldAnimate = true) {
+    const val = Math.max(0, parseInt(newXP, 10) || 0);
+    const newLevelInfo = calculateLevelFromXP(val);
+
+    if (shouldAnimate) {
+        const badge = document.getElementById('sidebar-level-badge');
+        if (badge && val !== currentXP) {
+            badge.classList.add('ring-2', 'ring-[#faa61a]', 'scale-105');
+            setTimeout(() => badge.classList.remove('ring-2', 'ring-[#faa61a]', 'scale-105'), 1000);
+        }
+
+        if (newLevelInfo.level > currentLevelData.level && currentLevelData.level !== 1) {
+            triggerLevelUp(newLevelInfo);
+        }
+    }
+
+    currentXP = val;
+    currentLevelData = newLevelInfo;
+    state.relationshipXP = val;
+    if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('kiscord_cached_xp', String(val));
+    }
+
+    renderLevelUI();
+    window.dispatchEvent(new CustomEvent('relationship-xp-updated', { detail: newLevelInfo }));
+}
+
 export async function initLevels() {
     console.log("[Levels] Initializing Relationship Leveling 2.0...");
-    await updateRelationshipXP();
+    // 1. Render immediately from cached XP (0ms latency on refresh)
+    renderLevelUI();
+
+    // 2. Fetch fresh XP from Supabase in background without artificial delay
+    updateRelationshipXP({ debounce: false });
     
-    // Poslech na změny v důležitých tabulkách pro Realtime XP update
+    // 3. Poslech na změny v důležitých tabulkách pro Realtime XP update
     const tables = ['health_data', 'bucket_list', 'timeline', 'timeline_events', 'gym_logs', 'daily_answers', 'love_letters'];
     
     const channel = supabase.channel('relationship-levels-realtime');
     tables.forEach(table => {
         channel.on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
             console.log(`[Levels] Realtime update from ${table}:`, payload);
-            updateRelationshipXP();
+            updateRelationshipXP({ debounce: true });
         });
     });
     
@@ -86,38 +130,21 @@ export async function initLevels() {
 
     // Expose helpers globally
     window.openRelationshipMilestonesModal = openRelationshipMilestonesModal;
+    window.setLevelXP = setLevelXP;
 }
 
-export async function updateRelationshipXP() {
+export async function updateRelationshipXP(options = {}) {
+    const debounce = options && options.debounce === true;
     try {
-        // Krátký timeout pro jistotu zpracování databáze
-        await new Promise(res => setTimeout(res, 400));
+        if (debounce) {
+            await new Promise(res => setTimeout(res, 300));
+        }
 
         const { data, error } = await supabase.rpc('get_relationship_xp');
         if (error) throw error;
 
-        const newXP = parseInt(data) || 0;
-        const newLevelInfo = calculateLevelFromXP(newXP);
-
-        // Sidebar badge vizuální impuls
-        const badge = document.getElementById('sidebar-level-badge');
-        if (badge && newXP !== currentXP) {
-             badge.classList.add('ring-2', 'ring-[#faa61a]', 'scale-105');
-             setTimeout(() => badge.classList.remove('ring-2', 'ring-[#faa61a]', 'scale-105'), 1000);
-        }
-
-        // Level Up oslava
-        if (newLevelInfo.level > currentLevelData.level && currentLevelData.level !== 1) {
-            triggerLevelUp(newLevelInfo);
-        }
-
-        currentXP = newXP;
-        currentLevelData = newLevelInfo;
-
-        renderLevelUI();
-        
-        // Zpřístupnit i pro dashboard
-        window.dispatchEvent(new CustomEvent('relationship-xp-updated', { detail: newLevelInfo }));
+        const newXP = parseInt(data, 10) || 0;
+        setLevelXP(newXP, true);
     } catch (e) {
         console.error("[Levels] Error fetching XP:", e);
     }

@@ -485,7 +485,7 @@ export function toggleDormItemBought(id, isBought) {
     }
 
     // Background cloud persist
-    supabase.from('dorm_shopping_items').update({ is_bought: isBought }).eq('id', id).catch(e => {
+    Promise.resolve(supabase.from('dorm_shopping_items').update({ is_bought: isBought }).eq('id', id)).catch(e => {
         console.warn("[DormHub] Update item error:", e);
     });
 }
@@ -496,7 +496,7 @@ export function deleteDormShoppingItem(id) {
     updateDormShoppingListUI();
 
     // Background cloud persist
-    supabase.from('dorm_shopping_items').delete().eq('id', id).catch(e => {
+    Promise.resolve(supabase.from('dorm_shopping_items').delete().eq('id', id)).catch(e => {
         console.warn("[DormHub] Delete item error:", e);
     });
 }

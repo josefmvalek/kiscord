@@ -1,583 +1,803 @@
 /**
- * Main Day Detail Modal Controller for Kiscord Calendar
+ * Main Day Detail Modal Controller for Kiscord Calendar (Day Modal 3.0 Bento Edition)
+ * Provides an ultra-luxurious Bento Dashboard for health biometrics, cycle phase prediction,
+ * gym logs, romantic dates with Watchlist picker, VUT FIT schedule, historical memories, and Discord export.
  */
 
 import { state } from '@core/state.js';
 import { triggerHaptic, getTodayKey } from '@core/utils.js';
-import { getMoodColor } from './grid.js';
+import { getMoodColor, getMoodLabel } from './month-view.js';
 import { SHIFT_PRESETS } from '@domains/archive/shifts.js';
-import { renderModal, renderButton, renderInputGroup } from '@core/ui.js';
-import { setCurrentModalDateKey } from './state.js';
+import { setCurrentModalDateKey, getCurrentModalDateKey } from './state.js';
 import { renderGymSectionHtml } from './sections-gym.js';
 import { renderDiarySectionHtml } from './sections-diary.js';
+import { formatDateKey, parseDateKey, getAnniversaryMemories } from './time-engine.js';
+import { getWeatherForDate } from './weather.js';
+import { supabase } from '@core/supabase.js';
+import { calculateCurrentCycleState } from '@domains/fitness/cycle/cycleEngine.js';
 
 export function ensureModals() {
-    if (!document.getElementById("day-modal")) {
-        const modalHtml = renderModal({
-            id: 'day-modal',
-            title: '<span id="modal-date-title">Datum</span>',
-            subtitle: '<span id="modal-date-subtitle">Den v týdnu</span>',
-            size: 'lg',
-            content: `
-                <div id="modal-section-health" class="space-y-4">
-                    <div class="flex items-center justify-between">
-                        <h4 class="text-xs font-bold text-[#3ba55c] uppercase flex items-center gap-2"><i class="fas fa-heartbeat"></i> Zdraví & Restart</h4>
-                        <button onclick="Calendar.toggleHealthEdit()" class="text-[10px] font-bold text-gray-400 hover:text-white uppercase tracking-widest transition">Upravit</button>
-                    </div>
-                    
-                    <div id="health-display-grid" class="grid grid-cols-2 gap-3">
-                        <div class="bg-black/10 p-3 rounded-xl border border-white/5">
-                            <span class="block text-[8px] text-gray-500 uppercase font-black mb-1 tracking-widest">Voda</span>
-                            <span id="modal-health-water" class="text-white font-bold text-sm">0/8</span>
-                        </div>
-                        <div class="bg-black/10 p-3 rounded-xl border border-white/5">
-                            <span class="block text-[8px] text-gray-500 uppercase font-black mb-1 tracking-widest">Spánek</span>
-                            <span id="modal-health-sleep" class="text-white font-bold text-sm">-</span>
-                        </div>
-                        <div class="bg-black/10 p-3 rounded-xl border border-white/5">
-                            <span class="block text-[8px] text-gray-500 uppercase font-black mb-1 tracking-widest">Nálada</span>
-                            <span id="modal-health-mood" class="text-white font-bold text-sm">-</span>
-                        </div>
-                        <div class="bg-black/10 p-3 rounded-xl border border-white/5">
-                            <span class="block text-[8px] text-gray-500 uppercase font-black mb-1 tracking-widest">Pohyb</span>
-                            <div id="modal-health-movement" class="flex flex-wrap gap-1"></div>
-                        </div>
-                        <div class="bg-black/10 p-3 rounded-xl border border-white/5">
-                            <span class="block text-[8px] text-gray-500 uppercase font-black mb-1 tracking-widest">Léky</span>
-                            <span id="modal-health-pills" class="text-white font-bold text-sm">-</span>
-                        </div>
-                        <div class="bg-black/10 p-3 rounded-xl border border-white/5 col-span-2">
-                            <span class="block text-[8px] text-gray-500 uppercase font-black mb-1 tracking-widest">Suplementy</span>
-                            <div id="modal-health-supplements" class="flex gap-3 mt-1"></div>
+    let modal = document.getElementById("day-modal");
+    if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "day-modal";
+        modal.className = "fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-end sm:items-center justify-center p-0 sm:p-4 select-none animate-fade-in";
+        modal.onclick = (e) => {
+            if (e.target === modal) closeDayModal();
+        };
+
+        modal.innerHTML = `
+            <div id="day-modal-container" class="cal-bottom-sheet bg-[#2f3136] border-t sm:border border-white/10 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-2xl max-h-[88vh] sm:max-h-[90vh] flex flex-col overflow-hidden text-white animate-scale-up">
+                <!-- MOBILE DRAG HANDLE (Pull-to-Dismiss) -->
+                <div class="w-full flex sm:hidden items-center justify-center pt-2.5 pb-1 bg-[#202225] cursor-grab" id="modal-drag-handle">
+                    <div class="w-12 h-1.5 bg-white/25 rounded-full"></div>
+                </div>
+
+                <!-- HERO HEADER -->
+                <div class="px-4 sm:px-5 py-3 sm:py-4 bg-[#202225] border-b border-white/10 flex items-center justify-between gap-3 flex-shrink-0">
+                    <div class="flex items-center gap-2">
+                        <button type="button" 
+                                onclick="Calendar.stepDayModal(-1)" 
+                                title="Předchozí den (←)"
+                                class="cal-day-nav-btn">
+                            <i class="fas fa-chevron-left text-xs"></i>
+                        </button>
+                        <div>
+                            <h3 id="modal-date-title" class="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                                Datum
+                            </h3>
+                            <div id="modal-date-subtitle" class="text-[11px] text-gray-400 flex items-center gap-2 font-medium">
+                                Den v týdnu
+                            </div>
                         </div>
                     </div>
 
-                    <div id="health-edit-form" class="hidden space-y-4 bg-black/10 p-4 rounded-xl border border-white/10 animate-fade-in shadow-inner">
-                        <div class="grid grid-cols-2 gap-3">
-                            ${renderInputGroup({ label: 'Voda (ks)', id: 'edit-health-water', type: 'number' })}
-                            ${renderInputGroup({ label: 'Spánek (h)', id: 'edit-health-sleep', type: 'number', attr: 'step="0.5"' })}
-                        </div>
-                        <div class="flex flex-wrap gap-4 mb-2 mt-2 px-1">
-                              <div class="flex items-center gap-2">
-                                 <input type="checkbox" id="edit-health-pills" class="w-4 h-4 rounded text-[#e74c3c] bg-[#202225] border-white/10 accent-[#e74c3c] cursor-pointer" />
-                                 <label for="edit-health-pills" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer">Léky</label>
-                              </div>
-                              <div class="flex items-center gap-2">
-                                 <input type="checkbox" id="edit-health-iron" class="w-4 h-4 rounded text-red-400 bg-[#202225] border-white/10 accent-red-400 cursor-pointer" />
-                                 <label for="edit-health-iron" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer">Železo</label>
-                              </div>
-                              <div class="flex items-center gap-2">
-                                 <input type="checkbox" id="edit-health-zinc" class="w-4 h-4 rounded text-yellow-400 bg-[#202225] border-white/10 accent-yellow-400 cursor-pointer" />
-                                 <label for="edit-health-zinc" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer">Zinek</label>
-                              </div>
-                              <div class="flex items-center gap-2">
-                                 <input type="checkbox" id="edit-health-magnesium" class="w-4 h-4 rounded text-purple-400 bg-[#202225] border-white/10 accent-purple-400 cursor-pointer" />
-                                 <label for="edit-health-magnesium" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer">Hořčík</label>
-                              </div>
-                        </div>
-                        ${renderInputGroup({ label: 'Nálada (1-10)', id: 'edit-health-mood', type: 'number', attr: 'min="1" max="10"' })}
-                        ${renderInputGroup({ label: 'Pohyb (gym, walk...)', id: 'edit-health-movement' })}
-                        
-                        <div class="flex gap-2 pt-2">
-                             ${renderButton({ text: 'Zrušit', variant: 'secondary', className: 'flex-1', onclick: "Calendar.toggleHealthEdit()" })}
-                             ${renderButton({ text: 'Uložit', variant: 'success', className: 'flex-[2]', onclick: "Calendar.saveHealthRecord()" })}
-                        </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" 
+                                onclick="Calendar.copyDayDiscordCard(Calendar.getCurrentModalDateKey())" 
+                                title="Zkopírovat plán dne naformátovaný pro Discord"
+                                class="px-2.5 py-1.5 rounded-xl bg-[#5865F2]/20 hover:bg-[#5865F2] text-[#5865F2] hover:text-white border border-[#5865F2]/30 text-xs font-bold transition flex items-center gap-1.5 active:scale-95">
+                            <i class="fab fa-discord text-xs"></i>
+                            <span class="hidden sm:inline">Discord</span>
+                        </button>
+                        <button type="button" 
+                                onclick="Calendar.stepDayModal(1)" 
+                                title="Následující den (→)"
+                                class="cal-day-nav-btn">
+                            <i class="fas fa-chevron-right text-xs"></i>
+                        </button>
+                        <button type="button" 
+                                onclick="Calendar.closeDayModal()" 
+                                class="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition flex items-center justify-center text-sm ml-1">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
                 </div>
 
-                <div id="modal-section-shifts" class="hidden space-y-4 pt-4 border-t border-white/5"></div>
-
-                <div id="modal-section-gym" class="hidden space-y-4 pt-4 border-t border-white/5"></div>
-
-                <div id="modal-section-date" class="hidden space-y-3 pt-4 border-t border-white/5"></div>
-
-                <div id="modal-section-diary" class="hidden space-y-4 pt-4 border-t border-white/5"></div>
-                
-                <div id="modal-section-school" class="hidden space-y-4 pt-4 border-t border-white/5">
-                    <h4 class="text-xs font-bold text-[#faa61a] uppercase mb-2 flex items-center gap-2"><i class="fas fa-graduation-cap"></i> Škola</h4>
-                    <div id="school-event-display" class="hidden bg-[#faa61a]/10 border border-[#faa61a]/30 rounded-xl p-3 flex justify-between items-center">
-                        <span id="school-event-text" class="text-white text-sm font-medium"></span>
-                        <button class="text-red-400 hover:text-red-200 p-1"><i class="fas fa-trash-alt"></i></button>
-                    </div>
-                    <div id="school-add-form" class="flex gap-2">
-                       <input type="text" id="school-input" placeholder="Zkouška, test..." class="flex-1 bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#faa61a]/50 transition-all">
-                       <button onclick="Calendar.addSchoolEvent()" class="bg-[#faa61a] hover:bg-[#c88515] text-white px-4 rounded-xl transition shadow-lg active:scale-95"><i class="fas fa-plus"></i></button>
-                    </div>
+                <!-- BENTO SCROLLABLE BODY -->
+                <div id="day-modal-body" class="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 space-y-4">
+                    <!-- Dynamic Bento Cards Content -->
                 </div>
-            `
-        });
-        const div = document.createElement('div');
-        div.innerHTML = modalHtml;
-        document.body.appendChild(div.firstElementChild);
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const container = modal.querySelector('#day-modal-container');
+        if (container) {
+            let startX = 0;
+            let startY = 0;
+            let isSwiping = false;
+            let isDraggingDown = false;
+
+            container.addEventListener('touchstart', (e) => {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.closest('button')) return;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                isSwiping = true;
+                isDraggingDown = false;
+            }, { passive: true });
+
+            container.addEventListener('touchmove', (e) => {
+                if (!isSwiping) return;
+                const curX = e.touches[0].clientX;
+                const curY = e.touches[0].clientY;
+                const diffX = curX - startX;
+                const diffY = curY - startY;
+
+                // Vertical Pull-to-Dismiss on mobile if dragging downwards from top of modal
+                if (diffY > 15 && diffY > Math.abs(diffX) * 1.2 && container.scrollTop <= 5) {
+                    isDraggingDown = true;
+                    container.style.transform = `translateY(${diffY * 0.65}px)`;
+                    container.style.transition = 'none';
+                    return;
+                }
+
+                // Horizontal day navigation swipe
+                if (!isDraggingDown && Math.abs(diffX) > Math.abs(diffY) * 1.2 && Math.abs(diffX) < 140) {
+                    container.style.transform = `translateX(${diffX * 0.35}px)`;
+                    container.style.transition = 'none';
+                }
+            }, { passive: true });
+
+            container.addEventListener('touchend', (e) => {
+                if (!isSwiping) return;
+                isSwiping = false;
+
+                const endX = e.changedTouches[0].clientX;
+                const endY = e.changedTouches[0].clientY;
+                const diffX = endX - startX;
+                const diffY = endY - startY;
+
+                // If pulled down sufficiently -> Close modal
+                if (isDraggingDown) {
+                    if (diffY > 70) {
+                        triggerHaptic('medium');
+                        container.style.transition = 'transform 0.2s ease-in';
+                        container.style.transform = 'translateY(100%)';
+                        setTimeout(() => {
+                            closeDayModal();
+                            container.style.transform = 'translateY(0px)';
+                        }, 180);
+                        return;
+                    } else {
+                        container.style.transition = 'transform 0.2s ease-out';
+                        container.style.transform = 'translateY(0px)';
+                        return;
+                    }
+                }
+
+                container.style.transition = 'transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
+                container.style.transform = 'translateX(0px)';
+
+                if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
+                    triggerHaptic('light');
+                    if (diffX > 0) {
+                        stepDayModal(-1);
+                    } else {
+                        stepDayModal(1);
+                    }
+                }
+            }, { passive: true });
+        }
     }
 }
 
+/**
+ * Opens Day Detail Modal and populates Bento Dashboard.
+ */
 export function showDayDetail(dateKey) {
     ensureModals();
     setCurrentModalDateKey(dateKey);
-    const [yr, mo, dy] = dateKey.split('-').map(Number);
-    const dateObj = new Date(yr, mo - 1, dy);
-
     triggerHaptic('light');
 
-    const todayKey = getTodayKey();
-    const isPast = dateKey < todayKey;
+    const [yr, mo, dy] = dateKey.split('-').map(Number);
+    const dateObj = new Date(yr, mo - 1, dy);
+    const dayNames = ['Neděle', 'Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota'];
+    const monthNames = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
 
     const titleEl = document.getElementById("modal-date-title");
     const subEl = document.getElementById("modal-date-subtitle");
-    if (titleEl) titleEl.innerText = dateObj.toLocaleDateString("cs-CZ", { day: "numeric", month: "long" });
-    if (subEl) subEl.innerText = dateObj.toLocaleDateString("cs-CZ", { weekday: "long", year: "numeric" });
+    const weather = getWeatherForDate(dateKey);
 
-    const health = (state.healthData || {})[dateKey];
+    if (titleEl) {
+        titleEl.innerHTML = `
+            <span>${dy}. ${monthNames[mo - 1]} ${yr}</span>
+            ${dateKey === getTodayKey() ? '<span class="px-2 py-0.5 rounded-full bg-[#5865F2] text-[9px] font-black uppercase text-white shadow-sm">Dnes</span>' : ''}
+        `;
+    }
+    if (subEl) {
+        subEl.innerHTML = `
+            <span>${dayNames[dateObj.getDay()]}</span>
+            <span class="text-gray-500">•</span>
+            <span class="text-amber-300 font-bold">${weather.icon} ${weather.temp}°C ${weather.desc}</span>
+        `;
+    }
+
+    const modalBody = document.getElementById("day-modal-body");
+    if (!modalBody) return;
+
+    const health = (state.healthData || {})[dateKey] || {};
     const plannedDate = (state.plannedDates || {})[dateKey];
-    const schoolEvent = (state.schoolEvents || {})[dateKey];
-    const movieHistory = (state.movieHistory || {})[dateKey];
-    const timelineEvent = (state.timelineEvents || []).find((e) => e.event_date === dateKey);
+    const dayDeadlines = (state.schoolDeadlines || []).filter(d => d.deadline_date === dateKey);
+    const daySchedule = (state.scheduleItems || []).filter(s => s.day_of_week === dateObj.getDay());
+    const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
 
-    const dateSection = document.getElementById("modal-section-date");
-    const schoolSection = document.getElementById("modal-section-school");
-    const healthSection = document.getElementById("modal-section-health");
+    // --- 1. HEALTH & BIOMETRICS BENTO CARD WITH CYCLE PREDICTION ---
+    const waterCount = health.water_count ?? health.water ?? 0;
+    const waterPct = Math.min(100, Math.round((waterCount / 8) * 100));
+    const moodVal = health.mood_score ?? health.mood ?? null;
+    const moodNum = moodVal !== null ? (typeof moodVal === 'number' ? moodVal : parseInt(moodVal, 10)) : null;
+    const sleepHours = health.sleep_hours ?? health.sleep ?? null;
 
-    // A) PLÁNY
-    const showDateSection = !isPast || timelineEvent || plannedDate || (movieHistory && movieHistory.length > 0);
+    let moodDialHtml = '';
+    for (let s = 1; s <= 10; s++) {
+        const c = getMoodColor(s);
+        const isActive = moodNum === s;
+        moodDialHtml += `
+            <button type="button" 
+                    onclick="Calendar.setDayModalMood(${s})"
+                    style="background-color: ${c}; color: ${s >= 8 ? '#10002B' : '#fff'};"
+                    class="cal-mood-dial-btn ${isActive ? 'active ring-2 ring-white ring-offset-2 ring-offset-[#202225]' : 'opacity-70 hover:opacity-100'}"
+                    title="${s}/10 - ${getMoodLabel(s)}">
+                ${s}
+            </button>
+        `;
+    }
 
-    if (showDateSection && dateSection) {
-        let plansHtml = `<h4 class="text-xs font-bold text-[#eb459e] uppercase mb-2 flex items-center gap-2"><i class="fas fa-calendar-day"></i> Plány & Vzpomínky</h4>`;
+    const supps = health.supplements || { iron: health.iron, zinc: health.zinc, magnesium: health.magnesium };
 
-        if (timelineEvent) {
-            plansHtml += `
-            <div class="bg-gradient-to-r from-[#5865F2]/10 to-[#eb459e]/10 border border-[#5865F2]/30 rounded-lg p-3 relative group hover:border-[#eb459e] transition cursor-pointer"
-                 onclick="Calendar.closeDayModal(); window.loadModule('timeline').then(m => m.jumpToTimeline('${timelineEvent.id}'))">
-                <div class="font-bold text-white text-sm flex items-center justify-between gap-2">
-                    <span class="flex items-center gap-2">
-                        <i class="fas ${timelineEvent.icon || "fa-star"} text-[#faa61a]"></i>
-                        ${timelineEvent.title}
-                    </span>
-                    <i class="fas fa-external-link-alt text-[10px] text-gray-500 group-hover:text-white transition"></i>
+    // Calculate menstrual cycle phase if available
+    let cycleInfoHtml = '';
+    try {
+        const cycleState = calculateCurrentCycleState(dateObj, state.cycleLogs, state.cycleSettings);
+        if (cycleState && cycleState.phase) {
+            cycleInfoHtml = `
+                <div class="mt-3 pt-2.5 border-t border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-[#202225] p-2.5 rounded-2xl border border-pink-500/20">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">${cycleState.phase.icon}</span>
+                        <div>
+                            <span class="text-[10px] font-black ${cycleState.phase.themeClass.split(' ')[0]} uppercase tracking-wider">${cycleState.phase.name} (Den ${cycleState.dayOfCycle})</span>
+                            <span class="text-[9px] text-gray-300 font-medium block">${cycleState.phase.energy}</span>
+                        </div>
+                    </div>
+                    <div class="text-[8.5px] text-pink-300/80 italic sm:max-w-[240px] sm:text-right">
+                        💡 ${cycleState.phase.partnerTip}
+                    </div>
                 </div>
-                <div class="text-[10px] text-gray-400 mt-1 italic">Kliknutím přejdeš na záznam v Timeline</div>
-            </div>`;
-        } else if (plannedDate) {
-            const iconsMap = {
-                food: '🍔', walk: '🌲', view: '⛰️', fun: '⚡',
-                movie: '🎬', discord: '🎧', game: '🎮', date: '🥂', gym: '🏋️‍♂️'
-            };
-            const icon = iconsMap[plannedDate.cat] || '📍';
+            `;
+        }
+    } catch (e) {}
 
-            const planStatusDefs = {
-                idea:      { icon: '💭', label: 'Nápad',       color: 'text-gray-400',    bg: 'bg-gray-500/10',   border: 'border-gray-500/20' },
-                confirmed: { icon: '📅', label: 'Potvrzeno',    color: 'text-[#5865F2]', bg: 'bg-[#5865F2]/10', border: 'border-[#5865F2]/30' },
-                happened:  { icon: '🎉', label: 'Proběhlo',     color: 'text-[#3ba55c]', bg: 'bg-[#3ba55c]/10', border: 'border-[#3ba55c]/30' }
-            };
-            const planStatus = plannedDate.status || 'idea';
-            const planStatusDef = planStatusDefs[planStatus] || planStatusDefs.idea;
+    const healthCardHtml = `
+        <div class="cal-bento-card">
+            <div class="flex items-center justify-between pb-2 mb-3 border-b border-white/5">
+                <h4 class="text-xs font-black text-[#3ba55c] uppercase tracking-wider flex items-center gap-2">
+                    <i class="fas fa-heartbeat"></i> Zdraví & Biometrika
+                </h4>
+                <span class="text-[10px] text-gray-400 font-bold">${moodNum ? getMoodLabel(moodNum) : 'Denní přehled'}</span>
+            </div>
 
-            const currentUserName = state.currentUser?.name || 'Josef';
-            const creator = plannedDate.created_by || 'Josef';
-            const isCreator = currentUserName.toLowerCase() === creator.toLowerCase();
-            
-            let isLocked = false;
-            if (plannedDate.is_secret && !plannedDate.is_manually_unlocked) {
-                if (!isCreator) {
-                    const unlockHours = plannedDate.secret_unlock_hours !== undefined ? plannedDate.secret_unlock_hours : 1;
-                    const eventDateTime = new Date(`${dateKey}T${plannedDate.time || '18:00'}:00`);
-                    if (!isNaN(eventDateTime.getTime())) {
-                        const unlockTime = new Date(eventDateTime.getTime() - unlockHours * 60 * 60 * 1000);
-                        isLocked = new Date() < unlockTime;
-                    }
-                }
-            }
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                <!-- Water Stepper -->
+                <div class="p-3 bg-[#202225] rounded-2xl border border-cyan-500/20 flex flex-col justify-between">
+                    <span class="text-[9px] font-bold uppercase text-cyan-400 tracking-wider flex items-center justify-between">
+                        <span>Hydratace</span>
+                        <span>💧 ${waterCount}/8</span>
+                    </span>
+                    <div class="flex items-center justify-between my-2">
+                        <button type="button" onclick="Calendar.setDayModalWater(-1)" class="w-7 h-7 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/25 text-cyan-300 font-black flex items-center justify-center transition active:scale-90">-</button>
+                        <div class="text-center font-mono font-black text-white text-lg">${waterCount * 250} <span class="text-[10px] text-gray-400">ml</span></div>
+                        <button type="button" onclick="Calendar.setDayModalWater(1)" class="w-7 h-7 rounded-lg bg-cyan-500/20 hover:bg-cyan-500 text-white font-black flex items-center justify-center transition active:scale-90 shadow-sm">+</button>
+                    </div>
+                    <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-cyan-400 h-full transition-all duration-300" style="width: ${waterPct}%;"></div>
+                    </div>
+                </div>
 
-            const checklist = plannedDate.checklist || [];
-            const checklistHtml = checklist.length > 0 ? `
-                <div class="mt-3 space-y-1.5">
-                    <div class="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2">Checklist</div>
-                    ${checklist.map((item, idx) => `
-                        <div class="flex items-center gap-2 group/check">
-                            <button onclick="Calendar.toggleChecklistItem('${dateKey}', ${idx})" 
-                                    class="w-5 h-5 rounded flex items-center justify-center border transition-all flex-shrink-0 ${item.done ? 'bg-[#3ba55c] border-[#3ba55c] text-white' : 'border-gray-600 text-transparent hover:border-gray-400'}">
-                                <i class="fas fa-check text-[8px]"></i>
-                            </button>
-                            <span class="text-xs ${item.done ? 'line-through text-gray-600' : 'text-gray-300'}">${item.text}</span>
+                <!-- Sleep Input -->
+                <div class="p-3 bg-[#202225] rounded-2xl border border-purple-500/20 flex flex-col justify-between">
+                    <span class="text-[9px] font-bold uppercase text-purple-400 tracking-wider">Spánek</span>
+                    <div class="flex items-center gap-2 my-2">
+                        <input type="number" 
+                               step="0.5" 
+                               min="0" 
+                               max="24" 
+                               id="modal-sleep-input"
+                               value="${sleepHours !== null ? sleepHours : ''}"
+                               placeholder="8.0"
+                               onchange="Calendar.saveDayModalSleep('${dateKey}', this.value)"
+                               class="w-full bg-black/30 border border-white/10 rounded-xl px-2.5 py-1 text-base font-mono font-bold text-purple-200 focus:outline-none focus:border-purple-500 transition" />
+                        <span class="text-xs font-bold text-gray-400">hod</span>
+                    </div>
+                    <div class="text-[9px] text-purple-300/80 font-bold">${sleepHours ? (sleepHours >= 7.5 ? '✨ Optimální' : '🥱 Deficit') : 'Nezadáno'}</div>
+                </div>
+
+                <!-- Vitamins & Movement -->
+                <div class="p-3 bg-[#202225] rounded-2xl border border-pink-500/20 flex flex-col justify-between">
+                    <span class="text-[9px] font-bold uppercase text-pink-400 tracking-wider">Suplementy & Léky</span>
+                    <div class="flex flex-wrap gap-1.5 my-1.5">
+                        <button type="button" 
+                                onclick="Calendar.toggleSupplement('${dateKey}', 'iron')"
+                                class="px-2 py-1 rounded-lg text-[10px] font-bold border transition ${supps?.iron ? 'bg-red-500/20 border-red-500/40 text-red-300' : 'bg-white/5 border-white/10 text-gray-500'}">
+                            🩸 Železo
+                        </button>
+                        <button type="button" 
+                                onclick="Calendar.toggleSupplement('${dateKey}', 'zinc')"
+                                class="px-2 py-1 rounded-lg text-[10px] font-bold border transition ${supps?.zinc ? 'bg-yellow-500/20 border-yellow-500/40 text-yellow-300' : 'bg-white/5 border-white/10 text-gray-500'}">
+                            ✨ Zinek
+                        </button>
+                        <button type="button" 
+                                onclick="Calendar.toggleSupplement('${dateKey}', 'magnesium')"
+                                class="px-2 py-1 rounded-lg text-[10px] font-bold border transition ${supps?.magnesium ? 'bg-purple-500/20 border-purple-500/40 text-purple-300' : 'bg-white/5 border-white/10 text-gray-500'}">
+                            🌙 Hořčík
+                        </button>
+                    </div>
+                    <span class="text-[8.5px] text-gray-400">Kliknutím přepneš splnění</span>
+                </div>
+            </div>
+
+            <!-- Mood Rating Bar -->
+            <div>
+                <span class="block text-[9px] font-bold uppercase text-gray-400 tracking-wider mb-2">Rychlé hodnocení nálady (1–10)</span>
+                <div class="flex items-center justify-between gap-1 overflow-x-auto p-1 bg-[#202225] rounded-2xl border border-white/5">
+                    ${moodDialHtml}
+                </div>
+            </div>
+
+            ${cycleInfoHtml}
+        </div>
+    `;
+
+    // --- 2. HISTORICAL ANNIVERSARY MEMORY CARD (POINT 5) ---
+    const anniversaries = getAnniversaryMemories(dateKey, state.timelineEvents);
+    let anniversaryCardHtml = '';
+    if (anniversaries.length > 0) {
+        anniversaryCardHtml = `
+            <div class="cal-bento-card cal-anniversary-sparkle">
+                <div class="flex items-center justify-between pb-2 mb-2 border-b border-amber-500/20">
+                    <h4 class="text-xs font-black text-amber-300 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fas fa-sparkles"></i> Tento den v minulosti
+                    </h4>
+                    <span class="text-[9px] font-black text-amber-400 uppercase tracking-wider">${anniversaries[0].anniversaryLabel}</span>
+                </div>
+                <div class="space-y-2">
+                    ${anniversaries.map(a => `
+                        <div class="flex items-center justify-between p-2.5 bg-black/40 rounded-xl border border-amber-500/30 text-xs cursor-pointer hover:border-amber-400 transition"
+                             onclick="Calendar.closeDayModal(); window.loadModule('timeline').then(m => m.jumpToTimeline('${a.id}'))">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-lg">${a.icon || '⭐'}</span>
+                                <div>
+                                    <div class="font-bold text-white">${a.title}</div>
+                                    ${a.description ? `<div class="text-[10px] text-amber-200/80 italic">${a.description}</div>` : ''}
+                                </div>
+                            </div>
+                            <span class="text-[9px] text-amber-400 font-bold uppercase tracking-wider">Vzpomínka →</span>
                         </div>
                     `).join('')}
                 </div>
-            ` : '';
-
-            if (isLocked) {
-                plansHtml += `
-                <div class="bg-gradient-to-br from-pink-500/15 to-purple-500/15 border-2 border-pink-500/40 rounded-2xl p-4 relative group shadow-xl overflow-hidden animate-fade-in">
-                    <div class="flex items-start justify-between gap-2 mb-3">
-                        <div class="font-black text-white text-sm flex items-center gap-2">
-                            <span class="p-2 rounded-xl bg-pink-500/20 text-pink-300 animate-pulse text-base">🔒</span>
-                            <div>
-                                <div class="text-xs font-black text-pink-300 uppercase tracking-wide">Tajné rande od ${creator} ✨</div>
-                                <div class="text-[10px] text-gray-400 font-medium">Místo se odemkne 1 hodinu před srazem!</div>
-                            </div>
-                        </div>
-                        <button onclick="Calendar.deletePlannedDate('${dateKey}')" class="text-red-400 hover:text-red-200 p-1 transition">
-                            <i class="fas fa-trash text-xs"></i>
-                        </button>
-                    </div>
-
-                    ${plannedDate.time ? `<div class="text-xs text-white font-bold mb-2 flex items-center gap-1.5 bg-black/20 p-2 rounded-xl w-fit"><i class="far fa-clock text-[#eb459e]"></i> Čas srazu: ${plannedDate.time}</div>` : ''}
-
-                    ${plannedDate.secret_dress_code ? `
-                        <div class="bg-black/30 rounded-xl p-2.5 mb-2 text-xs border border-white/5">
-                            <span class="text-pink-300 font-bold block text-[10px] uppercase tracking-wider mb-0.5">👟 Co na sebe (Dress Code):</span>
-                            <span class="text-gray-200">${plannedDate.secret_dress_code}</span>
-                        </div>
-                    ` : ''}
-
-                    ${plannedDate.secret_hint ? `
-                        <div class="bg-black/30 rounded-xl p-2.5 text-xs border border-white/5">
-                            <span class="text-pink-300 font-bold block text-[10px] uppercase tracking-wider mb-0.5">💡 Nápověda:</span>
-                            <span class="text-gray-200 italic">„${plannedDate.secret_hint}“</span>
-                        </div>
-                    ` : ''}
-                </div>`;
-            } else {
-                const secretBadge = plannedDate.is_secret ? `
-                    <div class="mb-2 px-2.5 py-1 rounded-lg bg-pink-500/20 border border-pink-500/30 text-pink-300 text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1">
-                        <i class="fas fa-unlock-alt"></i> ${isCreator ? '🔒 Tajné pro partnera (aktivní nápověda)' : '✨ Odhalené překvapení!'}
-                    </div>
-                ` : '';
-
-                plansHtml += `
-                <div class="bg-[#eb459e]/10 border border-[#eb459e]/30 rounded-xl p-4 relative group shadow-md">
-                    ${secretBadge}
-                    <div class="flex items-start justify-between gap-2 mb-2">
-                        <div class="font-bold text-white text-sm flex items-center gap-2">
-                            <span>${icon}</span> ${plannedDate.name}
-                        </div>
-                        <div class="flex items-center gap-2 flex-shrink-0">
-                            <button onclick="Calendar.cyclePlanStatus('${dateKey}')"
-                                    title="Klik pro změnu stavu"
-                                    class="flex items-center gap-1 px-2 py-1 rounded-lg ${planStatusDef.bg} ${planStatusDef.border} border ${planStatusDef.color} text-[9px] font-black uppercase tracking-widest transition-all hover:opacity-80 active:scale-95">
-                                ${planStatusDef.icon} ${planStatusDef.label}
-                            </button>
-                            <button onclick="Calendar.deletePlannedDate('${dateKey}')" class="text-red-400 hover:text-red-200 p-1 transition">
-                                <i class="fas fa-trash text-xs"></i>
-                            </button>
-                        </div>
-                    </div>
-                    ${plannedDate.time ? `<div class="text-xs text-gray-400 mb-1"><i class="far fa-clock text-[#5865F2] mr-1"></i>${plannedDate.time}</div>` : ''}
-                    ${plannedDate.note && plannedDate.note !== 'Vlastní plán' ? `<div class="text-xs text-gray-400 italic">${plannedDate.note}</div>` : ''}
-                    ${plannedDate.secret_dress_code ? `<div class="mt-2 text-[11px] text-pink-300"><i class="fas fa-tshirt mr-1"></i>${plannedDate.secret_dress_code}</div>` : ''}
-                    ${plannedDate.backup_plan ? `<div class="mt-2 bg-black/20 rounded-lg p-2 text-xs text-gray-400"><i class="fas fa-umbrella mr-1 text-[#faa61a]"></i><span class="text-[#faa61a] font-bold">Záloha:</span> ${plannedDate.backup_plan}</div>` : ''}
-                    ${checklistHtml}
-                </div>`;
-            }
-
-        } else {
-            plansHtml += `
-            <div class="flex flex-col gap-2">
-                <div class="flex gap-2">
-                    <select id="plan-type" class="bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none flex-1">
-                        <option value="gym">🏋️‍♂️ Posilovna</option>
-                        <option value="discord">🎧 Discord</option>
-                        <option value="game">🎮 Hra</option>
-                        <option value="movie">🎬 Film</option>
-                        <option value="date">📍 Rande</option>
-                    </select>
-                    <input type="time" id="plan-time" class="bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none w-20">
-                </div>
-                <input type="text" id="plan-name" placeholder="Co podnikneme?" class="flex-1 bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none">
-                <input type="text" id="plan-backup" placeholder="Záložní plán (pokud prší...)" 
-                       class="flex-1 bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none focus:border-[#faa61a]/50 transition">
-                <input type="text" id="plan-checklist" placeholder="Checklist položky oddělené čárkami: deka, víno..." 
-                       class="flex-1 bg-[#202225] text-white text-xs p-2 rounded border border-[#2f3136] outline-none focus:border-[#5865F2]/50 transition">
-                <button onclick="Calendar.addCustomPlan()" class="bg-[#5865F2] hover:bg-[#4752c4] text-white py-2 rounded transition font-bold text-xs flex items-center justify-center gap-2">
-                    <i class="fas fa-plus"></i> Přidat plán
-                </button>
-            </div>`;
-        }
-
-        if (movieHistory && movieHistory.length > 0) {
-            plansHtml += `<div class="mt-4 space-y-3">`;
-            movieHistory.forEach(item => {
-                const libItem = [...(state.library?.movies || []), ...(state.library?.series || [])].find(m => m.id === item.media_id);
-                const title = libItem ? libItem.title : "Neznámý film";
-                const icon = libItem && libItem.icon ? libItem.icon : "🎬";
-                const ratingStars = "⭐".repeat(item.rating || 0);
-                
-                plansHtml += `
-                <div class="bg-[#2f3136] border border-[#202225] rounded-xl p-3 hover:border-[#eb459e]/30 transition cursor-pointer"
-                     onclick="window.loadModule('library').then(m => m.openHistoryModal(${item.media_id}))">
-                    <div class="flex items-center gap-3 mb-2">
-                        <div class="text-xl">${icon}</div>
-                        <div class="flex-1 overflow-hidden">
-                            <div class="text-xs font-bold text-white truncate">${title}</div>
-                            <div class="text-[10px] text-yellow-400">${ratingStars}</div>
-                        </div>
-                        ${item.status === 'seen' ? '<div class="text-sm">🔥</div>' : '<div class="text-sm">🍿</div>'}
-                    </div>
-                    ${item.reaction ? `<div class="bg-[#202225] p-2 rounded-lg text-xs text-gray-300 italic border-l-2 border-[#eb459e] mt-1">"${item.reaction}"</div>` : `<div class="text-[10px] text-gray-500 italic ml-1">Bez recenze...</div>`}
-                </div>`;
-            });
-            plansHtml += `</div>`;
-        }
-
-        dateSection.innerHTML = plansHtml;
-        dateSection.classList.remove("hidden");
-    } else if (dateSection) {
-        dateSection.classList.add("hidden");
+            </div>
+        `;
     }
 
-    // B) ŠKOLA & DEADLINY
-    if (schoolSection) {
-        schoolSection.classList.remove("hidden");
-        const schoolDisplay = document.getElementById("school-event-display");
-        const schoolForm = document.getElementById("school-add-form");
-
-        const dayDate = new Date(dateKey);
-        const dayOfWeek = dayDate.getDay();
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-        const daySchedule = (state.scheduleItems || []).filter(s => s.day_of_week === dayOfWeek);
-        const deadlinesOnDate = (state.schoolDeadlines || []).filter(d => d.deadline_date === dateKey);
-
-        let schoolHtml = '';
-
-        if (!isWeekend && daySchedule.length > 0) {
-            schoolHtml += `
-                <div class="space-y-2 mb-3 bg-[#202225] border border-emerald-500/20 rounded-2xl p-3">
-                    <div class="flex items-center justify-between pb-1.5 border-b border-white/5">
-                        <span class="text-[9px] font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                            <i class="fas fa-graduation-cap"></i> VUT FIT Výuka (${daySchedule.length} hod.):
-                        </span>
-                        <button onclick="window.switchChannel('schedule')" class="text-[9px] font-bold text-emerald-400/80 hover:text-emerald-300 transition uppercase tracking-wider flex items-center gap-1">
-                            Celý rozvrh <i class="fas fa-arrow-right text-[7px]"></i>
-                        </button>
+    // --- 3. ROMANTIC DATE & PLANS BENTO CARD (WITH WATCHLIST PICKER) ---
+    let plansContentHtml = '';
+    if (plannedDate) {
+        const checklist = plannedDate.checklist || [];
+        plansContentHtml = `
+            <div class="p-3 bg-[#202225] rounded-2xl border border-pink-500/30">
+                <div class="flex items-start justify-between gap-2 mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">❤️</span>
+                        <div>
+                            <div class="text-sm font-black text-white">${plannedDate.name}</div>
+                            ${plannedDate.time ? `<div class="text-[10px] font-mono text-pink-300">Čas: ${plannedDate.time} (${plannedDate.durationMinutes || 90} min)</div>` : ''}
+                        </div>
                     </div>
-                    <div class="space-y-1.5 pt-0.5">
-                        ${daySchedule.sort((a, b) => (a.time_start || '').localeCompare(b.time_start || '')).map(sub => `
-                            <div class="flex items-center justify-between bg-black/30 border border-white/5 p-2 rounded-xl text-xs">
-                                <div class="flex items-center gap-2 min-w-0">
-                                    <span class="text-[9px] font-black px-1.5 py-0.5 bg-emerald-500/15 text-emerald-400 rounded">[${sub.subject_code || 'FIT'}]</span>
-                                    <div class="min-w-0">
-                                        <div class="text-xs font-bold text-white truncate">${sub.name}</div>
-                                        <span class="text-[9px] text-gray-400 block">${sub.type || 'Výuka'} • Učebna ${sub.room || 'Božetěchova'}</span>
-                                    </div>
-                                </div>
-                                <span class="text-[10px] text-emerald-300 font-mono font-bold ml-2 flex-shrink-0">${sub.time_start} - ${sub.time_end}</span>
+                    <button onclick="Calendar.deletePlannedDate('${dateKey}')" class="text-gray-500 hover:text-rose-400 p-1 text-xs transition">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+
+                ${checklist.length > 0 ? `
+                    <div class="mt-2.5 pt-2 border-t border-white/5 space-y-1.5">
+                        <span class="text-[8.5px] font-black uppercase text-gray-400 tracking-wider">Checklist plánu:</span>
+                        ${checklist.map((item, idx) => `
+                            <div class="flex items-center gap-2 cursor-pointer" onclick="Calendar.quickToggleChecklist('${dateKey}', ${idx})">
+                                <span class="w-4 h-4 rounded flex items-center justify-center border text-[9px] ${item.done ? 'bg-pink-500 border-pink-500 text-white' : 'border-gray-600 text-transparent'}">
+                                    <i class="fas fa-check"></i>
+                                </span>
+                                <span class="text-xs ${item.done ? 'line-through text-gray-500' : 'text-gray-200'}">${item.text}</span>
                             </div>
                         `).join('')}
                     </div>
+                ` : ''}
+            </div>
+        `;
+    } else {
+        plansContentHtml = `
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-3 bg-[#202225] rounded-2xl border border-white/5 gap-2">
+                <span class="text-xs text-gray-400">Žádný naplánovaný program</span>
+                <div class="flex items-center gap-1.5">
+                    <button onclick="Calendar.openWatchlistPicker('${dateKey}')" class="px-2.5 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/30 text-xs font-bold transition flex items-center gap-1.5">
+                        <i class="fas fa-film text-[10px]"></i>
+                        <span>🍿 Watchlist</span>
+                    </button>
+                    <button onclick="Calendar.openQuickAdd(this, '${dateKey}')" class="px-3 py-1.5 rounded-xl bg-pink-500/20 hover:bg-pink-500 text-pink-300 hover:text-white border border-pink-500/30 text-xs font-bold transition flex items-center gap-1.5">
+                        <i class="fas fa-plus text-[10px]"></i>
+                        <span>Naplánovat</span>
+                    </button>
                 </div>
-            `;
-        }
-
-        if (schoolEvent) {
-            schoolHtml += `
-                <div class="flex items-center justify-between bg-black/20 p-2.5 rounded-xl border border-white/5 mb-2">
-                    <span class="text-xs font-bold text-white">${schoolEvent.title}</span>
-                    <button onclick="Calendar.deleteSchoolEvent()" class="text-gray-500 hover:text-red-400 p-1 transition"><i class="fas fa-trash-alt text-xs"></i></button>
-                </div>
-            `;
-        }
-
-        if (deadlinesOnDate.length > 0) {
-            schoolHtml += `
-                <div class="space-y-1.5 mb-2">
-                    <span class="text-[9px] font-black text-emerald-400 uppercase tracking-wider block">FIT Deadliny & Zkoušky:</span>
-                    ${deadlinesOnDate.map(dl => `
-                        <div class="flex items-center justify-between bg-emerald-950/20 border border-emerald-500/20 p-2 rounded-xl text-xs">
-                            <div class="flex items-center gap-2 min-w-0">
-                                <span class="text-[9px] font-black px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded">${dl.subject_code || 'FIT'}</span>
-                                <span class="${dl.is_completed ? 'line-through text-gray-500' : 'text-white font-bold'} truncate">${dl.title}</span>
-                            </div>
-                            <span class="text-[10px] text-gray-400 font-mono">${dl.deadline_time || '23:59'}</span>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        }
-
-        if (schoolHtml) {
-            if (schoolDisplay) {
-                schoolDisplay.innerHTML = schoolHtml;
-                schoolDisplay.classList.remove("hidden");
-            }
-            if (schoolForm) schoolForm.classList.add("hidden");
-        } else {
-            if (schoolDisplay) schoolDisplay.classList.add("hidden");
-            if (schoolForm) {
-                schoolForm.classList.remove("hidden");
-                const inp = document.getElementById("school-input");
-                if (inp) inp.value = "";
-            }
-        }
+            </div>
+        `;
     }
 
-    // C) ZDRAVÍ
-    if (healthSection) {
-        healthSection.classList.remove("hidden");
-        
-        document.getElementById("modal-health-water").innerText = "0/8";
-        document.getElementById("modal-health-sleep").innerText = "-";
-        document.getElementById("modal-health-mood").innerText = "-";
-        const pillsSpan = document.getElementById("modal-health-pills");
-        if (pillsSpan) pillsSpan.innerText = "-";
-        const suppsContainer = document.getElementById("modal-health-supplements");
-        if (suppsContainer) suppsContainer.innerHTML = '<span class="text-gray-500 italic text-[10px]">Nic</span>';
-        const moveContainer = document.getElementById("modal-health-movement");
-        if (moveContainer) moveContainer.innerHTML = '<span class="text-gray-500 italic text-[10px]">Žádný pohyb</span>';
-        
-        const displayGrid = document.getElementById("health-display-grid");
-        const editForm = document.getElementById("health-edit-form");
-        if (displayGrid) displayGrid.classList.remove("hidden");
-        if (editForm) editForm.classList.add("hidden");
+    const plansCardHtml = `
+        <div class="cal-bento-card">
+            <div class="flex items-center justify-between pb-2 mb-3 border-b border-white/5">
+                <h4 class="text-xs font-black text-[#eb459e] uppercase tracking-wider flex items-center gap-2">
+                    <i class="fas fa-heart"></i> Rande & Společné chvíle
+                </h4>
+            </div>
+            ${plansContentHtml}
+        </div>
+    `;
 
-        if (health) {
-            document.getElementById("modal-health-water").innerText = `${health.water || 0}/8`;
-
-            let sleepText = "-";
-            if (typeof health.sleep === 'number') {
-                const h = health.sleep;
-                let icon = "😐";
-                if (h < 5) icon = "🧟‍♀️"; else if (h >= 9) icon = "👸"; else if (h >= 7) icon = "✨";
-                sleepText = `${h}h ${icon}`;
-            } else if (health.sleep) {
-                const sleepMap = { zombie: "Zombie 🧟‍♀️", ok: "Ujde to 😐", good: "Růženka 👸" };
-                sleepText = sleepMap[health.sleep] || "-";
-            }
-            document.getElementById("modal-health-sleep").innerHTML = sleepText;
-            
-            let moodText = "-";
-            if (typeof health.mood === 'number') {
-                let val = health.mood;
-                if (val > 10) val = Math.round(val / 10);
-                const hexColor = getMoodColor(val);
-                moodText = `<span class="px-2 py-0.5 rounded font-bold text-white shadow-sm" style="background-color: ${hexColor}">${val}/10</span>`;
-            } else if (health.mood) {
-                const moodIcons = { happy: "🥰", tired: "😴", sad: "😢", angry: "😡", horny: "😈" };
-                moodText = `${health.mood} ${moodIcons[health.mood] || ""}`;
-            }
-            document.getElementById("modal-health-mood").innerHTML = moodText;
-
-            if (moveContainer) {
-                const moveIconMap = { gym: "💪 Fitko", walk: "🌲 Proch.", run: "🏃‍♀️ Běh", yoga: "🧘‍♀️ Jóga", sex: "🔥 Love", clean: "🧹 Úklid", bike: "🚲 Kolo" };
-                const moves = health.movement || [];
-                if (moves.length > 0) {
-                    moveContainer.innerHTML = moves.map((m) => `<span class="bg-[#202225] px-2 py-1 rounded text-[10px] border border-gray-700">${moveIconMap[m] || m}</span>`).join("");
-                }
-            }
-            if (pillsSpan) {
-                pillsSpan.innerText = health.pills ? "Ano 💊" : "Ne";
-            }
-            if (suppsContainer) {
-                const s = health.supplements || { iron: false, zinc: false, magnesium: false };
-                const items = [
-                    { id: 'iron', icon: '🩸', label: 'Železo', color: 'text-red-400' },
-                    { id: 'zinc', icon: '✨', label: 'Zinek', color: 'text-yellow-400' },
-                    { id: 'magnesium', icon: '🌙', label: 'Hořčík', color: 'text-purple-400' }
-                ];
-                suppsContainer.innerHTML = items.map(it => `
-                    <div class="flex items-center gap-1.5 opacity-${s[it.id] ? '100' : '20'} transition-opacity">
-                        <span class="text-sm">${it.icon}</span>
-                        <span class="text-[9px] font-bold uppercase ${s[it.id] ? it.color : 'text-gray-500'}">${it.label}</span>
+    // --- 4. FIT SCHOOL & DEADLINES BENTO CARD ---
+    let schoolContentHtml = '';
+    if (!isWeekend && daySchedule.length > 0) {
+        schoolContentHtml += `
+            <div class="space-y-1.5 mb-2.5">
+                ${daySchedule.map(s => `
+                    <div class="flex items-center justify-between p-2 bg-[#202225] rounded-xl border border-emerald-500/20 text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono font-bold text-[9px]">[${s.subject_code}]</span>
+                            <span class="font-bold text-white">${s.name}</span>
+                            <span class="text-[10px] text-gray-400">• ${s.room || 'Božetěchova'}</span>
+                        </div>
+                        <span class="font-mono text-[10px] text-emerald-300 font-bold">${s.time_start} – ${s.time_end}</span>
                     </div>
-                `).join('');
-            }
-        }
-    }
-
-    // D) SMĚNY & PRÁCE
-    const shiftsSection = document.getElementById("modal-section-shifts");
-    if (shiftsSection) {
-        const dayShifts = (state.shifts || {})[dateKey];
-        shiftsSection.classList.remove("hidden");
-        
-        let shiftsHtml = `
-            <div class="flex items-center justify-between mb-2">
-                <h4 class="text-xs font-bold text-[#faa61a] uppercase flex items-center gap-2"><i class="fas fa-business-time"></i> Směny & Volno</h4>
-                <button onclick="Calendar.closeDayModal(); window.loadModule('shifts')" class="text-[10px] font-bold text-gray-400 hover:text-white uppercase tracking-widest transition">
-                    Upravit
-                </button>
+                `).join('')}
             </div>
         `;
+    }
 
-        const jose = dayShifts?.jose;
-        const klarka = dayShifts?.klarka;
-
-        if (jose && klarka && jose.shift_type === 'volno' && klarka.shift_type === 'volno') {
-            shiftsHtml += `
-                <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 text-center mb-3">
-                    <span class="text-xs font-black text-emerald-400 uppercase tracking-widest">🌴 Společné volno! 🥳</span>
-                </div>
-            `;
-        }
-
-        const josePreset = jose ? (SHIFT_PRESETS[jose.shift_type] || SHIFT_PRESETS.custom) : null;
-        const klarkaPreset = klarka ? (SHIFT_PRESETS[klarka.shift_type] || SHIFT_PRESETS.custom) : null;
-
-        const joseTime = jose && jose.time_start && jose.time_end ? `${jose.time_start} - ${jose.time_end}` : '';
-        const klarkaTime = klarka && klarka.time_start && klarka.time_end ? `${klarka.time_start} - ${klarka.time_end}` : '';
-
-        shiftsHtml += `
-            <div class="grid grid-cols-2 gap-3">
-                <div class="p-3 rounded-xl border ${jose ? 'bg-blue-500/5 border-blue-500/20' : 'bg-black/10 border-white/5 opacity-50'}">
-                    <span class="block text-[8px] text-blue-400 uppercase font-black tracking-widest mb-1">Jožka</span>
-                    ${jose ? `
-                        <div class="flex items-center gap-1.5 mb-1">
-                            <span class="text-base">${josePreset.emoji}</span>
-                            <span class="text-xs font-bold text-white">${josePreset.label.split(' ')[0]}</span>
-                        </div>
-                        ${joseTime ? `<span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-white/10 text-white/80">${joseTime}</span>` : ''}
-                        ${jose.note ? `<p class="text-[9px] text-gray-400 mt-1.5 italic truncate" title="${jose.note}">"${jose.note}"</p>` : ''}
-                    ` : `
-                        <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Nezadáno</span>
-                    `}
-                </div>
-                <div class="p-3 rounded-xl border ${klarka ? 'bg-pink-500/5 border-pink-500/20' : 'bg-black/10 border-white/5 opacity-50'}">
-                    <span class="block text-[8px] text-pink-400 uppercase font-black tracking-widest mb-1">Klárka</span>
-                    ${klarka ? `
-                        <div class="flex items-center gap-1.5 mb-1">
-                            <span class="text-base">${klarkaPreset.emoji}</span>
-                            <span class="text-xs font-bold text-white">${klarkaPreset.label.split(' ')[0]}</span>
-                        </div>
-                        ${klarkaTime ? `<span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-white/10 text-white/80">${klarkaTime}</span>` : ''}
-                        ${klarka.note ? `<p class="text-[9px] text-gray-400 mt-1.5 italic truncate" title="${klarka.note}">"${klarka.note}"</p>` : ''}
-                    ` : `
-                        <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Nezadáno</span>
-                    `}
-                </div>
+    if (dayDeadlines.length > 0) {
+        schoolContentHtml += `
+            <div class="space-y-1.5">
+                <span class="text-[8.5px] font-black uppercase text-rose-400 tracking-wider">Odevzdání & Deadliny:</span>
+                ${dayDeadlines.map(dl => `
+                    <div class="flex items-center justify-between p-2 bg-rose-500/10 rounded-xl border border-rose-500/30 text-xs">
+                        <span class="font-bold text-rose-200 truncate">[${dl.subject_code || 'FIT'}] ${dl.title}</span>
+                        <span class="text-[10px] font-mono text-rose-300 font-bold">Do ${dl.deadline_time || '23:59'}</span>
+                    </div>
+                `).join('')}
             </div>
         `;
-
-        shiftsSection.innerHTML = shiftsHtml;
     }
 
-    // E) ALPSKÝ DENÍČEK
-    const diarySection = document.getElementById("modal-section-diary");
-    if (diarySection) {
-        const diaryHtml = renderDiarySectionHtml(dateKey);
-        if (diaryHtml) {
-            diarySection.innerHTML = diaryHtml;
-            diarySection.classList.remove("hidden");
-        } else {
-            diarySection.classList.add("hidden");
-        }
+    if (!schoolContentHtml) {
+        schoolContentHtml = `<div class="text-xs text-gray-500 py-1 text-center">${isWeekend ? '🌴 Víkend bez výuky' : 'Žádná výuka ani deadliny'}</div>`;
     }
 
-    // F) POSILOVNA & TRÉNINKY
-    const gymSection = document.getElementById("modal-section-gym");
-    if (gymSection) {
-        const gymHtml = renderGymSectionHtml(dateKey);
-        if (gymHtml) {
-            gymSection.innerHTML = gymHtml;
-            gymSection.classList.remove("hidden");
-        } else {
-            gymSection.classList.add("hidden");
-        }
-    }
+    const schoolCardHtml = `
+        <div class="cal-bento-card">
+            <div class="flex items-center justify-between pb-2 mb-3 border-b border-white/5">
+                <h4 class="text-xs font-black text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fas fa-graduation-cap"></i> VUT FIT Škola
+                </h4>
+            </div>
+            ${schoolContentHtml}
+        </div>
+    `;
+
+    // --- 5. GYM & WORKOUTS BENTO CARD ---
+    const gymHtml = renderGymSectionHtml(dateKey);
+    const gymCardHtml = `
+        <div class="cal-bento-card">
+            <div class="flex items-center justify-between pb-2 mb-3 border-b border-white/5">
+                <h4 class="text-xs font-black text-[#faa61a] uppercase tracking-wider flex items-center gap-2">
+                    <i class="fas fa-dumbbell"></i> Posilovna & Tréninky
+                </h4>
+            </div>
+            ${gymHtml || '<div class="text-xs text-gray-500 py-1 text-center">Žádný zaznamenaný trénink</div>'}
+        </div>
+    `;
+
+    // --- 6. DIARY BENTO CARD ---
+    const diaryHtml = renderDiarySectionHtml(dateKey);
+    const diaryCardHtml = `
+        <div class="cal-bento-card">
+            <div class="flex items-center justify-between pb-2 mb-3 border-b border-white/5">
+                <h4 class="text-xs font-black text-blue-400 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fas fa-book"></i> Alpský Deníček
+                </h4>
+            </div>
+            ${diaryHtml || '<div class="text-xs text-gray-500 py-1 text-center">Žádný zápis v deníčku</div>'}
+        </div>
+    `;
+
+    modalBody.innerHTML = `
+        ${healthCardHtml}
+        ${anniversaryCardHtml}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${plansCardHtml}
+            ${schoolCardHtml}
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${gymCardHtml}
+            ${diaryCardHtml}
+        </div>
+    `;
 
     const modal = document.getElementById("day-modal");
+    if (modal) modal.classList.remove("hidden");
     if (modal) modal.style.display = "flex";
 }
 
 export function closeDayModal() {
     const modal = document.getElementById("day-modal");
-    if (modal) modal.style.display = "none";
+    if (modal) {
+        modal.classList.add("hidden");
+        modal.style.display = "none";
+    }
     setCurrentModalDateKey(null);
+}
+
+/**
+ * Steps day modal backward or forward by 1 day.
+ */
+export function stepDayModal(direction) {
+    const currentKey = getCurrentModalDateKey();
+    if (!currentKey) return;
+    const [y, m, d] = currentKey.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    date.setDate(date.getDate() + direction);
+    const nextKey = formatDateKey(date);
+    showDayDetail(nextKey);
+}
+
+/**
+ * Opens Watchlist & Shared Movies Picker Modal.
+ */
+export function openWatchlistPicker(dateKey) {
+    const movies = [...(state.library?.movies || []), ...(state.watchlist || [])];
+    const uniqueMap = new Map();
+    movies.forEach(m => {
+        if (m && m.title && !uniqueMap.has(m.title)) {
+            uniqueMap.set(m.title, m);
+        }
+    });
+
+    const list = Array.from(uniqueMap.values());
+
+    const modal = document.createElement('div');
+    modal.id = 'cal-watchlist-picker-modal';
+    modal.className = 'fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 select-none animate-fade-in';
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.remove();
+    };
+
+    modal.innerHTML = `
+        <div class="bg-[#2f3136] border border-white/10 rounded-3xl p-5 shadow-2xl w-full max-w-lg text-white max-h-[80vh] flex flex-col">
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-white/10">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🍿</span>
+                    <div>
+                        <h3 class="text-sm font-black text-white">Spolu-seznam Filmů & Seriálů</h3>
+                        <p class="text-[10px] text-gray-400">1-klikem naplánuj filmový večer</p>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('cal-watchlist-picker-modal')?.remove()" class="text-gray-400 hover:text-white p-1">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="overflow-y-auto space-y-2 flex-1 pr-1 custom-scrollbar">
+                ${list.length > 0 ? list.map(item => `
+                    <div class="flex items-center justify-between p-2.5 bg-[#202225] hover:bg-[#5865F2]/20 border border-white/5 hover:border-[#5865F2]/40 rounded-2xl transition cursor-pointer"
+                         onclick="Calendar.selectWatchlistMovie('${dateKey}', '${item.title.replace(/'/g, "\\'")}', '20:00', '${item.icon || '🎬'}')">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-xl">${item.icon || '🎬'}</span>
+                            <div>
+                                <div class="text-xs font-bold text-white">${item.title}</div>
+                                <div class="text-[10px] text-gray-400">${item.genre || item.category || 'Film / Seriál'} ${item.rating ? `• ⭐ ${item.rating}` : ''}</div>
+                            </div>
+                        </div>
+                        <button class="px-2.5 py-1 rounded-xl bg-[#5865F2] text-white text-[10px] font-black uppercase tracking-wider shadow-sm">
+                            Naplánovat
+                        </button>
+                    </div>
+                `).join('') : '<div class="text-center py-6 text-xs text-gray-400">Váš Watchlist je zatím prázdný. Přidejte filmy v sekci Knihovna!</div>'}
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+}
+
+/**
+ * Selects a movie from the Watchlist and schedules it into plannedDates.
+ */
+export async function selectWatchlistMovie(dateKey, title, time = '20:00', icon = '🎬') {
+    state.plannedDates = state.plannedDates || {};
+    state.plannedDates[dateKey] = {
+        name: `${icon} ${title}`,
+        time,
+        cat: 'movie',
+        status: 'confirmed',
+        durationMinutes: 120,
+        checklist: [
+            { text: 'Připravit popcorn 🍿', done: false },
+            { text: 'Zapálit svíčky ✨', done: false }
+        ]
+    };
+
+    triggerHaptic('medium');
+    document.getElementById('cal-watchlist-picker-modal')?.remove();
+
+    try {
+        await supabase.from('planned_dates').upsert({
+            date_key: dateKey,
+            name: `${icon} ${title}`,
+            time,
+            cat: 'movie',
+            status: 'confirmed',
+            duration_minutes: 120
+        });
+    } catch (e) {}
+
+    showDayDetail(dateKey);
+    const { renderCalendar } = await import('./index.js');
+    renderCalendar();
+}
+
+/**
+ * Sets mood score directly from Bento mood dial and broadcasts Sunflower update.
+ */
+export async function setDayModalMood(score) {
+    const dateKey = getCurrentModalDateKey();
+    if (!dateKey) return;
+
+    state.healthData = state.healthData || {};
+    state.healthData[dateKey] = state.healthData[dateKey] || {};
+    state.healthData[dateKey].mood_score = score;
+    state.healthData[dateKey].mood = score;
+
+    triggerHaptic('medium');
+
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('health-data-updated', { detail: { dateKey, health: state.healthData[dateKey] } }));
+        window.dispatchEvent(new CustomEvent('health-updated', { detail: { dateKey, health: state.healthData[dateKey] } }));
+    }
+
+    try {
+        await supabase.from('health_data').upsert({
+            date_key: dateKey,
+            mood_score: score,
+            updated_at: new Date().toISOString()
+        });
+    } catch (e) {}
+
+    showDayDetail(dateKey);
+}
+
+/**
+ * Updates water counter directly from Bento stepper and broadcasts Sunflower update.
+ */
+export async function setDayModalWater(delta) {
+    const dateKey = getCurrentModalDateKey();
+    if (!dateKey) return;
+
+    state.healthData = state.healthData || {};
+    state.healthData[dateKey] = state.healthData[dateKey] || {};
+    const cur = state.healthData[dateKey].water_count ?? state.healthData[dateKey].water ?? 0;
+    const next = Math.max(0, Math.min(16, cur + delta));
+
+    state.healthData[dateKey].water_count = next;
+    state.healthData[dateKey].water = next;
+
+    triggerHaptic('medium');
+
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('health-data-updated', { detail: { dateKey, health: state.healthData[dateKey] } }));
+        window.dispatchEvent(new CustomEvent('health-updated', { detail: { dateKey, health: state.healthData[dateKey] } }));
+    }
+
+    try {
+        await supabase.from('health_data').upsert({
+            date_key: dateKey,
+            water_count: next,
+            updated_at: new Date().toISOString()
+        });
+    } catch (e) {}
+
+    showDayDetail(dateKey);
+}
+
+/**
+ * Saves sleep duration from Bento input.
+ */
+export async function saveDayModalSleep(dateKey, hoursVal) {
+    const hours = parseFloat(hoursVal);
+    if (isNaN(hours)) return;
+
+    state.healthData = state.healthData || {};
+    state.healthData[dateKey] = state.healthData[dateKey] || {};
+    state.healthData[dateKey].sleep_hours = hours;
+    state.healthData[dateKey].sleep = hours;
+
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('health-data-updated', { detail: { dateKey, health: state.healthData[dateKey] } }));
+        window.dispatchEvent(new CustomEvent('health-updated', { detail: { dateKey, health: state.healthData[dateKey] } }));
+    }
+
+    try {
+        await supabase.from('health_data').upsert({
+            date_key: dateKey,
+            sleep_hours: hours,
+            updated_at: new Date().toISOString()
+        });
+    } catch (e) {}
+
+    showDayDetail(dateKey);
+}
+
+/**
+ * Toggles a supplement badge.
+ */
+export async function toggleSupplement(dateKey, suppKey) {
+    state.healthData = state.healthData || {};
+    state.healthData[dateKey] = state.healthData[dateKey] || {};
+    state.healthData[dateKey].supplements = state.healthData[dateKey].supplements || {};
+    
+    const cur = !!state.healthData[dateKey].supplements[suppKey];
+    state.healthData[dateKey].supplements[suppKey] = !cur;
+    state.healthData[dateKey][suppKey] = !cur;
+
+    triggerHaptic('light');
+
+    try {
+        await supabase.from('health_data').upsert({
+            date_key: dateKey,
+            [suppKey]: !cur,
+            updated_at: new Date().toISOString()
+        });
+    } catch (e) {}
+
+    showDayDetail(dateKey);
+}
+
+/**
+ * Copies a beautifully formatted Discord card for the current day.
+ */
+export async function copyDayDiscordCard(dateKey) {
+    if (!dateKey) return;
+    const [y, m, d] = dateKey.split('-').map(Number);
+    const dateObj = new Date(y, m - 1, d);
+    const dayNames = ['Neděle', 'Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota'];
+    const dateFormatted = `${dayNames[dateObj.getDay()]} ${d}.${m}.${y}`;
+
+    const health = (state.healthData || {})[dateKey] || {};
+    const plan = (state.plannedDates || {})[dateKey];
+    const gymLogs = (state.gymLogs || []).filter(l => l.date_key === dateKey);
+    const deadlines = (state.schoolDeadlines || []).filter(d => d.deadline_date === dateKey);
+
+    const lines = [];
+    lines.push(`**📅 Plán dne: ${dateFormatted}**`);
+    lines.push(`━━━━━━━━━━━━━━━━━━━━━`);
+
+    if (plan) {
+        lines.push(`❤️ **Rande / Plán:** ${plan.name} ${plan.time ? `(v ${plan.time})` : ''}`);
+        if (plan.checklist && plan.checklist.length > 0) {
+            plan.checklist.forEach(c => {
+                lines.push(`  ${c.done ? '✅' : '▫️'} ${c.text}`);
+            });
+        }
+    }
+
+    if (gymLogs.length > 0) {
+        gymLogs.forEach(g => {
+            const mins = Math.round((g.duration_seconds || 0) / 60);
+            lines.push(`🏋️‍♂️ **Posilovna:** ${g.name} (${mins} min)`);
+        });
+    }
+
+    if (deadlines.length > 0) {
+        deadlines.forEach(dl => {
+            lines.push(`🔥 **FIT Deadline:** [${dl.subject_code || 'FIT'}] ${dl.title} (do ${dl.deadline_time || '23:59'})`);
+        });
+    }
+
+    const water = health.water_count ?? health.water;
+    const sleep = health.sleep_hours ?? health.sleep;
+    const mood = health.mood_score ?? health.mood;
+    if (water || sleep || mood) {
+        lines.push(`✨ **Biometrika:** ${water ? `💧 ${water}/8` : ''} ${sleep ? `😴 ${sleep}h` : ''} ${mood ? `💜 ${mood}/10` : ''}`);
+    }
+
+    const text = lines.join('\n');
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(text);
+        triggerHaptic('heavy');
+    }
 }

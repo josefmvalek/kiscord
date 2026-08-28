@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { setupMockAuthSession } from '../fixtures/playwright-helpers.js';
 
 test.describe('Realtime Tinder Matcher E2E', () => {
   let jozkaContext;
@@ -19,66 +20,10 @@ test.describe('Realtime Tinder Matcher E2E', () => {
     klarkaPage.on('console', msg => console.log(`[Browser Klárka] ${msg.type()}: ${msg.text()}`));
 
     // 2. Setup localStorage session for Jožka
-    await jozkaPage.addInitScript(() => {
-      const makeMockJWT = (usr) => {
-        const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-        const payload = btoa(JSON.stringify({
-          sub: usr.id,
-          email: usr.email,
-          role: usr.role || 'authenticated',
-          exp: Math.floor(Date.now() / 1000) + 3600,
-        }));
-        return `${header}.${payload}.mocksignature`;
-      };
-      
-      const user = {
-        id: 'jose-id-123',
-        email: 'jozkavalek@email.cz',
-        role: 'authenticated',
-      };
-      
-      const session = {
-        access_token: makeMockJWT(user),
-        token_type: 'bearer',
-        expires_in: 3600,
-        refresh_token: 'fake-refresh-token',
-        user: user,
-        expires_at: Math.floor(Date.now() / 1000) + 3600,
-      };
-
-      window.localStorage.setItem('sb-nnrorazsiyiedwomgidf-auth-token', JSON.stringify(session));
-    });
+    await setupMockAuthSession(jozkaPage, { id: 'jose-id-123', email: 'jozkavalek@email.cz' });
 
     // 3. Setup localStorage session for Klárka
-    await klarkaPage.addInitScript(() => {
-      const makeMockJWT = (usr) => {
-        const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-        const payload = btoa(JSON.stringify({
-          sub: usr.id,
-          email: usr.email,
-          role: usr.role || 'authenticated',
-          exp: Math.floor(Date.now() / 1000) + 3600,
-        }));
-        return `${header}.${payload}.mocksignature`;
-      };
-      
-      const user = {
-        id: 'klarka-id-456',
-        email: 'vyslouzilova.klara07@gmail.com',
-        role: 'authenticated',
-      };
-      
-      const session = {
-        access_token: makeMockJWT(user),
-        token_type: 'bearer',
-        expires_in: 3600,
-        refresh_token: 'fake-refresh-token',
-        user: user,
-        expires_at: Math.floor(Date.now() / 1000) + 3600,
-      };
-
-      window.localStorage.setItem('sb-nnrorazsiyiedwomgidf-auth-token', JSON.stringify(session));
-    });
+    await setupMockAuthSession(klarkaPage, { id: 'klarka-id-456', email: 'vyslouzilova.klara07@gmail.com' });
 
     // 4. Intercept API calls for both pages to return movies and watchlists
     const mockLibraryMovies = [

@@ -235,20 +235,6 @@ export function urlBase64ToUint8Array(base64String) {
     return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
 }
 
-/**
- * Safely escapes special HTML characters in text strings to prevent XSS.
- * @param {string} str
- * @returns {string}
- */
-export function escapeHTML(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
-export const escapeHtml = escapeHTML;
+// Canonical Security & XSS Re-exports
+export { escapeHTML, escapeHtml, safeHTML, rawHTML } from './security.js';
 

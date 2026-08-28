@@ -617,38 +617,42 @@ export async function notifyPartnerCouponRedeemed(couponTitle) {
  * Broadcasts a haptic touch pulse pattern to the partner in real-time.
  */
 export async function broadcastHapticPulse(pulseData) {
-    if (!mainChannel) return;
-    await mainChannel.send({
-        type: 'broadcast',
-        event: 'haptic-pulse',
-        payload: {
-            from: state.currentUser?.id,
-            senderName: state.currentUser?.name,
-            timestamp: Date.now(),
-            ...pulseData
-        }
-    });
+    if (!mainChannel || mainChannel.state !== 'joined') return;
+    try {
+        await mainChannel.send({
+            type: 'broadcast',
+            event: 'haptic-pulse',
+            payload: {
+                from: state.currentUser?.id,
+                senderName: state.currentUser?.name,
+                timestamp: Date.now(),
+                ...pulseData
+            }
+        });
+    } catch (e) {}
 }
 
 /**
  * Broadcasts ambient activity status (active channel, state, battery) to the partner.
  */
 export async function broadcastAmbientActivity(activityData) {
-    if (!mainChannel) return;
+    if (!mainChannel || mainChannel.state !== 'joined') return;
     const payload = typeof activityData === 'string' 
         ? { channel: activityData, activity: getActivityLabelForChannel(activityData) }
         : activityData;
 
-    await mainChannel.send({
-        type: 'broadcast',
-        event: 'ambient-activity',
-        payload: {
-            from: state.currentUser?.id,
-            senderName: state.currentUser?.name,
-            timestamp: Date.now(),
-            ...payload
-        }
-    });
+    try {
+        await mainChannel.send({
+            type: 'broadcast',
+            event: 'ambient-activity',
+            payload: {
+                from: state.currentUser?.id,
+                senderName: state.currentUser?.name,
+                timestamp: Date.now(),
+                ...payload
+            }
+        });
+    } catch (e) {}
 }
 
 export function getActivityLabelForChannel(channelId) {

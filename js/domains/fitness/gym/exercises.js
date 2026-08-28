@@ -13,6 +13,7 @@ export const CATEGORY_EMOJIS = {
     'Nohy': '🦵',
     'Ruce': '💪',
     'Břicho': '🍫',
+    'Kardio': '⚡',
     'Ostatní': '🏋️‍♂️'
 };
 
@@ -47,7 +48,7 @@ export function getExerciseThumbnailHtml(ex, sizeClass = 'w-12 h-12') {
 
 export function renderExercisesTab() {
     const exercises = state.gymExercises || [];
-    const categories = ['Hrudník', 'Záda', 'Ramena', 'Nohy', 'Ruce', 'Břicho', 'Ostatní'];
+    const categories = ['Hrudník', 'Záda', 'Ramena', 'Nohy', 'Ruce', 'Břicho', 'Kardio', 'Ostatní'];
 
     return `
         <div class="space-y-6">
@@ -55,9 +56,14 @@ export function renderExercisesTab() {
                 <h2 class="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2 leading-none">
                     <i class="fas fa-dumbbell text-[#7289da]"></i> Katalog cviků
                 </h2>
-                <button onclick="window.Gym.openCreateExerciseModal()" class="px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs uppercase tracking-wider transition flex items-center gap-1.5 shadow-lg shadow-emerald-500/10 w-full sm:w-auto justify-center">
-                    <i class="fas fa-plus text-xs"></i> Nový cvik
-                </button>
+                <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+                    <button onclick="window.Gym.openExerciseCatalogModal()" class="px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 border border-amber-500/30 font-bold text-xs uppercase tracking-wider transition flex items-center gap-1.5 shadow-md shadow-amber-500/10 w-full sm:w-auto justify-center">
+                        <span>⚡</span> Procházet knihovnu (${defaultExercises.length}+ GIFů)
+                    </button>
+                    <button onclick="window.Gym.openCreateExerciseModal()" class="px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs uppercase tracking-wider transition flex items-center gap-1.5 shadow-lg shadow-emerald-500/10 w-full sm:w-auto justify-center">
+                        <i class="fas fa-plus text-xs"></i> Nový cvik
+                    </button>
+                </div>
             </div>
 
             <input type="text" placeholder="Hledat cvik podle názvu nebo partie..." oninput="window.Gym.filterTabExercises(this.value)" class="w-full bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2]/50 transition shadow-md">
@@ -300,21 +306,32 @@ export function openExerciseGuideModal(exerciseId) {
 export function openCreateExerciseModal() {
     triggerHaptic('light');
 
+    const categories = ['Hrudník', 'Záda', 'Ramena', 'Nohy', 'Ruce', 'Břicho', 'Kardio', 'Ostatní'];
+    const groupedOptions = categories.map(cat => {
+        const items = POPULAR_EXERCISE_PRESETS.map((p, idx) => ({ ...p, originalIdx: idx })).filter(p => p.category === cat);
+        if (items.length === 0) return '';
+        return `
+            <optgroup label="${getCategoryEmoji(cat)} ${cat} (${items.length})">
+                ${items.map(item => `
+                    <option value="${item.originalIdx}">${item.name}</option>
+                `).join('')}
+            </optgroup>
+        `;
+    }).join('');
+
     const contentHtml = `
         <div class="space-y-4 text-left font-sans">
             <!-- Quick Preset Template Picker -->
             <div class="p-3.5 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/25 rounded-2xl space-y-2">
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-                        <span>⚡</span> Rychlý výběr z populárních šablon cviků
+                        <span>⚡</span> Rychlý výběr z ${POPULAR_EXERCISE_PRESETS.length} šablon cviků s GIFy
                     </span>
                     <span class="text-[9px] text-gray-400 font-mono font-bold">1 klik = vyplněno</span>
                 </div>
                 <select id="preset-exercise-selector" onchange="window.Gym.applyExercisePreset(this.value)" class="w-full bg-[#18191c] text-white text-xs p-2.5 rounded-xl border border-amber-500/30 outline-none focus:border-amber-400 transition font-bold cursor-pointer">
-                    <option value="">-- Vybrat šablonu (${POPULAR_EXERCISE_PRESETS.length} cviků s GymVisual GIFy) --</option>
-                    ${POPULAR_EXERCISE_PRESETS.map((p, idx) => `
-                        <option value="${idx}">${getCategoryEmoji(p.category)} ${p.name} (${p.category})</option>
-                    `).join('')}
+                    <option value="">-- Vybrat šablonu z knihovny (${POPULAR_EXERCISE_PRESETS.length} cviků) --</option>
+                    ${groupedOptions}
                 </select>
             </div>
 
@@ -333,6 +350,7 @@ export function openCreateExerciseModal() {
                     <option value="Nohy">Nohy 🦵</option>
                     <option value="Ruce">Ruce 💪</option>
                     <option value="Břicho">Břicho 🍫</option>
+                    <option value="Kardio">Kardio ⚡</option>
                     <option value="Ostatní">Ostatní 🏋️‍♂️</option>
                 </select>
             </div>
@@ -659,3 +677,244 @@ export async function deleteExercise(exerciseId, renderGymFn) {
         showNotification('Nepodařilo se smazat cvik z databáze.', 'danger');
     }
 }
+
+// ==========================================
+// EXERCISE CATALOG LIBRARY BROWSER MODAL (110+ GIFS)
+// ==========================================
+
+let activeCatalogCategory = 'all';
+
+export function openExerciseCatalogModal() {
+    triggerHaptic('light');
+    activeCatalogCategory = 'all';
+
+    const categories = [
+        { id: 'all', name: 'Vše', emoji: '🌟' },
+        { id: 'Hrudník', name: 'Hrudník', emoji: '🦍' },
+        { id: 'Záda', name: 'Záda', emoji: '🦅' },
+        { id: 'Ramena', name: 'Ramena', emoji: '🥥' },
+        { id: 'Nohy', name: 'Nohy', emoji: '🦵' },
+        { id: 'Ruce', name: 'Ruce', emoji: '💪' },
+        { id: 'Břicho', name: 'Břicho', emoji: '🍫' },
+        { id: 'Kardio', name: 'Kardio', emoji: '⚡' }
+    ];
+
+    const currentExIds = new Set((state.gymExercises || []).map(e => e.id));
+
+    const contentHtml = `
+        <div class="space-y-4 text-left font-sans">
+            <!-- Search and Filter Header -->
+            <div class="space-y-2.5">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    <input type="text" 
+                           id="catalog-search-input" 
+                           placeholder="Hledat mezi ${defaultExercises.length}+ cviky (např. bench, dřep, břicho)..." 
+                           oninput="window.Gym.filterCatalogExercises()" 
+                           class="w-full bg-[#18191c] text-white text-xs pl-9 pr-4 py-2.5 rounded-xl border border-white/10 outline-none focus:border-[#faa61a]/60 transition shadow-inner">
+                </div>
+
+                <!-- Category Pills -->
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+                    ${categories.map(c => `
+                        <button type="button" 
+                                onclick="window.Gym.setCatalogCategoryFilter('${c.id}')" 
+                                id="cat-filter-btn-${c.id}" 
+                                class="catalog-cat-btn px-3 py-1.5 rounded-xl font-bold text-[11px] whitespace-nowrap transition-all duration-150 flex items-center gap-1 ${c.id === 'all' ? 'bg-[#faa61a] text-black shadow-md shadow-[#faa61a]/20 font-black' : 'bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5'}">
+                            <span>${c.emoji}</span> <span>${c.name}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Exercises Grid Container -->
+            <div class="max-h-[60vh] overflow-y-auto pr-1 space-y-2 no-scrollbar" id="catalog-exercises-grid">
+                ${renderCatalogGridHtml(defaultExercises, currentExIds)}
+            </div>
+        </div>
+    `;
+
+    const actionsHtml = `
+        <div class="flex justify-between items-center w-full">
+            <span class="text-[10px] text-gray-400 font-mono">Celkem ${defaultExercises.length} cviků s GymVisual animacemi</span>
+            <button onclick="document.getElementById('exercise-catalog-modal')?.remove()" 
+                    class="px-5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider transition">
+                Zavřít
+            </button>
+        </div>
+    `;
+
+    document.getElementById('exercise-catalog-modal')?.remove();
+
+    document.body.insertAdjacentHTML('beforeend', renderModal({
+        id: 'exercise-catalog-modal',
+        title: 'Knihovna Cviků s Animacemi',
+        subtitle: `Kompletní databáze ${defaultExercises.length}+ ověřených cviků s GIFy 🏋️‍♂️`,
+        size: 'xl',
+        content: contentHtml,
+        actions: actionsHtml,
+        onClose: "document.getElementById('exercise-catalog-modal')?.remove()"
+    }));
+
+    const modalEl = document.getElementById('exercise-catalog-modal');
+    if (modalEl) {
+        modalEl.classList.remove('hidden');
+        modalEl.classList.add('flex');
+    }
+}
+
+function renderCatalogGridHtml(exercisesList, currentExIds) {
+    return exercisesList.map(ex => {
+        const isAdded = currentExIds.has(ex.id);
+        const emoji = getCategoryEmoji(ex.category);
+        const secText = (ex.secondary_muscles || []).slice(0, 2).join(', ');
+
+        return `
+            <div class="catalog-ex-card glass-card bg-white/[0.02] border border-white/5 hover:border-white/15 rounded-2xl p-3 flex items-center justify-between gap-3 transition-all duration-150 group" 
+                 data-id="${ex.id}" 
+                 data-name="${ex.name.toLowerCase()}" 
+                 data-category="${ex.category.toLowerCase()}" 
+                 data-sec="${(ex.secondary_muscles || []).join(' ').toLowerCase()}">
+                
+                <div class="flex items-center gap-3 min-w-0 flex-1 cursor-pointer" onclick="window.Gym.openExerciseGuideModal('${ex.id}')">
+                    <div class="w-14 h-14 rounded-xl overflow-hidden bg-black/50 border border-white/10 flex-shrink-0 relative group/thumb shadow-sm">
+                        <img src="${ex.image_url}" alt="${ex.name}" class="w-full h-full object-cover group-hover/thumb:scale-110 transition-transform duration-300" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-full h-full flex items-center justify-center text-xl\\'>${emoji}</div>';" />
+                    </div>
+
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-white/5 text-gray-300 border border-white/5 flex items-center gap-1">
+                                <span>${emoji}</span> ${ex.category}
+                            </span>
+                            ${ex.metric_type && ex.metric_type !== 'weight_reps' ? `
+                                <span class="text-[8px] font-mono text-amber-400/80 bg-amber-400/10 px-1.5 py-0.5 rounded">
+                                    ${ex.metric_type === 'duration' ? '⏱️ Čas' : ex.metric_type === 'reps_only' ? '🔢 Opakování' : '🏃 Vzdálenost'}
+                                </span>
+                            ` : ''}
+                        </div>
+                        <h4 class="text-xs font-bold text-white truncate mt-1 group-hover:text-[#faa61a] transition-colors">${ex.name}</h4>
+                        <div class="text-[9px] text-gray-400 truncate mt-0.5">
+                            ${secText ? `<span class="text-white/40">Sekundární:</span> ${secText}` : 'Primární izolace'}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                    <button onclick="window.Gym.openExerciseGuideModal('${ex.id}')" 
+                            class="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition flex items-center justify-center text-xs" 
+                            title="Zobrazit návod a GIF">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    ${isAdded ? `
+                        <button id="catalog-import-btn-${ex.id}" 
+                                class="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold cursor-default flex items-center gap-1 select-none" 
+                                disabled>
+                            <span>✅</span> V katalogu
+                        </button>
+                    ` : `
+                        <button id="catalog-import-btn-${ex.id}" 
+                                onclick="window.Gym.importCatalogExercise('${ex.id}')" 
+                                class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-[10px] uppercase tracking-wider transition shadow-md shadow-emerald-500/10 flex items-center gap-1">
+                            <i class="fas fa-plus text-[9px]"></i> Přidat
+                        </button>
+                    `}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+export function setCatalogCategoryFilter(catId) {
+    triggerHaptic('light');
+    activeCatalogCategory = catId;
+
+    document.querySelectorAll('.catalog-cat-btn').forEach(btn => {
+        btn.className = 'catalog-cat-btn px-3 py-1.5 rounded-xl font-bold text-[11px] whitespace-nowrap transition-all duration-150 flex items-center gap-1 bg-white/5 hover:bg-white/10 text-gray-300 border border-white/5';
+    });
+    const activeBtn = document.getElementById(`cat-filter-btn-${catId}`);
+    if (activeBtn) {
+        activeBtn.className = 'catalog-cat-btn px-3 py-1.5 rounded-xl font-black text-[11px] whitespace-nowrap transition-all duration-150 flex items-center gap-1 bg-[#faa61a] text-black shadow-md shadow-[#faa61a]/20';
+    }
+
+    filterCatalogExercises();
+}
+
+export function filterCatalogExercises() {
+    const query = document.getElementById('catalog-search-input')?.value.toLowerCase().trim() || '';
+    const cards = document.querySelectorAll('.catalog-ex-card');
+
+    cards.forEach(card => {
+        const name = card.dataset.name || '';
+        const cat = card.dataset.category || '';
+        const sec = card.dataset.sec || '';
+
+        const matchesQuery = !query || name.includes(query) || cat.includes(query) || sec.includes(query);
+        const matchesCategory = activeCatalogCategory === 'all' || cat === activeCatalogCategory.toLowerCase();
+
+        if (matchesQuery && matchesCategory) {
+            card.classList.remove('hidden');
+        } else {
+            card.classList.add('hidden');
+        }
+    });
+}
+
+export async function importCatalogExercise(exerciseId) {
+    triggerHaptic('medium');
+    const templateEx = defaultExercises.find(e => e.id === exerciseId);
+    if (!templateEx) return;
+
+    const alreadyExists = (state.gymExercises || []).some(e => e.id === exerciseId);
+    if (alreadyExists) {
+        showNotification(`Cvik "${templateEx.name}" již máš v katalogu!`, 'info');
+        return;
+    }
+
+    try {
+        const isValidUUID = (val) => typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+        const createdBy = isValidUUID(state.currentUser?.id) ? state.currentUser.id : null;
+
+        const newExObj = {
+            id: templateEx.id,
+            name: templateEx.name,
+            category: templateEx.category,
+            secondary_muscles: templateEx.secondary_muscles,
+            image_url: templateEx.image_url,
+            instructions: templateEx.instructions,
+            metric_type: templateEx.metric_type || 'weight_reps',
+            is_default: true,
+            created_by: createdBy
+        };
+
+        const { error } = await supabase.from('gym_exercises').insert(newExObj);
+        if (error) throw error;
+
+        // Optimistic local state update
+        if (!state.gymExercises) state.gymExercises = [];
+        state.gymExercises.push(newExObj);
+
+        showNotification(`Cvik "${templateEx.name}" byl úspěšně přidán do tvého katalogu! 🏋️‍♂️`, 'success');
+
+        // Update import button in modal
+        const btn = document.getElementById(`catalog-import-btn-${exerciseId}`);
+        if (btn) {
+            btn.outerHTML = `
+                <button id="catalog-import-btn-${exerciseId}" 
+                        class="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-bold cursor-default flex items-center gap-1 select-none" 
+                        disabled>
+                    <span>✅</span> V katalogu
+                </button>
+            `;
+        }
+
+        // Re-render exercises tab if open
+        const tabEl = document.getElementById('gym-tab-exercises');
+        if (tabEl && window.Gym?.renderExercisesTab) {
+            tabEl.innerHTML = window.Gym.renderExercisesTab();
+        }
+    } catch (e) {
+        console.error('[Gym] Import exercise error:', e);
+        showNotification('Chyba při importu cviku: ' + e.message, 'danger');
+    }
+}
+

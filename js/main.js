@@ -16,6 +16,7 @@ import { initAuthListeners, updateUserProfileUI, updateGlobalAssetsUI } from './
 import { setupNavigation, renderChannels, setupSearch, switchChannel, renderServersList } from './core/router.js';
 import { setupConnectivityListeners, checkAppUpdate, setupGlobalTouchGestures, setupNativePopovers, setupMobileCollapsibleHeaders } from './core/app-ui.js';
 import { exposeGlobals } from './core/globals.js';
+import { initSpotlight } from './shared/dom/spotlight.js';
 
 // Extra Module Initialization (Legacy/Dependencies)
 import { setupQuestsRealtime } from './domains/entertainment/quests.js';
@@ -54,6 +55,7 @@ async function initApp() {
     setupGlobalTouchGestures();
     setupNativePopovers();
     setupMobileCollapsibleHeaders();
+    initSpotlight();
 
     import('./core/servers.js').then(s => {
         s.applyServerAmbientTheme(state.currentServer || 'home');
@@ -125,5 +127,5 @@ function prefetchModules() {
     import('./domains/lifestyle/timeline/index.js').catch(() => {});
     import('./domains/entertainment/library/index.js').catch(() => {});
     import('./domains/lifestyle/bucketlist.js').catch(() => {});
-    import('./domains/archive/alpska-vyzva.js').catch(() => {});
+    import('./domains/archive/alpska-vyzva/index.js').catch(() => {});
 }

@@ -21,6 +21,8 @@ export function escapeHTML(str) {
     return String(str).replace(/[&<>"']/g, char => ESCAPE_MAP[char] || char);
 }
 
+export const escapeHtml = escapeHTML;
+
 /**
  * Tagged template literal for producing safe HTML strings
  * @param {TemplateStringsArray} strings

@@ -99,6 +99,12 @@ export function setupGlobalTouchGestures() {
         touchStartY = e.touches[0].clientY;
         touchMoveY = touchStartY;
 
+        // Never trigger pull-to-refresh inside calendar grid or custom scroll containers
+        if (e.target && e.target.closest && e.target.closest('#cal-time-grid-scroll, .cal-week-container, .cal-month-cell, .no-pull-refresh, [data-no-pull-refresh]')) {
+            isPulling = false;
+            return;
+        }
+
         const container = document.getElementById('messages-container');
         if (container && container.scrollTop <= 2) {
             isPulling = true;

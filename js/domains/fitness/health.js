@@ -1,5 +1,5 @@
 import { state, saveStateToCache } from '@core/state.js';
-import { triggerHaptic, getTodayKey } from '@core/utils.js';
+import { triggerHaptic, triggerConfetti, getTodayKey } from '@core/utils.js';
 import { supabase } from '@core/supabase.js';
 import { broadcastHealthUpdate, broadcastSleepStatus } from '@core/sync.js';
 import { safeUpsert } from '@core/offline.js';
@@ -437,7 +437,7 @@ export function triggerGoodnightOverlay() {
 }
 
 export function triggerGoodMorningOverlay() {
-    if (typeof window.triggerConfetti === 'function') window.triggerConfetti();
+    triggerConfetti();
     const overlay = document.createElement('div');
     overlay.className = 'fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center animate-fade-in cursor-pointer group';
     overlay.onclick = () => {

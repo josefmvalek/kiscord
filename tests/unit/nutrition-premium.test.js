@@ -29,7 +29,7 @@ vi.mock('../../js/core/theme.js', () => ({
 
 import { state } from '../../js/core/state.js';
 import { getFastingState, startFast, endFast, calculateFastingProgress, renderFastingCard } from '../../js/domains/fitness/nutrition/fastingTimer.js';
-import { calculateSmoothedWeightTrend, calculateAdaptiveTDEE, renderTDEECoachCard } from '../../js/domains/fitness/nutrition/tdeeCoach.js';
+import { calculateSmoothedWeightTrend, calculateAdaptiveTDEE, renderTDEECoachCard } from '../../js/domains/fitness/nutrition/tdee-coach.js';
 import { parseFoodNaturalLanguage } from '../../js/domains/fitness/nutrition/nlpParser.js';
 import { calculateRecipeNutrition, renderRecipeBuilder } from '../../js/domains/fitness/nutrition/recipeBuilder.js';
 import { getWeeklyNutritionStats, renderWeeklyAnalytics } from '../../js/domains/fitness/nutrition/weeklyAnalytics.js';

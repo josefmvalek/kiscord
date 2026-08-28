@@ -66,13 +66,16 @@ The application uses `localStorage` for state caching, enabling instantaneous ap
 
 ---
 
-## 4. On-Demand Lazy Data Loading (`loaders.js`)
+## 4. On-Demand Lazy Data Loading (`loaders.js`) & Unified Bootstrap
 
-To optimize bandwidth and memory, data is fetched only when navigating to a channel:
+To optimize bandwidth and memory, data is fetched only when navigating to a channel or via unified server procedures:
 
-1. Checks if data is already loaded in `state._loaded`.
-2. If absent or stale (older than 5 minutes via `isStale()`), retrieves records from Supabase.
-3. Marks the domain as loaded and emits a notification to the event bus.
+1. **Unified Dashboard Bootstrap (`get_full_dashboard_bootstrap`)**:
+   - Fetches complete dashboard state (personal health, partner health, habits & logs, active quests, pinned drawing, tetris, next event) in 1 network call (< 90ms).
+2. **On-Demand Domain Loaders (`loaders.js`)**:
+   - Checks if data is already loaded in `state._loaded`.
+   - If absent or stale (older than 5 minutes via `isStale()`), retrieves records from Supabase.
+   - Marks the domain as loaded and emits a notification to the event bus.
 
 ```javascript
 export async function ensureLibraryData(force = false) {
@@ -85,6 +88,16 @@ export async function ensureLibraryData(force = false) {
 
 ---
 
-## 5. Offline Mutation Queue
+## 5. Multi-Tier SWR Repository Layer (`js/core/repositories/`)
+
+For data-heavy domains (`GymRepository`, `CoupleRepository`, `UniversityRepository`), the `BaseRepository` provides automatic multi-tier caching:
+- **L1 In-Memory Cache (`Map`)**: Sub-1ms micro-caching within the active session.
+- **L2 IndexedDB Async Storage (`idb.js`)**: Persistent offline store.
+- **Background SWR Revalidation**: Instant UI rendering from cache with background network refresh and event notification.
+
+---
+
+## 6. Offline Mutation Queue
 
 All database writes (Upsert, Insert, Delete) are wrapped by `js/core/offline.js`, saving operations to `kiscord_sync_queue` during connection loss and automatically flushing when online.
+

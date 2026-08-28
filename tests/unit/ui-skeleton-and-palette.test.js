@@ -19,7 +19,7 @@ vi.mock('../../js/core/theme.js', () => {
     };
 });
 
-import { getAllSearchableItems } from '../../js/core/commandPalette.js';
+import { getAllSearchableItems } from '../../js/core/command-palette.js';
 import { renderSkeletonLoader, renderMetricCard } from '../../js/core/ui.js';
 
 describe('UI Kit 2.0 & Skeleton Loader Engine', () => {

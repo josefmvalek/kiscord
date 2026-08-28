@@ -2,6 +2,9 @@ import { supabase } from '@core/supabase.js';
 import { state } from '@core/state.js';
 import { triggerHaptic, triggerConfetti } from '@core/utils.js';
 import { showNotification } from '@core/theme.js';
+import { activeTierList, setActiveTierList, renderEditorUI } from './editor.js';
+
+let subscription = null;
 
 export function setupRealtime(id) {
     if (subscription) cleanupRealtime();
@@ -13,15 +16,15 @@ export function setupRealtime(id) {
             { event: 'UPDATE', schema: 'public', table: 'tier_lists', filter: `id=eq.${id}` },
             (payload) => {
                 console.log('[REALTIME] Received remote update:', payload);
-                // Only update if the change didn't come from us (simplified: if data changed)
-                if (JSON.stringify(payload.new.data) !== JSON.stringify(activeTierList.data) || 
+                if (activeTierList && (
+                    JSON.stringify(payload.new.data) !== JSON.stringify(activeTierList.data) || 
                     JSON.stringify(payload.new.duel_data) !== JSON.stringify(activeTierList.duel_data) ||
-                    payload.new.is_duel !== activeTierList.is_duel) {
-                    activeTierList = payload.new;
+                    payload.new.is_duel !== activeTierList.is_duel
+                )) {
+                    setActiveTierList(payload.new);
                     renderEditorUI();
                 }
             }
-
         )
         .subscribe();
 }
@@ -32,7 +35,6 @@ export function cleanupRealtime() {
         subscription = null;
     }
 }
-
 
 export async function toggleDuelMode() {
     if (!activeTierList) return;
@@ -51,17 +53,18 @@ export async function toggleDuelMode() {
 
         const { error } = await supabase.from('tier_lists').update(updates).eq('id', activeTierList.id);
         if (error) throw error;
-        window.showNotification(newDuelStatus ? "Duel spuštěn! ⚔️" : "Duel ukončen.", "success");
+        showNotification(newDuelStatus ? "Duel spuštěn! ⚔️" : "Duel ukončen.", "success");
     } catch (err) {
-        window.showNotification("Chyba při přepnutí duelu.");
+        showNotification("Chyba při přepnutí duelu.", "error");
     }
 }
 
 export function renderDuelStatusBar() {
+    if (!activeTierList) return '';
     const isRevealed = activeTierList.duel_data?.revealed;
     const joseReady = activeTierList.duel_data?.jose_ready;
     const klarkaReady = activeTierList.duel_data?.klarka_ready;
-    const user = state.currentUser.name?.toLowerCase().includes('klárka') ? 'klarka' : 'jose';
+    const user = state.currentUser?.name?.toLowerCase().includes('klárka') ? 'klarka' : 'jose';
     const amIReady = activeTierList.duel_data?.[`${user}_ready`];
 
     return `
@@ -105,7 +108,7 @@ export async function markReady() {
         console.error("[TIERLIST] markReady failed: No active tier list or duel data.");
         return;
     }
-    const user = state.currentUser.name?.toLowerCase().includes('klárka') ? 'klarka' : 'jose';
+    const user = state.currentUser?.name?.toLowerCase().includes('klárka') ? 'klarka' : 'jose';
     const currentReady = activeTierList.duel_data[`${user}_ready`];
     const isReady = !currentReady;
     
@@ -132,10 +135,8 @@ export async function revealDuel() {
         const newDuelData = { ...activeTierList.duel_data, revealed: true };
         const { error } = await supabase.from('tier_lists').update({ duel_data: newDuelData }).eq('id', activeTierList.id);
         if (error) throw error;
-        window.showNotification("VÝSLEDKY ODHALENY! 🎉", "success");
+        showNotification("VÝSLEDKY ODHALENY! 🎉", "success");
     } catch (err) {
         console.error("Reveal err:", err);
     }
 }
-
-

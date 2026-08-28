@@ -19,7 +19,7 @@ export function sendSunlight() {
     triggerConfetti();
     showNotification("Poslal/a jsi sluneční paprsek! ☀️💛", "success");
 
-    supabase.from('sunlight_history').insert([{ from_user_id: state.currentUser?.id }]).catch(() => {});
+    Promise.resolve(supabase.from('sunlight_history').insert([{ from_user_id: state.currentUser?.id }])).catch(() => {});
     broadcastSunlight();
 
     import('@core/notifications.js').then(m => {

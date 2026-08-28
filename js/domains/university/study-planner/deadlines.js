@@ -237,7 +237,7 @@ export function toggleDeadlineComplete(id, completed) {
     window.StudyPlanner?.render?.();
 
     // Background cloud persist
-    supabase.from('school_deadlines').update({ is_completed: completed }).eq('id', id).catch(e => {
+    Promise.resolve(supabase.from('school_deadlines').update({ is_completed: completed }).eq('id', id)).catch(e => {
         console.error("[StudyPlanner] Toggle error in background:", e);
     });
 }
@@ -250,7 +250,7 @@ export function deleteDeadlineItem(id) {
     window.StudyPlanner?.render?.();
 
     // Background cloud persist
-    supabase.from('school_deadlines').delete().eq('id', id).catch(e => {
+    Promise.resolve(supabase.from('school_deadlines').delete().eq('id', id)).catch(e => {
         console.error("[StudyPlanner] Delete error in background:", e);
     });
 }

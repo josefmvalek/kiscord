@@ -421,8 +421,10 @@ export function renderSettings() {
     };
 
     window.updateBrowserNotifStatus = () => {
+        if (typeof document === 'undefined') return;
         const el = document.getElementById('browser-notif-status');
         if (!el) return;
+        if (typeof Notification === 'undefined') return;
 
         const permission = Notification.permission;
         let text = 'Neznámý';

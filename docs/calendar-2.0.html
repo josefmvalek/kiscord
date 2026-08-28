@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>📅 Kiscord Kalendář 3.0 — Technická Dokumentace &amp; Architektura</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
+<link rel="stylesheet" media="(prefers-color-scheme: light)" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css">
+<link rel="stylesheet" media="(prefers-color-scheme: dark)" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+<style>
+:root {
+    --md-bg: #0E1E38;
+    --md-surface: #142B50;
+    --md-border: #1A3868;
+    --md-text: #F7F7F2;
+    --md-text-muted: rgba(247, 247, 242, 0.68);
+    --md-accent: #00D4AA;
+    --md-accent-soft: rgba(0, 212, 170, 0.14);
+    --md-code-bg: #122648;
+    --md-link: #00D4AA;
+    --md-link-hover: #08FECE;
+    --md-success: #10A85C;
+    --md-warn: #C87C10;
+    --md-scale: 1.25;
+    --md-font-heading: 'Inter', system-ui, -apple-system, sans-serif;
+    --md-font-body: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+    margin: 0;
+    padding: 2rem 1.5rem;
+    background: var(--md-bg);
+    color: var(--md-text);
+    font-family: var(--md-font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+main h1, main h2, main h3, main h4, main h5, main h6 {
+    font-family: var(--md-font-heading);
+    color: var(--md-text);
+    line-height: 1.25;
+    margin: 1.5em 0 0.5em;
+    font-weight: 600;
+    scroll-margin-top: 1rem;
+}
+main h1 { font-size: calc(1rem * var(--md-scale) * var(--md-scale) * var(--md-scale) * var(--md-scale)); margin-top: 0; }
+main h2 { font-size: calc(1rem * var(--md-scale) * var(--md-scale) * var(--md-scale)); border-bottom: 1px solid var(--md-border); padding-bottom: 0.3em; }
+main h3 { font-size: calc(1rem * var(--md-scale) * var(--md-scale)); }
+main h4 { font-size: calc(1rem * var(--md-scale)); }
+main h5, main h6 { font-size: 1rem; color: var(--md-text-muted); }
+
+p { margin: 0.5em 0 1em; }
+a { color: var(--md-link); text-decoration: underline; text-underline-offset: 2px; }
+a:hover { color: var(--md-link-hover); }
+
+strong { font-weight: 600; }
+em { font-style: italic; }
+
+code {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: var(--md-code-bg);
+    padding: 0.15em 0.35em;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+pre {
+    background: var(--md-code-bg);
+    border: 1px solid var(--md-border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    margin: 1.5em 0;
+    position: relative;
+}
+pre code { background: transparent; padding: 0; font-size: 1em; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5em 0;
+    font-size: 0.9375rem;
+}
+th, td {
+    border: 1px solid var(--md-border);
+    padding: 0.5em 0.75em;
+    text-align: left;
+}
+th { background: var(--md-surface); font-weight: 600; }
+td.align-center, th.align-center { text-align: center; }
+td.align-right, th.align-right { text-align: right; }
+
+blockquote {
+    border-left: 3px solid var(--md-border);
+    margin: 1.5em 0;
+    padding: 0.5em 0 0.5em 1.25em;
+    color: var(--md-text-muted);
+    font-style: italic;
+}
+
+ul, ol { padding-left: 1.5em; margin: 0.5em 0 1em; }
+li { margin: 0.25em 0; }
+
+hr {
+    border: 0;
+    border-top: 1px solid var(--md-border);
+    margin: 3em 0;
+}
+
+.callout {
+    border-left: 4px solid var(--md-accent);
+    background: var(--md-accent-soft);
+    padding: 0.75rem 1rem 0.75rem 1.25rem;
+    margin: 1.5em 0;
+    border-radius: 0 8px 8px 0;
+}
+.callout .callout-label {
+    font-family: var(--md-font-heading);
+    font-weight: 600;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25em;
+    color: var(--md-accent);
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}
+.callout .callout-icon {
+    display: inline-flex;
+    width: 1.125em;
+    height: 1.125em;
+    align-items: center;
+    justify-content: center;
+}
+.callout-note { border-left-color: var(--md-link); }
+.callout-note .callout-label { color: var(--md-link); }
+.callout-tip { border-left-color: var(--md-success); }
+.callout-tip .callout-label { color: var(--md-success); }
+.callout-important { border-left-color: var(--md-accent); }
+.callout-warning { border-left-color: var(--md-warn); }
+.callout-warning .callout-label { color: var(--md-warn); }
+.callout-caution { border-left-color: var(--md-warn); }
+.callout-caution .callout-label { color: var(--md-warn); }
+.callout p:last-child { margin-bottom: 0; }
+.callout p:first-child { margin-top: 0; }
+
+/* TOC */
+nav.toc { font-size: 0.9375rem; line-height: 1.5; }
+nav.toc ol, nav.toc ul { padding-left: 1.25em; }
+nav.toc a {
+    color: var(--md-text-muted);
+    text-decoration: none;
+    display: block;
+    padding: 0.15em 0.25em;
+    border-radius: 3px;
+}
+nav.toc a:hover { color: var(--md-link); background: var(--md-accent-soft); }
+nav.toc a[aria-current="location"] {
+    color: var(--md-accent);
+    font-weight: 600;
+    background: var(--md-accent-soft);
+}
+
+/* TOC variants */
+body.toc-sticky-sidebar { display: grid; grid-template-columns: 220px 1fr; gap: 2.5rem; max-width: 1200px; }
+body.toc-sticky-sidebar nav.toc {
+    position: sticky;
+    top: 1.5rem;
+    align-self: start;
+    max-height: calc(100vh - 3rem);
+    overflow-y: auto;
+    border-right: 1px solid var(--md-border);
+    padding-right: 1rem;
+}
+@media (max-width: 800px) {
+    body.toc-sticky-sidebar { display: block; }
+    body.toc-sticky-sidebar nav.toc { position: static; border-right: none; max-height: none; margin-bottom: 2rem; }
+}
+
+body.toc-collapsible-top nav.toc {
+    background: var(--md-surface);
+    border: 1px solid var(--md-border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 2rem;
+}
+body.toc-collapsible-top nav.toc summary { cursor: pointer; font-weight: 600; font-family: var(--md-font-heading); }
+
+body.toc-none nav.toc { display: none; }
+
+/* Search */
+.md-search {
+    position: sticky;
+    top: 0;
+    background: var(--md-bg);
+    padding: 0.5rem 0 0.75rem;
+    z-index: 10;
+    border-bottom: 1px solid var(--md-border);
+    margin-bottom: 1rem;
+}
+.md-search input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--md-border);
+    border-radius: 6px;
+    font-size: 0.9375rem;
+    background: var(--md-surface);
+    color: var(--md-text);
+    font-family: inherit;
+}
+.md-search input:focus {
+    outline: 2px solid var(--md-accent);
+    outline-offset: 2px;
+}
+main section[hidden] { display: none; }
+
+/* Code-copy button */
+.code-copy {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: var(--md-surface);
+    color: var(--md-text-muted);
+    border: 1px solid var(--md-border);
+    border-radius: 5px;
+    padding: 0.2em 0.5em;
+    font-size: 0.75rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    font-family: inherit;
+}
+pre:hover .code-copy { opacity: 1; }
+.code-copy:hover { color: var(--md-text); background: var(--md-bg); }
+.code-copy.copied { color: var(--md-success); }
+
+/* Footer */
+footer.md-footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--md-border);
+    color: var(--md-text-muted);
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+footer.md-footer img { max-height: 24px; max-width: 120px; }
+
+@media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+    html { scroll-behavior: auto; }
+}
+
+        body.style-technical { max-width: 960px; line-height: 1.6; }
+        body.style-technical main h2 { font-size: calc(1rem * var(--md-scale) * var(--md-scale)); margin-top: 2.5rem; }
+        body.style-technical pre { font-size: 0.875rem; line-height: 1.5; }
+    </style>
+</head>
+<body class="style-technical toc-sticky-sidebar">
+<nav class="toc" aria-label="Table of contents">
+<ol>
+<ol>
+<li><a href="#spatial-zen-frosted-glass-luxe-ai-spotlight-edition">Spatial Zen, Frosted-Glass Luxe &amp; AI Spotlight Edition</a></li>
+</ol>
+<li><a href="#obsah">📑 Obsah</a></li>
+<li><a href="#1-pehled-a-cle-systmu-spatial-zen">1. Přehled a Cíle Systému (Spatial Zen)</a></li>
+<ol>
+<li><a href="#klov-inovace-verze-30">Klíčové inovace verze 3.0:</a></li>
+</ol>
+<li><a href="#2-modulrn-struktura-kdu">2. Modulární Struktura Kódu</a></li>
+<li><a href="#3-design-systm-tokeny-gpu-animace-fze-1">3. Design Systém, Tokeny &amp; GPU Animace (Fáze 1)</a></li>
+<ol>
+<li><a href="#a-design-tokens-csstokenscssfilecusersjozkadesktopprojektykiscordcsstokenscss">A) Design Tokens ([css/tokens.css](file:///c:/Users/Jozka/Desktop/Projekty/kiscord/css/tokens.css))</a></li>
+<li><a href="#b-gpu-akcelerovan-animace-cssanimationscssfilecusersjozkadesktopprojektykiscordcssanimationscss">B) GPU-Akcelerované Animace ([css/animations.css](file:///c:/Users/Jozka/Desktop/Projekty/kiscord/css/animations.css))</a></li>
+</ol>
+<li><a href="#4-msn-mka-30-zen-edition-zen-peek-hud-fze-2">4. Měsíční Mřížka 3.0: Zen Edition &amp; Zen Peek HUD (Fáze 2)</a></li>
+<ol>
+<li><a href="#a-smart-event-hierarchy-prioritizace">A) Smart Event Hierarchy &amp; Prioritizace</a></li>
+<li><a href="#b-minimalistick-vitality-dots">B) Minimalistické Vitality Dots</a></li>
+<li><a href="#c-zen-peek-hud-popover">C) Zen Peek HUD Popover</a></li>
+</ol>
+<li><a href="#5-tdenn-24h-mka-time-spotlight-romantic-gap-fze-3">5. Týdenní 24h Mřížka: Time Spotlight &amp; Romantic Gap (Fáze 3)</a></li>
+<ol>
+<li><a href="#a-zen-tdenn-hlaviky">A) Zen Týdenní Hlavičky</a></li>
+<li><a href="#b-nightscape-24h-ambientn-gradient">B) Nightscape 24h Ambientní Gradient</a></li>
+<li><a href="#c-now-laser-30-time-spotlight">C) Now Laser 3.0 &amp; Time Spotlight</a></li>
+<li><a href="#d-romantic-gap-in-grid-zones">D) Romantic Gap In-Grid Zones</a></li>
+</ol>
+<li><a href="#6-interaktivita-klvesov-zkratky-ai-spotlight-command-bar-fze-4">6. Interaktivita, Klávesové Zkratky &amp; AI Spotlight Command Bar (Fáze 4)</a></li>
+<ol>
+<li><a href="#a-ai-spotlight-command-bar">A) AI Spotlight Command Bar</a></li>
+<li><a href="#b-kompletn-pehled-klvesovch-zkratek">B) Kompletní Přehled Klávesových Zkratek</a></li>
+</ol>
+<li><a href="#7-specializovan-telemetrick-filtry">7. Specializované Telemetrické Filtry</a></li>
+<li><a href="#8-rann-briefing-partnersk-radar-ical-sync">8. Ranní Briefing, Partnerský Radar &amp; iCal Sync</a></li>
+<li><a href="#9-asov-engine-kolizn-algoritmus">9. Časový Engine &amp; Kolizní Algoritmus</a></li>
+<ol>
+<li><a href="#a-vpoet-souadnic-calculateeventcoordinates">A) Výpočet Souřadnic (`calculateEventCoordinates`)</a></li>
+<li><a href="#b-kolizn-balic-algoritmus-calculateeventcollisions">B) Kolizní Balicí Algoritmus (`calculateEventCollisions`)</a></li>
+</ol>
+<li><a href="#10-verifikace-testovac-pokryt">10. Verifikace &amp; Testovací Pokrytí</a></li>
+<ol>
+<li><a href="#vsledky-testovac-sady">Výsledky Testovací Sady:</a></li>
+</ol>
+</ol>
+</nav>
+<main>
+<div class="md-search"><input type="search" id="md-search-input" placeholder="Filter sections… (Esc to clear)" aria-label="Filter document sections"></div>
+<h1 id="kiscord-kalend-30-technick-dokumentace-architektura">📅 Kiscord Kalendář 3.0 — Technická Dokumentace &amp; Architektura</h1>
+<h3 id="spatial-zen-frosted-glass-luxe-ai-spotlight-edition">Spatial Zen, Frosted-Glass Luxe &amp; AI Spotlight Edition</h3>
+<blockquote><strong>Kompletní technická specifikace, systémový design a architektonický přehled modulu Kalendář 3.0 pro aplikaci Kiscord (Project-K).</strong></blockquote>
+<hr>
+<h2 id="obsah">📑 Obsah</h2>
+<ol><li><a href="#1-přehled-a-cíle-systému-spatial-zen">Přehled a Cíle Systému (Spatial Zen)</a></li><li><a href="#2-modulární-struktura-kódu">Modulární Struktura Kódu</a></li><li><a href="#3-design-systém-tokeny--gpu-animace-fáze-1">Design Systém, Tokeny &amp; GPU Animace (Fáze 1)</a></li><li><a href="#4-měsíční-mřížka-30-zen-edition--zen-peek-hud-fáze-2">Měsíční Mřížka 3.0: Zen Edition &amp; Zen Peek HUD (Fáze 2)</a></li><li><a href="#5-týdenní-24h-mřížka-time-spotlight--romantic-gap-fáze-3">Týdenní 24h Mřížka: Time Spotlight &amp; Romantic Gap (Fáze 3)</a></li><li><a href="#6-interaktivita-klávesové-zkratky--ai-spotlight-command-bar-fáze-4">Interaktivita, Klávesové Zkratky &amp; AI Spotlight Command Bar (Fáze 4)</a></li><li><a href="#7-specializované-telemetrické-filtry">Specializované Telemetrické Filtry</a></li><li><a href="#8-ranní-briefing-partnerský-radar--ical-sync">Ranní Briefing, Partnerský Radar &amp; iCal Sync</a></li><li><a href="#9-časový-engine--kolizní-algoritmus">Časový Engine &amp; Kolizní Algoritmus</a></li><li><a href="#10-verifikace--testovací-pokrytí">Verifikace &amp; Testovací Pokrytí</a></li></ol>
+<hr>
+<h2 id="1-pehled-a-cle-systmu-spatial-zen">1. Přehled a Cíle Systému (Spatial Zen)</h2>
+<p>Modul <strong>Kalendář 3.0</strong> představuje vlajkovou loď lifestylového plánování v aplikaci Kiscord (s přímým přesahem do budoucí komerční aplikace <em>DuoTime</em>). Architektura verze 3.0 prošla kompletní transformací zaměřenou na <strong>Spatial Zen</strong>, <strong>Progressive Disclosure</strong> a <strong>Frosted-Glass Cyber-Luxe</strong> estetiku podle vzorů předních světových aplikací (<em>Linear, Notion Calendar / Cron, Structured, Apple Health a Rise</em>).</p>
+<pre><button class="code-copy" type="button" aria-label="Copy code">Copy</button><code class="language-text">┌─────────────────────────────────────────────────────────────────────────────┐
+│                          ARCHITEKTURNÍ PILÍŘE 3.0                           │
+├──────────────────────────────┬──────────────────────────────┬───────────────┤
+│ 💎 Frosted-Glass Luxe        │ 🧘 Smart Event Hierarchy     │ ⏱️ Time Laser │
+│ • Translucentní karty 12-24px│ • Max 1–2 Hero čipy v buňce  │    &amp; Spotlight│
+│ • Levý 3.5px doménový akcent │ • Sbalený &quot;+N další&quot; čip     │ • Nightscape  │
+│ • Skleněné vrstvy a aury     │ • Minimalistické Vitality    │   24h gradient│
+│                              │   Dots (💧, 😴, ⚡, 💊)       │ • Romantic Gap│
+└──────────────────────────────┴──────────────────────────────┴───────────────┘</code></pre>
+<h3 id="klov-inovace-verze-30">Klíčové inovace verze 3.0:</h3>
+<ul><li><strong>Zero-Clutter Měsíční Přehled</strong>: Odstranění 250+ soupeřících vizuálních prvků. V buňce měsíce se zobrazují max. <strong>1–2 prioritní Hero čipy</strong> s automatickým sbalením dalších událostí do <code>+N další</code>.</li><li><strong>Minimalistické Vitality Dots</strong>: Původní těžkopádný textový blok nahrazen 3 zářícími mikro-tečkami (azurová pro vodu, fialová pro spánek, barevná pro náladu, pilulka pro vitamíny).</li><li><strong>Zen Peek HUD Popover</strong>: Plovoucí mikro-náhled na hover (<code>200ms</code> debounce) s počasím, kompletní telemetrií dne a 1-click rychlými akcemi (<code>+1 Voda</code>, <code>+ Plán</code>, <code>Detail ›</code>).</li><li><strong>Nightscape 24h Týdenní Gradient</strong>: Ambientní světelné pozadí odrážející cirkadiánní rytmus (hluboká indigová noc $\rightarrow$ čistý grafitový den $\rightarrow$ teplý soumrak).</li><li><strong>Now Laser 3.0 &amp; Time Spotlight</strong>: Živý časový laser s pulzujícím diamantovým majákem a vertikálním světelným kuželem na sloupec aktuálního dne.</li><li><strong>Romantic Gap In-Grid Zones</strong>: Automatická detekce volných večerních oken pro rande a jejich zobrazení v rozvrhu jako interaktivních šampaňsko-růžových slotů.</li><li><strong>AI Spotlight Command Bar (<code>Cmd+K</code> / <code>Ctrl+K</code> / <code>Mezerník</code> / <code>N</code>)</strong>: Okamžité vyhledávání a přirozené plánování v češtině (NLP) s detekcí kolizí a živým preview.</li></ul>
+<hr>
+<h2 id="2-modulrn-struktura-kdu">2. Modulární Struktura Kódu</h2>
+<p>Architektura kalendáře žije v adresáři <code>js/domains/lifestyle/calendar/</code>:</p>
+<pre><button class="code-copy" type="button" aria-label="Copy code">Copy</button><code class="language-text">js/domains/lifestyle/calendar/
+├── index.js              # Orchestrátor, AI Spotlight Command Bar, klávesové zkratky, top bar
+├── state.js              # Centrální stav (režimy zobrazení, filtry, anchor date, session, animace)
+├── time-engine.js        # Matematické jádro: deterministické souřadnice, kolize, ISO klíče
+├── week-view.js          # 24h týdenní rozvrh, Nightscape gradient, Now Laser 3.0, Romantic Gap
+├── month-view.js         # Bezscrollové měsíční zobrazení, Smart Event Hierarchy, Vitality Dots
+├── quick-popover.js      # Zen Peek HUD, 1-click Quick Add dialog, checklist toggle
+├── day-modal.js          # Plnohodnotný Bento modal detailu dne (editace zdraví, plánů, směn)
+├── nlp-quick-add.js      # Natural Language parser pro češtinu, detektor kolizí, Gap Finder
+├── partner-radar.js      # Partnerský odpočet do dalšího rande a interaktivní Love Pulse
+├── daily-briefing.js     # Ranní přehled dne, analýza spánku a 1-click Discord export
+├── weather.js            # Poskytovatel meteorologické předpovědi (teplota, stav, ikony)
+├── recurring-events.js   # Expanze opakovaných událostí a rutin (týdenní výuka FIT, tréninky)
+├── weekly-analytics.js   # Týdenní analytický drawer pro agregaci spánku, tréninků a návyků
+├── drag-drop.js          # Plynulé drag &amp; drop přeplánování a změna délky událostí
+└── ics-sync.js           # RFC 5545 export a import standardních .ics souborů</code></pre>
+<hr>
+<h2 id="3-design-systm-tokeny-gpu-animace-fze-1">3. Design Systém, Tokeny &amp; GPU Animace (Fáze 1)</h2>
+<h3 id="a-design-tokens-csstokenscssfilecusersjozkadesktopprojektykiscordcsstokenscss">A) Design Tokens (<a href="file:///c:/Users/Jozka/Desktop/Projekty/kiscord/css/tokens.css">css/tokens.css</a>)</h3>
+<p>Definovány v <code>:root</code> pro konzistentní vzhled a snadnou údržbu:</p>
+<pre><button class="code-copy" type="button" aria-label="Copy code">Copy</button><code class="language-css">/* Surface &amp; Borders */
+--cal-surface-cell: rgba(47, 49, 54, 0.45);
+--cal-surface-card: rgba(32, 34, 37, 0.85);
+--cal-surface-hover: rgba(255, 255, 255, 0.05);
+--cal-border-subtle: rgba(255, 255, 255, 0.07);
+--cal-border-hover: rgba(255, 255, 255, 0.18);
+
+/* Doménové Gradienty &amp; Akcenty */
+--cal-fit-accent: #6ee7b7;       /* Emerald FIT */
+--cal-gym-accent: #fcd34d;       /* Amber Gym */
+--cal-date-accent: #f9a8d4;      /* Romantic Pink */
+--cal-deadline-accent: #fda4af;  /* Urgent Rose */
+--cal-movie-accent: #d8b4fe;     /* Purple Cinema */
+--cal-diary-accent: #93c5fd;     /* Blue Diary */
+
+/* Vitality &amp; Biometrics */
+--cal-water-color: #00e5ff;
+--cal-sleep-color: #a855f7;
+--cal-mood-glow: #ec4899;
+
+/* Pružinové Křivky (Easing) */
+--cal-spring-snappy: cubic-bezier(0.16, 1, 0.3, 1);
+--cal-spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);</code></pre>
+<h3 id="b-gpu-akcelerovan-animace-cssanimationscssfilecusersjozkadesktopprojektykiscordcssanimationscss">B) GPU-Akcelerované Animace (<a href="file:///c:/Users/Jozka/Desktop/Projekty/kiscord/css/animations.css">css/animations.css</a>)</h3>
+<ul><li><code>@keyframes calCellPopIn</code>: Plynulé pružinové naskakování buněk kalendáře.</li><li><code>@keyframes calSlideNext</code> / <code>calSlidePrev</code>: GPU-akcelerovaný horizontální přechod mezi měsíci/týdny.</li><li><code>@keyframes calLaserBeaconPulse</code>: Pulzující záře diamantového majáku aktuálního času.</li><li><code>@keyframes calRomanticShimmer</code>: Jemná šampaňsko-růžová animace volných slotů na rande.</li><li><code>@keyframes calZenPeekIn</code>: Plynulý nástup plovoucího HUD náhledu.</li></ul>
+<hr>
+<h2 id="4-msn-mka-30-zen-edition-zen-peek-hud-fze-2">4. Měsíční Mřížka 3.0: Zen Edition &amp; Zen Peek HUD (Fáze 2)</h2>
+<p>Implementováno v <code>month-view.js</code> a <code>quick-popover.js</code>:</p>
+<h3 id="a-smart-event-hierarchy-prioritizace">A) Smart Event Hierarchy &amp; Prioritizace</h3>
+<p>Všechny události dne jsou agregovány do jednotného prioritizovaného pole:</p>
+<ol><li>🔥 <strong>Neodevzdané deadliny a zkoušky FIT</strong> (Priorita 1)</li><li>❤️ <strong>Naplánované rande a výlety</strong> (Priorita 2)</li><li>🎓 <strong>Přednášky a laboratoře FIT</strong> (Priorita 3)</li><li>🏋️‍♂️ <strong>Tréninky v posilovně</strong> (Priorita 4)</li><li>⭐ <strong>Milníky vztahu</strong>, 🎬 <strong>Filmy</strong>, 📝 <strong>Deníček</strong> (Priorita 5–7)</li></ol>
+<p>Buňka zobrazuje <strong>max. 1–2 Hero čipy</strong>. Při $\ge 3$ událostech se automaticky vykreslí sbalený čip <code>+N další</code>, který po kliknutí či hoveru otevře kompletní agendu.</p>
+<h3 id="b-minimalistick-vitality-dots">B) Minimalistické Vitality Dots</h3>
+<p>Spodní řádek buňky obsahuje 3 zářící mikro-tečky:</p>
+<ul><li>💧 <strong>Voda</strong>: Azurová tečka s pulzující aurou při splnění cíle $\ge 8$ sklenic.</li><li>😴 <strong>Spánek</strong>: Fialová tečka s luminiscencí při optimálním spánku $\ge 7.5\text{h}$.</li><li>⚡ <strong>Nálada/Energie</strong>: Tečka zbarvená podle nálady dne (1–10).</li><li>💊 <strong>Vitamíny</strong>: Miniaturní indikátor splněných vitamínů/léků.</li></ul>
+<h3 id="c-zen-peek-hud-popover">C) Zen Peek HUD Popover</h3>
+<p>Při najetí myší na buňku (<code>hover</code> s 200ms debounce) se otevře plovoucí frosted-glass karta:</p>
+<ul><li><strong>Hlavička</strong>: Plný název dne + počasí (<code>☀️ 24°C</code>).</li><li><strong>Telemetrie</strong>: Přesné hodnoty spánku, vody a nálady.</li><li><strong>Agenda</strong>: Kompletní chronologický seznam událostí.</li><li><strong>Rychlé Akce v patičce</strong>: <code>[💧 +1 Voda]</code>, <code>[+ Plán]</code>, <code>[Detail ›]</code>.</li></ul>
+<hr>
+<h2 id="5-tdenn-24h-mka-time-spotlight-romantic-gap-fze-3">5. Týdenní 24h Mřížka: Time Spotlight &amp; Romantic Gap (Fáze 3)</h2>
+<p>Implementováno v <code>week-view.js</code>:</p>
+<h3 id="a-zen-tdenn-hlaviky">A) Zen Týdenní Hlavičky</h3>
+<p>Čistá vertikální struktura bez textového šumu:</p>
+<ol><li><strong>Den v týdnu</strong>: <code>PO</code>, <code>ÚT</code>, <code>ST</code>... (dnešek zářivě modrý <code>#5865F2</code>).</li><li><strong>Číslo dne</strong>: Zářivý kruhový odznak s hloubkovým stínem pro dnešek.</li><li><strong>Počasí</strong>: Kompaktní čip s ikonou a teplotou.</li><li><strong>Vitality Dots</strong>: 3 mikro-tečky pod počasím.</li><li><strong>Hero Untimed Badge</strong>: Max. 1 subtilní frosted čip pro celodenní akci či urgentní deadline.</li></ol>
+<h3 id="b-nightscape-24h-ambientn-gradient">B) Nightscape 24h Ambientní Gradient</h3>
+<p>Pozadí 24-hodinového rozvrhu plynule přechází podle denní doby:</p>
+<ul><li><code>00:00 – 06:00</code>: Kosmická indigová noc (<code>rgba(15, 15, 26, 0.7)</code>).</li><li><code>07:00 – 17:00</code>: Čistý grafitový den pro maximální čitelnost karet.</li><li><code>18:00 – 23:00</code>: Teplý soumračný tón (<code>rgba(37, 28, 48, 0.25)</code>).</li></ul>
+<h3 id="c-now-laser-30-time-spotlight">C) Now Laser 3.0 &amp; Time Spotlight</h3>
+<ul><li><strong>Now Laser</strong>: Zářící horizontální paprsek s pulzujícím diamantovým majákem a bublinou aktuálního času.</li><li><strong>Column Spotlight</strong>: Jemný vertikální světelný kužel na sloupci dnešního dne (<code>cal-today-spotlight</code>).</li></ul>
+<h3 id="d-romantic-gap-in-grid-zones">D) Romantic Gap In-Grid Zones</h3>
+<p>Algoritmus <code>findBestRomanticGaps</code> analyzuje rozvrh a detekuje volná večerní okna $\ge 90\text{ min}$ bez kolizí se školou či gymem. V rozvrhu se vykreslí pruhovaný slot <code>.cal-romantic-gap-slot</code>:</p>
+<ul><li>Kliknutím na slot se otevře <strong>Quick Add</strong> s předvyplněným časem a kategorií <em>Rande</em>.</li></ul>
+<hr>
+<h2 id="6-interaktivita-klvesov-zkratky-ai-spotlight-command-bar-fze-4">6. Interaktivita, Klávesové Zkratky &amp; AI Spotlight Command Bar (Fáze 4)</h2>
+<p>Implementováno v <code>index.js</code> a <code>nlp-quick-add.js</code>:</p>
+<h3 id="a-ai-spotlight-command-bar">A) AI Spotlight Command Bar</h3>
+<p>Aktivuje se stiskem <code>Cmd+K</code>, <code>Ctrl+K</code>, <code>Mezerníku</code> nebo <code>N</code>:</p>
+<ul><li><strong>Plovoucí skleněný terminál</strong> (<code>backdrop-blur-2xl</code>, <code>border-white/15</code>).</li><li><strong>Živé NLP parsování v češtině</strong>:</li></ul>
+<p>- <em>"Zítra v 17:00 Push Day"</em> $\rightarrow$ úterý 17:00, kategorie 🏋️ Gym. - <em>"Pátek 19:30 Večeře s Klárkou"</em> $\rightarrow$ pátek 19:30, kategorie ❤️ Rande. - <em>"Středa 14:00 Projekt WIS"</em> $\rightarrow$ středa 14:00, kategorie 🎓 FIT.</p>
+<ul><li><strong>Detekce kolizí v reálném čase</strong>: Varování, pokud v daném čase již existuje přednáška či trénink.</li><li><strong>Rychlé návrhy &amp; příkazy</strong>: Okamžité prokliky při prázdném vstupu.</li></ul>
+<h3 id="b-kompletn-pehled-klvesovch-zkratek">B) Kompletní Přehled Klávesových Zkratek</h3>
+<table><thead><tr><th class="align-left">Klávesa</th><th class="align-left">Akce</th><th class="align-left">Popis</th></tr></thead><tbody><tr><td class="align-left"><code>Cmd+K</code> / <code>Ctrl+K</code> / <code>Mezerník</code></td><td class="align-left"><strong>Spotlight Command Bar</strong></td><td class="align-left">Otevře plovoucí AI vyhledávání a NLP plánování</td></tr><tr><td class="align-left"><code>W</code></td><td class="align-left"><strong>Týdenní pohled</strong></td><td class="align-left">Přepne na 24h rozvrh (Week View)</td></tr><tr><td class="align-left"><code>M</code></td><td class="align-left"><strong>Měsíční pohled</strong></td><td class="align-left">Přepne na no-scroll mřížku (Month View)</td></tr><tr><td class="align-left"><code>A</code></td><td class="align-left"><strong>Agenda pohled</strong></td><td class="align-left">Přepne na chronologický seznam (Agenda View)</td></tr><tr><td class="align-left"><code>T</code></td><td class="align-left"><strong>Skočit na Dnešek</strong></td><td class="align-left">Okamžitě vycentruje kalendář na dnešní den</td></tr><tr><td class="align-left"><code>←</code> / <code>J</code></td><td class="align-left"><strong>Předchozí období</strong></td><td class="align-left">Posun o týden / měsíc zpět</td></tr><tr><td class="align-left"><code>→</code> / <code>K</code></td><td class="align-left"><strong>Další období</strong></td><td class="align-left">Posun o týden / měsíc dopředu</td></tr><tr><td class="align-left"><code>1</code> – <code>6</code></td><td class="align-left"><strong>Přepínání filtrů</strong></td><td class="align-left">Vše (1), FIT (2), Gym (3), Spánek (4), Voda (5), Zdraví (6)</td></tr><tr><td class="align-left"><code>G</code></td><td class="align-left"><strong>Romantic Gap Finder</strong></td><td class="align-left">Otevře vyhledávač volných oken na rande</td></tr><tr><td class="align-left"><code>D</code></td><td class="align-left"><strong>Ranní Briefing</strong></td><td class="align-left">Otevře ranní přehled dne s Discord exportem</td></tr><tr><td class="align-left"><code>E</code></td><td class="align-left"><strong>Export iCal</strong></td><td class="align-left">Otevře exportní dialog standardu RFC 5545</td></tr><tr><td class="align-left"><code>?</code> / <code>Shift+/</code></td><td class="align-left"><strong>Nápověda zkratek</strong></td><td class="align-left">Zobrazí Bento přehled všech klávesových zkratek</td></tr><tr><td class="align-left"><code>ESC</code></td><td class="align-left"><strong>Zavřít dialogy</strong></td><td class="align-left">Okamžitě zavře všechny otevřené popovery a modály</td></tr></tbody></table>
+<hr>
+<h2 id="7-specializovan-telemetrick-filtry">7. Specializované Telemetrické Filtry</h2>
+<p>Při přepnutí filtru v horní liště se buňky měsíčního i týdenního zobrazení přepnou do dedikovaného telemetrického módu:</p>
+<ol><li>💧 <strong>Voda (Liquid Tank)</strong>: Vizuální nádrž s SVG vlnami a procentuálním naplněním. Při dosažení $8/8$ sklenic buňka získá Aqua záři. Obsahuje in-cell tlačítko <code>[+1]</code>.</li><li>😴 <strong>Spánek (Hypnogram)</strong>: Noční obloha s personifikovanými avatary (👸 Královský $\ge 9\text{h}$, ✨ Optimální $\ge 7.5\text{h}$, 🥱 Průměrný, 🧟‍♀️ Deficit).</li><li>🏋️‍♂️ <strong>Gym (Muscle Pump Flare)</strong>: Zlatavá aura, součet odcvičených minut, celkový objem sérií a název tréninku.</li><li>🎓 <strong>FIT (Cyber Radar)</strong>: Zvýraznění laboratoří, přednášek s čísly místností a pulzující deadliny s odpočtem.</li><li>💜 <strong>Zdraví &amp; Nálada (Aura Heatmap)</strong>: Radiant mesh gradienty zbarvené podle skóre nálady (1–10) s indikátory menstruačního cyklu.</li></ol>
+<hr>
+<h2 id="8-rann-briefing-partnersk-radar-ical-sync">8. Ranní Briefing, Partnerský Radar &amp; iCal Sync</h2>
+<ul><li><strong>Ranní Briefing (<code>daily-briefing.js</code>)</strong>: Analýza spánku a regenerace, lokální počasí, dnešní program na FIT a tréninky, 1-click Discord markdown clipboard export.</li><li><strong>Partnerský Radar (<code>partner-radar.js</code>)</strong>: Živý odpočet do dalšího rande s odznáčkem v záhlaví a tlačítkem pro odeslání srdečního pulzu (<em>Love Pulse</em>) s haptikou a zvukem.</li><li><strong>iCalendar Standard Sync (<code>ics-sync.js</code>)</strong>: Plná podpora RFC 5545 pro obousměrný export a import událostí do Apple Calendar, Google Calendar a Outlooku s podporou pravidla <code>RRULE</code> pro opakované přednášky.</li></ul>
+<hr>
+<h2 id="9-asov-engine-kolizn-algoritmus">9. Časový Engine &amp; Kolizní Algoritmus</h2>
+<p>Soubor <code>time-engine.js</code> poskytuje deterministické matematické funkce bez externích závislostí:</p>
+<h3 id="a-vpoet-souadnic-calculateeventcoordinates">A) Výpočet Souřadnic (<code>calculateEventCoordinates</code>)</h3>
+<p>$$\text{top} = \frac{\text{startMinutes} - (\text{startHour} \times 60)}{60} \times \text{HOUR\_HEIGHT}$$ $$\text{height} = \max\left(20, \frac{\text{durationMinutes}}{60} \times \text{HOUR\_HEIGHT}\right)$$</p>
+<h3 id="b-kolizn-balic-algoritmus-calculateeventcollisions">B) Kolizní Balicí Algoritmus (<code>calculateEventCollisions</code>)</h3>
+<p>Překrývající se události jsou seskupeny do sloupcových klastrů a každé kartě je přiřazen index sloupce <code>colIndex</code> a celkový počet <code>totalCols</code>.</p>
+<hr>
+<h2 id="10-verifikace-testovac-pokryt">10. Verifikace &amp; Testovací Pokrytí</h2>
+<p>Modul Kalendář 3.0 je stoprocentně pokryt automatickými integračními a jednotkovými testy ve frameworku <strong>Vitest</strong>:</p>
+<pre><button class="code-copy" type="button" aria-label="Copy code">Copy</button><code class="language-bash">npm run test:run -- tests/unit/calendar-week-view.test.js tests/unit/calendar-phase3.test.js tests/unit/calendar-quick-popover.test.js tests/unit/calendar-phase4.test.js</code></pre>
+<h3 id="vsledky-testovac-sady">Výsledky Testovací Sady:</h3>
+<ul><li><strong>Testovací soubory</strong>: <code>4 passed (4)</code></li><li><strong>Celkový počet testů</strong>: <code>51 passed (51)</code></li><li><strong>Úspěšnost</strong>: <code>100 %</code></li></ul>
+<footer class="md-footer"><span style="margin-left:auto">Generated by markdown-html</span></footer>
+</main>
+<script defer src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+</body>
+</html>

@@ -32,7 +32,6 @@ export async function ensureCalendarData(force = false) {
     try {
         await Promise.all([
             ensureTimelineData(force),
-            ensureLibraryData(force),
             ensureStudyData(force)
         ]);
 
@@ -64,12 +63,19 @@ export async function ensureCalendarData(force = false) {
 export async function ensureLibraryData(force = false) {
     if (state._loaded.library && !force && !isStale('library')) return;
     try {
-        const [libData, watchData, ratingData] = await Promise.all([
-            supabase.from('library_content').select('*'),
-            supabase.from('library_watchlist').select('*'),
-            supabase.from('library_ratings').select('*')
+        let timeoutId;
+        const timeoutPromise = new Promise((_, reject) => {
+            timeoutId = setTimeout(() => reject(new Error('Library load timeout')), 4000);
+        });
+        const [libData, watchData, ratingData] = await Promise.race([
+            Promise.all([
+                supabase.from('library_content').select('*'),
+                supabase.from('library_watchlist').select('*'),
+                supabase.from('library_ratings').select('*')
+            ]).finally(() => clearTimeout(timeoutId)),
+            timeoutPromise
         ]);
-        if (libData.data) {
+        if (libData && libData.data) {
             state.library = { movies: [], series: [], games: [] };
             libData.data.forEach(item => {
                 const typeKey = item.type === 'movie' ? 'movies' : (item.type === 'series' ? 'series' : 'games');
@@ -91,8 +97,8 @@ export async function ensureLibraryData(force = false) {
                 });
             });
         }
-        if (watchData.data) state.watchlist = watchData.data.map(row => ({ id: parseInt(row.media_id), type: row.type, user_id: row.added_by }));
-        if (ratingData.data) {
+        if (watchData && watchData.data) state.watchlist = watchData.data.map(row => ({ id: parseInt(row.media_id), type: row.type, user_id: row.added_by }));
+        if (ratingData && ratingData.data) {
             state.ratings = {}; state.watchHistory = {}; state.movieHistory = {};
             ratingData.data.forEach(row => {
                 const mid = parseInt(row.media_id);
@@ -385,7 +391,7 @@ export async function ensureDailyArchiveData(force = false) {
     try {
         const [{ data: qData }, { data: aData }] = await Promise.all([
             supabase.from('daily_questions').select('*'),
-            supabase.from('daily_answers').select('*').order('created_at', { ascending: false })
+            supabase.from('daily_answers').select('*').order('created_at', { ascending: false }).limit(200)
         ]);
 
         if (qData && aData) {
@@ -527,24 +533,31 @@ export async function ensureDiaryData(force = false) {
 export async function ensureGymData(force = false) {
     if (state._loaded.gym && !force && !isStale('gym')) return;
     try {
-        const [exercises, templates, logs, prs, measurements] = await Promise.all([
+        const [exercises, templates, logs, prs, measurements, splits] = await Promise.all([
             supabase.from('gym_exercises').select('*').order('name'),
             supabase.from('gym_templates').select('*').order('created_at', { ascending: false }),
             supabase.from('gym_logs').select('*').order('logged_at', { ascending: false }).limit(100),
             supabase.from('gym_prs').select('*'),
-            supabase.from('gym_body_measurements').select('*').order('date_key', { ascending: false })
+            supabase.from('gym_body_measurements').select('*').order('date_key', { ascending: false }),
+            supabase.from('training_splits').select('*').order('created_at', { ascending: false })
         ]);
         if (exercises.data) state.gymExercises = exercises.data;
         if (templates.data) state.gymTemplates = templates.data;
         if (logs.data) state.gymLogs = logs.data;
         if (prs.data) state.gymPRs = prs.data;
         if (measurements.data) state.gymBodyMeasurements = measurements.data;
+        if (splits.data) {
+            state.trainingSplits = splits.data;
+            const mySplit = splits.data.find(s => s.is_active && (!s.user_id || s.user_id === state.currentUser?.id)) || splits.data.find(s => !s.user_id || s.user_id === state.currentUser?.id) || null;
+            state.activeTrainingSplit = mySplit;
+        }
         markLoaded('gym');
         stateEvents.emit('gym');
     } catch (e) {
         console.error("Gym Load Error:", e);
     }
 }
+
 
 export async function ensureAllHealthData() {
     try {

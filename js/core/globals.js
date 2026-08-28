@@ -5,7 +5,7 @@ import { toggleUserPopout, toggleMobileMenu } from './app-ui.js';
 import { handleLogin } from './auth-handler.js';
 import { state } from './state.js';
 import { renderSkeletonLoader, renderMetricCard, closeModal } from './ui.js';
-import { openCommandPalette, closeCommandPalette } from './commandPalette.js';
+import { openCommandPalette, closeCommandPalette } from './command-palette.js';
 import { initKiscordNamespace } from './actions/namespace.js';
 import { ActionDispatcher } from './actions/dispatcher.js';
 
@@ -16,7 +16,7 @@ window.loadModule = (name) => {
         // Core
         case 'ai_helper': return import('./ai_helper.js');
         case 'auth': return import('./auth.js');
-        case 'commandPalette': return import('./commandPalette.js');
+        case 'commandPalette': return import('./command-palette.js');
         case 'loader': return import('./loader.js');
         case 'migration': return import('../migration.js');
         case 'notifications': return import('./notifications.js');
@@ -44,7 +44,7 @@ window.loadModule = (name) => {
         case 'financeTracker': return import('../domains/archive/finance/index.js');
         case 'flashcards': return import('../domains/entertainment/flashcards.js');
         case 'funfacts': return import('../domains/entertainment/funfacts.js');
-        case 'gameDraw': return import('../domains/entertainment/game-draw.js');
+        case 'gameDraw': return import('../domains/entertainment/game-draw/index.js');
         case 'gameWho': return import('../domains/entertainment/game-who.js');
         case 'games': return import('../domains/entertainment/games.js');
         case 'gamesHub': return import('../domains/entertainment/games-hub.js');
@@ -52,7 +52,7 @@ window.loadModule = (name) => {
         case 'health': return import('../domains/fitness/health.js');
         case 'health_ui': return import('../domains/lifestyle/dashboard/health_ui.js');
         case 'highlighter': return import('../domains/entertainment/highlighter.js');
-        case 'letters': return import('../domains/couple/letters.js');
+        case 'letters': return import('../domains/couple/letters/index.js');
         case 'library': return import('../domains/entertainment/library/index.js');
         case 'loveShop': return import('../domains/couple/love-shop/index.js');
         case 'manual': return import('../domains/system/manual/index.js');
@@ -69,12 +69,12 @@ window.loadModule = (name) => {
         case 'spaced_repetition': return import('../domains/entertainment/spaced-repetition.js');
         case 'stats': return import('../domains/entertainment/stats.js');
         case 'studyPlanner': return import('../domains/university/study-planner/index.js');
-        case 'tierlist': return import('../domains/entertainment/tierlist.js');
+        case 'tierlist': return import('../domains/entertainment/tierlist/index.js');
         case 'timeline': return import('../domains/lifestyle/timeline/index.js');
         case 'topics': return import('../domains/couple/topics/index.js');
         case 'watchlist': return import('../domains/entertainment/watchlist.js');
         case 'kasicka': return import('../domains/archive/kasicka.js');
-        case 'alpskaVyzva': return import('../domains/archive/alpska-vyzva.js');
+        case 'alpskaVyzva': return import('../domains/archive/alpska-vyzva/index.js');
         case 'alpskyDenicek': return import('../domains/archive/alpsky-denicek.js');
         default: console.error('Unknown loadModule request:', name); return Promise.reject(new Error('Module not found'));
     }

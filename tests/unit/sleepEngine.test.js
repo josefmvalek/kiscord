@@ -46,20 +46,24 @@ describe('Sleep Engine & Ultradian Architecture', () => {
     });
 
     describe('Sleep Debt Calculation', () => {
-        it('should calculate 0 debt when 8h target is met daily', () => {
-            const mockLogs = {
-                '2026-08-22': { sleep_duration_hours: 8.0 },
-                '2026-08-21': { sleep_duration_hours: 8.0 },
-                '2026-08-20': { sleep_duration_hours: 8.0 }
-            };
+        it('should calculate zero sleep debt when sleeping full 8 hours daily', () => {
+            const now = new Date();
+            const mockLogs = {};
+            for (let i = 0; i < 7; i++) {
+                const d = new Date();
+                d.setDate(now.getDate() - i);
+                mockLogs[d.toISOString().split('T')[0]] = { sleep_duration_hours: 8.0 };
+            }
             const debt = calculateSleepDebt(mockLogs, 8.0);
             expect(debt).toBe(0);
         });
 
         it('should accumulate sleep debt when sleeping less than baseline', () => {
+            const d1 = new Date(); d1.setDate(d1.getDate() - 1);
+            const d2 = new Date(); d2.setDate(d2.getDate() - 2);
             const mockLogs = {
-                '2026-08-22': { sleep_duration_hours: 6.0 }, // +2h debt
-                '2026-08-21': { sleep_duration_hours: 7.0 }  // +1h debt
+                [d1.toISOString().split('T')[0]]: { sleep_duration_hours: 6.0 }, // +2h debt
+                [d2.toISOString().split('T')[0]]: { sleep_duration_hours: 7.0 }  // +1h debt
             };
             const debt = calculateSleepDebt(mockLogs, 8.0);
             expect(debt).toBe(3.0);

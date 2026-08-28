@@ -97,7 +97,7 @@ const ROUTE_REGISTRY = {
         render: (m, c) => m.renderTopics(c)
     },
     'letters': {
-        loader: () => import('../../domains/couple/letters.js'),
+        loader: () => import('../../domains/couple/letters/index.js'),
         render: (m, c) => m.renderLetters(c)
     },
     'confession': {
@@ -123,7 +123,7 @@ const ROUTE_REGISTRY = {
         render: (m, c) => m.renderNutrition(c)
     },
     'tdee-coach': {
-        loader: () => import('../../domains/fitness/nutrition/tdeeCoach.js'),
+        loader: () => import('../../domains/fitness/nutrition/tdee-coach.js'),
         render: (m, c) => m.renderTdeeCoach?.(c)
     },
     'body-metrics': {
@@ -188,11 +188,11 @@ const ROUTE_REGISTRY = {
     // 6. Entertainment & Games
     'library': {
         loader: () => import('../../domains/entertainment/library/index.js'),
-        render: (m, c) => m.renderLibrary(c)
+        render: (m, c, ch, params) => m.renderLibrary(params?.category || 'movies')
     },
     'watchlist': {
         loader: () => import('../../domains/entertainment/watchlist.js'),
-        render: (m, c) => m.renderWatchlist(c)
+        render: (m, c, ch, params) => m.renderWatchlist(typeof params?.category === 'string' ? params.category : null)
     },
     'netflix-matcher': {
         loader: () => import('../../domains/entertainment/netflix-matcher.js'),
@@ -207,7 +207,7 @@ const ROUTE_REGISTRY = {
         render: (m, c) => m.renderDecisionMatcher(c)
     },
     'tierlist': {
-        loader: () => import('../../domains/entertainment/tierlist.js'),
+        loader: () => import('../../domains/entertainment/tierlist/index.js'),
         render: (m, c) => m.renderTierList(c)
     },
     'games-hub': {
@@ -227,7 +227,7 @@ const ROUTE_REGISTRY = {
         render: (m, c) => m.renderGameWho(c)
     },
     'game-draw': {
-        loader: () => import('../../domains/entertainment/game-draw.js'),
+        loader: () => import('../../domains/entertainment/game-draw/index.js'),
         render: (m, c) => m.renderGameDraw(c)
     },
     'draw-gallery': {
@@ -265,7 +265,7 @@ const ROUTE_REGISTRY = {
         render: (m, c) => m.renderAustrianGerman(c)
     },
     'austria-info': {
-        loader: () => import('../../domains/archive/austria-info.js'),
+        loader: () => import('../../domains/archive/austria-info/index.js'),
         render: (m, c) => m.renderAustriaInfo(c)
     },
     'kasicka': {
@@ -273,7 +273,7 @@ const ROUTE_REGISTRY = {
         render: (m, c) => m.renderKasicka(c)
     },
     'alpska-vyzva': {
-        loader: () => import('../../domains/archive/alpska-vyzva.js'),
+        loader: () => import('../../domains/archive/alpska-vyzva/index.js'),
         render: (m, c) => m.renderAlpskaVyzva(c)
     },
     'alpsky-denicek': {
@@ -291,6 +291,8 @@ const ROUTE_REGISTRY = {
  * @type {Record<string, string>}
  */
 const ROUTE_ALIASES = {
+    'date-planner': 'dateplanner',
+    'map': 'dateplanner',
     'finance': 'finance-tracker',
     'health-engine': 'tracking-hub',
     'spanek': 'sleep-tracker',

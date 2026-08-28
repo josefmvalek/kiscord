@@ -10,7 +10,7 @@ import { switchChannel, switchServer } from '../router.js';
 import { toggleUserPopout, toggleMobileMenu } from '../app-ui.js';
 import { handleLogin } from '../auth-handler.js';
 import { renderSkeletonLoader, renderMetricCard, closeModal } from '../ui.js';
-import { openCommandPalette, closeCommandPalette } from '../commandPalette.js';
+import { openCommandPalette, closeCommandPalette } from '../command-palette.js';
 import { ActionDispatcher, registerAction, registerActions } from './dispatcher.js';
 import { repositories } from '../repositories/index.js';
 

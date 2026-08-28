@@ -10,7 +10,10 @@
 | Section | Document | Description |
 |---|---|---|
 | 🚀 **Onboarding & Setup** | [Interactive HTML Guide](./developer-onboarding.html) \| [Markdown Version](./developer-onboarding.md) | Single-file interactive developer guide with sticky TOC, real-time search, and code copying |
-| 🏛️ **Architecture & Core** | [System Architecture](./architecture.md) | SPA lifecycle, dynamic module lazy loading, View Transitions, memory management |
+| 📅 **Kalendář 2.0 Spec** | [Interactive HTML Spec](./calendar-2.0.html) \| [Markdown Spec](./modules/calendar-2.0.md) | Full technical specification: 24h time-grid, collision engine, fit-viewport month grid, daily briefing, and mobile UX |
+| 🏛️ **Architecture & Core** | [System Architecture](./architecture.md) | SPA lifecycle, SWR repositories, dynamic module lazy loading, View Transitions |
+| 📑 **ADR Index** | [Architecture Decision Records](./adr/README.md) | Records of all 10 architectural decisions (ADR 0001–0010) following the MADR standard |
+| 🗺️ **Strategy & Roadmap** | [Strategy & Roadmap](./STRATEGY_AND_ROADMAP.md) | Comprehensive development roadmap, milestones, and release strategy |
 | 💾 **Database & Backend** | [Database Model & Supabase](./database.md) | PostgreSQL table schemas, Row Level Security (RLS) policies, RPCs, and Storage buckets |
 | ⚙️ **DevOps & PWA** | [DevOps, PWA & Caching](./dev-ops.md) | Service Worker (3-tier cache strategy), offline sync queue, build & Vercel deployment |
 | 🧩 **Module Catalog** | [All Channels Overview](./modules/index.md) | 55+ channels organized across 7 categories |

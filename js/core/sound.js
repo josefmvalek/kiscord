@@ -1,19 +1,37 @@
 import { state } from './state.js';
 
 let audioCtx = null;
+let userHasInteracted = false;
+
+if (typeof window !== 'undefined') {
+    const enableAudio = () => {
+        userHasInteracted = true;
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume().catch(() => {});
+        }
+        window.removeEventListener('click', enableAudio);
+        window.removeEventListener('keydown', enableAudio);
+        window.removeEventListener('touchstart', enableAudio);
+    };
+    window.addEventListener('click', enableAudio, { once: true, passive: true });
+    window.addEventListener('keydown', enableAudio, { once: true, passive: true });
+    window.addEventListener('touchstart', enableAudio, { once: true, passive: true });
+}
 
 function getAudioContext() {
     if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const AudioContextClass = typeof window !== 'undefined' ? (window.AudioContext || window.webkitAudioContext) : null;
+        if (!AudioContextClass) return null;
+        audioCtx = new AudioContextClass();
     }
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
+    if (audioCtx.state === 'suspended' && userHasInteracted) {
+        audioCtx.resume().catch(() => {});
     }
     return audioCtx;
 }
 
 function isSoundEnabled() {
-    return state && state.settings && state.settings.soundEnabled;
+    return Boolean(state?.settings?.soundEnabled);
 }
 
 /**
@@ -195,6 +213,7 @@ export function playHeartbeat() {
     if (!isSoundEnabled()) return;
     try {
         const ctx = getAudioContext();
+        if (!ctx) return;
         const now = ctx.currentTime;
 
         // Lub (First thump - lower pitch)
@@ -349,17 +368,66 @@ export function playSuccessChime() {
     }
 }
 
-// Global window event listener to resume AudioContext upon first interaction
-if (typeof window !== 'undefined') {
-    const resumeContext = () => {
-        if (audioCtx && audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
-        window.removeEventListener('click', resumeContext);
-        window.removeEventListener('keydown', resumeContext);
-    };
-    window.addEventListener('click', resumeContext);
-    window.addEventListener('keydown', resumeContext);
+/**
+ * Plays a refreshing synthetic water drop plop sound (sine pitch ramp with bandpass bubble)
+ */
+export function playWaterDrop() {
+    if (!isSoundEnabled()) return;
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        // Pitch upward bend creating water drop "bloop" effect
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(1450, now + 0.08);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.15);
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.18, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.2);
+    } catch (e) {
+        console.warn("[Sound] Failed to play water drop:", e);
+    }
+}
+
+/**
+ * Plays a subtle, tactile mechanical pop for quick actions and checkboxes
+ */
+export function playQuickPop() {
+    if (!isSoundEnabled()) return;
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(420, now);
+        osc.frequency.exponentialRampToValueAtTime(120, now + 0.05);
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.1, now + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.07);
+    } catch (e) {
+        console.warn("[Sound] Failed to play quick pop:", e);
+    }
 }
 
 

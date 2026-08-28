@@ -3,7 +3,32 @@ import { state, awardLoveCoinsToCurrentUser } from '@core/state.js';
 import { triggerHaptic, triggerConfetti } from '@core/utils.js';
 import { showNotification, showConfirmDialog } from '@core/theme.js';
 import { renderModal, renderInputGroup } from '@core/ui.js';
-import { selectLocation } from './location-detail.js';
+import { safeInsert } from '@core/offline.js';
+import { uploadFile } from '@core/storage.js';
+import { playChime } from '@core/sound.js';
+import { 
+    getLastMapClick, 
+    setSelectedLocCat, 
+    getSelectedLocCat, 
+    getSelectedCountry, 
+    getPreviewMarker, 
+    setPreviewMarker, 
+    setMarkersMemories 
+} from '../state.js';
+import { 
+    renderAddLocationModalTemplate, 
+    renderEditLocationModalTemplate 
+} from '../templates.js';
+import { 
+    switchCountry, 
+    renderMarkers, 
+    renderLocationList 
+} from '../leaflet.js';
+import { 
+    updateRouteUI, 
+    renderRoutePolyline 
+} from '../routing.js';
+import { selectLocation, closeLocationDetail } from './location-detail.js';
 
 export function showAddLocationModal(prefillData = null) {
     const lastMapClick = getLastMapClick();

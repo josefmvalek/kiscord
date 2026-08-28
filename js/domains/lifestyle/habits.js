@@ -179,6 +179,17 @@ function calculateHabitStreak(habitId) {
     return streak;
 }
 
+export function setHabitsFromBootstrap(habits, logs) {
+    if (Array.isArray(habits)) {
+        habitsData = habits;
+        saveLocalHabits();
+    }
+    if (Array.isArray(logs)) {
+        habitLogs = logs;
+        saveLocalHabitLogs();
+    }
+}
+
 export async function loadHabitsData() {
     try {
         const [habitsRes, logsRes] = await Promise.all([
@@ -203,6 +214,14 @@ export async function loadHabitsData() {
         habitsData = JSON.parse(localStorage.getItem('kiscord_local_habits') || '[]');
         habitLogs = JSON.parse(localStorage.getItem('kiscord_local_habit_logs') || '[]');
     }
+}
+
+export async function ensureHabitsData(force = false) {
+    if (!force && habitsData && habitsData.length > 0) {
+        return habitsData;
+    }
+    await loadHabitsData();
+    return habitsData;
 }
 
 function saveLocalHabits() {

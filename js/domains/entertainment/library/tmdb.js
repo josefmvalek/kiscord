@@ -83,6 +83,15 @@ export function showAddMediaModal(category) {
                 </div>
 
                 ${targetCat === 'games' ? `
+                <div class="space-y-1">
+                    <label class="block text-[10px] text-gray-500 font-bold uppercase tracking-widest">Stav hry</label>
+                    <select id="m-game-status" class="w-full bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2] transition-all">
+                        <option value="máme" selected>🎮 Máme (V naší knihovně)</option>
+                        <option value="chceme">🌟 Chceme (V plánu / Wishlist)</option>
+                        <option value="dohráno">🏆 Dohráno (Dokončeno)</option>
+                    </select>
+                </div>
+
                 <div class="bg-[#faa61a]/10 border border-[#faa61a]/30 p-3 rounded-xl flex items-center justify-between cursor-pointer hover:bg-[#faa61a]/15 transition" onclick="const cb = document.getElementById('m-is-frequent'); cb.checked = !cb.checked;">
                     <div class="flex items-center gap-2.5">
                         <span class="text-xl text-[#faa61a]">⚡</span>
@@ -156,6 +165,14 @@ export async function saveNewMedia(category, refreshFn) {
     const isFrequentEl = document.getElementById('m-is-frequent');
     if (isFrequentEl && isFrequentEl.checked && !moodTags.includes('stálice')) {
         moodTags.push('stálice');
+    }
+
+    const gameStatusEl = document.getElementById('m-game-status');
+    if (gameStatusEl && dbType === 'game') {
+        const gStatus = gameStatusEl.value;
+        if (gStatus && !moodTags.includes(gStatus)) {
+            moodTags.push(gStatus);
+        }
     }
     
     const tmdbId = document.getElementById('m-tmdb-id')?.value;
@@ -354,6 +371,7 @@ export function showEditMediaModal(itemId, category) {
     if (!item) return;
 
     const isFrequent = item.is_frequent || (item.mood_tags || []).includes('stálice') || item.cat === 'Stálice';
+    const currentGameStatus = (state.watchHistory[item.id]?.status === 'seen' || (item.mood_tags || []).includes('dohráno')) ? 'dohráno' : (((item.mood_tags || []).includes('chceme') || (state.watchlist || []).some(w => String(w.id) === String(item.id))) ? 'chceme' : 'máme');
     const modalTitle = cat === 'games' ? 'Upravit hru' : (cat === 'series' ? 'Upravit seriál' : 'Upravit film');
     const categories = cat === 'games' 
         ? ["RPG", "FPS", "Strategie", "Simulátor", "Závodní", "Ostatní"]
@@ -376,6 +394,15 @@ export function showEditMediaModal(itemId, category) {
                 </div>
 
                 ${cat === 'games' ? `
+                <div class="space-y-1">
+                    <label class="block text-[10px] text-gray-500 font-bold uppercase tracking-widest">Stav hry</label>
+                    <select id="m-game-status-edit" class="w-full bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2] transition-all">
+                        <option value="máme" ${currentGameStatus === 'máme' ? 'selected' : ''}>🎮 Máme (V naší knihovně)</option>
+                        <option value="chceme" ${currentGameStatus === 'chceme' ? 'selected' : ''}>🌟 Chceme (V plánu / Wishlist)</option>
+                        <option value="dohráno" ${currentGameStatus === 'dohráno' ? 'selected' : ''}>🏆 Dohráno (Dokončeno)</option>
+                    </select>
+                </div>
+
                 <div class="bg-[#faa61a]/10 border border-[#faa61a]/30 p-3 rounded-xl flex items-center justify-between cursor-pointer hover:bg-[#faa61a]/15 transition" onclick="const cb = document.getElementById('m-is-frequent-edit'); cb.checked = !cb.checked;">
                     <div class="flex items-center gap-2.5">
                         <span class="text-xl text-[#faa61a]">⚡</span>
@@ -390,7 +417,7 @@ export function showEditMediaModal(itemId, category) {
                 
                 ${renderInputGroup({ label: 'Magnet Link', id: 'm-magnet-edit', placeholder: 'magnet:?xt=...', value: item.magnet || '', attr: 'class="w-full bg-[#202225] text-white text-[10px] p-3 rounded-xl border border-[#2f3136] outline-none font-mono"' })}
                 ${renderInputGroup({ label: 'Google Drive Link', id: 'm-gdrive-edit', placeholder: 'https://drive.google.com/...', value: item.gdrive || '' })}
-                ${renderInputGroup({ label: 'Mood Tags (oddělit čárkou)', id: 'm-moods-edit', placeholder: 'Moods', value: (item.mood_tags || []).filter(t => t !== 'stálice').join(', ') })}
+                ${renderInputGroup({ label: 'Mood Tags (oddělit čárkou)', id: 'm-moods-edit', placeholder: 'Moods', value: (item.mood_tags || []).filter(t => !['stálice', 'máme', 'chceme', 'dohráno'].includes(t)).join(', ') })}
             </div>
         </div>
     `;
@@ -446,6 +473,19 @@ export async function updateMedia(itemId, category, refreshFn) {
             mood_tags.push('stálice');
         } else if (!isFrequentEl.checked) {
             mood_tags = mood_tags.filter(t => t !== 'stálice');
+        }
+    }
+
+    const gameStatusEl = document.getElementById('m-game-status-edit');
+    if (gameStatusEl && cat === 'games') {
+        const gStatus = gameStatusEl.value;
+        mood_tags = mood_tags.filter(t => !['máme', 'chceme', 'dohráno'].includes(t));
+        mood_tags.push(gStatus);
+        if (gStatus === 'dohráno') {
+            if (!state.watchHistory[itemId]) state.watchHistory[itemId] = { status: 'seen', rating: 0, date: new Date().toISOString().split('T')[0] };
+            else state.watchHistory[itemId].status = 'seen';
+        } else {
+            if (state.watchHistory[itemId]) state.watchHistory[itemId].status = 'unseen';
         }
     }
 

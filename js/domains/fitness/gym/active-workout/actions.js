@@ -2,17 +2,36 @@ import { supabase } from '@core/supabase.js';
 import { state, ensureGymData } from '@core/state.js';
 import { triggerHaptic, triggerConfetti, getTodayKey } from '@core/utils.js';
 import { showNotification, showConfirmDialog } from '@core/theme.js';
+import { playArcade } from '@core/sound.js';
 import { renderModal } from '@core/ui.js';
 import {
     activeWorkout,
     loadActiveWorkoutFromStorage,
     saveActiveWorkoutToStorage,
-    getTypeBadgeHTML
+    getTypeBadgeHTML,
+    setRestTimeDuration
 } from '../shared.js';
 import { calculate1RM, openPlateCalculatorModal, openWarmupModal, getExerciseTargetSuggestion } from '../tools.js';
 import { getLastExerciseHistory } from '../analytics.js';
 import { getExerciseThumbnailHtml, openExerciseGuideModal } from '../exercises.js';
 import { startRestTimer } from './timer.js';
+import { renderActiveSetRowHtml } from './render.js';
+
+/**
+ * Updates the workout progress bar without full page re-render.
+ */
+export function updateActiveWorkoutProgressDom() {
+    if (!activeWorkout) return;
+    let totalSets = 0;
+    let completedSets = 0;
+    activeWorkout.exercises.forEach(e => {
+        totalSets += (e.sets || []).length;
+        completedSets += (e.sets || []).filter(s => s.completed).length;
+    });
+    const percentage = totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
+    const progBar = document.getElementById('active-workout-progress');
+    if (progBar) progBar.style.width = `${percentage}%`;
+}
 
 export function adjustVal(exIdx, setIdx, key, delta) {
     triggerHaptic('light');
@@ -47,6 +66,113 @@ export function adjustActiveExerciseWeight(exIdx, delta) {
         }
     });
     saveActiveWorkoutToStorage();
+}
+
+/**
+ * Adds a new set to an active exercise during workout with smooth DOM patch (no full-page jump).
+ */
+export function addSetToActiveExercise(exIdx, renderGymFn) {
+    triggerHaptic('light');
+    if (!activeWorkout) {
+        loadActiveWorkoutFromStorage();
+    }
+    if (!activeWorkout || !activeWorkout.exercises || !activeWorkout.exercises[exIdx]) return;
+
+    const ex = activeWorkout.exercises[exIdx];
+    const prevSets = ex.sets || [];
+    let defaultWeight = 10;
+    let defaultReps = 10;
+
+    if (prevSets.length > 0) {
+        const lastSet = prevSets[prevSets.length - 1];
+        defaultWeight = (lastSet.weight !== undefined && lastSet.weight !== null) ? lastSet.weight : 10;
+        defaultReps = (lastSet.reps !== undefined && lastSet.reps !== null) ? lastSet.reps : 10;
+    }
+
+    const newSetObj = {
+        weight: defaultWeight,
+        reps: defaultReps,
+        completed: false,
+        type: 'N',
+        rir: null
+    };
+
+    ex.sets.push(newSetObj);
+    const newSetIdx = ex.sets.length - 1;
+
+    saveActiveWorkoutToStorage();
+
+    // Fine-grained DOM update: avoids scroll reset, full-page animations and layout flickering
+    const setsContainer = document.getElementById(`active-exercise-sets-${exIdx}`);
+    if (setsContainer) {
+        const existingPR = (state.gymPRs || []).find(p => p.user_id === state.currentUser?.id && p.exercise_id === ex.exercise_id);
+        const prWeight = existingPR ? parseFloat(existingPR.weight) : 0;
+        const lastHistory = getLastExerciseHistory(ex.exercise_id);
+
+        const newRowHtml = renderActiveSetRowHtml(exIdx, newSetIdx, newSetObj, lastHistory, prWeight);
+        setsContainer.insertAdjacentHTML('beforeend', newRowHtml);
+
+        // Update progress bar
+        updateActiveWorkoutProgressDom();
+
+        // Update set count badge if present
+        const countBadge = document.getElementById(`active-exercise-sets-count-${exIdx}`);
+        if (countBadge) {
+            countBadge.textContent = `${ex.sets.length} sérií`;
+        }
+    } else if (renderGymFn) {
+        renderGymFn();
+    } else if (window.Gym?.renderGym) {
+        window.Gym.renderGym();
+    }
+}
+
+/**
+ * Removes a set from an active exercise during workout with smooth DOM patch (no full-page jump).
+ */
+export function removeSetFromActiveExercise(exIdx, setIdx, renderGymFn) {
+    triggerHaptic('medium');
+    if (!activeWorkout) {
+        loadActiveWorkoutFromStorage();
+    }
+    if (!activeWorkout || !activeWorkout.exercises || !activeWorkout.exercises[exIdx]) return;
+
+    const ex = activeWorkout.exercises[exIdx];
+    if (!ex.sets || ex.sets.length <= 1) {
+        showNotification('Cvik musí mít alespoň 1 sérii!', 'warning');
+        return;
+    }
+
+    const targetIdx = (setIdx !== undefined && setIdx !== null) ? setIdx : ex.sets.length - 1;
+    ex.sets.splice(targetIdx, 1);
+
+    saveActiveWorkoutToStorage();
+
+    // Fine-grained DOM update: avoids scroll reset, full-page animations and layout flickering
+    const setsContainer = document.getElementById(`active-exercise-sets-${exIdx}`);
+    if (setsContainer) {
+        const existingPR = (state.gymPRs || []).find(p => p.user_id === state.currentUser?.id && p.exercise_id === ex.exercise_id);
+        const prWeight = existingPR ? parseFloat(existingPR.weight) : 0;
+        const lastHistory = getLastExerciseHistory(ex.exercise_id);
+
+        // Re-render only this exercise's set rows to keep indices cleanly synced
+        setsContainer.innerHTML = ex.sets.map((s, idx) => 
+            renderActiveSetRowHtml(exIdx, idx, s, lastHistory, prWeight)
+        ).join('');
+
+        // Update progress bar
+        updateActiveWorkoutProgressDom();
+
+        // Update set count badge if present
+        const countBadge = document.getElementById(`active-exercise-sets-count-${exIdx}`);
+        if (countBadge) {
+            countBadge.textContent = `${ex.sets.length} sérií`;
+        }
+    } else if (renderGymFn) {
+        renderGymFn();
+    } else if (window.Gym?.renderGym) {
+        window.Gym.renderGym();
+    }
 }
 
 export function toggleSetComplete(exIdx, setIdx, renderGymFn) {
@@ -117,7 +243,7 @@ export function toggleSetComplete(exIdx, setIdx, renderGymFn) {
     // DOM patch – update row without re-render
     const row = document.getElementById(`set-row-${exIdx}-${setIdx}`);
     if (row) {
-        row.className = `grid grid-cols-12 items-center gap-1.5 p-1.5 rounded-2xl transition duration-150 ${setObj.completed ? 'bg-[#3ba55c]/10 border border-[#3ba55c]/25' : 'bg-black/25 border border-white/5'}`;
+        row.className = `grid grid-cols-12 items-center gap-1.5 p-1.5 rounded-2xl transition duration-150 ${setObj.completed ? 'bg-[#3ba55c]/10 border border-[#3ba55c]/25' : 'bg-black/25 border-y border-r border-white/5 border-l-[3px] border-l-[#faa61a]'}`;
 
         const controls = row.querySelectorAll(`input, button:not(#complete-btn-${exIdx}-${setIdx})`);
         controls.forEach(c => {
@@ -194,8 +320,24 @@ export function toggleWorkoutChecklistItem(itemKey, renderGymFn) {
     }
     activeWorkout.checklist[itemKey] = !activeWorkout.checklist[itemKey];
     saveActiveWorkoutToStorage();
-    if (renderGymFn) renderGymFn();
-    else if (window.Gym?.renderGym) window.Gym.renderGym();
+
+    const btn = document.getElementById(`checklist-btn-${itemKey}`);
+    if (btn) {
+        const isChecked = activeWorkout.checklist[itemKey];
+        const colors = {
+            creatine: isChecked ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-white/5 text-gray-400 hover:text-white',
+            preworkout: isChecked ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'bg-white/5 text-gray-400 hover:text-white',
+            water: isChecked ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-white/5 text-gray-400 hover:text-white',
+            protein: isChecked ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-white/5 text-gray-400 hover:text-white'
+        };
+        const emojis = { creatine: '💊 Kreatin', preworkout: '⚡ Pre-workout', water: '💧 1.5L Voda', protein: '🥤 Protein' };
+        btn.className = `px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition flex items-center gap-1.5 flex-shrink-0 ${colors[itemKey] || ''}`;
+        btn.innerHTML = `<span>${emojis[itemKey] || itemKey}</span> ${isChecked ? '✓' : ''}`;
+    } else if (renderGymFn) {
+        renderGymFn();
+    } else if (window.Gym?.renderGym) {
+        window.Gym.renderGym();
+    }
 }
 
 /**
@@ -410,15 +552,30 @@ export function fillSetsFromLastHistory(exIdx, renderGymFn) {
                 weight: prevSet.weight,
                 reps: prevSet.reps,
                 completed: false,
-                type: prevSet.type || 'N'
+                type: prevSet.type || 'N',
+                rir: null
             });
         }
     });
 
     saveActiveWorkoutToStorage();
     showNotification(`Série vyplněny podle tréninku ze dne ${history.formattedDate} ⚡`, 'success');
-    if (renderGymFn) renderGymFn();
-    else if (window.Gym?.renderGym) window.Gym.renderGym();
+
+    const setsContainer = document.getElementById(`active-exercise-sets-${exIdx}`);
+    if (setsContainer) {
+        const existingPR = (state.gymPRs || []).find(p => p.user_id === state.currentUser?.id && p.exercise_id === ex.exercise_id);
+        const prWeight = existingPR ? parseFloat(existingPR.weight) : 0;
+        setsContainer.innerHTML = ex.sets.map((s, idx) => 
+            renderActiveSetRowHtml(exIdx, idx, s, history, prWeight)
+        ).join('');
+        updateActiveWorkoutProgressDom();
+        const countBadge = document.getElementById(`active-exercise-sets-count-${exIdx}`);
+        if (countBadge) countBadge.textContent = `${ex.sets.length} sérií`;
+    } else if (renderGymFn) {
+        renderGymFn();
+    } else if (window.Gym?.renderGym) {
+        window.Gym.renderGym();
+    }
 }
 
 /**
@@ -436,8 +593,17 @@ export function cycleSetRir(exIdx, setIdx, renderGymFn) {
     else s.rir = null;
 
     saveActiveWorkoutToStorage();
-    if (renderGymFn) renderGymFn();
-    else if (window.Gym?.renderGym) window.Gym.renderGym();
+
+    const rirBtn = document.getElementById(`rir-btn-${exIdx}-${setIdx}`);
+    if (rirBtn) {
+        const rirLabel = (s.rir !== undefined && s.rir !== null) ? `RIR ${s.rir}` : null;
+        rirBtn.className = `text-[7.5px] font-mono font-bold mt-0.5 px-1 rounded transition ${rirLabel ? 'bg-purple-500/20 text-purple-300' : 'text-gray-500 hover:text-gray-300'}`;
+        rirBtn.textContent = rirLabel || 'RIR -';
+    } else if (renderGymFn) {
+        renderGymFn();
+    } else if (window.Gym?.renderGym) {
+        window.Gym.renderGym();
+    }
 }
 
 

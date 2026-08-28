@@ -235,12 +235,17 @@ export async function migrateStaticContentToSupabase() {
         };
 
         // 1. Facts
-        await seedTable('app_facts', typeof factsLibrary !== 'undefined' ? factsLibrary : null, async () => {
+        const factsData = (typeof window !== 'undefined' && window.factsLibrary) ? window.factsLibrary : (typeof factsLibrary !== 'undefined' ? factsLibrary : null);
+        await seedTable('app_facts', factsData, async () => {
             const factsBatch = [];
-            for (const [cat, items] of Object.entries(factsLibrary)) {
-                items.forEach(item => {
-                    factsBatch.push({ category: cat, icon: item.icon, text: item.text });
-                });
+            if (factsData) {
+                for (const [cat, items] of Object.entries(factsData)) {
+                    if (Array.isArray(items)) {
+                        items.forEach(item => {
+                            factsBatch.push({ category: cat, icon: item.icon, text: item.text });
+                        });
+                    }
+                }
             }
             if (factsBatch.length > 0) {
                 const { error } = await supabase.from('app_facts').insert(factsBatch);
@@ -250,23 +255,28 @@ export async function migrateStaticContentToSupabase() {
         });
 
         // 2. Library
-        await seedTable('library_content', typeof library !== 'undefined' ? library : null, async () => {
+        const libraryData = (typeof window !== 'undefined' && window.library) ? window.library : (typeof library !== 'undefined' ? library : null);
+        await seedTable('library_content', libraryData, async () => {
             const libraryBatch = [];
-            for (const [type, items] of Object.entries(library)) {
-                let mappedType = 'movie';
-                if (type === 'series') mappedType = 'series';
-                if (type === 'games') mappedType = 'game';
+            if (libraryData) {
+                for (const [type, items] of Object.entries(libraryData)) {
+                    let mappedType = 'movie';
+                    if (type === 'series') mappedType = 'series';
+                    if (type === 'games') mappedType = 'game';
 
-                items.forEach(item => {
-                    libraryBatch.push({
-                        type: mappedType,
-                        title: item.title,
-                        icon: item.icon,
-                        category: item.cat,
-                        magnet: item.magnet,
-                        gdrive: item.gdrive
-                    });
-                });
+                    if (Array.isArray(items)) {
+                        items.forEach(item => {
+                            libraryBatch.push({
+                                type: mappedType,
+                                title: item.title,
+                                icon: item.icon,
+                                category: item.cat,
+                                magnet: item.magnet,
+                                gdrive: item.gdrive
+                            });
+                        });
+                    }
+                }
             }
             if (libraryBatch.length > 0) {
                 const { error } = await supabase.from('library_content').insert(libraryBatch);
@@ -276,8 +286,10 @@ export async function migrateStaticContentToSupabase() {
         });
 
         // 3. Date Locations
-        await seedTable('date_locations', typeof dateLocations !== 'undefined' ? dateLocations : null, async () => {
-            const locBatch = dateLocations.map(loc => ({
+        const locData = (typeof window !== 'undefined' && window.dateLocations) ? window.dateLocations : (typeof dateLocations !== 'undefined' ? dateLocations : null);
+        await seedTable('date_locations', locData, async () => {
+            if (!Array.isArray(locData)) return;
+            const locBatch = locData.map(loc => ({
                 id: loc.id,
                 name: loc.name,
                 category: loc.cat,
@@ -293,8 +305,10 @@ export async function migrateStaticContentToSupabase() {
         });
 
         // 4. Conversation Topics
-        await seedTable('conversation_topics', typeof conversationTopics !== 'undefined' ? conversationTopics : null, async () => {
-            const topicBatch = conversationTopics.map(t => ({
+        const topicsData = (typeof window !== 'undefined' && window.conversationTopics) ? window.conversationTopics : (typeof conversationTopics !== 'undefined' ? conversationTopics : null);
+        await seedTable('conversation_topics', topicsData, async () => {
+            if (!Array.isArray(topicsData)) return;
+            const topicBatch = topicsData.map(t => ({
                 id: t.id,
                 title: t.title,
                 icon: t.icon,
@@ -310,8 +324,10 @@ export async function migrateStaticContentToSupabase() {
         });
 
         // 5. Timeline Events
-        await seedTable('timeline_events', typeof timelineEvents !== 'undefined' ? timelineEvents : null, async () => {
-            const timelineBatch = timelineEvents.map(ev => ({
+        const timelineData = (typeof window !== 'undefined' && window.timelineEvents) ? window.timelineEvents : (typeof timelineEvents !== 'undefined' ? timelineEvents : null);
+        await seedTable('timeline_events', timelineData, async () => {
+            if (!Array.isArray(timelineData)) return;
+            const timelineBatch = timelineData.map(ev => ({
                 title: ev.title,
                 event_date: ev.date || null,
                 icon: ev.icon,

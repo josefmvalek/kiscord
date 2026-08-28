@@ -17,6 +17,8 @@ Tento adresář obsahuje evidenci klíčových architektonických rozhodnutí pr
 | [ADR-0007](0007-webrtc-peer-to-peer-channel.md) | WebRTC Peer-to-Peer Direct Intimacy Channel (Sub-10ms) | **Accepted** | 2026-08-23 |
 | [ADR-0008](0008-client-side-aes-gcm-encrypted-backup.md) | Client-Side AES-GCM Encrypted Backup & Restore (.kiscord) | **Accepted** | 2026-08-23 |
 | [ADR-0009](0009-discord-slash-commands-voice-logging.md) | Discord Slash Commands & Smart Voice Logging Engine | **Accepted** | 2026-08-23 |
+| [ADR-0010](0010-database-performance-and-unified-bootstrap.md) | Database Performance Optimization & Unified Dashboard Bootstrap | **Accepted** | 2026-08-26 |
+| [ADR-0011](0011-test-suite-architecture-and-fixtures.md) | Test Suite Architecture, Reusable Mock Builders, and Shared E2E Test Fixtures | **Accepted** | 2026-08-26 |
 
 ---
 

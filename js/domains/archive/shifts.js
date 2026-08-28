@@ -400,7 +400,7 @@ window.deleteShift = async () => {
     renderShifts();
 
     // Background cloud delete
-    supabase.from('brigade_shifts').delete().eq('id', myShift.id).catch(err => {
+    Promise.resolve(supabase.from('brigade_shifts').delete().eq('id', myShift.id)).catch(err => {
         console.error('[Shifts] Delete failed in background:', err);
     });
 };

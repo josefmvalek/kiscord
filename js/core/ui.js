@@ -334,33 +334,33 @@ export function renderErrorState({ message = 'Něco se nepovedlo...', onRetry = 
 export function renderSkeletonLoader({ type = 'channel', count = 3 } = {}) {
     if (type === 'channel') {
         return `
-            <div class="p-4 md:p-6 space-y-6 w-full animate-fade-in">
+            <div class="p-4 md:p-6 space-y-6 w-full kiscord-skeleton-container animate-fade-in select-none">
                 <!-- Header skeleton -->
                 <div class="flex items-center justify-between pb-4 border-b border-[var(--border-subtle)]">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-2xl kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                    <div class="flex items-center gap-3.5">
+                        <div class="w-11 h-11 rounded-2xl kiscord-skeleton kiscord-skeleton-shimmer shadow-sm"></div>
                         <div class="space-y-2">
-                            <div class="w-32 h-4 rounded-md kiscord-skeleton kiscord-skeleton-shimmer"></div>
-                            <div class="w-48 h-3 rounded-md kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                            <div class="w-36 h-4 rounded-lg kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                            <div class="w-52 h-3 rounded-md kiscord-skeleton kiscord-skeleton-shimmer opacity-70"></div>
                         </div>
                     </div>
-                    <div class="w-24 h-8 rounded-xl kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                    <div class="w-28 h-9 rounded-xl kiscord-skeleton kiscord-skeleton-shimmer shadow-sm"></div>
                 </div>
                 <!-- Grid Cards skeleton -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     ${Array.from({ length: count }).map(() => `
                         <div class="kiscord-skeleton-card">
                             <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-xl kiscord-skeleton kiscord-skeleton-shimmer"></div>
-                                <div class="flex-1 space-y-1.5">
-                                    <div class="w-3/4 h-3.5 rounded kiscord-skeleton kiscord-skeleton-shimmer"></div>
-                                    <div class="w-1/2 h-2.5 rounded kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                                <div class="w-9 h-9 rounded-xl kiscord-skeleton kiscord-skeleton-shimmer flex-shrink-0"></div>
+                                <div class="flex-1 space-y-1.5 min-w-0">
+                                    <div class="w-3/4 h-3.5 rounded-md kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                                    <div class="w-1/2 h-2.5 rounded-md kiscord-skeleton kiscord-skeleton-shimmer opacity-70"></div>
                                 </div>
                             </div>
-                            <div class="w-full h-16 rounded-xl kiscord-skeleton kiscord-skeleton-shimmer mt-2"></div>
-                            <div class="flex justify-between items-center mt-2 pt-2 border-t border-[var(--border-subtle)]">
-                                <div class="w-20 h-3 rounded kiscord-skeleton kiscord-skeleton-shimmer"></div>
-                                <div class="w-12 h-6 rounded-lg kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                            <div class="w-full h-20 rounded-xl kiscord-skeleton kiscord-skeleton-shimmer mt-1"></div>
+                            <div class="flex justify-between items-center mt-2 pt-2.5 border-t border-[var(--border-subtle)]">
+                                <div class="w-24 h-3 rounded-md kiscord-skeleton kiscord-skeleton-shimmer opacity-60"></div>
+                                <div class="w-14 h-6 rounded-lg kiscord-skeleton kiscord-skeleton-shimmer"></div>
                             </div>
                         </div>
                     `).join('')}
@@ -371,17 +371,17 @@ export function renderSkeletonLoader({ type = 'channel', count = 3 } = {}) {
 
     if (type === 'list') {
         return `
-            <div class="p-4 space-y-3 w-full animate-fade-in">
+            <div class="p-4 space-y-3 w-full kiscord-skeleton-container animate-fade-in select-none">
                 ${Array.from({ length: count }).map(() => `
-                    <div class="p-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex items-center justify-between gap-4">
-                        <div class="flex items-center gap-3 min-w-0 flex-1">
+                    <div class="p-4 rounded-2xl bg-[var(--luxe-glass-bg,var(--bg-secondary))] border border-[var(--luxe-glass-border,var(--border-subtle))] flex items-center justify-between gap-4 shadow-sm">
+                        <div class="flex items-center gap-3.5 min-w-0 flex-1">
                             <div class="kiscord-skeleton-avatar kiscord-skeleton-shimmer flex-shrink-0"></div>
                             <div class="space-y-1.5 flex-1 min-w-0">
-                                <div class="w-1/2 h-3.5 rounded kiscord-skeleton kiscord-skeleton-shimmer"></div>
-                                <div class="w-1/3 h-2.5 rounded kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                                <div class="w-1/2 h-3.5 rounded-md kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                                <div class="w-1/3 h-2.5 rounded-md kiscord-skeleton kiscord-skeleton-shimmer opacity-70"></div>
                             </div>
                         </div>
-                        <div class="w-16 h-7 rounded-xl kiscord-skeleton kiscord-skeleton-shimmer flex-shrink-0"></div>
+                        <div class="w-16 h-8 rounded-xl kiscord-skeleton kiscord-skeleton-shimmer flex-shrink-0"></div>
                     </div>
                 `).join('')}
             </div>
@@ -389,12 +389,12 @@ export function renderSkeletonLoader({ type = 'channel', count = 3 } = {}) {
     }
 
     return `
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4 animate-fade-in">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4 kiscord-skeleton-container animate-fade-in select-none">
             ${Array.from({ length: count }).map(() => `
                 <div class="kiscord-skeleton-card">
                     <div class="w-full h-32 rounded-xl kiscord-skeleton kiscord-skeleton-shimmer mb-2"></div>
-                    <div class="w-3/4 h-4 rounded kiscord-skeleton kiscord-skeleton-shimmer"></div>
-                    <div class="w-1/2 h-3 rounded kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                    <div class="w-3/4 h-4 rounded-md kiscord-skeleton kiscord-skeleton-shimmer"></div>
+                    <div class="w-1/2 h-3 rounded-md kiscord-skeleton kiscord-skeleton-shimmer opacity-70"></div>
                 </div>
             `).join('')}
         </div>

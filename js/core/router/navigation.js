@@ -162,12 +162,19 @@ export function switchChannel(channelId, push = true, keepServer = false) {
     }
 
     const container = document.getElementById("messages-container");
+    let skeletonTimer = null;
+
     if (container) {
-        if (typeof window.renderSkeletonLoader === 'function') {
-            container.innerHTML = window.renderSkeletonLoader({ type: 'channel', count: 6 });
-        } else {
-            container.innerHTML = "";
-        }
+        // Soften previous content during transition instead of harsh instant wipe
+        container.classList.add('channel-content-fading');
+        container.classList.remove('channel-content-enter');
+
+        // Only display skeleton if module loading takes longer than 180ms (slow network/cold cache)
+        skeletonTimer = setTimeout(() => {
+            if (typeof window !== 'undefined' && typeof window.renderSkeletonLoader === 'function' && container && container.classList?.contains('channel-content-fading')) {
+                container.innerHTML = window.renderSkeletonLoader({ type: 'channel', count: 6 });
+            }
+        }, 180);
     }
 
     // Lazy load channel specific dataset before mounting
@@ -191,9 +198,21 @@ export function switchChannel(channelId, push = true, keepServer = false) {
         if (channelId === 'nutrition') l.ensureNutritionData?.();
     }).catch(e => console.warn('[Loaders] Lazy data loading warning:', e));
 
-    if (container) {
-        mountChannelModule(channelId, container);
-    }
+    const performMount = async () => {
+        if (!container) return;
+        try {
+            await mountChannelModule(channelId, container);
+        } finally {
+            if (skeletonTimer) clearTimeout(skeletonTimer);
+            container.classList.remove('channel-content-fading');
+            container.classList.add('channel-content-enter');
+            setTimeout(() => {
+                container.classList.remove('channel-content-enter');
+            }, 200);
+        }
+    };
+
+    performMount();
 
     import('../../domains/system/ambient-presence.js').then(m => m.broadcastMyPresence?.(channelId)).catch(() => {});
 

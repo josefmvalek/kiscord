@@ -1,5 +1,4 @@
-
-import { triggerHaptic } from '@core/utils.js';
+import { triggerHaptic, triggerConfetti } from '@core/utils.js';
 
 // --- CONFESSION LOGIC ---
 

@@ -13,9 +13,11 @@ vi.mock('../../js/core/supabase.js', () => ({
       eq: vi.fn().mockReturnThis(),
       or: vi.fn().mockReturnThis(),
       order: vi.fn().mockImplementation(function() {
-        return Object.assign(Promise.resolve({ data: [], error: null }), {
-          order: vi.fn().mockResolvedValue({ data: [], error: null })
+        const p = Promise.resolve({ data: [], error: null });
+        const chain = Object.assign(p, {
+          order: vi.fn().mockImplementation(() => chain)
         });
+        return chain;
       })
     })),
     channel: vi.fn(() => ({
@@ -44,6 +46,10 @@ vi.mock('../../js/core/sound.js', () => ({
 vi.mock('../../js/core/sync.js', () => ({
   notifyPartnerCouponGifted: vi.fn().mockResolvedValue({}),
   notifyPartnerCouponRedeemed: vi.fn().mockResolvedValue({})
+}));
+
+vi.mock('../../js/core/loaders.js', () => ({
+  ensureLoveShopData: vi.fn().mockResolvedValue({})
 }));
 
 import { state } from '../../js/core/state.js';

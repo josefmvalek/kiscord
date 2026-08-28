@@ -1,19 +1,32 @@
 # Kiscord Developer Onboarding & Architecture Guide
 
 > **Comprehensive engineering guide and onboarding reference for Kiscord (Project-K).**  
-> This interactive document guides engineers, architects, and contributors through local setup, system architecture, Supabase database modeling, and developer workflows.
+> This interactive document guides engineers, architects, and contributors through local setup, system architecture, Supabase database modeling, repository contracts, and developer workflows.
 
 ---
 
 ## 1. Project Overview & Context
 
-Kiscord is a highly customized, private **Progressive Web App (PWA)** styled after Discord (dark mode, glassmorphism, channel sidebar, notification chimes, and haptics). It is built for two primary users (**Josef & Klárka**) as a central companion application for daily life.
+Kiscord is a highly customized, private **Progressive Web App (PWA)** styled after Discord (dark mode, glassmorphism, channel sidebar, notification chimes, haptics, and fluid animations). It is built specifically for two primary users (**Josef & Klárka**) as a central companion application for daily life, university studies, couple goals, and fitness.
+
+```mermaid
+graph TD
+    User["Josef & Klárka (Mobile & Desktop PWA)"] --> SPA["Kiscord Client (Vite + Vanilla JS)"]
+    SPA --> SWR["SWR Layer (IndexedDB keyval)"]
+    SPA --> SW["Service Worker (3-Tier Cache)"]
+    SPA --> Router["Lifecycle Router & Module Map"]
+    SPA --> Repos["Domain Repositories (8 Slices)"]
+    Repos --> Supabase["Supabase Backend (PostgreSQL 15+)"]
+    Supabase --> RLS["Row Level Security (RLS)"]
+    Supabase --> Realtime["Realtime WebSockets"]
+    SPA <--> WebRTC["WebRTC Intimacy P2P Channel (<10ms)"]
+```
 
 ### Core Functional Domains
 1. **Daily Routine & Health**: Hydration tracker (8 droplets), sleep logging with active session timers, mood tracking with reactive SVG sunflowers, and daily notes.
-2. **University Studies (VUT FIT & Dorm Life)**: Timetables with room hints, WIS points tracker, assignment deadlines, floor laundry room machine bookings, room packing checklist, and personal finances.
-3. **Fitness Ecosystem (Gym Tracker)**: 15-module gym tracker featuring a floating active workout HUD, rest timer with sound/haptics, 100+ animated GIF exercises, 1RM progression charts, anatomical muscle volume heatmaps, and body measurement tracking.
-4. **Relationship, Dreams & Memories**: Couple coupon shop redeemable with Love Coins, interactive date map (Leaflet), shared bucket list, photo timeline, and time-locked message capsules.
+2. **University Studies (VUT FIT & Dorm Life)**: Timetables with room hints, WIS points tracker, assignment deadlines, floor laundry room machine bookings, room packing checklist, personal finances, and Matura exam flashcards.
+3. **Fitness Ecosystem (Gym Tracker & Calendar 2.0)**: 15-module gym tracker featuring a floating active workout HUD, rest timer with sound/haptics, 100+ animated GIF exercises, 1RM progression charts, anatomical muscle volume heatmaps, body measurement tracking, and unified calendar synergy.
+4. **Relationship, Dreams & Memories**: Couple coupon shop redeemable with Love Coins, interactive date map (Leaflet), shared bucket list, photo timeline, time-locked message capsules, and partner radar countdowns.
 5. **Entertainment & Arcade**: Media library with TMDB integration, mutual match discovery (*Spolu-seznam*), dedicated movie/series/game Tinder Matchers, and two-player Arcade Hub (Draw Duel, Couple Quizzes, Who Is More Likely To?, Photo Puzzle, Tetris War).
 
 ---
@@ -28,8 +41,7 @@ Setting up a fresh development environment takes under 5 minutes.
 |---|---|---|
 | **Node.js** | `>= 20.0.0` (LTS) | JavaScript runtime environment |
 | **npm** | `>= 10.0.0` | Package and script manager |
-| **Python** | `>= 3.10` | Documentation and md-document tooling |
-| **Modern Browser** | Chrome / Edge / Safari / Firefox | Testing PWA and View Transitions API |
+| **Modern Browser** | Chrome / Edge / Safari / Firefox | Testing PWA, IndexedDB, and View Transitions API |
 
 ### Setup Commands
 
@@ -44,7 +56,7 @@ npm install
 # 3. Start local development server (Vite)
 npm run dev
 
-## 4. Run test suites & type check
+# 4. Run test suites & type check
 npm run test:run
 npm run typecheck
 ```
@@ -53,11 +65,11 @@ npm run typecheck
 > The development server runs on `http://localhost:5173`. Thanks to Vite Hot Module Replacement (HMR), edits to JavaScript, CSS, and HTML are reflected instantly.
 
 ### Verification Checklist
-- [ ] Dev server is running on `http://localhost:5173` without terminal or browser console errors.
-- [ ] All 19 test suites (131 tests) pass cleanly via `npm run test:run`.
-- [ ] Static type check passes with 0 errors via `npm run typecheck`.
-- [ ] Navigating to the page renders the Discord-themed dashboard and sidebar.
-- [ ] DevTools $\rightarrow$ Application confirms the Service Worker is registered and IndexedDB (`kiscord_db`) holds cached state.
+- [x] Dev server is running on `http://localhost:5173` without terminal or browser console errors.
+- [x] **All 66 test suites (464 tests) pass cleanly** via `npm run test:run`.
+- [x] Static type check passes with 0 errors via `npm run typecheck`.
+- [x] Navigating to the page renders the Discord-themed dashboard and collapsible sidebar.
+- [x] DevTools $\rightarrow$ Application confirms the Service Worker is registered and IndexedDB (`kiscord_db`) holds cached state.
 
 ---
 
@@ -68,13 +80,14 @@ Kiscord intentionally avoids heavy frontend frameworks (React, Angular). Instead
 | Layer | Technology | Rationale |
 |---|---|---|
 | **Core Frontend** | Vanilla JavaScript (ES6+ Modules) | Zero framework runtime cost, instant DOM manipulation, complete memory control |
+| **Data Access** | SWR Repository Layer (`BaseRepository`) | Local-first instant UI rendering backed by IndexedDB cache + background sync |
 | **Type Safety** | JSDoc + Supabase TypeScript Types | Compile-time validation without bundling step (`tsc -p jsconfig.json`) |
 | **Styling & Theming** | CSS Variables + Tailwind CSS | Authentic Discord Dark theme, 7 switchable themes, glassmorphism blur effects |
 | **Build Tooling** | Vite 6 | Lightning-fast startup, ES module dynamic code splitting, rapid HMR |
 | **Backend & DB** | Supabase (PostgreSQL 15+) | Row Level Security (RLS), Realtime WebSockets, Storage buckets, PL/pgSQL RPCs |
 | **Local Storage** | IndexedDB (`js/core/idb.js`) | Asynchronous, non-blocking, multi-gigabyte capacity for state & binary assets |
 | **PWA & Offline** | Service Worker + Cache API | 3-tier caching hierarchy, zero-data-loss offline sync queue |
-| **Unit Testing** | Vitest + Happy-DOM | High-speed in-memory testing without heavy browser process overhead |
+| **Unit Testing** | Vitest + Happy-DOM | High-speed in-memory testing (66 suites, 464 tests in <20s) |
 | **E2E Testing** | Playwright | Multi-browser end-to-end automation for critical user journeys |
 | **Hosting & CI/CD** | Vercel | Instant deployments and branch previews on every push |
 
@@ -82,7 +95,7 @@ Kiscord intentionally avoids heavy frontend frameworks (React, Angular). Instead
 
 ## 4. Core Architecture & Application Lifecycle
 
-The application operates as a **Single Page Application (SPA)** with dynamic on-demand module loading.
+The application operates as a **Single Page Application (SPA)** with dynamic on-demand module loading and standardized component lifecycle management.
 
 ```
                     ┌────────────────────────┐
@@ -91,16 +104,16 @@ The application operates as a **Single Page Application (SPA)** with dynamic on-
                                 │ (Initial Load)
                                 ▼
                     ┌────────────────────────┐
-                    │     js/app.js Init     │
+                    │     js/main.js Init    │
                     └───────────┬────────────┘
                                 │
         ┌───────────────────────┼───────────────────────┐
         ▼                       ▼                       ▼
 ┌───────────────┐       ┌───────────────┐       ┌───────────────┐
 │  js/core/     │       │  js/core/     │       │  js/core/     │
-│  auth.js      │       │  state.js     │       │  router.js    │
+│  auth.js      │       │  state.js     │       │  router/      │
 └───────┬───────┘       └───────┬───────┘       └───────┬───────┘
-        │                       │ (IndexedDB Cache)     │
+        │                       │ (IndexedDB SWR Cache) │
         │                       ▼                       ▼
         │               ┌───────────────┐       ┌───────────────┐
         │               │ js/core/      │       │ Dynamic       │
@@ -111,78 +124,77 @@ The application operates as a **Single Page Application (SPA)** with dynamic on-
                                 ▼
                     ┌────────────────────────┐
                     │  Render Channel to DOM │
-                    └───────────────┘────────┘
+                    └────────────────────────┘
 ```
 
-### 1. State Management (`js/core/state.js`)
-- Single global reactive container `state`.
-- **Pub/Sub Event Bus (`stateEvents`)**: UI modules register listeners (e.g. `stateEvents.on('health', callback)`).
-- **High-Capacity Cache Persistence**: Automatically saves state snapshots asynchronously to **IndexedDB** (`kiscord_db` $\rightarrow$ `keyval` store).
-- **SWR (Stale-While-Revalidate)**: Renders cached data immediately while fetching fresh records in the background (`initializeState`).
+### 1. Data Access & Repositories Layer (`js/core/repositories/`)
+Standardized repository pattern abstracting Supabase API interactions and SWR caching:
+- `BaseRepository.js`: Core CRUD operations (`getAll`, `getById`, `save`, `insert`, `update`, `delete`), SWR cache management (`getWithSWR`, `getAllWithSWR`), and cache invalidation.
+- `GymRepository.js`: Exercises catalog (24h TTL cache), workout logs, and PRs.
+- `HealthRepository.js`: Daily hydration, sleep, mood, and notes.
+- `FinanceRepository.js`: Brno monthly expenses and budget entries.
+- `MediaRepository.js`: Movies, TV series, games, and shared watchlist.
+- `CoupleRepository.js`: Love Shop coupons, Love Letters, Daily Questions, and Confessions.
+- `UniversityRepository.js`: School subjects, deadlines, timetable items, and Matura flashcards.
+- `EntertainmentRepository.js`: Gamified achievements, co-op quests, and custom tierlists.
+- `SystemRepository.js`: Release changelogs and system settings.
 
-### 2. Navigation & Router (`js/core/router.js`)
+### 2. State Management & Reactive Signals (`js/core/state.js` & `js/core/signals.js`)
+- Single reactive state container `state`.
+- **Pub/Sub Event Bus (`stateEvents`)**: UI modules subscribe to domain channels (e.g. `stateEvents.on('gym', callback)`).
+- **Reactive Signals Engine**: Ultra-lightweight reactive primitives (`createSignal`, `createEffect`, `createMemo`) for fine-grained DOM updates without re-renders.
+
+### 3. Module Lifecycle & Router (`js/core/router/`)
 - `switchChannel(channelId)` orchestrates:
-  1. Invoking cleanup callbacks to terminate open WebSockets and timers.
-  2. Pushing records to `history.pushState` for browser navigation.
-  3. Triggering lazy data fetchers in `loaders.js`.
-  4. Dynamically importing module chunks via `import()`.
-  5. Rendering UI into `#main-content` using the **View Transitions API**.
-  6. Closing the mobile drawer automatically.
-
-### 3. Synchronization & Offline Queue (`js/core/offline.js`)
-- Safe mutation wrappers: `safeUpsert()`, `safeInsert()`, and `safeDelete()`.
-- If offline, mutations are queued in `kiscord_sync_queue` (persisted in IndexedDB).
-- When `window.addEventListener('online')` fires, the queue is processed sequentially and pushed to Supabase.
+  1. Invoking cleanup callbacks (`destroy()`) to prevent event listener and timer leaks.
+  2. Pushing state to browser history (`history.pushState`).
+  3. Dynamic asynchronous loading via `import()`.
+  4. Rendering UI with native **View Transitions API**.
+  5. Automatic responsive drawer closing on mobile.
 
 ---
 
-## 5. Channel Catalog (55+ Channels Across 7 Categories)
+## 5. Major Feature Engines
 
-### Category 1: 📌 Pinned (Always at Top)
-- **`#dashboard`** (`dashboard.js`): Personal overview, Sunflower mood sync, hydration (8 water droplets), sleep timer and wake tracker, Fact of the Day, and quick notes.
-- **`#kalendář`** (`calendar.js`): Monthly calendar combining dates, university milestones, and memory highlights with mood heatmap shading.
+### 📅 Calendar 2.0 Engine (`js/domains/lifestyle/calendar/`)
+- **24-Hour Week Grid (`week-view.js`)**: Interactive 24-hour visual time matrix with full drag-and-drop event manipulation.
+- **Dynamic Collision Resolver (`time-engine.js`)**: Automatic slot assignment and offset calculation for overlapping events.
+- **Fit-to-Viewport Month Grid (`month-view.js`)**: Responsive CSS Grid layout with cell badges for gym workouts, study deadlines, dates, and mood indicators.
+- **Agenda View Mode (`agenda-view.js`)**: Linear chronological list grouping past, today's, and future events with sticky headers.
+- **Quick Event Popover (`quick-popover.js`)**: Instant event preview on click with one-tap status toggles and delete actions.
+- **Natural Language Parsing Quick-Add (`nlp-quick-add.js`)**: Parses queries like *"Zítra v 18:00 večeře"* into structured events.
+- **Partner Radar & Date Countdown (`partner-radar.js`)**: Live visual countdown to the nearest shared couple date.
+- **Meteorological Forecasts (`weather.js`)**: Integrated seasonal temperature and weather forecasts per date.
+- **ICS Calendar Sync (`ics-sync.js`)**: Export calendar events to standard iCalendar format (.ics) for Apple/Google Calendar.
 
-### Category 2: 🎓 VUT FIT & KOLEJE (University & Dorm Life)
-- **`#rozvrh`** (`schedule.js`): Weekly timetable, campus building room hints, and joint free slot calculator.
-- **`#studijní-plán`** (`studyPlanner.js`): WIS point tracking, credit requirements, and exam countdowns.
-- **`#koleje-brno`** (`dormHub.js`): Floor laundry machine booking tracker, dorm packing checklist, and cafeteria menus.
-- **`#finance`** (`financeTracker.js`): Personal Brno budget + savings goal piggy bank (*Kasička*).
-- **`#počítač`** (`laptopComparison.js`): Computer specification comparison guide for CS students.
-
-### Category 3: 🌿 ZDRAVÍ & FITNESS
-- **`#posilovna`** (`gym/`): 15 submodules (active HUD, rest timer, 100+ animated GIF exercises, 1RM progression charts, muscle volume heatmap, couple gym streak, annual wrapped).
-- **`#návyky`** (`habits.js`): Daily ritual tracking with Love Coins rewards.
-- **`#regenerace`** (`regenerace/`): Evidence-based supplement guide and recovery science.
-
-### Category 4: 💖 NÁŠ SVĚT & PŘÍBĚH
-- **`#obchůdek`** (`loveShop.js`): Couple coupon shop and redeemed voucher inventory pantry.
-- **`#plánovač-rande`** (`map.js`): Interactive Leaflet map with pinned favorite date spots and routes.
-- **`#bucket-list`** (`bucketlist.js`): Shared dream bucket list with priorities and photo uploads.
-- **`#společné-questy`** (`quests.js`): Cooperative missions and milestones.
-- **`#denní-otázky`** (`dailyQuestions.js`) & **`#témata`** (`topics.js`): Daily conversational prompts and deep-talk card decks.
-- **`#timeline`** (`timeline.js`): Photo memory timeline with lightbox gallery.
-- **`#dopisy`** (`letters.js`): Time-locked message capsules for future anniversaries.
-- **`#achievementy`** (`achievements.js`): Gamified relationship trophies.
-
-### Category 5: 🎮 ZÁBAVA & MÉDIA
-- **`#knihovna`** (`library.js`): Movies, series, and games catalogue with TMDB search, game modes (Staples vs Backlog), and magnet links.
-- **`#watchlist`** (`watchlist.js`): Mutual matches (*Spolu-seznam*), personal wishlists, **Tinder Matcher**, and **Dice of Chance**.
-- **`#gamesky`** (`gamesHub.js`): Central Arcade Hub unifying Draw Duel, Who Is More Likely To?, Couple Quizzes, Photo Puzzle, Tetris War Tracker, Tier Lists, and Fact Encyclopedia.
-- **`#music-bot`** (`static.js`): Shared playlist and web audio player.
-
-### Category 6: 📦 ARCHIV (Default Collapsed)
-- **`#rakousko-kasička`** (`kasicka.js`) & **`#rakousko-info`** (`austriaInfo.js`): Alpine work earnings archive and seasonal work guidelines.
-- **`#plánovač-směn`** (`shifts.js`) & **`#rakouská-němčina`** (`austrianGerman.js`): Work shift scheduler and dialect phrasebook.
-- **`#matura-*`** (`matura.js`): High school graduation study tracker and knowledge base (Czech literature, IT systems, Pomodoro timer).
-
-### Category 7: ⚙️ SYSTÉM & INFO (Default Collapsed)
-- **`#statistiky`** (`stats.js`): Relationship data analytics.
-- **`#nastavení`** (`settings.js`): 7 visual themes switcher (Default Dark, Light, Valentines, Christmas, Tetris, Forest, Gold), audio/haptics, and cache tools.
-- **`#changelog`** (`changelog.js`): Release version history.
+### 🏋️ Gym Tracker & Active Workout HUD (`js/domains/fitness/gym/`)
+- **Floating Active Workout HUD (`active-workout/`)**: Persistent overlay during workouts with exercise progress, set logging, and quick notes.
+- **Smart Rest Interval Timer**: Countdown timer with customizable intervals, audio chimes, and haptic feedback.
+- **1RM Progression & Volume Analytics (`analytics.js`)**: Automatic One Rep Max estimation (Brzycki formula) and muscle group volume heatmaps.
+- **Personal Records (PR) Engine**: Automatic detection and celebratory animation upon achieving new personal bests.
 
 ---
 
-## 6. Database Schema & Security (Supabase)
+## 6. Architecture Decision Records (ADR 0001–0010)
+
+Kiscord follows the Michael Nygard / MADR standard for architectural documentation:
+
+| ADR | Title | Status | Date | Core Impact |
+|---|---|---|---|---|
+| [ADR-0001](adr/0001-vanilla-js-swr-architecture.md) | Pure Vanilla JS Architecture with Dynamic ES Modules and SWR Cache | **Accepted** | 2026-08-21 | Zero-framework runtime, instant local loading |
+| [ADR-0002](adr/0002-supabase-postgresql-rls.md) | Supabase PostgreSQL Backend with Row Level Security (RLS) | **Accepted** | 2026-08-22 | Multi-tenant security for private couple app |
+| [ADR-0003](adr/0003-domain-store-slices.md) | Modularize State Management into Domain Store Slices & Reactive Bus | **Accepted** | 2026-08-23 | Domain separation of concerns |
+| [ADR-0004](adr/0004-module-lifecycle-router-decoupling.md) | Standardized Module Lifecycle Interface & Router Decoupling | **Accepted** | 2026-08-23 | Elimination of memory and event listener leaks |
+| [ADR-0005](adr/0005-resilient-offline-sync-conflict-detection.md) | Conflict-Aware Offline Sync Queue with Exponential Backoff | **Accepted** | 2026-08-23 | Guaranteed data persistence in low-connectivity |
+| [ADR-0006](adr/0006-reactive-signals-engine.md) | Lightweight Reactive Signals Engine (~60 LOC Vanilla JS) | **Accepted** | 2026-08-23 | Fine-grained reactive DOM binding |
+| [ADR-0007](adr/0007-webrtc-peer-to-peer-channel.md) | WebRTC Peer-to-Peer Direct Intimacy Channel (Sub-10ms) | **Accepted** | 2026-08-23 | Low-latency live couple interactions |
+| [ADR-0008](adr/0008-client-side-aes-gcm-encrypted-backup.md) | Client-Side AES-GCM Encrypted Backup & Restore (.kiscord) | **Accepted** | 2026-08-23 | End-to-end encrypted manual backups |
+| [ADR-0009](adr/0009-discord-slash-commands-voice-logging.md) | Discord Slash Commands & Smart Voice Logging Engine | **Accepted** | 2026-08-23 | Natural language and voice input processing |
+| [ADR-0010](adr/0010-database-performance-and-unified-bootstrap.md) | Database Performance Optimization & Unified Dashboard Bootstrap | **Accepted** | 2026-08-26 | Compound indexes, optimized RPCs, single query bootstrap |
+
+---
+
+## 7. Database Schema & Security (Supabase)
 
 Database operations run on PostgreSQL 15+ in Supabase with strict **Row Level Security (RLS)** enforcement.
 
@@ -199,78 +211,49 @@ Database operations run on PostgreSQL 15+ in Supabase with strict **Row Level Se
         ┌────────────────────────┼────────────────────────┐
         ▼                        ▼                        ▼
 ┌──────────────┐         ┌──────────────┐         ┌──────────────┐
-│ health_data  │         │ gym_workouts │         │app_finances  │
+│ health_data  │         │   gym_logs   │         │ app_finances │
 └──────────────┘         └───────┬──────┘         └──────────────┘
                                  │
                                  ▼
                          ┌──────────────┐
-                         │   gym_sets   │
+                         │   gym_prs    │
                          └──────────────┘
 ```
 
 ### Security Archetypes:
 1. **Private Personal Tables** (`app_finances`, `health_data`, `gym_body_measurements`):
    - Policy: `auth.uid() = user_id`. User records remain completely isolated.
-2. **Shared Couple Tables** (`library_content`, `timeline_events`, `planned_dates`, `dorm_checklist`):
+2. **Shared Couple Tables** (`library_content`, `timeline_events`, `planned_dates`, `dorm_checklist`, `user_coupons`):
    - Policy: `authenticated` users have full read and write access.
 
 ---
 
-## 7. Developer Cookbook & Common Recipes
+## 8. Developer Cookbook & Common Recipes
 
-### Recipe A: Adding a New Channel / Feature
-
-1. Create `js/modules/myFeature.js`:
+### Recipe A: Adding a New Repository Method
+1. Open the corresponding domain repository in `js/core/repositories/`.
+2. Wrap remote queries with `getWithSWR` or `getAllWithSWR` to benefit from automatic IndexedDB caching and TTL invalidation:
    ```javascript
-   import { state, stateEvents } from '../core/state.js';
-   import { safeUpsert } from '../core/offline.js';
-
-   export async function renderMyFeature() {
-       const root = document.getElementById('main-content');
-       root.innerHTML = `
-           <div class="channel-header">
-               <h2><i class="fa-solid fa-star text-accent"></i> My New Feature</h2>
-           </div>
-           <div class="card p-4">Feature content goes here...</div>
-       `;
+   async getCustomData(options = {}) {
+       return this.getWithSWR(
+           'custom_data_cache_key',
+           async () => {
+               const { data, error } = await supabase.from('my_table').select('*');
+               if (error) throw error;
+               return data || [];
+           },
+           options
+       );
    }
    ```
 
-2. Register in `js/core/router.js`:
-   ```javascript
-   export const moduleMap = {
-       // ... existing modules ...
-       'my-feature': () => import('../modules/myFeature.js'),
-   };
-   ```
-
-3. Add channel definition to `channelCategories` in `js/core/router.js`.
-
-### Recipe B: Creating a Database Migration
-
-1. Create a migration file in `supabase/migrations/YYYYMMDD_feature_name.sql`:
-   ```sql
-   CREATE TABLE public.my_custom_table (
-       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-       user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-       title TEXT NOT NULL,
-       created_at TIMESTAMPTZ DEFAULT NOW()
-   );
-
-   ALTER TABLE public.my_custom_table ENABLE ROW LEVEL SECURITY;
-
-   CREATE POLICY "Allow authenticated" ON public.my_custom_table
-       FOR ALL TO authenticated USING (true) WITH CHECK (true);
-   ```
-
-### Recipe C: Running Tests
-
+### Recipe B: Running Verification Tests
 ```bash
-# Run unit and integration tests
+# Run all 66 unit/integration test suites
 npm run test:run
 
-# Run interactive test watcher
-npm test
+# Run TypeScript type check
+npm run typecheck
 
 # Run Playwright E2E tests
 npm run test:e2e
@@ -278,30 +261,17 @@ npm run test:e2e
 
 ---
 
-## 8. Troubleshooting & Debugging Guide
-
-> [!IMPORTANT]
-> **Common developer issues and fixes:**
+## 9. Troubleshooting & Debugging Guide
 
 1. **Client displays stale build after deployment**:
    - Increment `CACHE_NAME` in `public/sw.js`.
    - In the application, open `#nastavení` and trigger **"Clear Cache and Reload"**.
-
 2. **Offline queue failed to synchronize**:
    - Inspect `localStorage.getItem('kiscord_sync_queue')` in DevTools.
    - Check console logs for database constraint errors.
-
 3. **RLS permission denied (403)**:
    - Ensure the user is logged in with a valid session via `supabase.auth.getSession()`.
    - Verify that an active policy exists on the table for role `authenticated`.
 
 ---
-
-## 9. Role-Specific Guidance
-
-- **👶 Junior Developer**: Review `tests/unit/` to understand module APIs and start with UI component tweaks.
-- **🧑‍💻 Senior Architect**: Inspect database indexes in `supabase/migrations/` and enforce cleanup hook discipline in `router.js`.
-- **🤝 Contributor**: Always verify that `npm run test:run` passes before submitting PRs, following conventional commits (`feat:`, `fix:`, `docs:`).
-
----
-*Documentation compiled for project Kiscord.*
+*Documentation compiled for project Kiscord (Project-K).*

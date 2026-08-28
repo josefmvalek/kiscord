@@ -5,17 +5,25 @@ import { showNotification, showConfirmDialog } from '@core/theme.js';
 import { renderModal, renderInputGroup } from '@core/ui.js';
 import { getCategoryEmoji, getExerciseThumbnailHtml, openExerciseGuideModal } from '../exercises.js';
 import { startWorkout } from '../active-workout/index.js';
+import { renderSplitOverviewBarHtml } from '../splits.js';
 
 export function renderTemplatesTab() {
     const templates = state.gymTemplates || [];
+    const splitBarHtml = renderSplitOverviewBarHtml();
     
     return `
         <div class="space-y-6">
+            <!-- Training Split Overview Strip -->
+            ${splitBarHtml}
+
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <h2 class="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2 leading-none">
-                    <i class="fas fa-list-ul text-[#faa61a]"></i> Tréninkové plány
+                    <i class="fas fa-list-ul text-[#faa61a]"></i> Tréninkové plány & Šablony
                 </h2>
                 <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                    <button onclick="window.Gym.openSplitManagerModal()" class="px-3 sm:px-3.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-black text-xs uppercase tracking-wider transition flex items-center gap-1.5 flex-1 sm:flex-none justify-center">
+                        <i class="fas fa-calendar-alt text-xs text-amber-400"></i> Můj Split
+                    </button>
                     <button onclick="window.Gym.startFreeWorkout()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-black text-xs uppercase tracking-wider transition flex items-center gap-1.5 shadow-lg shadow-amber-500/15 flex-1 sm:flex-none justify-center">
                         <i class="fas fa-bolt text-xs"></i> Volný trénink
                     </button>
@@ -32,6 +40,7 @@ export function renderTemplatesTab() {
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
                 ${templates.length === 0 ? `
                     <div class="col-span-full text-center py-16 bg-white/[0.01] border border-dashed border-white/10 rounded-3xl">
                         <span class="text-5xl block mb-4">🦝</span>

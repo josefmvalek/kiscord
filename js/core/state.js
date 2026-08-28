@@ -107,12 +107,22 @@ export async function initializeState() {
 
     const revalidate = async () => {
         if (!navigator.onLine && hasCached) return;
+        return syncWithSupabase();
+    };
 
-        const today = new Date().toISOString().split('T')[0];
+    if (hasCached) {
+        revalidate();
+    } else {
+        await syncWithSupabase();
+    }
+}
 
-        try {
-            console.log("[State] Revalidating state from Supabase...");
-            const [
+export async function syncWithSupabase() {
+    const today = new Date().toISOString().split('T')[0];
+
+    try {
+        console.log("[State] Revalidating state from Supabase...");
+        const [
                 { data: healthHistory },
                 { data: todayDates },
                 { data: tetrisData },
@@ -254,14 +264,6 @@ export async function initializeState() {
             console.error("Critical Revalidation Error:", e);
             state.loadError = true;
         }
-    };
-
-    if (hasCached) {
-        revalidate();
-        return Promise.resolve();
-    } else {
-        return revalidate();
-    }
 }
 
 /**

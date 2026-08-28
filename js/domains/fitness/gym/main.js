@@ -19,7 +19,8 @@ import {
     handleWorkoutPhotoSelected, clearWorkoutPhoto, openPhotoLightbox,
     toggleWorkoutChecklistItem, moveExerciseUp, moveExerciseDown,
     removeExerciseFromActiveWorkout, openSwapExerciseModal, swapExercise,
-    openExerciseNotesModal, saveExerciseNotes, fillSetsFromLastHistory, cycleSetRir
+    openExerciseNotesModal, saveExerciseNotes, fillSetsFromLastHistory, cycleSetRir,
+    addSetToActiveExercise, removeSetFromActiveExercise
 } from './activeWorkout.js';
 
 import {
@@ -40,7 +41,9 @@ import {
     renderExercisesTab, filterTabExercises, filterModalExercises,
     openCreateExerciseModal, saveExercise, openEditExerciseModal,
     saveEditedExercise, deleteExercise, openExerciseGuideModal,
-    getExerciseThumbnailHtml, getCategoryEmoji, applyExercisePreset
+    getExerciseThumbnailHtml, getCategoryEmoji, applyExercisePreset,
+    openExerciseCatalogModal, filterCatalogExercises, setCatalogCategoryFilter,
+    importCatalogExercise
 } from './exercises.js';
 import {
     openPlateCalculatorModal,
@@ -70,6 +73,17 @@ import {
 import {
     openFitnessWrappedModal
 } from './annualWrapped.js';
+import {
+    openSplitManagerModal,
+    onSplitDayRestToggle,
+    applySplitPreset,
+    saveTrainingSplitFromForm,
+    deleteTrainingSplit,
+    shiftActiveSplitDays,
+    startSplitWorkout,
+    getActiveTrainingSplit,
+    getActiveSplitForDay
+} from './splits.js';
 
 import { getActiveWorkout } from './activeWorkout.js';
 
@@ -267,6 +281,10 @@ export function attachWindowGym() {
         getExerciseThumbnailHtml,
         getCategoryEmoji,
         applyExercisePreset,
+        openExerciseCatalogModal,
+        filterCatalogExercises,
+        setCatalogCategoryFilter,
+        importCatalogExercise,
         openEditExerciseModal,
         saveEditedExercise: () => saveEditedExercise(renderGym),
         deleteExercise: (id) => deleteExercise(id, renderGym),
@@ -313,6 +331,19 @@ export function attachWindowGym() {
         saveExerciseNotes: (exIdx, notes) => saveExerciseNotes(exIdx, notes, renderGym),
         fillSetsFromLastHistory: (exIdx) => fillSetsFromLastHistory(exIdx, renderGym),
         cycleSetRir: (exIdx, sIdx) => cycleSetRir(exIdx, sIdx, renderGym),
+        addSetToActiveExercise: (exIdx) => addSetToActiveExercise(exIdx, renderGym),
+        removeSetFromActiveExercise: (exIdx, sIdx) => removeSetFromActiveExercise(exIdx, sIdx, renderGym),
+        addActiveSet: (exIdx) => addSetToActiveExercise(exIdx, renderGym),
+        removeActiveSet: (exIdx, sIdx) => removeSetFromActiveExercise(exIdx, sIdx, renderGym),
+        openSplitManagerModal,
+        onSplitDayRestToggle,
+        applySplitPreset,
+        saveTrainingSplitFromForm,
+        deleteTrainingSplit,
+        shiftActiveSplitDays,
+        startSplitWorkout,
+        getActiveTrainingSplit,
+        getActiveSplitForDay,
         getActiveWorkout,
         renderGym
     };
@@ -322,3 +353,4 @@ export function attachWindowGym() {
 if (typeof window !== 'undefined') {
     attachWindowGym();
 }
+

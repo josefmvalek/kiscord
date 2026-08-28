@@ -1,6 +1,6 @@
 import { state } from '@core/state.js';
 import { supabase } from '@core/supabase.js';
-import { safeInsert } from '@core/offline.js';
+import { safeInsert, safeUpsert } from '@core/offline.js';
 import { triggerHaptic } from '@core/utils.js';
 import { renderNetflixMatcher } from '@domains/entertainment/netflix-matcher.js';
 
@@ -37,6 +37,101 @@ export function handleLiveSearch(query, category) {
 export function startMatcher(cat) {
     triggerHaptic('medium');
     renderNetflixMatcher(cat);
+}
+
+export function getGameStatus(game) {
+    if (!game) return 'máme';
+    const historyStatus = state.watchHistory[game.id]?.status;
+    if (historyStatus === 'seen' || (game.mood_tags || []).includes('dohráno')) {
+        return 'dohráno';
+    }
+    if ((game.mood_tags || []).includes('chceme') || (game.mood_tags || []).includes('wishlist') || (state.watchlist || []).some(w => String(w.id) === String(game.id))) {
+        return 'chceme';
+    }
+    return 'máme';
+}
+
+export async function setGameStatus(itemId, targetStatus, refreshFn) {
+    triggerHaptic('medium');
+    const game = (state.library.games || []).find(g => g.id === itemId);
+    if (!game) return;
+
+    const myId = state.currentUser?.id;
+    let tags = (game.mood_tags || []).filter(t => t !== 'máme' && t !== 'chceme' && t !== 'dohráno' && t !== 'wishlist' && t !== 'backlog');
+
+    if (targetStatus === 'dohráno') {
+        tags.push('dohráno');
+        if (!state.watchHistory[itemId]) {
+            state.watchHistory[itemId] = { status: 'seen', rating: state.ratings[itemId] || 0, date: new Date().toISOString().split('T')[0], reaction: '' };
+        } else {
+            state.watchHistory[itemId].status = 'seen';
+            if (!state.watchHistory[itemId].date) state.watchHistory[itemId].date = new Date().toISOString().split('T')[0];
+        }
+        state.watchlist = (state.watchlist || []).filter(w => !(String(w.id) === String(itemId) && w.user_id === myId));
+        
+        try {
+            await supabase.from('library_watchlist').delete().match({ media_id: itemId, added_by: myId });
+        } catch (e) {}
+        
+        try {
+            await safeUpsert('library_ratings', {
+                media_id: itemId,
+                user_id: myId,
+                status: 'seen',
+                seen_date: state.watchHistory[itemId].date,
+                rating: state.watchHistory[itemId].rating || 0
+            });
+        } catch (e) {}
+
+        if (window.showNotification) window.showNotification(`🏆 "${game.title}" přesunuta do: Dohráno!`, 'success');
+    } else if (targetStatus === 'chceme') {
+        tags.push('chceme');
+        if (state.watchHistory[itemId]) {
+            state.watchHistory[itemId].status = 'unseen';
+        }
+        if (!state.watchlist) state.watchlist = [];
+        if (!state.watchlist.some(w => String(w.id) === String(itemId) && w.user_id === myId)) {
+            state.watchlist.push({ id: itemId, type: 'game', user_id: myId });
+            try {
+                await safeInsert('library_watchlist', {
+                    media_id: itemId,
+                    type: 'game',
+                    added_by: myId
+                });
+            } catch (e) {}
+        }
+        try {
+            await supabase.from('library_ratings').delete().match({ media_id: itemId, user_id: myId });
+        } catch (e) {}
+
+        if (window.showNotification) window.showNotification(`🌟 "${game.title}" přesunuta do: Chceme!`, 'success');
+    } else {
+        // 'máme' (default owned)
+        tags.push('máme');
+        if (state.watchHistory[itemId]) {
+            state.watchHistory[itemId].status = 'unseen';
+        }
+        state.watchlist = (state.watchlist || []).filter(w => !(String(w.id) === String(itemId) && w.user_id === myId));
+        try {
+            await supabase.from('library_watchlist').delete().match({ media_id: itemId, added_by: myId });
+        } catch (e) {}
+        try {
+            await supabase.from('library_ratings').delete().match({ media_id: itemId, user_id: myId });
+        } catch (e) {}
+
+        if (window.showNotification) window.showNotification(`🎮 "${game.title}" přesunuta do: Máme!`, 'info');
+    }
+
+    game.mood_tags = tags;
+
+    try {
+        await supabase.from('library_content').update({ mood_tags: tags }).eq('id', itemId);
+    } catch (e) {
+        console.error("Failed to update game status:", e);
+    }
+
+    if (refreshFn) refreshFn('games');
+    else if (typeof window.Library?.renderLibrary === 'function') window.Library.renderLibrary('games');
 }
 
 export async function toggleGameFrequent(itemId, refreshFn) {

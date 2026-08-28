@@ -3,23 +3,38 @@ import { supabase } from '../supabase.js';
 
 export class GymRepository extends BaseRepository {
     constructor() {
-        super('gym_workouts');
+        super('gym_logs');
     }
 
-    async getExercises() {
-        const { data, error } = await supabase
-            .from('gym_exercises')
-            .select('*')
-            .order('name');
-        if (error) throw error;
-        return data || [];
+    /**
+     * Get exercise catalog with SWR caching in IndexedDB
+     * @param {Object} [options={}]
+     */
+    async getExercises(options = {}) {
+        return this.getWithSWR(
+            'all_exercises',
+            async () => {
+                const { data, error } = await supabase
+                    .from('gym_exercises')
+                    .select('*')
+                    .order('name');
+                if (error) throw error;
+                return data || [];
+            },
+            { ttlMs: 1000 * 60 * 60 * 24, ...options } // Cache for 24h by default
+        );
     }
 
-    async getWorkoutHistory(userId, limit = 50) {
+    /**
+     * Get workout history for user or couple
+     * @param {string|null} userId 
+     * @param {number} limit 
+     */
+    async getWorkoutHistory(userId = null, limit = 50) {
         let query = supabase
-            .from('gym_workouts')
-            .select('*, gym_sets(*)')
-            .order('created_at', { ascending: false })
+            .from('gym_logs')
+            .select('*')
+            .order('logged_at', { ascending: false })
             .limit(limit);
 
         if (userId) {
@@ -31,17 +46,31 @@ export class GymRepository extends BaseRepository {
         return data || [];
     }
 
-    async saveWorkoutWithSets(workoutData, sets) {
-        const { data: savedWorkout, error: workoutError } = await this.save(workoutData);
-        if (workoutError) throw workoutError;
+    /**
+     * Get Personal Records (PRs)
+     * @param {string|null} userId 
+     */
+    async getPRs(userId = null) {
+        let query = supabase
+            .from('gym_prs')
+            .select('*');
 
-        if (Array.isArray(sets) && sets.length > 0 && savedWorkout) {
-            const workoutId = savedWorkout[0]?.id || workoutData.id;
-            const preparedSets = sets.map(s => ({ ...s, workout_id: workoutId }));
-            await supabase.from('gym_sets').upsert(preparedSets);
+        if (userId) {
+            query = query.eq('user_id', userId);
         }
 
-        return savedWorkout;
+        const { data, error } = await query;
+        if (error) throw error;
+        return data || [];
+    }
+
+    /**
+     * Save a completed workout log
+     * @param {Object} logData 
+     */
+    async saveLog(logData) {
+        await this.invalidateCache('workout_history');
+        return this.save(logData);
     }
 }
 

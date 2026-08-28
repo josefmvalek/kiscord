@@ -3,7 +3,14 @@ import { state, awardLoveCoinsToCurrentUser } from '@core/state.js';
 import { triggerHaptic, triggerConfetti } from '@core/utils.js';
 import { showNotification } from '@core/theme.js';
 import { renderModal } from '@core/ui.js';
+import { safeUpsert } from '@core/offline.js';
+import { playChime } from '@core/sound.js';
+import { getSelectedCountry } from '../state.js';
 import { selectLocation } from './location-detail.js';
+
+let matcherIndex = 0;
+let matcherLiked = [];
+let matcherDeck = [];
 
 export function openDateMatcher(preferredCategory = 'all') {
     matcherIndex = 0;

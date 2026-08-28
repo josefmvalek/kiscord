@@ -51,7 +51,9 @@ export {
     openExerciseNotesModal,
     saveExerciseNotes,
     fillSetsFromLastHistory,
-    cycleSetRir
+    cycleSetRir,
+    addSetToActiveExercise,
+    removeSetFromActiveExercise
 } from './activeWorkout.js';
 
 export {
@@ -108,7 +110,11 @@ export {
     openExerciseGuideModal,
     getExerciseThumbnailHtml,
     getCategoryEmoji,
-    applyExercisePreset
+    applyExercisePreset,
+    openExerciseCatalogModal,
+    filterCatalogExercises,
+    setCatalogCategoryFilter,
+    importCatalogExercise
 } from './exercises.js';
 
 export {
@@ -168,4 +174,19 @@ export {
     calculateFitnessWrapped,
     openFitnessWrappedModal
 } from './annualWrapped.js';
+
+export {
+    DAYS_OF_WEEK,
+    SPLIT_PRESETS,
+    getActiveTrainingSplit,
+    getActiveSplitForDay,
+    renderSplitOverviewBarHtml,
+    openSplitManagerModal,
+    onSplitDayRestToggle,
+    applySplitPreset,
+    saveTrainingSplitFromForm,
+    deleteTrainingSplit,
+    shiftActiveSplitDays,
+    startSplitWorkout
+} from './splits.js';
 

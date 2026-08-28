@@ -32,7 +32,7 @@ vi.mock('../../js/core/sound.js', () => ({
 
 import { state } from '../../js/core/state.js';
 import { getServerMentionCount, renderServersList } from '../../js/core/servers.js';
-import { getAllSearchableItems, renderPaletteResults } from '../../js/core/commandPalette.js';
+import { getAllSearchableItems, renderPaletteResults } from '../../js/core/command-palette.js';
 import { openSideDrawer, closeSideDrawer, isSideDrawerOpen } from '../../js/core/sideDrawer.js';
 import { getActivityLabelForChannel, renderRichPresenceHub } from '../../js/core/sync.js';
 

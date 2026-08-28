@@ -1,4 +1,4 @@
-import { calculateSmoothedWeightTrend } from '../nutrition/tdeeCoach.js';
+import { calculateSmoothedWeightTrend } from '../nutrition/tdee-coach.js';
 import { escapeHTML } from '@core/utils.js';
 
 /**

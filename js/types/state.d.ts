@@ -74,6 +74,26 @@ export interface AppSettings {
   };
 }
 
+export interface TrainingSplitDay {
+  dayOfWeek: number; // 1 = Pondělí, ..., 7 = Neděle (or 0)
+  splitName: string; // např. "Push Day 🦍"
+  templateId?: string | null;
+  isRest: boolean;
+  preferredTime?: string | null; // "17:00"
+}
+
+export interface TrainingSplit {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  is_active: boolean;
+  rotation_mode?: 'fixed_days' | 'rolling';
+  schedule_pattern: TrainingSplitDay[];
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface AppState {
   currentChannel: string;
   currentUser: UserProfile;
@@ -96,6 +116,8 @@ export interface AppState {
   gymLogs: Tables<'gym_workouts'>[];
   gymPRs: any[];
   gymBodyMeasurements: Tables<'gym_body_measurements'>[];
+  trainingSplits?: TrainingSplit[];
+  activeTrainingSplit?: TrainingSplit | null;
   activeWorkout: ActiveWorkoutState | null;
   schoolDeadlines: Tables<'study_deadlines'>[];
   schoolSubjects: Tables<'vut_subjects'>[];
@@ -106,3 +128,4 @@ export interface AppState {
   _loaded?: Record<string, boolean>;
   [key: string]: any;
 }
+
