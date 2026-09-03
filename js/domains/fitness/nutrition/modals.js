@@ -34,12 +34,19 @@ export function openAddFoodModal(mealType = 'lunch', prefilledFood = null) {
     if (!modalEl) {
         modalEl = document.createElement('div');
         modalEl.id = 'nutrition-modal';
-        modalEl.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity';
+        modalEl.className = 'kiscord-modal-backdrop modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-opacity animate-fade-in';
+        modalEl.onclick = (e) => {
+            if (e.target === modalEl) window.closeNutritionModal();
+        };
         document.body.appendChild(modalEl);
     }
 
     renderModalContent(modalEl, prefilledFood);
     modalEl.style.display = 'flex';
+    setTimeout(() => {
+        const firstInput = modalEl.querySelector('input:not([type="hidden"]), textarea');
+        if (firstInput) firstInput.focus();
+    }, 50);
 }
 
 function renderModalContent(container, prefilledFood = null) {
@@ -53,25 +60,25 @@ function renderModalContent(container, prefilledFood = null) {
     const savedList = [...DEFAULT_FOOD_PRESETS, ...(state.savedFoods || [])];
 
     container.innerHTML = `
-        <div class="bg-[#2f3136] w-full max-w-lg rounded-2xl border border-white/10 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div class="bg-[var(--bg-secondary)] w-full max-w-lg rounded-2xl border border-[var(--border-default)] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             <!-- Modal Header -->
-            <div class="flex items-center justify-between p-4 border-b border-white/5 bg-[#202225]">
-                <div class="flex items-center gap-2">
-                    <span class="w-8 h-8 rounded-lg bg-[#14b8a6]/20 text-[#14b8a6] flex items-center justify-center text-sm font-bold">
+            <div class="flex items-center justify-between p-4 border-b border-[var(--border-subtle)] bg-[var(--bg-tertiary)] flex-shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-xl bg-[#14b8a6]/20 text-[#14b8a6] border border-[#14b8a6]/30 flex items-center justify-center text-sm font-bold shadow-inner">
                         <i class="fas fa-plus"></i>
                     </span>
                     <div>
-                        <h3 class="text-sm font-black text-white uppercase tracking-wider">Přidat do: ${mealTitles[currentMealType] || 'Jídlo'}</h3>
-                        <p class="text-[10px] text-gray-400">Rychlé zadání, AI textový parser, vyhledávač nebo oblíbené</p>
+                        <h3 class="text-sm font-black text-[var(--text-header)] uppercase tracking-wider">Přidat do: ${mealTitles[currentMealType] || 'Jídlo'}</h3>
+                        <p class="text-[10px] text-[var(--text-muted)] font-medium">Rychlé zadání, AI textový parser, vyhledávač nebo oblíbené</p>
                     </div>
                 </div>
-                <button onclick="window.closeNutritionModal()" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center text-xs transition">
+                <button data-modal-close onclick="window.closeNutritionModal()" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-[var(--text-muted)] hover:text-white flex items-center justify-center text-xs transition" title="Zavřít (Esc)">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
 
             <!-- Multi-Modal Navigation Tabs -->
-            <div class="grid grid-cols-4 p-1 bg-[#202225] border-b border-white/5 gap-1 text-[11px]">
+            <div class="grid grid-cols-4 p-1.5 bg-[var(--bg-tertiary)] border-b border-[var(--border-subtle)] gap-1 text-[11px] flex-shrink-0">
                 <button 
                     onclick="window.switchNutritionTab('quick')" 
                     class="py-1.5 rounded-lg font-bold transition flex items-center justify-center gap-1 ${activeTab === 'quick' ? 'bg-[#14b8a6] text-white shadow-sm' : 'text-gray-400 hover:text-white'}"
@@ -113,39 +120,41 @@ function renderQuickAddForm(food = null) {
     return `
         <form id="quick-food-form" onsubmit="window.submitQuickFood(event)" class="space-y-3">
             <div>
-                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Název jídla / položky</label>
+                <label class="block text-[10px] font-black text-[var(--text-muted)] uppercase tracking-wider mb-1">Název jídla / položky</label>
                 <input 
                     type="text" 
                     id="food-name" 
                     required 
                     placeholder="např. Kuřecí steak s rýží" 
                     value="${food?.food_name || food?.name || ''}"
-                    class="w-full bg-[#202225] border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#14b8a6] transition"
+                    class="kiscord-input"
                 />
             </div>
 
             <div class="grid grid-cols-2 gap-2.5">
                 <div>
-                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Kalorie (kcal)</label>
+                    <label class="block text-[10px] font-black text-[var(--text-muted)] uppercase tracking-wider mb-1">Kalorie (kcal)</label>
                     <input 
                         type="number" 
+                        inputmode="numeric"
                         id="food-calories" 
                         required 
                         min="0"
                         placeholder="kcal" 
                         value="${food?.calories ?? ''}"
-                        class="w-full bg-[#202225] border border-white/10 rounded-xl px-3 py-2 text-sm font-bold text-white focus:outline-none focus:border-[#14b8a6] transition"
+                        class="kiscord-input font-bold"
                     />
                 </div>
                 <div>
-                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-wider mb-1">Gramáž porce (g / ml)</label>
+                    <label class="block text-[10px] font-black text-[var(--text-muted)] uppercase tracking-wider mb-1">Gramáž porce (g / ml)</label>
                     <input 
                         type="number" 
+                        inputmode="numeric"
                         id="food-amount" 
                         min="0"
                         placeholder="např. 150" 
                         value="${food?.amount_g ?? ''}"
-                        class="w-full bg-[#202225] border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#14b8a6] transition"
+                        class="kiscord-input"
                     />
                 </div>
             </div>
@@ -155,36 +164,39 @@ function renderQuickAddForm(food = null) {
                     <label class="block text-[10px] font-black text-[#5865F2] uppercase tracking-wider mb-1">Bílkoviny (g)</label>
                     <input 
                         type="number" 
+                        inputmode="decimal"
                         id="food-protein" 
                         step="0.1" 
                         min="0"
                         placeholder="g" 
                         value="${food?.protein ?? ''}"
-                        class="w-full bg-[#202225] border border-white/10 rounded-xl px-2.5 py-2 text-sm font-bold text-white focus:outline-none focus:border-[#5865F2] transition"
+                        class="kiscord-input font-bold"
                     />
                 </div>
                 <div>
                     <label class="block text-[10px] font-black text-[#faa61a] uppercase tracking-wider mb-1">Sacharidy (g)</label>
                     <input 
                         type="number" 
+                        inputmode="decimal"
                         id="food-carbs" 
                         step="0.1" 
                         min="0"
                         placeholder="g" 
                         value="${food?.carbs ?? ''}"
-                        class="w-full bg-[#202225] border border-white/10 rounded-xl px-2.5 py-2 text-sm font-bold text-white focus:outline-none focus:border-[#faa61a] transition"
+                        class="kiscord-input font-bold"
                     />
                 </div>
                 <div>
                     <label class="block text-[10px] font-black text-[#ed4245] uppercase tracking-wider mb-1">Tuky (g)</label>
                     <input 
                         type="number" 
+                        inputmode="decimal"
                         id="food-fats" 
                         step="0.1" 
                         min="0"
                         placeholder="g" 
                         value="${food?.fats ?? ''}"
-                        class="w-full bg-[#202225] border border-white/10 rounded-xl px-2.5 py-2 text-sm font-bold text-white focus:outline-none focus:border-[#ed4245] transition"
+                        class="kiscord-input font-bold"
                     />
                 </div>
             </div>
@@ -192,7 +204,8 @@ function renderQuickAddForm(food = null) {
             <div class="pt-2 flex items-center gap-2">
                 <button 
                     type="submit" 
-                    class="flex-1 py-2.5 px-4 bg-[#14b8a6] hover:bg-[#14b8a6]/90 text-white rounded-xl text-xs font-black uppercase tracking-wider transition shadow-lg shadow-[#14b8a6]/20 flex items-center justify-center gap-2"
+                    data-modal-primary
+                    class="flex-1 py-2.5 px-4 bg-[#14b8a6] hover:bg-[#14b8a6]/90 text-white rounded-xl text-xs font-black uppercase tracking-wider transition shadow-lg shadow-[#14b8a6]/20 flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                 >
                     <i class="fas fa-check"></i> <span>Zapsat jídlo</span>
                 </button>

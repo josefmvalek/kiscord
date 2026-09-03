@@ -6,7 +6,8 @@ import { supabase } from '@core/supabase.js';
 import { state } from '@core/state.js';
 import { triggerHaptic, triggerConfetti } from '@core/utils.js';
 import { showNotification, showConfirmDialog } from '@core/theme.js';
-import { renderModal, renderInputGroup } from '@core/ui.js';
+import { renderModal, renderInputGroup, focusFirstInputInModal } from '@core/ui.js';
+import { safeInsert, safeUpsert } from '@core/offline.js';
 import { FIT_PRESET_SUBJECTS } from '../schedule.js';
 import { getSubjectsData, calculateGrade } from './store.js';
 
@@ -227,12 +228,13 @@ export function openAddSubjectModalFIT() {
 
     const actionsHtml = `
         <div class="flex justify-end gap-2.5 w-full">
-            <button onclick="document.getElementById('add-subject-points-modal').remove()" 
+            <button onclick="document.getElementById('add-subject-points-modal')?.remove()" 
                     class="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 font-bold text-xs uppercase tracking-wider transition">
                 Zrušit
             </button>
             <button onclick="window.StudyPlanner.saveSubjectPointsItem()" 
-                    class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-500/20 active:scale-95">
+                    data-modal-primary
+                    class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-500/20 active:scale-95 cursor-pointer">
                 Uložit předmět
             </button>
         </div>
@@ -246,12 +248,15 @@ export function openAddSubjectModalFIT() {
         subtitle: 'VUT FIT WIS Tracker 🎯',
         content: contentHtml,
         actions: actionsHtml,
-        onClose: "document.getElementById('add-subject-points-modal').remove()"
+        onClose: "document.getElementById('add-subject-points-modal')?.remove()"
     }));
 
     const el = document.getElementById('add-subject-points-modal');
-    el?.classList.remove('hidden');
-    el?.classList.add('flex');
+    if (el) {
+        el.classList.remove('hidden');
+        el.classList.add('flex');
+        focusFirstInputInModal('add-subject-points-modal');
+    }
 }
 
 export function applySubjectPresetPoints(code, name) {
@@ -269,9 +274,9 @@ export function openEditSubjectPointsModal(id) {
 
     const contentHtml = `
         <div class="space-y-4 text-left">
-            <div class="bg-[#18191c] p-3 rounded-xl border border-gray-800">
+            <div class="bg-[var(--bg-tertiary)] p-3 rounded-xl border border-[var(--border-subtle)]">
                 <span class="text-xs font-black text-[#5865F2] font-mono mr-1">${s.code}</span>
-                <span class="text-xs font-bold text-white">${s.name}</span>
+                <span class="text-xs font-bold text-[var(--text-header)]">${s.name}</span>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
@@ -279,12 +284,16 @@ export function openEditSubjectPointsModal(id) {
                     label: 'Body z laborek / cvičení',
                     id: 'fit-edit-labs',
                     type: 'number',
+                    inputmode: 'decimal',
+                    step: '0.5',
                     value: String(s.points_labs || 0)
                 })}
                 ${renderInputGroup({
                     label: 'Body z projektů (WIS)',
                     id: 'fit-edit-proj',
                     type: 'number',
+                    inputmode: 'decimal',
+                    step: '0.5',
                     value: String(s.points_projects || 0)
                 })}
             </div>
@@ -294,12 +303,16 @@ export function openEditSubjectPointsModal(id) {
                     label: 'Body z půlsemestrálky',
                     id: 'fit-edit-mid',
                     type: 'number',
+                    inputmode: 'decimal',
+                    step: '0.5',
                     value: String(s.points_midterm || 0)
                 })}
                 ${renderInputGroup({
                     label: 'Body ze zkoušky',
                     id: 'fit-edit-exam',
                     type: 'number',
+                    inputmode: 'decimal',
+                    step: '0.5',
                     value: String(s.points_exam || 0)
                 })}
             </div>
@@ -308,12 +321,13 @@ export function openEditSubjectPointsModal(id) {
 
     const actionsHtml = `
         <div class="flex justify-end gap-2.5 w-full">
-            <button onclick="document.getElementById('edit-points-modal').remove()" 
+            <button onclick="document.getElementById('edit-points-modal')?.remove()" 
                     class="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 font-bold text-xs uppercase tracking-wider transition">
                 Zrušit
             </button>
             <button onclick="window.StudyPlanner.updateSubjectPoints('${s.id}')" 
-                    class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-500/20 active:scale-95">
+                    data-modal-primary
+                    class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-500/20 active:scale-95 cursor-pointer">
                 Uložit body
             </button>
         </div>
@@ -327,12 +341,15 @@ export function openEditSubjectPointsModal(id) {
         subtitle: `${s.code} — ${s.name}`,
         content: contentHtml,
         actions: actionsHtml,
-        onClose: "document.getElementById('edit-points-modal').remove()"
+        onClose: "document.getElementById('edit-points-modal')?.remove()"
     }));
 
     const el = document.getElementById('edit-points-modal');
-    el?.classList.remove('hidden');
-    el?.classList.add('flex');
+    if (el) {
+        el.classList.remove('hidden');
+        el.classList.add('flex');
+        focusFirstInputInModal('edit-points-modal');
+    }
 }
 
 export async function saveSubjectPointsItem() {
@@ -340,7 +357,7 @@ export async function saveSubjectPointsItem() {
 
     const code = document.getElementById('fit-sub-code')?.value.trim();
     const name = document.getElementById('fit-sub-name')?.value.trim();
-    const semester = document.getElementById('fit-sub-sem')?.value.trim();
+    const semester = document.getElementById('fit-sub-sem')?.value?.trim() || '1';
     const minPoints = Number(document.getElementById('fit-sub-min')?.value) || 20;
     const targetGrade = document.getElementById('fit-sub-grade')?.value || 'A';
 
@@ -349,16 +366,25 @@ export async function saveSubjectPointsItem() {
         return;
     }
 
+    const newSub = {
+        id: crypto.randomUUID(),
+        user_id: state.currentUser?.id,
+        code: code.toUpperCase(),
+        name,
+        semester,
+        min_credit_points: minPoints,
+        target_grade: targetGrade,
+        points_labs: 0,
+        points_projects: 0,
+        points_midterm: 0,
+        points_exam: 0,
+        created_at: new Date().toISOString()
+    };
+
     try {
-        const { error } = await supabase.from('school_subjects').insert({
-            user_id: state.currentUser?.id,
-            code: code.toUpperCase(),
-            name,
-            semester,
-            min_credit_points: minPoints,
-            target_grade: targetGrade
-        });
-        if (error) throw error;
+        await safeInsert('school_subjects', newSub);
+        const subjectsData = getSubjectsData();
+        subjectsData.push(newSub);
 
         triggerConfetti();
         showNotification('Předmět přidán do bodového plánovače! 🎯', 'success');
@@ -378,23 +404,32 @@ export async function updateSubjectPoints(id) {
     const mid = Number(document.getElementById('fit-edit-mid')?.value) || 0;
     const exam = Number(document.getElementById('fit-edit-exam')?.value) || 0;
 
+    const subjectsData = getSubjectsData();
+    const targetSub = subjectsData.find(sub => sub.id === id);
+    if (targetSub) {
+        targetSub.points_labs = labs;
+        targetSub.points_projects = proj;
+        targetSub.points_midterm = mid;
+        targetSub.points_exam = exam;
+    }
+
     try {
-        const { error } = await supabase.from('school_subjects').update({
+        await safeUpsert('school_subjects', {
+            id,
             points_labs: labs,
             points_projects: proj,
             points_midterm: mid,
             points_exam: exam,
             updated_at: new Date().toISOString()
-        }).eq('id', id);
+        });
 
-        if (error) throw error;
-
-        showNotification('Body předmětu úspěšně aktualizovány! 📊', 'success');
+        triggerConfetti();
+        showNotification('Body byly úspěšně zapsány! 📚✨', 'success');
         document.getElementById('edit-points-modal')?.remove();
         window.StudyPlanner?.render?.();
     } catch (e) {
         console.error("[StudyPlanner] Error updating points:", e);
-        showNotification('Chyba při aktualizaci: ' + e.message, 'danger');
+        showNotification('Chyba při aktualizaci bodů: ' + e.message, 'danger');
     }
 }
 

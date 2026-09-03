@@ -205,18 +205,12 @@ export function toggleSetComplete(exIdx, setIdx, renderGymFn) {
             // 1) Weight PR
             const weightPR = myPRs.find(p => !p.pr_type || p.pr_type === 'weight');
             if (!weightPR || w > parseFloat(weightPR.weight)) {
-                playArcade();
-                triggerConfetti();
-                setTimeout(() => triggerConfetti(), 400);
-                showNotification(`🏆 NOVÝ REKORD: ${exName} – ${w} kg! 🔥`, 'success');
                 _savePR({ exercise_id: exId, weight: w, reps: r, pr_type: 'weight', est_1rm: est1RM });
             }
             // 2) Estimated 1RM PR
             else if (est1RM > 0) {
                 const est1RMPR = myPRs.find(p => p.pr_type === 'est_1rm');
                 if (!est1RMPR || est1RM > parseFloat(est1RMPR.est_1rm || 0)) {
-                    playArcade();
-                    showNotification(`💡 Nové odhadované 1RM: ${exName} – ~${est1RM} kg (${w}kg×${r})`, 'success');
                     _savePR({ exercise_id: exId, weight: w, reps: r, pr_type: 'est_1rm', est_1rm: est1RM });
                 }
             }
@@ -230,10 +224,6 @@ export function toggleSetComplete(exIdx, setIdx, renderGymFn) {
             const volumePR = myPRs.find(p => p.pr_type === 'volume');
             if (sessionVolume > 0 && (!volumePR || sessionVolume > parseFloat(volumePR.volume_kg || 0))) {
                 _savePR({ exercise_id: exId, weight: w, reps: r, pr_type: 'volume', volume_kg: sessionVolume });
-                // Only notify if meaningful improvement (>5%)
-                if (!volumePR || sessionVolume > parseFloat(volumePR.volume_kg || 0) * 1.05) {
-                    showNotification(`📊 Nový objemový rekord: ${exName} – ${Math.round(sessionVolume)} kg celkem!`, 'info');
-                }
             }
         }
     } else {
@@ -873,9 +863,23 @@ export function addExerciseToActiveWorkout(exerciseId, renderGymFn) {
         sets: setsArray
     });
 
+    const newExIndex = activeWorkout.exercises.length - 1;
+
     saveActiveWorkoutToStorage();
     showNotification(`Cvik "${ex.name}" byl zařazen do tréninku.`, 'success');
-    if (renderGymFn) renderGymFn();
+    if (renderGymFn) {
+        renderGymFn();
+        requestAnimationFrame(() => {
+            const newCard = document.getElementById(`active-exercise-card-${newExIndex}`);
+            if (newCard) {
+                newCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                newCard.classList.add('ring-2', 'ring-amber-400/50', 'transition-all');
+                setTimeout(() => {
+                    newCard.classList.remove('ring-2', 'ring-amber-400/50');
+                }, 1800);
+            }
+        });
+    }
 }
 
 /**

@@ -9,7 +9,7 @@ if (typeof window !== 'undefined' && !window.__kiscordEscapeListenerAttached) {
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             // Find the topmost visible modal
-            const openModals = Array.from(document.querySelectorAll('.kiscord-modal-backdrop, .modal-backdrop'))
+            const openModals = Array.from(document.querySelectorAll('.kiscord-modal-backdrop, .modal-backdrop, #nutrition-modal, [data-modal]'))
                 .filter(m => m.style.display !== 'none' && !m.classList.contains('hidden'));
             
             if (openModals.length > 0) {
@@ -19,6 +19,8 @@ if (typeof window !== 'undefined' && !window.__kiscordEscapeListenerAttached) {
                     closeBtn.click();
                 } else if (topModal.id && typeof window.closeModal === 'function') {
                     window.closeModal(topModal.id);
+                } else if (topModal.id === 'nutrition-modal' && typeof window.closeNutritionModal === 'function') {
+                    window.closeNutritionModal();
                 } else {
                     topModal.style.display = 'none';
                     topModal.remove();
@@ -26,6 +28,47 @@ if (typeof window !== 'undefined' && !window.__kiscordEscapeListenerAttached) {
             }
         }
     });
+}
+
+// Global Enter Key Submit Listener for Modals
+if (typeof window !== 'undefined' && !window.__kiscordEnterSubmitAttached) {
+    window.__kiscordEnterSubmitAttached = true;
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            const target = e.target;
+            if (target && target.tagName === 'INPUT' && target.type !== 'textarea') {
+                const modal = target.closest('.kiscord-modal-backdrop, .modal-backdrop, #nutrition-modal');
+                if (modal) {
+                    const primaryBtn = modal.querySelector('[data-modal-primary]') ||
+                        modal.querySelector('.kiscord-btn-primary, .kiscord-btn-accent, .kiscord-btn-success, button[type="submit"]');
+                    if (primaryBtn && !primaryBtn.disabled) {
+                        e.preventDefault();
+                        primaryBtn.click();
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Automatically focuses and selects the first input in a modal.
+ * @param {string} modalId
+ */
+export function focusFirstInputInModal(modalId) {
+    if (typeof requestAnimationFrame !== 'undefined') {
+        requestAnimationFrame(() => {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+            const input = modal.querySelector('input:not([type="hidden"]):not([disabled]), textarea:not([disabled]), select:not([disabled])');
+            if (input) {
+                input.focus();
+                if (input.select && typeof input.select === 'function' && input.type !== 'date' && input.type !== 'time') {
+                    input.select();
+                }
+            }
+        });
+    }
 }
 
 /**
@@ -155,13 +198,20 @@ export function renderInputGroup({
     type = 'text',
     placeholder = '',
     value = '',
+    inputmode = '',
+    step = '',
+    enterkeyhint = '',
     attr = '',
     hint = ''
 }) {
+    const inputmodeAttr = inputmode ? `inputmode="${inputmode}"` : (type === 'number' ? 'inputmode="decimal"' : '');
+    const stepAttr = step ? `step="${step}"` : '';
+    const enterkeyAttr = enterkeyhint ? `enterkeyhint="${enterkeyhint}"` : 'enterkeyhint="done"';
+
     return `
         <div class="space-y-1.5 w-full">
             ${label ? `<label for="${id}" class="kiscord-label">${label}</label>` : ''}
-            <input type="${type}" id="${id}" placeholder="${placeholder}" value="${value}" ${attr} class="kiscord-input">
+            <input type="${type}" id="${id}" placeholder="${placeholder}" value="${value}" ${inputmodeAttr} ${stepAttr} ${enterkeyAttr} ${attr} class="kiscord-input">
             ${hint ? `<p class="text-[10px] text-[var(--text-muted)] italic">${hint}</p>` : ''}
         </div>
     `;

@@ -74,6 +74,16 @@ export async function handleAuthState(event, session) {
     }
 }
 
+function getLocalDevSession() {
+    try {
+        const raw = localStorage.getItem('sb-nnrorazsiyiedwomgidf-auth-token');
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (parsed?.user?.email) return parsed;
+    } catch {}
+    return null;
+}
+
 export function initAuthListeners() {
     onAuthChange(handleAuthState);
 
@@ -83,10 +93,22 @@ export function initAuthListeners() {
             console.log('[Auth] Manual session detection');
             handleAuthState('INITIAL_SESSION', { user });
         } else if (!user && !lastUserId) {
+            const devSession = getLocalDevSession();
+            if (devSession?.user) {
+                console.log('[Auth] Restoring dev simulated session for', devSession.user.email);
+                handleAuthState('INITIAL_SESSION', { user: devSession.user });
+                return;
+            }
             handleAuthState('INITIAL_SESSION', { user: null });
         }
     }).catch(err => {
         console.warn('[Auth] Session detection fallback:', err);
+        const devSession = getLocalDevSession();
+        if (devSession?.user && !lastUserId) {
+            console.log('[Auth] Restoring dev simulated session on error for', devSession.user.email);
+            handleAuthState('INITIAL_SESSION', { user: devSession.user });
+            return;
+        }
         if (!lastUserId) {
             handleAuthState('INITIAL_SESSION', { user: null });
         }
@@ -120,6 +142,76 @@ export async function handleLogin(form) {
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<span>Přihlásit se</span><i class="fas fa-arrow-right text-xs"></i>';
     }
+}
+
+export async function simulateUserLogin(persona = 'josef') {
+    const isJosefTarget = typeof persona === 'string' && (persona.toLowerCase().includes('joz') || persona.toLowerCase().includes('jose'));
+    const userData = isJosefTarget ? {
+        id: state.user_ids?.jose || 'jose-id-123',
+        email: 'jozkavalek@email.cz',
+        role: 'authenticated'
+    } : {
+        id: state.user_ids?.klarka || 'klarka-id-456',
+        email: 'vyslouzilova.klara07@gmail.com',
+        role: 'authenticated'
+    };
+
+    triggerHaptic('success');
+
+    const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+    const payload = btoa(JSON.stringify({
+        sub: userData.id,
+        email: userData.email,
+        role: userData.role,
+        exp: Math.floor(Date.now() / 1000) + 86400 * 30
+    }));
+    const session = {
+        access_token: `${header}.${payload}.mocksignature`,
+        token_type: 'bearer',
+        expires_in: 86400 * 30,
+        refresh_token: 'dev-refresh-token',
+        user: userData,
+        expires_at: Math.floor(Date.now() / 1000) + 86400 * 30
+    };
+    try {
+        localStorage.setItem('sb-nnrorazsiyiedwomgidf-auth-token', JSON.stringify(session));
+    } catch {}
+
+    lastUserId = userData.id;
+    const loginEl = document.getElementById('login-screen');
+    const appEl = document.getElementById('app-interface');
+    if (loginEl) loginEl.classList.remove('login-visible');
+    if (appEl) {
+        appEl.classList.add('show');
+        appEl.classList.remove('opacity-0');
+        appEl.classList.add('opacity-100');
+    }
+
+    updateUserProfileUI(userData);
+    try {
+        await initializeState().catch(e => console.warn('[Simulate] Init error:', e));
+        renderChannels();
+    } catch (err) {
+        console.warn('[Simulate] Render error:', err);
+    }
+
+    const currentChannel = state.currentChannel || 'dashboard';
+    switchChannel(currentChannel, false);
+
+    import('./theme.js').then(th => {
+        th.showNotification(`Přihlášen jako ${isJosefTarget ? 'Jožka 🦝' : 'Klárka 🌸'} (Simulace)`, 'success');
+    }).catch(() => {});
+}
+
+export function toggleSimulatedUser() {
+    const isCurrentJosef = isJosef(state.currentUser);
+    const target = isCurrentJosef ? 'klarka' : 'josef';
+    return simulateUserLogin(target);
+}
+
+if (typeof window !== 'undefined') {
+    window.simulateUserLogin = simulateUserLogin;
+    window.toggleSimulatedUser = toggleSimulatedUser;
 }
 
 export function updateUserProfileUI(user) {

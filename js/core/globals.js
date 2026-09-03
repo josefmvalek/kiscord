@@ -2,7 +2,7 @@ import { triggerConfetti, triggerHaptic } from './utils.js';
 import { toggleTheme, showNotification, toggleValentineMode } from './theme.js';
 import { switchChannel } from './router.js';
 import { toggleUserPopout, toggleMobileMenu } from './app-ui.js';
-import { handleLogin } from './auth-handler.js';
+import { handleLogin, simulateUserLogin, toggleSimulatedUser } from './auth-handler.js';
 import { state } from './state.js';
 import { renderSkeletonLoader, renderMetricCard, closeModal } from './ui.js';
 import { openCommandPalette, closeCommandPalette } from './command-palette.js';
@@ -99,6 +99,8 @@ export function exposeGlobals() {
     window.toggleUserPopout = toggleUserPopout;
     window.toggleMobileMenu = toggleMobileMenu;
     window.handleLogin = handleLogin;
+    window.simulateUserLogin = simulateUserLogin;
+    window.toggleSimulatedUser = toggleSimulatedUser;
 
     // Modals & form
     window.closeModal = closeModal;

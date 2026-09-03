@@ -96,6 +96,22 @@
           <i class="fas fa-arrow-right text-xs"></i>
         </button>
         <p id="login-error" class="hidden text-red-400 text-center text-xs mt-4"></p>
+
+        <div class="relative flex py-2 items-center">
+          <div class="flex-grow border-t border-white/10"></div>
+          <span class="flex-shrink mx-3 text-gray-400 text-[10px] font-bold uppercase tracking-widest">Rychlá simulace</span>
+          <div class="flex-grow border-t border-white/10"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button type="button" onclick="window.simulateUserLogin('josef')" class="w-full bg-[#5865F2]/20 hover:bg-[#5865F2]/40 border border-[#5865F2]/50 text-[#5865F2] hover:text-white py-2.5 px-3 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+            <span>🦝</span>
+            <span>Jožka</span>
+          </button>
+          <button type="button" onclick="window.simulateUserLogin('klarka')" class="w-full bg-[#eb459e]/20 hover:bg-[#eb459e]/40 border border-[#eb459e]/50 text-[#eb459e] hover:text-white py-2.5 px-3 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+            <span>🌸</span>
+            <span>Klárka</span>
+          </button>
+        </div>
       </form>
     </div>
   </div>
@@ -292,31 +308,6 @@
     </div>
   </div>
 
-  <!-- Floating Action Button (Thumb-Zone FAB) for Mobile -->
-  <div id="mobile-fab-container" class="fixed bottom-[72px] right-3.5 z-40 md:hidden flex flex-col items-end gap-2 select-none">
-    <!-- Speed Dial Sheet -->
-    <div id="mobile-fab-sheet" class="hidden flex-col items-end gap-2 mb-1 animate-scale-spring">
-      <button onclick="window.quickLogWater ? window.quickLogWater() : null; window.toggleMobileFab();" 
-              class="px-3.5 py-2 rounded-2xl bg-[var(--bg-secondary)]/95 backdrop-blur-md border border-[#00aff4]/40 text-sky-400 text-[11px] font-black uppercase tracking-wider shadow-2xl flex items-center gap-2 active-pop">
-        <span>+250ml Vody</span> <i class="fas fa-tint text-sm"></i>
-      </button>
-      <button onclick="window.switchChannel('habits'); window.toggleMobileFab();" 
-              class="px-3.5 py-2 rounded-2xl bg-[var(--bg-secondary)]/95 backdrop-blur-md border border-[#3ba55c]/40 text-emerald-400 text-[11px] font-black uppercase tracking-wider shadow-2xl flex items-center gap-2 active-pop">
-        <span>Návyky</span> <i class="fas fa-check-circle text-sm"></i>
-      </button>
-      <button onclick="window.showQuickPlanModal ? window.showQuickPlanModal(1) : window.switchChannel('dashboard'); window.toggleMobileFab();" 
-              class="px-3.5 py-2 rounded-2xl bg-[var(--bg-secondary)]/95 backdrop-blur-md border border-[#eb459e]/40 text-pink-400 text-[11px] font-black uppercase tracking-wider shadow-2xl flex items-center gap-2 active-pop">
-        <span>Plán / Rande</span> <i class="fas fa-heart text-sm"></i>
-      </button>
-    </div>
-
-    <!-- Main FAB Trigger -->
-    <button id="mobile-fab-main-btn" onclick="window.toggleMobileFab()" 
-            class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[var(--blurple)] to-[var(--pink)] text-white shadow-[0_8px_25px_rgba(88,101,242,0.5)] border border-white/20 flex items-center justify-center text-lg active-pop transition-transform duration-300"
-            title="Rychlé akce">
-      <i id="mobile-fab-icon" class="fas fa-plus transition-transform duration-300"></i>
-    </button>
-  </div>
 
   <!-- Mobile Bottom Navigation Bar -->
   <nav id="mobile-bottom-nav" class="fixed bottom-0 inset-x-0 z-40 bg-[var(--bg-secondary)]/95 backdrop-blur-xl border-t border-[var(--border-subtle)] flex md:hidden items-center justify-around px-1 py-1.5 transition-transform duration-300 select-none shadow-[0_-8px_25px_rgba(0,0,0,0.4)]">

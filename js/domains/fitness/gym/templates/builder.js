@@ -6,6 +6,7 @@ import { renderModal, renderInputGroup } from '@core/ui.js';
 import { getCategoryEmoji, getExerciseThumbnailHtml, openExerciseGuideModal } from '../exercises.js';
 import { startWorkout } from '../active-workout/index.js';
 import { renderSplitOverviewBarHtml } from '../splits.js';
+import { defaultExercises, defaultTemplates } from '../shared.js';
 
 export function renderTemplatesTab() {
     const templates = state.gymTemplates || [];

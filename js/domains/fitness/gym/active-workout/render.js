@@ -179,22 +179,6 @@ export function renderActiveWorkoutView(renderGymFn) {
                     ${restTimerHtml}
                 </div>
 
-                <!-- Pre & Post-workout Quick Checklist -->
-                <div class="max-w-4xl mx-auto flex items-center justify-between gap-1.5 p-2 bg-[#202225] border border-white/5 rounded-2xl select-none overflow-x-auto custom-scrollbar">
-                    <button id="checklist-btn-creatine" onclick="window.Gym.toggleWorkoutChecklistItem('creatine')" class="px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition flex items-center gap-1.5 flex-shrink-0 ${(activeWorkout.checklist?.creatine) ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-white/5 text-gray-400 hover:text-white'}">
-                        <span>💊 Kreatin</span> ${(activeWorkout.checklist?.creatine) ? '✓' : ''}
-                    </button>
-                    <button id="checklist-btn-preworkout" onclick="window.Gym.toggleWorkoutChecklistItem('preworkout')" class="px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition flex items-center gap-1.5 flex-shrink-0 ${(activeWorkout.checklist?.preworkout) ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'bg-white/5 text-gray-400 hover:text-white'}">
-                        <span>⚡ Pre-workout</span> ${(activeWorkout.checklist?.preworkout) ? '✓' : ''}
-                    </button>
-                    <button id="checklist-btn-water" onclick="window.Gym.toggleWorkoutChecklistItem('water')" class="px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition flex items-center gap-1.5 flex-shrink-0 ${(activeWorkout.checklist?.water) ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-white/5 text-gray-400 hover:text-white'}">
-                        <span>💧 1.5L Voda</span> ${(activeWorkout.checklist?.water) ? '✓' : ''}
-                    </button>
-                    <button id="checklist-btn-protein" onclick="window.Gym.toggleWorkoutChecklistItem('protein')" class="px-2.5 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition flex items-center gap-1.5 flex-shrink-0 ${(activeWorkout.checklist?.protein) ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-white/5 text-gray-400 hover:text-white'}">
-                        <span>🥤 Protein</span> ${(activeWorkout.checklist?.protein) ? '✓' : ''}
-                    </button>
-                </div>
-
                 <div class="max-w-4xl mx-auto space-y-5">
                     ${modeHeaderHtml}
 
@@ -246,6 +230,11 @@ export function renderActiveWorkoutView(renderGymFn) {
                                                 <i class="fas fa-chevron-down"></i>
                                             </button>
                                         ` : ''}
+
+                                        <!-- Plate Calculator -->
+                                        <button onclick="window.Gym.openPlateCalculatorModal(${parseFloat(e.sets?.[0]?.weight) || 60})" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-amber-500/20 text-gray-400 hover:text-amber-400 transition flex items-center justify-center text-[10px]" title="Kalkulačka kotoučů">
+                                            <span>🧮</span>
+                                        </button>
 
                                         <!-- Swap Alternative -->
                                         <button onclick="window.Gym.openSwapExerciseModal(${exIdx})" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-amber-400 transition flex items-center justify-center text-[10px]" title="Nahradit cvik alternativou">
@@ -342,6 +331,9 @@ export function renderActiveWorkoutView(renderGymFn) {
                     </button>
                     <button onclick="window.Gym.openRestModeOverlay()" class="w-11 h-11 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 active:bg-amber-500/30 text-amber-400 border border-amber-500/20 font-black transition flex items-center justify-center" title="Otevřít REST MODE">
                         <i class="fas fa-hourglass-half text-xs"></i>
+                    </button>
+                    <button onclick="window.Gym.openPlateCalculatorModal(60)" class="w-11 h-11 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 active:bg-amber-500/30 text-amber-400 border border-amber-500/20 font-black transition flex items-center justify-center" title="Kalkulačka kotoučů">
+                        <span class="text-sm">🧮</span>
                     </button>
                 </div>
                 

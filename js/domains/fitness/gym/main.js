@@ -40,6 +40,7 @@ import {
 } from './prs.js';
 import {
     renderExercisesTab, filterTabExercises, filterModalExercises,
+    normalizeSearchString, matchesExerciseQuery,
     openCreateExerciseModal, saveExercise, openEditExerciseModal,
     saveEditedExercise, deleteExercise, openExerciseGuideModal,
     getExerciseThumbnailHtml, getCategoryEmoji, applyExercisePreset,
@@ -178,24 +179,24 @@ export async function renderGym() {
                     ${renderMinimizedBanner()}
 
                     <!-- Tab Switcher Bar (Responsive 5-column grid, icon-only on mobile) -->
-                    <div class="grid grid-cols-5 gap-1 sm:gap-1.5 p-1 sm:p-1.5 bg-[#202225] border border-white/5 rounded-2xl mb-6 select-none shadow-inner">
-                        <button onclick="window.Gym.switchTab('templates')" class="py-2.5 px-1 sm:px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${activeTab === 'templates' ? 'bg-[#faa61a] text-black shadow-lg shadow-[#faa61a]/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}" title="Plány">
+                    <div id="gym-tab-switcher" class="grid grid-cols-5 gap-1 sm:gap-1.5 p-1 sm:p-1.5 bg-[#202225] border border-white/5 rounded-2xl mb-6 select-none shadow-inner">
+                        <button data-gym-tab="templates" onclick="window.Gym.switchTab('templates')" class="py-2.5 px-1 sm:px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${activeTab === 'templates' ? 'bg-[#faa61a] text-black shadow-lg shadow-[#faa61a]/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}" title="Plány">
                             <i class="fas fa-list-ul text-sm sm:text-xs"></i>
                             <span class="hidden sm:inline">Plány</span>
                         </button>
-                        <button onclick="window.Gym.switchTab('feed')" class="py-2.5 px-1 sm:px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${activeTab === 'feed' ? 'bg-[#faa61a] text-black shadow-lg shadow-[#faa61a]/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}" title="Feed">
+                        <button data-gym-tab="feed" onclick="window.Gym.switchTab('feed')" class="py-2.5 px-1 sm:px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${activeTab === 'feed' ? 'bg-[#faa61a] text-black shadow-lg shadow-[#faa61a]/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}" title="Feed">
                             <i class="fas fa-stream text-sm sm:text-xs"></i>
                             <span class="hidden sm:inline">Feed</span>
                         </button>
-                        <button onclick="window.Gym.switchTab('prs')" class="py-2.5 px-1 sm:px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${activeTab === 'prs' ? 'bg-[#faa61a] text-black shadow-lg shadow-[#faa61a]/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}" title="PRs">
+                        <button data-gym-tab="prs" onclick="window.Gym.switchTab('prs')" class="py-2.5 px-1 sm:px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${activeTab === 'prs' ? 'bg-[#faa61a] text-black shadow-lg shadow-[#faa61a]/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}" title="PRs">
                             <i class="fas fa-trophy text-sm sm:text-xs"></i>
                             <span class="hidden sm:inline">PRs</span>
                         </button>
-                        <button onclick="window.Gym.switchTab('measurements')" class="py-2.5 px-1 sm:px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${activeTab === 'measurements' ? 'bg-[#faa61a] text-black shadow-lg shadow-[#faa61a]/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}" title="Míry">
+                        <button data-gym-tab="measurements" onclick="window.Gym.switchTab('measurements')" class="py-2.5 px-1 sm:px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${activeTab === 'measurements' ? 'bg-[#faa61a] text-black shadow-lg shadow-[#faa61a]/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}" title="Míry">
                             <i class="fas fa-ruler-combined text-sm sm:text-xs"></i>
                             <span class="hidden sm:inline">Míry</span>
                         </button>
-                        <button onclick="window.Gym.switchTab('exercises')" class="py-2.5 px-1 sm:px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${activeTab === 'exercises' ? 'bg-[#faa61a] text-black shadow-lg shadow-[#faa61a]/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}" title="Cviky">
+                        <button data-gym-tab="exercises" onclick="window.Gym.switchTab('exercises')" class="py-2.5 px-1 sm:px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${activeTab === 'exercises' ? 'bg-[#faa61a] text-black shadow-lg shadow-[#faa61a]/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}" title="Cviky">
                             <i class="fas fa-dumbbell text-sm sm:text-xs"></i>
                             <span class="hidden sm:inline">Cviky</span>
                         </button>
@@ -225,6 +226,38 @@ export async function renderGym() {
 export function switchTab(tab) {
     triggerHaptic('light');
     setActiveTab(tab);
+
+    const tabContentEl = document.getElementById('gym-tab-content');
+    const tabSwitcherEl = document.getElementById('gym-tab-switcher');
+
+    if (tabContentEl && tabSwitcherEl) {
+        tabSwitcherEl.querySelectorAll('button[data-gym-tab]').forEach(btn => {
+            const btnTab = btn.dataset.gymTab;
+            const isActive = btnTab === tab;
+            btn.className = `py-2.5 px-1 sm:px-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 ${
+                isActive ? 'bg-[#faa61a] text-black shadow-lg shadow-[#faa61a]/20' : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`;
+        });
+
+        let tabContent = '';
+        if (tab === 'templates') tabContent = renderTemplatesTab();
+        else if (tab === 'feed') tabContent = renderFeedTab();
+        else if (tab === 'prs') tabContent = renderPRsTab();
+        else if (tab === 'measurements') tabContent = renderBodyTrackerTab();
+        else if (tab === 'exercises') tabContent = renderExercisesTab();
+
+        tabContentEl.innerHTML = tabContent;
+
+        if (tab === 'measurements') {
+            requestAnimationFrame(() => {
+                if (typeof switchBodyChart === 'function') {
+                    switchBodyChart('weight');
+                }
+            });
+        }
+        return;
+    }
+
     renderGym();
 }
 
@@ -267,6 +300,8 @@ export function attachWindowGym() {
         addManualSet,
         removeManualSet,
         filterModalExercises,
+        normalizeSearchString,
+        matchesExerciseQuery,
         openManualLogModal: (renderFn, dtKey) => openManualLogModal(renderFn || renderGym, dtKey),
         saveManualLog: () => saveManualLog(renderGym),
         openEditGymLogModal: (logId, dtKey) => openEditGymLogModal(logId, dtKey),

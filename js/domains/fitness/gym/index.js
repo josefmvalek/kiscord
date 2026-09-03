@@ -103,6 +103,8 @@ export {
     renderExercisesTab,
     filterTabExercises,
     filterModalExercises,
+    normalizeSearchString,
+    matchesExerciseQuery,
     openCreateExerciseModal,
     saveExercise,
     openEditExerciseModal,

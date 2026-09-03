@@ -2,7 +2,8 @@ import { supabase } from '@core/supabase.js';
 import { state, ensureLoveShopData } from '@core/state.js';
 import { triggerHaptic, triggerConfetti, getTodayKey } from '@core/utils.js';
 import { showNotification, showConfirmDialog } from '@core/theme.js';
-import { renderModal, renderInputGroup } from '@core/ui.js';
+import { renderModal, renderInputGroup, focusFirstInputInModal } from '@core/ui.js';
+import { safeInsert } from '@core/offline.js';
 
 let habitsData = [];
 let habitLogs = [];
@@ -274,7 +275,8 @@ export function openAddHabitModal() {
                 Zrušit
             </button>
             <button onclick="window.saveHabitItem()" 
-                    class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-[10px] uppercase tracking-wider transition shadow-lg shadow-emerald-500/20">
+                    data-modal-primary
+                    class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-[10px] uppercase tracking-wider transition shadow-lg shadow-emerald-500/20 active:scale-95 cursor-pointer">
                 Uložit návyk
             </button>
         </div>
@@ -288,23 +290,28 @@ export function openAddHabitModal() {
         subtitle: 'Vybuduj si skvělé rutiny 🌿',
         content: contentHtml,
         actions: actionsHtml,
-        onClose: "document.getElementById('add-habit-modal').remove()"
+        onClose: "document.getElementById('add-habit-modal')?.remove()"
     }));
 
-    document.getElementById('add-habit-modal').classList.remove('hidden');
-    document.getElementById('add-habit-modal').classList.add('flex');
+    const modalEl = document.getElementById('add-habit-modal');
+    if (modalEl) {
+        modalEl.classList.remove('hidden');
+        modalEl.classList.add('flex');
+        focusFirstInputInModal('add-habit-modal');
+    }
 }
 
 export async function saveHabitItem() {
     triggerHaptic('medium');
 
-    const icon = document.getElementById('habit-icon').value.trim() || '🌿';
-    const name = document.getElementById('habit-name').value.trim();
-    const desc = document.getElementById('habit-desc').value.trim();
-    const isShared = document.getElementById('habit-shared').checked;
+    const icon = document.getElementById('habit-icon')?.value.trim() || '🌿';
+    const name = document.getElementById('habit-name')?.value.trim();
+    const desc = document.getElementById('habit-desc')?.value.trim();
+    const isShared = document.getElementById('habit-shared')?.checked;
 
     if (!name) {
         showNotification('Napište název návyku!', 'warning');
+        document.getElementById('habit-name')?.focus();
         return;
     }
 
@@ -318,15 +325,9 @@ export async function saveHabitItem() {
     };
 
     try {
-        const { error } = await supabase
-            .from('app_habits')
-            .insert(newHabit);
-
-        if (error) {
-            console.warn("[Habits] DB insert error, fallback to local storage:", error);
-        }
+        await safeInsert('app_habits', newHabit);
     } catch (e) {
-        console.warn("[Habits] DB exception, fallback to local storage:", e);
+        console.warn("[Habits] safeInsert exception, fallback to local storage:", e);
     }
 
     habitsData.push(newHabit);

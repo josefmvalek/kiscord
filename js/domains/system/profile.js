@@ -26,8 +26,13 @@ export function ensureProfileModal() {
                     </p>
                 </div>
 
+                <button onclick="window.toggleSimulatedUser ? window.toggleSimulatedUser() : null; document.getElementById('user-popout').classList.remove('active')"
+                    class="w-full mt-4 bg-emerald-500/15 hover:bg-emerald-500 text-emerald-400 hover:text-white py-2 rounded-xl text-xs font-black transition border border-emerald-500/30 flex items-center justify-center gap-2 shadow-sm">
+                    <i class="fas fa-user-friends"></i> Přepnout uživatele (Jožka ↔ Klárka)
+                </button>
+
                 <button onclick="window.toggleTheme()"
-                    class="w-full mt-4 bg-purple-500/10 hover:bg-purple-500 text-purple-400 hover:text-white py-2 rounded text-xs font-bold transition border border-purple-500/20 flex items-center justify-center gap-2">
+                    class="w-full mt-2 bg-purple-500/10 hover:bg-purple-500 text-purple-400 hover:text-white py-2 rounded text-xs font-bold transition border border-purple-500/20 flex items-center justify-center gap-2">
                     <i class="fas fa-palette"></i> Změnit téma
                 </button>
 

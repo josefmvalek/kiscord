@@ -131,13 +131,64 @@ export function renderExercisesTab() {
     `;
 }
 
-export function filterTabExercises(query) {
-    const q = query.toLowerCase().trim();
+/**
+ * Normalizes text by converting to lower-case, stripping diacritics (háčky, čárky),
+ * and trimming excess whitespace.
+ */
+export function normalizeSearchString(str) {
+    if (!str) return '';
+    return String(str)
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .trim();
+}
+
+/**
+ * Helper to match query token against a target word with prefix/stem support for Czech inflections.
+ */
+function tokenMatchesWord(token, word) {
+    if (word === token) return true;
+    if (word.includes(token)) return true;
     
+    // Only compare stems or reverse inclusion for words of sufficient length (prevents single-letter words like 's', 'v' matching everything)
+    if (word.length >= 3 && token.length >= 3) {
+        if (token.includes(word)) return true;
+        const minStemLen = Math.min(token.length, word.length, 4);
+        if (minStemLen >= 3) {
+            const tokenStem = token.slice(0, minStemLen);
+            const wordStem = word.slice(0, minStemLen);
+            if (tokenStem === wordStem) return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Intelligent multi-token search matcher.
+ * Returns true if ALL words (tokens) in query match targetText (in any word order and with inflections).
+ */
+export function matchesExerciseQuery(targetText, query) {
+    if (!query || !query.trim()) return true;
+    const normTarget = normalizeSearchString(targetText);
+    const normQuery = normalizeSearchString(query);
+    if (!normQuery) return true;
+
+    const queryTokens = normQuery.split(/\s+/).filter(Boolean);
+    const targetWords = normTarget.split(/\s+/).filter(Boolean);
+
+    return queryTokens.every(token => 
+        normTarget.includes(token) || targetWords.some(word => tokenMatchesWord(token, word))
+    );
+}
+
+export function filterTabExercises(query) {
     const items = document.querySelectorAll('.exercise-tab-item');
     items.forEach(item => {
         const name = item.getAttribute('data-name') || '';
-        if (name.includes(q)) {
+        const category = item.getAttribute('data-category') || '';
+        if (matchesExerciseQuery(`${name} ${category}`, query)) {
             item.style.display = 'flex';
         } else {
             item.style.display = 'none';
@@ -149,9 +200,9 @@ export function filterTabExercises(query) {
         const cat = sec.getAttribute('data-cat') || '';
         const visibleItems = sec.querySelectorAll('.exercise-tab-item[style*="display: flex"], .exercise-tab-item:not([style*="display: none"])');
         
-        if (cat.includes(q) || visibleItems.length > 0) {
+        if (matchesExerciseQuery(cat, query) || visibleItems.length > 0) {
             sec.style.display = 'block';
-            if (cat.includes(q) && q.length > 0) {
+            if (matchesExerciseQuery(cat, query) && query.trim().length > 0) {
                 sec.querySelectorAll('.exercise-tab-item').forEach(i => i.style.display = 'flex');
             }
         } else {
@@ -161,12 +212,11 @@ export function filterTabExercises(query) {
 }
 
 export function filterModalExercises(query) {
-    const q = query.toLowerCase().trim();
     const items = document.querySelectorAll('.exercise-select-item');
     items.forEach(item => {
         const name = item.getAttribute('data-name') || '';
         const category = item.getAttribute('data-category') || '';
-        if (name.includes(q) || category.includes(q)) {
+        if (matchesExerciseQuery(`${name} ${category}`, query)) {
             item.style.display = 'flex';
         } else {
             item.style.display = 'none';

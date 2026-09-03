@@ -9,6 +9,53 @@ import { state } from './state.js';
 // Pre-defined Quick Actions
 const QUICK_ACTIONS = [
     {
+        id: 'action-switch-user',
+        title: '👤 Přepnout uživatele (Jožka ↔ Klárka)',
+        category: 'Simulace & Uživatel',
+        icon: '👤',
+        color: '#eb459e',
+        handler: () => window.toggleSimulatedUser?.()
+    },
+    {
+        id: 'action-nutrition-quick',
+        title: '🥗 Zapsat rychlé jídlo / kalorii',
+        category: 'Rychlé zadávání',
+        icon: '🥗',
+        color: '#14b8a6',
+        handler: () => {
+            window.switchChannel('nutrition');
+            setTimeout(() => {
+                import('../domains/fitness/nutrition/modals.js').then(m => m.openAddFoodModal?.('lunch'));
+            }, 250);
+        }
+    },
+    {
+        id: 'action-habit-add',
+        title: '🌿 Přidat nový denní návyk',
+        category: 'Rychlé zadávání',
+        icon: '🌿',
+        color: '#10b981',
+        handler: () => {
+            window.switchChannel('habits');
+            setTimeout(() => {
+                import('../domains/lifestyle/habits.js').then(m => m.openAddHabitModal?.());
+            }, 250);
+        }
+    },
+    {
+        id: 'action-points-add',
+        title: '📚 Zadat WIS body z předmětu (VUT FIT)',
+        category: 'Rychlé zadávání',
+        icon: '📚',
+        color: '#5865f2',
+        handler: () => {
+            window.switchChannel('study-planner');
+            setTimeout(() => {
+                import('../domains/university/study-planner/points.js').then(m => m.openAddSubjectPointsModal?.());
+            }, 250);
+        }
+    },
+    {
         id: 'action-water',
         title: 'Zapsat sklenici vody (+250 ml)',
         category: 'Rychlá akce',
