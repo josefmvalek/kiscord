@@ -1,5 +1,5 @@
 # Kiscord — Full API Signatures & Symbol Contracts (llms-full.txt)
-> Comprehensive reference containing function signatures, parameter contracts, and schemas.
+> Comprehensive reference containing function signatures, parameter contracts, schemas, and domain module interfaces.
 
 ---
 
@@ -10,6 +10,7 @@
 export const state: {
     currentUser: { id: string; email: string; user_metadata?: any } | null;
     currentChannel: string;
+    currentServer?: string;
     library: { movies: MediaItem[]; series: MediaItem[]; games: MediaItem[] };
     watchHistory: Record<string, { status: string; rating: number; reaction?: string }>;
     watchlist: Array<{ id: string; type: string; user_id: string }>;
@@ -30,25 +31,67 @@ export const state: {
     [key: string]: any;
 };
 
-export function saveStateToCache(): void;
+export function saveStateToCache(): Promise<void>;
 export function loadStateFromCache(): Promise<boolean>;
 export function initializeState(): Promise<void>;
 export function awardLoveCoinsToCurrentUser(amount: number, reason?: string): Promise<void>;
 ```
 
-### `/js/core/router.js`
+### `/js/core/signals.js`
 ```typescript
-export const moduleMap: Record<string, () => Promise<any>>;
+export function createSignal<T>(initialValue: T): [() => T, (nextValue: T | ((prev: T) => T)) => void];
+export function createEffect(effectFn: () => void | (() => void)): () => void;
+export function createComputed<T>(computeFn: () => T): () => T;
+```
+
+### `/js/core/idb.js`
+```typescript
+export function initDB(): Promise<IDBDatabase>;
+export function getCachedItem(storeName: string, key: string): Promise<any>;
+export function setCachedItem(storeName: string, key: string, value: any): Promise<void>;
+export function addToSyncQueue(operation: { table: string; type: 'upsert'|'insert'|'delete'; payload: any; matchKeys?: string[] }): Promise<void>;
+export function getSyncQueue(): Promise<Array<{ id: number; table: string; type: string; payload: any; matchKeys?: string[] }>>;
+export function removeFromSyncQueue(id: number): Promise<void>;
+export function clearSyncQueue(): Promise<void>;
+```
+
+### `/js/core/repositories/base-repository.js`
+```typescript
+export class BaseRepository<T> {
+    constructor(tableName: string, options?: { maxAgeMs?: number; primaryKey?: string });
+    getAll(forceFetch?: boolean): Promise<T[]>;
+    getById(id: string | number, forceFetch?: boolean): Promise<T | null>;
+    save(item: Partial<T>): Promise<T>;
+    delete(id: string | number): Promise<void>;
+    revalidate(): Promise<T[]>;
+    subscribe(callback: (data: T[]) => void): () => void;
+}
+```
+
+### `/js/core/router/` (Facade: `/js/core/router.js`)
+```typescript
+// /js/core/router/channel-registry.js
 export const channelCategories: Array<{
     name: string;
     items: Array<{ id: string; name: string; icon: string; type: string; color: string; desc: string }>;
 }>;
-
-export function switchChannel(channelId: string, params?: any): Promise<void>;
-export function renderChannels(): void;
+export function getChannelItemById(channelId: string): ChannelItem | undefined;
 export function toggleCategoryCollapse(categoryName: string): void;
 export function collapseAllCategories(): void;
 export function expandAllCategories(): void;
+export function toggleFavoriteChannel(channelId: string): void;
+
+// /js/core/router/module-loader.js
+export const ROUTE_REGISTRY: Record<string, {
+    loader: () => Promise<any>;
+    render: (mod: any, container: HTMLElement, channelId: string, params?: any) => any;
+}>;
+export function mountChannelModule(channelId: string, container: HTMLElement, params?: any): Promise<any>;
+
+// /js/core/router/navigation.js
+export function switchChannel(channelId: string, params?: any): Promise<void>;
+export function renderChannels(): void;
+export function updateChannelHeader(channelId: string): void;
 export function updateGlobalWorkoutMiniBar(): void;
 ```
 
@@ -77,33 +120,12 @@ export function broadcastPomodoroUpdate(status: any): Promise<void>;
 export function cleanupRealtimeSync(): void;
 ```
 
-### `/js/core/ui.js`
+### `/js/core/offline.js`
 ```typescript
-export function renderModal(options: {
-    id: string;
-    title: string;
-    subtitle?: string;
-    content: string;
-    actions?: string;
-    onClose?: string;
-}): string;
-
-export function renderButton(options: {
-    text: string;
-    variant?: 'primary' | 'secondary' | 'danger' | 'success';
-    onClick?: string;
-    icon?: string;
-    className?: string;
-}): string;
-
-export function renderInputGroup(options: {
-    label: string;
-    id: string;
-    type?: string;
-    value?: string | number;
-    placeholder?: string;
-    attr?: string;
-}): string;
+export function safeUpsert(table: string, data: any, matchKeys?: string[]): Promise<any>;
+export function safeInsert(table: string, data: any): Promise<any>;
+export function safeDelete(table: string, matchQuery: Record<string, any>): Promise<any>;
+export function processOfflineQueue(): Promise<void>;
 ```
 
 ### `/js/core/utils.js`
@@ -117,17 +139,17 @@ export function sleep(ms: number): Promise<void>;
 
 ---
 
-## 2. Module Interfaces (`/js/modules/`)
+## 2. Domain Module Interfaces (`/js/domains/`)
 
-### A. VUT FIT & KOLEJE
+### A. VUT FIT & KOLEJE (`/js/domains/university/`)
 ```typescript
-// /js/modules/schedule.js
+// /js/domains/university/schedule.js
 export function renderSchedule(): Promise<void>;
 export function openAddSubjectModal(): void;
 export function saveScheduleSubject(): Promise<void>;
 export function deleteScheduleItem(id: string): Promise<void>;
 
-// /js/modules/studyPlanner.js
+// /js/domains/university/study-planner/index.js
 export function renderStudyPlanner(): Promise<void>;
 export function openAddSubjectModalFIT(): void;
 export function openEditSubjectPointsModal(subjectId: string): void;
@@ -135,25 +157,18 @@ export function saveSubjectPointsItem(): Promise<void>;
 export function saveDeadlineItem(): Promise<void>;
 export function toggleDeadlineComplete(id: string): Promise<void>;
 
-// /js/modules/dormHub.js
+// /js/domains/university/dorm-hub.js
 export function renderDormHub(): Promise<void>;
 export function toggleChecklistItem(index: number): void;
 export function saveLaundryReservation(slot: any): Promise<void>;
 
-// /js/modules/financeTracker.js
+// /js/domains/archive/finance/ or university finance
 export function renderFinanceTracker(targetTab?: 'budget' | 'savings'): Promise<void>;
-export function switchTab(tab: 'budget' | 'savings'): void;
-export function openAddTransactionModal(preset?: any): void;
-export function saveTransactionItem(): Promise<void>;
-export function deleteTransactionItem(id: string): Promise<void>;
-export function openSavingsGoalModal(editIndex?: number): void;
-export function saveSavingsGoal(editIndex?: number): void;
-export function adjustGoalSavings(index: number, amount: number): void;
 ```
 
-### B. ZDRAVÍ & FITNESS
+### B. ZDRAVÍ & FITNESS (`/js/domains/fitness/`)
 ```typescript
-// /js/modules/gym/main.js & activeWorkout.js
+// /js/domains/fitness/gym/index.js & main.js
 export function renderGym(initialTab?: string): Promise<void>;
 export function startWorkout(templateId?: string): void;
 export function startFreeWorkout(): void;
@@ -162,49 +177,49 @@ export function startRestTimer(durationSeconds?: number): void;
 export function finishActiveWorkout(): Promise<void>;
 export function cancelActiveWorkout(): Promise<void>;
 
-// /js/modules/gym/bodyTracker.js
+// /js/domains/fitness/gym/bodyTracker.js
 export function renderBodyTrackerTab(): Promise<void>;
 export function openLogMeasurementModal(): void;
 export function saveBodyMeasurement(): Promise<void>;
 
-// /js/modules/gym/prs.js
+// /js/domains/fitness/gym/prs.js
 export function renderPRsTab(): Promise<void>;
 export function openExerciseAnalyticsModal(exerciseId: string): void;
 
-// /js/modules/habits.js
+// /js/domains/lifestyle/habits.js
 export function renderHabits(): Promise<void>;
 export function toggleHabitToday(habitId: string): Promise<void>;
 export function openAddHabitModal(): void;
 export function saveHabitItem(): Promise<void>;
 ```
 
-### C. NÁŠ SVĚT & PŘÍBĚH
+### C. NÁŠ SVĚT & PŘÍBĚH (`/js/domains/couple/` & `/js/domains/lifestyle/`)
 ```typescript
-// /js/modules/loveShop.js
+// /js/domains/couple/love-shop/index.js
 export function renderLoveShop(): Promise<void>;
 export function openBuyModal(couponId: string): void;
 export function confirmBuyCoupon(couponId: string): Promise<void>;
 export function redeemCouponDirect(couponId: string): Promise<void>;
 
-// /js/modules/map.js
+// /js/domains/lifestyle/date-planner/index.js
 export function renderMap(): Promise<void>;
 export function openGoogleMapsRoute(): void;
 export function addNewDateLocation(lat: number, lng: number, name: string): Promise<void>;
 
-// /js/modules/timeline.js
+// /js/domains/lifestyle/timeline/index.js
 export function renderTimeline(): Promise<void>;
 export function openGallery(photoIndex: number): void;
 export function uploadPhoto(files: FileList): Promise<void>;
 
-// /js/modules/letters.js
+// /js/domains/couple/letters/index.js
 export function renderLetters(): Promise<void>;
 export function sendLetter(payload: { title: string; body: string; unlock_at: string; photos?: string[] }): Promise<void>;
 export function openLetter(letterId: string): void;
 ```
 
-### D. ZÁBAVA & MÉDIA
+### D. ZÁBAVA & MÉDIA (`/js/domains/entertainment/`)
 ```typescript
-// /js/modules/library.js
+// /js/domains/entertainment/library/index.js
 export function renderLibrary(category?: 'movies' | 'series' | 'games'): void;
 export function handleLiveSearch(query: string): void;
 export function setGameFilter(filter: 'all' | 'frequent' | 'backlog' | 'completed'): void;
@@ -215,54 +230,38 @@ export function saveNewMedia(): Promise<void>;
 export function showEditMediaModal(id: number): void;
 export function updateMedia(): Promise<void>;
 
-// /js/modules/watchlist.js
+// /js/domains/entertainment/watchlist.js
 export function renderWatchlist(filterCategory?: 'all' | 'movie' | 'series' | 'game'): void;
 export function removeWatchlistItem(mediaId: number): Promise<void>;
 export function rollTheDice(): void;
 export function startTinder(category?: 'movie' | 'series' | 'game'): void;
 
-// /js/modules/netflixMatcher.js
+// /js/domains/entertainment/netflix-matcher.js
 export function renderNetflixMatcher(initialCategory?: 'movie' | 'series' | 'game' | null): Promise<void>;
 export function swipeLeft(): void;
 export function swipeRight(): void;
 export function setCategoryFilter(filter: 'all' | 'movie' | 'series' | 'game'): void;
 export function setMode(mode: 'watchlist' | 'discovery'): void;
 
-// /js/modules/gamesHub.js
+// /js/domains/entertainment/games-hub.js
 export function renderGamesHub(filter?: 'all' | 'couple' | 'logic' | 'ranking'): void;
 export function setFilter(filter: string): void;
 
-// /js/modules/coupleQuiz.js
+// /js/domains/couple/couple-quiz.js
 export function renderCoupleQuiz(): Promise<void>;
 export function startCreate(): void;
 export function startQuiz(quizId: string): void;
 
-// /js/modules/gameWho.js
+// /js/domains/entertainment/game-who.js
 export function renderGameWho(): void;
 export function submitGameVote(questionId: string, votedForUserId: string): Promise<void>;
 
-// /js/modules/gameDraw.js
-export function renderGameDraw(): void;
-export function setDrawColor(color: string): void;
-export function setDrawSize(size: number): void;
-export function undoLastStroke(): void;
-
-// /js/modules/tierlist.js
-export function renderTierList(): Promise<void>;
-export function showCreateModal(): void;
-export function loadTierLists(): Promise<void>;
-
-// /js/modules/funfacts.js
+// /js/domains/entertainment/funfacts.js
 export function renderFunFacts(): void;
 export function openFactCategory(catId: string, sub1?: string, sub2?: string): void;
 export function toggleFactFavorite(factId: string, catId: string): void;
 
-// /js/modules/games.js (Tetris & Puzzle)
-export function renderTetrisTracker(): void;
-export function updateTetrisScore(who: 'jose' | 'klarka' | 'reset', amount: number): Promise<void>;
-export function renderPuzzleGame(selectedImage?: string | null): void;
-
-// /js/modules/manual.js (Application Guide & Interactive Documentation)
+// /js/domains/system/manual/index.js
 export function renderManual(): void;
 ```
 

@@ -30,7 +30,7 @@ window.loadModule = (name) => {
         case 'router': return import('./router.js');
         case 'app-ui': return import('./app-ui.js');
         case 'auth-handler': return import('./auth-handler.js');
-        case 'globals': return import('./globals.js');
+        case 'globals': return Promise.resolve({ ActionDispatcher, initKiscordNamespace, exposeGlobals });
         // Modules
         case 'achievements': return import('../domains/entertainment/achievements.js');
         case 'bucketlist': return import('../domains/lifestyle/bucketlist.js');

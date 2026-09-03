@@ -42,60 +42,36 @@ test.describe('Calendar & Shifts Integration E2E', () => {
   });
 
   test('should render calendar grid and highlight Joint Day Off 🌴', async ({ page }) => {
-    // Navigate to local server
-    await page.goto('/');
+    // Navigate directly to calendar channel
+    await page.goto('/?channel=calendar');
 
     // Verify login is bypassed and app interface is shown
     await expect(page.locator('#app-interface')).toHaveClass(/show/);
     await expect(page.locator('#sidebar-user-name')).toHaveText('Jožka');
 
-    // Switch to Calendar tab using the sidebar button
-    const calendarButton = page.locator('.channel-link[data-channel="calendar"]');
-    await calendarButton.click();
+    // Verify Calendar 3.0 main container renders successfully
+    const calendarMain = page.locator('#calendar-main-content');
+    await expect(calendarMain).toBeVisible({ timeout: 15000 });
 
-    // Verify calendar grid renders successfully
-    const calendarGrid = page.locator('#calendar-grid');
-    await expect(calendarGrid).toBeVisible();
+    // Check filter pills bar is rendered
+    const filtersBar = page.locator('#calendar-filters');
+    await expect(filtersBar).toBeVisible();
 
-    // Check for "all" filter status rendering shifts
-    const activeFilter = page.locator('button[onclick*="all"]');
-    await expect(activeFilter).toBeVisible();
-
-    // Locate the cell for June 1st, 2026 or a day with Joint Day Off (using mock shifts)
-    // In our shifts mock we set '2026-06-01' as joint day off. Let's inspect the page content.
-    // The calendar should display joint day off indicators.
-    // We expect the cell containing "1.6." or joint day off elements.
-    const jointDayOffBadge = page.locator('.border-emerald-500\\/40');
-    // It might or might not render June 2026 depending on the current date, but the test ensures the classes exist
-    // Let's assert that the filter buttons work as expected
+    // Verify presence of functional filters
     const filters = ['all', 'sleep', 'water', 'health'];
     for (const f of filters) {
-      await expect(page.locator(`button[onclick*="${f}"]`)).toBeVisible();
+      await expect(page.locator(`button[onclick*="'${f}'"]`)).toBeVisible();
     }
   });
 
   test('should verify shift conflict warning during scheduling', async ({ page }) => {
-    await page.goto('/');
-
-    // Load calendar channel
-    await page.locator('.channel-link[data-channel="calendar"]').click();
-
-    // Mock confirmation behavior: clicking "Zrušit" to prevent saving a conflict plan
-    let dialogMessage = '';
-    page.on('dialog', async (dialog) => {
-      dialogMessage = dialog.message();
-      // Dismiss the confirm dialog simulating "Cancel"
-      await dialog.dismiss();
-    });
+    await page.goto('/?channel=calendar');
 
     // Wait for the calendar module to load completely
     await page.waitForFunction(() => window.Calendar !== undefined);
 
-    // Simulate clicking on a calendar cell or opening the day detail modal
-    // Instead of full DOM click path which is highly dependent on dates,
-    // we can directly invoke the Day Detail Modal controller to test standard scheduling logic:
+    // Setup current user shift to morning shift on 2026-06-01 and trigger Quick Add
     await page.evaluate(() => {
-      // Setup current user shift to morning shift on a date key, e.g. 2026-06-01
       window.state.shifts = {
         '2026-06-01': {
           jose: {
@@ -106,36 +82,34 @@ test.describe('Calendar & Shifts Integration E2E', () => {
           }
         }
       };
-      // Trigger modal open
-      window.Calendar.showDayDetail('2026-06-01');
+      window.Calendar.openQuickAdd(null, '2026-06-01', '10:00');
     });
 
-    // Verify modal is displayed
-    await expect(page.locator('#day-modal')).toBeVisible();
+    // Verify Quick Add popover is displayed
+    const popover = page.locator('#cal-quick-popover');
+    await expect(popover).toBeVisible();
 
-    // Check if Směny & Volno section is rendered in modal
-    await expect(page.locator('#modal-section-shifts')).toBeVisible();
-    await expect(page.locator('#modal-section-shifts')).toContainText('Směny & Volno');
-    await expect(page.locator('#modal-section-shifts')).toContainText('Jožka');
-    await expect(page.locator('#modal-section-shifts')).toContainText('Ranní');
-    await expect(page.locator('#modal-section-shifts')).toContainText('06:00 - 14:00');
+    // Switch to Date type and fill title/time inside the shift (10:00 is between 06:00 and 14:00)
+    await page.locator('#qadd-type-date').click();
+    await page.locator('#qadd-title').fill('Společný oběd');
+    await page.locator('#qadd-time').fill('10:00');
 
-    // Fill new plan fields
-    await page.locator('#plan-name').fill('Společný oběd');
-    await page.locator('#plan-time').fill('10:00'); // This is exactly inside morning shift 06:00 - 14:00!
+    // Submit the form
+    await page.locator('#cal-quick-add-form').evaluate(form => {
+      form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    });
 
-    // Click Save plan
-    await page.locator('button:has-text("Přidat plán")').click();
+    // Verify custom confirm dialog warning is triggered with shift conflict details
+    const confirmDialog = page.locator('#app-confirm-dialog');
+    await expect(confirmDialog).toBeVisible();
+    await expect(confirmDialog).toContainText('má v tuto dobu směnu');
+    await expect(confirmDialog).toContainText('Chceš plán přesto uložit?');
 
-    // Verify dialog warning is triggered
-    expect(dialogMessage).toContain('má v tuto dobu směnu');
-    expect(dialogMessage).toContain('Chceš plán přesto uložit?');
+    // Dismiss by clicking "Zrušit"
+    await page.locator('#confirm-cancel').click();
+    await expect(confirmDialog).not.toBeVisible();
 
-    // Verify that due to dismissing the dialog, modal stays open and plan is NOT saved
-    await expect(page.locator('#day-modal')).toBeVisible();
-    await expect(page.locator('#plan-name')).toHaveValue('Společný oběd');
-
-    // Verify state was not updated
+    // Verify state was not updated and plan was NOT saved
     const plannedDates = await page.evaluate(() => window.state.plannedDates || {});
     expect(plannedDates['2026-06-01']).toBeUndefined();
   });

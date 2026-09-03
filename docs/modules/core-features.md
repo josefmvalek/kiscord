@@ -5,7 +5,7 @@
 ---
 
 ## 1. Dashboard (`#dashboard`)
-**File**: `js/modules/dashboard.js` (and submodules in `js/modules/dashboard/*`)
+**File**: `js/domains/lifestyle/dashboard/index.js` (and submodules in `js/domains/lifestyle/dashboard/*`)
 
 Serves as the primary landing hub and personal overview of the day.
 
@@ -19,7 +19,7 @@ Serves as the primary landing hub and personal overview of the day.
 ---
 
 ## 2. Health & Biometrics (`#dashboard`)
-**Files**: `js/modules/health.js`, `js/modules/dashboard/health_ui.js`
+**Files**: `js/domains/fitness/health.js`, `js/domains/lifestyle/dashboard/health_ui.js`
 
 Manages biometric data tracking and synchronization with the `health_data` table.
 

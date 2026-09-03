@@ -66,7 +66,7 @@ npm run typecheck
 
 ### Verification Checklist
 - [x] Dev server is running on `http://localhost:5173` without terminal or browser console errors.
-- [x] **All 66 test suites (464 tests) pass cleanly** via `npm run test:run`.
+- [x] **All 75 test suites (528 tests) pass cleanly** via `npm run test:run`.
 - [x] Static type check passes with 0 errors via `npm run typecheck`.
 - [x] Navigating to the page renders the Discord-themed dashboard and collapsible sidebar.
 - [x] DevTools $\rightarrow$ Application confirms the Service Worker is registered and IndexedDB (`kiscord_db`) holds cached state.
@@ -87,7 +87,7 @@ Kiscord intentionally avoids heavy frontend frameworks (React, Angular). Instead
 | **Backend & DB** | Supabase (PostgreSQL 15+) | Row Level Security (RLS), Realtime WebSockets, Storage buckets, PL/pgSQL RPCs |
 | **Local Storage** | IndexedDB (`js/core/idb.js`) | Asynchronous, non-blocking, multi-gigabyte capacity for state & binary assets |
 | **PWA & Offline** | Service Worker + Cache API | 3-tier caching hierarchy, zero-data-loss offline sync queue |
-| **Unit Testing** | Vitest + Happy-DOM | High-speed in-memory testing (66 suites, 464 tests in <20s) |
+| **Unit Testing** | Vitest + Happy-DOM | High-speed in-memory testing (75 suites, 528 tests in <20s) |
 | **E2E Testing** | Playwright | Multi-browser end-to-end automation for critical user journeys |
 | **Hosting & CI/CD** | Vercel | Instant deployments and branch previews on every push |
 
@@ -175,7 +175,7 @@ Standardized repository pattern abstracting Supabase API interactions and SWR ca
 
 ---
 
-## 6. Architecture Decision Records (ADR 0001–0010)
+## 6. Architecture Decision Records (ADR 0001–0011)
 
 Kiscord follows the Michael Nygard / MADR standard for architectural documentation:
 
@@ -191,6 +191,7 @@ Kiscord follows the Michael Nygard / MADR standard for architectural documentati
 | [ADR-0008](adr/0008-client-side-aes-gcm-encrypted-backup.md) | Client-Side AES-GCM Encrypted Backup & Restore (.kiscord) | **Accepted** | 2026-08-23 | End-to-end encrypted manual backups |
 | [ADR-0009](adr/0009-discord-slash-commands-voice-logging.md) | Discord Slash Commands & Smart Voice Logging Engine | **Accepted** | 2026-08-23 | Natural language and voice input processing |
 | [ADR-0010](adr/0010-database-performance-and-unified-bootstrap.md) | Database Performance Optimization & Unified Dashboard Bootstrap | **Accepted** | 2026-08-26 | Compound indexes, optimized RPCs, single query bootstrap |
+| [ADR-0011](adr/0011-test-suite-architecture-and-fixtures.md) | Test Suite Architecture, Reusable Mock Builders, and Shared E2E Test Fixtures | **Accepted** | 2026-08-26 | Standardized mock fixtures and headless browser tests |
 
 ---
 
@@ -249,7 +250,7 @@ Database operations run on PostgreSQL 15+ in Supabase with strict **Row Level Se
 
 ### Recipe B: Running Verification Tests
 ```bash
-# Run all 66 unit/integration test suites
+# Run all 75 unit/integration test suites (528 tests)
 npm run test:run
 
 # Run TypeScript type check
@@ -267,7 +268,7 @@ npm run test:e2e
    - Increment `CACHE_NAME` in `public/sw.js`.
    - In the application, open `#nastavení` and trigger **"Clear Cache and Reload"**.
 2. **Offline queue failed to synchronize**:
-   - Inspect `localStorage.getItem('kiscord_sync_queue')` in DevTools.
+   - Inspect the `sync_queue` store in IndexedDB (`kiscord_db`) via DevTools Application tab.
    - Check console logs for database constraint errors.
 3. **RLS permission denied (403)**:
    - Ensure the user is logged in with a valid session via `supabase.auth.getSession()`.

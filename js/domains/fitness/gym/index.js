@@ -69,11 +69,12 @@ export {
     saveManualLog,
     openScheduleTemplateModal,
     saveScheduledTemplate,
-    addManualSet,
-    removeManualSet,
     openEditGymLogModal,
     saveEditGymLog,
-    onTemplateModeChange
+    onTemplateModeChange,
+    onTemplateCheckboxToggle,
+    moveTemplateExercise,
+    removeTemplateExercise
 } from './templates.js';
 
 export {

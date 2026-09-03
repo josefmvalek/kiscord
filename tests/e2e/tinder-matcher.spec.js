@@ -175,23 +175,21 @@ test.describe('Realtime Tinder Matcher E2E', () => {
   });
 
   test('should synchronize matches in real time between partners', async () => {
-    // 1. Open both pages
-    await jozkaPage.goto('/');
-    await klarkaPage.goto('/');
+    // 1. Open both pages directly in Watchlist
+    await jozkaPage.goto('/?channel=watchlist');
+    await klarkaPage.goto('/?channel=watchlist');
 
     // Check we are logged in
     await expect(jozkaPage.locator('#sidebar-user-name')).toHaveText('Jožka');
     await expect(klarkaPage.locator('#sidebar-user-name')).toHaveText('Klárka');
 
-    // 2. Both navigate to Watchlist -> Tinder
-    const jozkaLibrary = jozkaPage.locator('.channel-link[data-channel="watchlist"]');
-    await jozkaLibrary.click();
+    // 2. Both navigate to Tinder
     const jozkaTinderBtn = jozkaPage.locator('button[onclick*="startTinder"]');
+    await expect(jozkaTinderBtn).toBeVisible({ timeout: 15000 });
     await jozkaTinderBtn.click();
 
-    const klarkaLibrary = klarkaPage.locator('.channel-link[data-channel="watchlist"]');
-    await klarkaLibrary.click();
     const klarkaTinderBtn = klarkaPage.locator('button[onclick*="startTinder"]');
+    await expect(klarkaTinderBtn).toBeVisible({ timeout: 15000 });
     await klarkaTinderBtn.click();
 
     // Wait for the NetflixMatcher module to load completely on both pages

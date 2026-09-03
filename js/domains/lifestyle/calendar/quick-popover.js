@@ -10,6 +10,7 @@ import { supabase } from '@core/supabase.js';
 import { showDayDetail } from './day-modal.js';
 import { toggleChecklistItem } from './sections-plans.js';
 import { getWeatherForDate } from './weather.js';
+import { showConfirmDialog } from '@core/theme.js';
 
 let activePopover = null;
 
@@ -173,6 +174,35 @@ export async function handleQuickAddSubmit(event, dateKey) {
     const cat = document.getElementById('qadd-date-cat')?.value || 'date';
 
     if (!title) return;
+
+    // Shift conflict validation
+    if (time && (type === 'date' || type === 'gym')) {
+        const dayShifts = (state.shifts || {})[dateKey] || (state.workEntries || {})[dateKey];
+        if (dayShifts) {
+            let conflictMsg = '';
+            if (dayShifts.jose && dayShifts.jose.shift_type !== 'volno' && dayShifts.jose.time_start && dayShifts.jose.time_end) {
+                const start = dayShifts.jose.time_start;
+                const end = dayShifts.jose.time_end;
+                if (time >= start && time <= end) {
+                    conflictMsg += `• Jožka má v tuto dobu směnu (${start} - ${end})\n`;
+                }
+            }
+            if (dayShifts.klarka && dayShifts.klarka.shift_type !== 'volno' && dayShifts.klarka.time_start && dayShifts.klarka.time_end) {
+                const start = dayShifts.klarka.time_start;
+                const end = dayShifts.klarka.time_end;
+                if (time >= start && time <= end) {
+                    conflictMsg += `• Klárka má v tuto dobu směnu (${start} - ${end})\n`;
+                }
+            }
+            if (conflictMsg) {
+                const confirmSave = await showConfirmDialog(`⚠️ Pozor! Plánovaný čas koliduje s pracovní směnou:\n\n${conflictMsg}\nChceš plán přesto uložit?`, 'Uložit i tak', 'Zrušit');
+                if (!confirmSave) {
+                    triggerHaptic('heavy');
+                    return;
+                }
+            }
+        }
+    }
 
     if (type === 'gym') {
         // Create planned gym workout entry

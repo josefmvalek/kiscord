@@ -65,11 +65,7 @@ test.describe('Milostné dopisy - Časový zámek E2E', () => {
   });
 
   test('should verify future locked letters are not readable and past letters are openable', async ({ page }) => {
-    await page.goto('/');
-
-    // Navigate to Letters channel
-    const lettersBtn = page.locator('.channel-link[data-channel="letters"]');
-    await lettersBtn.click();
+    await page.goto('/?channel=letters');
 
     // Wait for letters content area to appear (app needs to boot + render inbox)
     const contentArea = page.locator('#letters-content-area');

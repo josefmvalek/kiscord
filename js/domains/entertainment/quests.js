@@ -10,9 +10,9 @@ import { showNotification } from '@core/theme.js';
 
 let questData = {};
 
-export async function renderQuests() {
-    const container = document.getElementById("messages-container");
+export async function renderQuests(container = document.getElementById("messages-container")) {
     if (!container) return;
+    container.classList.remove('channel-content-fading');
 
     container.innerHTML = `
         <div class="flex flex-col h-full bg-[#36393f] overflow-hidden animate-fade-in">
@@ -219,8 +219,10 @@ async function fetchQuestProgress() {
 
         renderQuestCards();
         
-        if (loader) loader.classList.add('hidden');
-        if (grid) grid.classList.remove('hidden');
+        const activeLoader = document.getElementById('quests-loader') || loader;
+        const activeGrid = document.getElementById('quests-grid') || grid;
+        if (activeLoader) activeLoader.classList.add('hidden');
+        if (activeGrid) activeGrid.classList.remove('hidden');
 
     } catch (e) {
         console.error("[Quests] Unexpected Fetch Error:", e);

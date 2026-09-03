@@ -5,7 +5,7 @@
 ---
 
 ## 1. Timetable & Schedule (`#rozvrh`)
-- **File:** `/js/modules/schedule.js`
+- **File:** `js/domains/university/schedule.js`
 - **Capabilities:**
   - Weekly visual timetable color-coded by lecture, lab, and exercise sessions.
   - VUT FIT campus building navigation hints (`FIT_ROOM_HINTS`).
@@ -14,7 +14,7 @@
 ---
 
 ## 2. Study Planner & WIS Tracker (`#studijní-plán`)
-- **File:** `/js/modules/studyPlanner.js`
+- **File:** `js/domains/university/study-planner/index.js`
 - **Capabilities:**
   - Overview of enrolled university subjects, credit totals, and real-time WIS points.
   - Course pass probability calculator with dynamic status indicators.
@@ -23,7 +23,7 @@
 ---
 
 ## 3. Dorm Life Hub (`#koleje-brno`)
-- **File:** `/js/modules/dormHub.js`
+- **File:** `js/domains/university/dorm-hub.js`
 - **Capabilities:**
   - **Laundry Tracker:** Live machine booking and timer tracker for floor washing machines with notifications.
   - **Dorm Checklist:** Comprehensive room packing checklist categorized by packed and purchased states.
@@ -32,7 +32,7 @@
 ---
 
 ## 4. Personal Finance Tracker (`#finance`)
-- **File:** `/js/modules/financeTracker.js`
+- **File:** `js/domains/archive/finance/`
 - **Architecture:**
   - **Tab 1: Brno Personal Budget:**
     - Income and expense tracking across categories (Cafeteria, Housing/Dorm, Groceries, Transit, Leisure).
@@ -45,7 +45,7 @@
 ---
 
 ## 5. Laptop Comparison & Guide (`#počítač`)
-- **File:** `/js/modules/laptopComparison.js`
+- **File:** `js/domains/university/laptop-comparison.js`
 - **Capabilities:**
   - Specification matrix (performance, battery life, weight, display quality) for selecting laptops for CS engineering studies.
   - Personal evaluation notes and candidate rankings.

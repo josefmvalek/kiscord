@@ -427,11 +427,11 @@ npm run typecheck</code></pre>
 <hr>
 <h2 id="7-developer-cookbook-common-recipes">7. Developer Cookbook &amp; Common Recipes</h2>
 <h3 id="recipe-a-adding-a-new-channel-feature">Recipe A: Adding a New Channel / Feature</h3>
-<ol><li>Create <code>js/modules/myFeature.js</code>:</li></ol>
+<ol><li>Create <code>js/domains/lifestyle/myFeature.js</code>:</li></ol>
 <p>```javascript import { state, stateEvents } from '../core/state.js'; import { safeUpsert } from '../core/offline.js';</p>
 <p>export async function renderMyFeature() { const root = document.getElementById('main-content'); root.innerHTML = <code> &lt;div class="channel-header"&gt; &lt;h2&gt;&lt;i class="fa-solid fa-star text-accent"&gt;&lt;/i&gt; My New Feature&lt;/h2&gt; &lt;/div&gt; &lt;div class="card p-4"&gt;Feature content goes here...&lt;/div&gt; </code>; } ```</p>
 <ol><li>Register in <code>js/core/router.js</code>:</li></ol>
-<p>``<code>javascript export const moduleMap = { // ... existing modules ... 'my-feature': () =&gt; import('../modules/myFeature.js'), }; </code>``</p>
+<p>``<code>javascript export const moduleMap = { // ... existing modules ... 'my-feature': () =&gt; import('../../domains/lifestyle/myFeature.js'), }; </code>``</p>
 <ol><li>Add channel definition to <code>channelCategories</code> in <code>js/core/router.js</code>.</li></ol>
 <h3 id="recipe-b-creating-a-database-migration">Recipe B: Creating a Database Migration</h3>
 <ol><li>Create a migration file in <code>supabase/migrations/YYYYMMDD_feature_name.sql</code>:</li></ol>

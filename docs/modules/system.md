@@ -5,7 +5,7 @@
 ---
 
 ## 1. Settings (`#nastavení`)
-**File**: `js/modules/settings.js`
+**File**: `js/domains/system/settings/index.js`
 
 Comprehensive preference center controlling application visuals, audio, and data.
 
@@ -21,7 +21,7 @@ Comprehensive preference center controlling application visuals, audio, and data
 ---
 
 ## 2. Hall of Fame & Achievements (`#achievementy`)
-**File**: `js/modules/achievements.js`
+**File**: `js/domains/entertainment/achievements.js`
 
 Collection of trophies celebrating relationship milestones and wellness streaks.
 
@@ -34,7 +34,7 @@ Collection of trophies celebrating relationship milestones and wellness streaks.
 ---
 
 ## 3. Levels & Relationship XP
-**File**: `js/modules/levels.js`
+**File**: `js/domains/entertainment/levels.js`
 
 Progression system measuring relationship activity over time.
 
@@ -47,7 +47,7 @@ Progression system measuring relationship activity over time.
 ---
 
 ## 4. Co-op Quests
-**File**: `js/modules/quests.js`
+**File**: `js/domains/entertainment/quests.js`
 
 Monthly cooperative missions requiring mutual participation.
 
@@ -59,7 +59,7 @@ Monthly cooperative missions requiring mutual participation.
 ---
 
 ## 5. Interactive Application Guide & Manual (`#návod`)
-**File**: `js/modules/manual.js`
+**File**: `js/domains/system/manual/index.js`
 
 Central interactive user manual and operational guide for both users.
 
@@ -69,3 +69,10 @@ Central interactive user manual and operational guide for both users.
 - **3-Step Daily Routine Cheat Sheet**: Rapid morning, daytime, and evening flow.
 - **Keyboard Shortcuts & Gestures**: Reference table for Command Palette (`Ctrl+K`), modal closing (`Esc`), Tinder swipes, and floating workout HUD.
 - **Interactive FAQ Accordion**: Practical solutions for offline syncing, Love Coins accumulation, locked letters, and mobile PWA installation.
+
+---
+
+## 6. System Diagnostics & Profile
+- **`#statistiky` (`js/domains/entertainment/stats.js`)**: Relationship telemetry, check-in history, activity heatmaps.
+- **`#changelog` (`js/domains/system/changelog.js`)**: Version release history and milestone changelogs.
+- **`#profil` (`js/domains/system/profile.js`)**: User avatar upload, Love Coins balance, status message.

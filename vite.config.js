@@ -10,8 +10,7 @@ export default defineConfig({
       '@core': path.resolve(__dirname, './js/core'),
       '@domains': path.resolve(__dirname, './js/domains'),
       '@shared': path.resolve(__dirname, './js/shared'),
-      '@types': path.resolve(__dirname, './js/types'),
-      '@modules': path.resolve(__dirname, './js/modules')
+      '@types': path.resolve(__dirname, './js/types')
     }
   },
   build: {
@@ -21,6 +20,13 @@ export default defineConfig({
       input: {
         main: './index.html',
       },
+      output: {
+        manualChunks(id) {
+          if (id.includes('@supabase/')) {
+            return 'vendor-supabase';
+          }
+        }
+      }
     },
   },
   server: {

@@ -4,32 +4,46 @@
 
 ---
 
-## 1. Central Router (`js/core/router.js`)
+## 1. Decoupled Router & Facade (`js/core/router/` & `js/core/router.js`)
+
+Channel navigation is organized into decoupled services exposed through a unified facade:
+- **`channel-registry.js`**: Channel definitions, category grouping, icons, colors, and favorites.
+- **`module-loader.js`**: Declarative `ROUTE_REGISTRY` mapping channel IDs to lazy dynamic imports and render adapters.
+- **`navigation.js`**: Navigation engine handling URL history, View Transitions, breadcrumbs, and mobile drawer.
+- **`router.js`**: Central facade re-exporting the router API.
 
 At the center of the navigation architecture is `switchChannel(channelId)`. This function manages the complete transition lifecycle:
 
 ### Channel Switch Lifecycle:
 1. **Deduplication**: Checks if the requested channel is already active.
 2. **History State**: Pushes an entry to `history.pushState` so browser Back/Forward buttons work seamlessly.
-3. **UI Cleanup**: Invokes registered cleanup functions to terminate open WebSockets and timers from the previous module (e.g. `drawCleanup()`).
-4. **Lazy Loading**: Imports the target module dynamically via `import()`.
+3. **UI Cleanup**: Invokes registered cleanup functions (`unmount()`) via `CleanupCollector` from `module-lifecycle.js`.
+4. **Lazy Loading**: Imports the target domain module dynamically via `import()`.
 5. **Data Fetching**: Initiates on-demand data retrieval via `loaders.js` (e.g. `ensureCalendarData()`).
-6. **Rendering**: Executes the module's primary render routine into `#main-content`.
+6. **Rendering**: Executes the module's primary render routine into `#main-content` wrapped in View Transitions.
 7. **Mobile Drawer**: Automatically closes the sidebar drawer on mobile viewports.
 
 ---
 
-## 2. Module Map (`moduleMap`)
+## 2. Route Registry (`ROUTE_REGISTRY`)
 
-The router maintains an asynchronous map of channel IDs to file paths, downloading JavaScript chunks only when the user first opens that channel:
+Located in `js/core/router/module-loader.js`, `ROUTE_REGISTRY` maps channel IDs to lazy domain imports and render adapters:
 
 ```javascript
-export const moduleMap = {
-    'calendar': () => import('../modules/calendar.js'),
-    'timeline': () => import('../modules/timeline.js'),
-    'gym': () => import('../modules/gym/main.js'),
-    'library': () => import('../modules/library.js'),
-    // ... additional modules ...
+export const ROUTE_REGISTRY = {
+    'calendar': {
+        loader: () => import('../../domains/lifestyle/calendar/index.js'),
+        render: (m) => m.renderCalendar()
+    },
+    'gym': {
+        loader: () => import('../../domains/fitness/gym/index.js'),
+        render: (m, c) => m.renderGym(c)
+    },
+    'library': {
+        loader: () => import('../../domains/entertainment/library/index.js'),
+        render: (m, c) => m.renderLibrary(c)
+    },
+    // ... additional domain routes ...
 };
 ```
 

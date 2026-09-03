@@ -90,8 +90,8 @@ The project includes an extensive test suite ensuring high reliability across al
 ### A. Unit & Integration Testing (Vitest)
 - **Configuration**: `vitest.config.js`
 - **Environment**: `happy-dom` (lightweight in-memory DOM simulation)
-- **Scope**: 18 test files, 125 test cases covering:
-  - State management and cache hydration (`tests/integration/offline-sync.test.js`)
+- **Scope**: 75 test files, 528 test cases covering:
+  - State management, signals, and cache hydration (`tests/integration/offline-sync.test.js`, `signals.test.js`)
   - 7 themes visual engine (`tests/unit/theme.test.js`)
   - Gym tracker, 1RM analytics, and rest timer (`tests/unit/gym-*.test.js`)
   - Collapsible sidebar categories and router (`tests/unit/sidebar-categories.test.js`)
@@ -107,16 +107,88 @@ npm test
 
 ### B. End-to-End Testing (Playwright)
 - **Configuration**: `playwright.config.js`
-- **Scope**: Real browser automation (time-locked letters, quest progression, shift scheduler, Tinder Matcher).
+- **Environment**: Chromium headless (with automatic Vite dev server bootstrap on `localhost:3000`)
+- **Fixtures & Mocking**: `tests/fixtures/playwright-helpers.js` provides hermetic Supabase auth simulation (`localStorage` token injection) and network route interception (`page.route('**/rest/v1/**')`) with HTTP HEAD `content-range` emulation.
+- **Test Specifications** (6 tests in 5 files, 100% passing):
+  1. `tests/e2e/letters-locking.spec.js`: Verifies time-locked love letters (countdown badge, lock state, unlocked content reveal).
+  2. `tests/e2e/bucketlist-upload.spec.js`: Verifies bucketlist card rendering, status filters, and modal photo upload simulation.
+  3. `tests/e2e/tinder-matcher.spec.js`: Multi-user dual browser context test (Jožka & Klárka), testing real-time swipe synchronization and MATCH popup modal.
+  4. `tests/e2e/calendar-shifts.spec.js`: Tests Calendar 3.0 Spatial Zen rendering, Joint Day Off 🌴 detection, and quick-add shift conflict confirmation dialog (`#app-confirm-dialog`).
+  5. `tests/e2e/quests-progression.spec.js`: Verifies cooperative quest progress calculation, consolidated RPC mocking, and Admin modal quest creation.
 
 ```bash
-# Run Playwright E2E tests
+# Run all Playwright E2E tests (headless)
 npm run test:e2e
+
+# Run single test file
+npx playwright test tests/e2e/quests-progression.spec.js
+
+# Run with interactive Playwright UI
+npm run test:e2e:ui
+
+# View HTML test report
+npm run test:e2e:report
+```
+
+### C. Static Code Analysis & Formatting (Biome)
+- **Configuration**: `biome.json`
+- **Engine**: `@biomejs/biome` (Rust-based, sub-500ms execution across 400+ files)
+- **Scope**: Lints JS/TS/CSS/JSON, flags unused imports/variables, eliminates `var`, ensures consistent formatting.
+
+```bash
+# Run ultra-fast linter
+npm run lint
+
+# Auto-fix safe lint warnings
+npm run lint:fix
+
+# Format files according to style guidelines
+npm run format
 ```
 
 ---
 
-## 4. Build Pipeline & Deployment (Vercel)
+## 4. Build Pipeline & Deployment (GitHub Actions & Vercel)
+
+### A. Continuous Integration Pipeline (`.github/workflows/ci.yml`)
+
+Every push to `main` or `develop` and every pull request targeting `main` automatically triggers our GitHub Actions CI workflow.
+
+```mermaid
+flowchart LR
+    Push[Git Push / PR] --> CI{CI Pipeline Trigger}
+    
+    subgraph Parallel Job 1: code-quality
+        CI --> Linter[Biome Lint]
+        Linter --> Typecheck[TypeScript Check]
+        Typecheck --> Vitest[Vitest Unit & Integration]
+        Vitest --> ViteBuild[Vite Production Build]
+    end
+    
+    subgraph Parallel Job 2: e2e-playwright
+        CI --> Cache[Cache Restore: Chromium]
+        Cache --> E2E[Playwright Headless Suite]
+        E2E -->|Failure| Artifacts[Upload Test Report]
+    end
+    
+    ViteBuild --> Status[All Checks Green ✅]
+    E2E --> Status
+    Status --> Vercel[Vercel Production Deployment 🚀]
+```
+
+- **Execution Strategy**: Parallel execution of `code-quality` and `e2e-playwright` achieves sub-2-minute execution.
+- **Smart Caching**:
+  - `actions/setup-node@v4` with `cache: 'npm'` for packages.
+  - `actions/cache@v4` caching `~/.cache/ms-playwright` keyed against `package-lock.json` hash (saves ~180 MB download per run).
+- **Concurrency & Resource Protection**:
+  - `concurrency: { group: ..., cancel-in-progress: true }` immediately cancels obsolete runs on new commits.
+- **Local Simulation**:
+  ```bash
+  # Run complete CI suite locally in one command
+  npm run test:ci
+  ```
+
+### B. Production Hosting & Deployment (Vercel)
 
 - **Bundler**: [Vite 6](https://vitejs.dev/) with ES module chunking.
 - **CSS Processor**: Tailwind CSS v4 + PostCSS (`@tailwindcss/postcss`).
@@ -135,3 +207,4 @@ npm run test:e2e
       ]
     }
     ```
+

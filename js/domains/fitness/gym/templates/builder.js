@@ -117,11 +117,33 @@ export function renderTemplatesTab() {
     `;
 }
 
+// Modal state for active template exercises being configured
+let modalTemplateExercises = [];
+
+function syncInputsToModalTemplateExercises(mode) {
+    if (!Array.isArray(modalTemplateExercises)) return;
+    modalTemplateExercises.forEach(item => {
+        const exId = item.exercise_id;
+        const setsEl = document.getElementById(`${mode}-ex-sets-${exId}`);
+        const repsEl = document.getElementById(`${mode}-ex-reps-${exId}`);
+        const weightEl = document.getElementById(`${mode}-ex-weight-${exId}`);
+        const restEl = document.getElementById(`${mode}-ex-rest-${exId}`);
+        const supersetEl = document.getElementById(`${mode}-ex-superset-${exId}`);
+
+        if (setsEl) item.sets = parseInt(setsEl.value, 10) || 4;
+        if (repsEl) item.reps = parseInt(repsEl.value, 10) || 10;
+        if (weightEl) item.weight = parseFloat(weightEl.value) || 0;
+        if (restEl) item.rest_seconds = parseInt(restEl.value, 10) || 90;
+        if (supersetEl) item.superset_group = supersetEl.value || null;
+    });
+}
+
 // --- CREATE TEMPLATE MODAL ---
 export function openCreateTemplateModal() {
     triggerHaptic('light');
 
     const exercises = state.gymExercises || [];
+    modalTemplateExercises = [];
 
     const contentHtml = `
         <div class="space-y-4 text-left">
@@ -157,10 +179,10 @@ export function openCreateTemplateModal() {
             <div class="space-y-2">
                 <label class="block text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1.5 ml-1">Vyber cviky tréninku</label>
                 <input type="text" placeholder="Hledat cvik podle názvu nebo partie..." oninput="window.Gym.filterModalExercises(this.value)" class="w-full bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2]/50 transition mb-2">
-                <div class="max-h-60 overflow-y-auto border border-white/5 bg-black/10 rounded-2xl p-3 custom-scrollbar space-y-2">
+                <div class="max-h-56 overflow-y-auto border border-white/5 bg-black/10 rounded-2xl p-3 custom-scrollbar space-y-2">
                     ${exercises.map(ex => `
                         <label class="exercise-select-item flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition select-none" data-name="${ex.name.toLowerCase()}" data-category="${ex.category.toLowerCase()}">
-                            <input type="checkbox" name="tmpl-exercises" value="${ex.id}" onchange="window.Gym.refreshExercisesConfig('create')" class="w-4 h-4 rounded accent-[#faa61a] border-white/10 bg-black/20 focus:ring-0 flex-shrink-0">
+                            <input type="checkbox" name="tmpl-exercises" value="${ex.id}" onchange="window.Gym.onTemplateCheckboxToggle('create', '${ex.id}', this.checked)" class="w-4 h-4 rounded accent-[#faa61a] border-white/10 bg-black/20 focus:ring-0 flex-shrink-0">
                             <div class="flex items-center gap-2.5 min-w-0">
                                 ${getExerciseThumbnailHtml(ex, 'w-8 h-8')}
                                 <div class="min-w-0">
@@ -191,6 +213,8 @@ export function openCreateTemplateModal() {
         </div>
     `;
 
+    document.getElementById('create-template-modal')?.remove();
+
     document.body.insertAdjacentHTML('beforeend', renderModal({
         id: 'create-template-modal',
         title: 'Nová Tréninková Šablona',
@@ -214,33 +238,16 @@ export async function saveTemplate(renderGymFn) {
     const amrapMinutes = parseInt(document.getElementById('create-amrap-minutes')?.value) || 20;
     const emomMinutes = parseInt(document.getElementById('create-emom-minutes')?.value) || 15;
     
-    const checked = Array.from(document.querySelectorAll('input[name="tmpl-exercises"]:checked')).map(cb => cb.value);
+    syncInputsToModalTemplateExercises('create');
 
     if (!name) {
         showNotification('Zadej název šablony!', 'warning');
         return;
     }
-    if (checked.length === 0) {
+    if (!modalTemplateExercises || modalTemplateExercises.length === 0) {
         showNotification('Vyber alespoň jeden cvik!', 'warning');
         return;
     }
-
-    // Build exercises structure with inputs from configurator
-    const tmplExercises = checked.map(exId => {
-        const setsEl = document.getElementById(`create-ex-sets-${exId}`);
-        const repsEl = document.getElementById(`create-ex-reps-${exId}`);
-        const weightEl = document.getElementById(`create-ex-weight-${exId}`);
-        const restEl = document.getElementById(`create-ex-rest-${exId}`);
-        const supersetEl = document.getElementById(`create-ex-superset-${exId}`);
-        return {
-            exercise_id: exId,
-            sets: setsEl ? parseInt(setsEl.value) || 4 : 4,
-            reps: repsEl ? parseInt(repsEl.value) || 10 : 10,
-            weight: weightEl ? parseFloat(weightEl.value) || 10 : 10,
-            rest_seconds: restEl ? parseInt(restEl.value) || 90 : 90,
-            superset_group: supersetEl?.value || null
-        };
-    });
 
     try {
         const { error } = await supabase
@@ -252,7 +259,7 @@ export async function saveTemplate(renderGymFn) {
                 circuit_rounds: circuitRounds,
                 amrap_minutes: amrapMinutes,
                 emom_minutes: emomMinutes,
-                exercises: tmplExercises,
+                exercises: modalTemplateExercises,
                 created_by: state.currentUser?.id
             });
 
@@ -262,7 +269,7 @@ export async function saveTemplate(renderGymFn) {
         document.getElementById('create-template-modal')?.remove();
         
         await ensureGymData(true);
-        renderGymFn();
+        if (renderGymFn) renderGymFn();
     } catch (e) {
         console.error("[Gym] Failed to save template:", e);
         showNotification('Nepodařilo se uložit šablonu.', 'danger');
@@ -287,7 +294,7 @@ export async function deleteTemplate(id, event, renderGymFn) {
 
         showNotification('Šablona smazána.', 'info');
         await ensureGymData(true);
-        renderGymFn();
+        if (renderGymFn) renderGymFn();
     } catch (e) {
         console.error('[Gym] Failed to delete template:', e);
         showNotification('Nepodařilo se smazat šablonu.', 'danger');
@@ -324,11 +331,11 @@ export async function checkAndSeed(renderGymFn) {
 
         showNotification("Gym database seeded successfully! 🏋️‍♂️", "success");
         await ensureGymData(true);
-        renderGymFn();
+        if (renderGymFn) renderGymFn();
     } catch (e) {
         console.error("[Gym] Seeding failed:", e);
         showNotification("Inicializace selhala: " + e.message, "danger");
-        renderGymFn();
+        if (renderGymFn) renderGymFn();
     }
 }
 
@@ -341,7 +348,17 @@ export function openEditTemplateModal(templateId, event) {
     if (!template) return;
 
     const exercises = state.gymExercises || [];
-    const templateExerciseIds = template.exercises.map(e => e.exercise_id);
+    // Deep clone existing exercises preserving their exact custom order
+    modalTemplateExercises = (template.exercises || []).map(e => ({
+        exercise_id: e.exercise_id,
+        sets: e.sets ?? 4,
+        reps: e.reps ?? 10,
+        weight: e.weight ?? 10,
+        rest_seconds: e.rest_seconds ?? 90,
+        superset_group: e.superset_group || null
+    }));
+
+    const templateExerciseIds = modalTemplateExercises.map(e => e.exercise_id);
     const tmplMode = template.mode || 'standard';
 
     const contentHtml = `
@@ -380,12 +397,12 @@ export function openEditTemplateModal(templateId, event) {
             <div class="space-y-2">
                 <label class="block text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1.5 ml-1">Zvolené cviky tréninku</label>
                 <input type="text" placeholder="Hledat cvik podle názvu nebo partie..." oninput="window.Gym.filterModalExercises(this.value)" class="w-full bg-[#202225] text-white text-xs p-3 rounded-xl border border-[#2f3136] outline-none focus:border-[#5865F2]/50 transition mb-2">
-                <div class="max-h-60 overflow-y-auto border border-white/5 bg-black/10 rounded-2xl p-3 custom-scrollbar space-y-2">
+                <div class="max-h-56 overflow-y-auto border border-white/5 bg-black/10 rounded-2xl p-3 custom-scrollbar space-y-2">
                     ${exercises.map(ex => {
                         const isChecked = templateExerciseIds.includes(ex.id);
                         return `
                             <label class="exercise-select-item flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition select-none" data-name="${ex.name.toLowerCase()}" data-category="${ex.category.toLowerCase()}">
-                                <input type="checkbox" name="edit-tmpl-exercises" value="${ex.id}" ${isChecked ? 'checked' : ''} onchange="window.Gym.refreshExercisesConfig('edit')" class="w-4 h-4 rounded accent-[#faa61a] border-white/10 bg-black/20 focus:ring-0 flex-shrink-0">
+                                <input type="checkbox" name="edit-tmpl-exercises" value="${ex.id}" ${isChecked ? 'checked' : ''} onchange="window.Gym.onTemplateCheckboxToggle('edit', '${ex.id}', this.checked)" class="w-4 h-4 rounded accent-[#faa61a] border-white/10 bg-black/20 focus:ring-0 flex-shrink-0">
                                 <div class="flex items-center gap-2.5 min-w-0">
                                     ${getExerciseThumbnailHtml(ex, 'w-8 h-8')}
                                     <div class="min-w-0">
@@ -399,7 +416,7 @@ export function openEditTemplateModal(templateId, event) {
                 </div>
             </div>
             
-            <!-- Dynamic configurator for exercise properties -->
+            <!-- Dynamic configurator for exercise properties & reordering -->
             <div id="edit-tmpl-exercises-config" class="space-y-3 mt-4 hidden"></div>
 
             <input type="hidden" id="edit-tmpl-id" value="${templateId}">
@@ -434,7 +451,7 @@ export function openEditTemplateModal(templateId, event) {
     document.getElementById('edit-template-modal').classList.add('flex');
 
     // Render initial exercises config
-    window.Gym.refreshExercisesConfig('edit', template);
+    refreshExercisesConfig('edit');
 }
 
 export async function saveEditedTemplate(renderGymFn) {
@@ -447,38 +464,17 @@ export async function saveEditedTemplate(renderGymFn) {
     const circuitRounds = parseInt(document.getElementById('edit-circuit-rounds')?.value) || 3;
     const amrapMinutes = parseInt(document.getElementById('edit-amrap-minutes')?.value) || 20;
     const emomMinutes = parseInt(document.getElementById('edit-emom-minutes')?.value) || 15;
-    const checked = Array.from(document.querySelectorAll('input[name="edit-tmpl-exercises"]:checked')).map(cb => cb.value);
+
+    syncInputsToModalTemplateExercises('edit');
 
     if (!name) {
         showNotification('Zadej název šablony!', 'warning');
         return;
     }
-    if (checked.length === 0) {
+    if (!modalTemplateExercises || modalTemplateExercises.length === 0) {
         showNotification('Vyber alespoň jeden cvik!', 'warning');
         return;
     }
-
-    const template = state.gymTemplates.find(t => t.id === id);
-    if (!template) return;
-
-    // Preserving/building exercises structure with inputs from configurator
-    const newExercises = checked.map(exId => {
-        const setsEl = document.getElementById(`edit-ex-sets-${exId}`);
-        const repsEl = document.getElementById(`edit-ex-reps-${exId}`);
-        const weightEl = document.getElementById(`edit-ex-weight-${exId}`);
-        const restEl = document.getElementById(`edit-ex-rest-${exId}`);
-        const supersetEl = document.getElementById(`edit-ex-superset-${exId}`);
-        
-        const oldEx = template.exercises.find(e => e.exercise_id === exId);
-        return {
-            exercise_id: exId,
-            sets: setsEl ? parseInt(setsEl.value) || 4 : (oldEx ? oldEx.sets || 4 : 4),
-            reps: repsEl ? parseInt(repsEl.value) || 10 : (oldEx ? oldEx.reps || 10 : 10),
-            weight: weightEl ? parseFloat(weightEl.value) || 10 : (oldEx ? oldEx.weight || 10 : 10),
-            rest_seconds: restEl ? parseInt(restEl.value) || 90 : (oldEx ? oldEx.rest_seconds || 90 : 90),
-            superset_group: supersetEl?.value || (oldEx ? oldEx.superset_group || null : null)
-        };
-    });
 
     try {
         const { error } = await supabase
@@ -490,7 +486,7 @@ export async function saveEditedTemplate(renderGymFn) {
                 circuit_rounds: circuitRounds,
                 amrap_minutes: amrapMinutes,
                 emom_minutes: emomMinutes,
-                exercises: newExercises
+                exercises: modalTemplateExercises
             })
             .eq('id', id);
 
@@ -500,7 +496,7 @@ export async function saveEditedTemplate(renderGymFn) {
         document.getElementById('edit-template-modal')?.remove();
 
         await ensureGymData(true);
-        renderGymFn();
+        if (renderGymFn) renderGymFn();
     } catch (e) {
         console.error("[Gym] Failed to update template:", e);
         showNotification('Nepodařilo se uložit změny plánu.', 'danger');
@@ -551,16 +547,69 @@ export function onTemplateModeChange(prefix, mode) {
     }
 }
 
+// --- TEMPLATE EXERCISE INTERACTION HANDLERS (ORDER & REMOVAL) ---
+
+export function onTemplateCheckboxToggle(mode, exId, isChecked) {
+    triggerHaptic('light');
+    syncInputsToModalTemplateExercises(mode);
+
+    if (isChecked) {
+        if (!modalTemplateExercises.some(item => item.exercise_id === exId)) {
+            modalTemplateExercises.push({
+                exercise_id: exId,
+                sets: 4,
+                reps: 10,
+                weight: 10,
+                rest_seconds: 90,
+                superset_group: null
+            });
+        }
+    } else {
+        modalTemplateExercises = modalTemplateExercises.filter(item => item.exercise_id !== exId);
+    }
+
+    refreshExercisesConfig(mode);
+}
+
+export function moveTemplateExercise(mode, index, direction) {
+    triggerHaptic('medium');
+    syncInputsToModalTemplateExercises(mode);
+
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= modalTemplateExercises.length) return;
+
+    const temp = modalTemplateExercises[index];
+    modalTemplateExercises[index] = modalTemplateExercises[targetIndex];
+    modalTemplateExercises[targetIndex] = temp;
+
+    refreshExercisesConfig(mode);
+}
+
+export function removeTemplateExercise(mode, index) {
+    triggerHaptic('medium');
+    syncInputsToModalTemplateExercises(mode);
+
+    const removed = modalTemplateExercises.splice(index, 1)[0];
+    if (removed) {
+        const cbName = mode === 'create' ? 'tmpl-exercises' : 'edit-tmpl-exercises';
+        const checkbox = document.querySelector(`input[name="${cbName}"][value="${removed.exercise_id}"]`);
+        if (checkbox) {
+            checkbox.checked = false;
+        }
+    }
+
+    refreshExercisesConfig(mode);
+    showNotification('Cvik byl odebrán ze šablony.', 'info');
+}
+
 // --- REFRESH EXERCISES CONFIG (shared between create and edit modals) ---
 export function refreshExercisesConfig(mode, template = null) {
     const isCreate = mode === 'create';
-    const cbName = isCreate ? 'tmpl-exercises' : 'edit-tmpl-exercises';
     const configContainerId = isCreate ? 'tmpl-exercises-config' : 'edit-tmpl-exercises-config';
     const container = document.getElementById(configContainerId);
     if (!container) return;
 
-    const checkedBoxes = Array.from(document.querySelectorAll(`input[name="${cbName}"]:checked`));
-    if (checkedBoxes.length === 0) {
+    if (!modalTemplateExercises || modalTemplateExercises.length === 0) {
         container.innerHTML = '';
         container.classList.add('hidden');
         return;
@@ -568,86 +617,102 @@ export function refreshExercisesConfig(mode, template = null) {
 
     container.classList.remove('hidden');
 
-    // Preserve user inputs if they are already typing before checking/unchecking other items
-    const preserved = {};
-    checkedBoxes.forEach(cb => {
-        const exId = cb.value;
-        const setsEl = document.getElementById(`${mode}-ex-sets-${exId}`);
-        const repsEl = document.getElementById(`${mode}-ex-reps-${exId}`);
-        const weightEl = document.getElementById(`${mode}-ex-weight-${exId}`);
-        const restEl = document.getElementById(`${mode}-ex-rest-${exId}`);
-        const supersetEl = document.getElementById(`${mode}-ex-superset-${exId}`);
-        if (setsEl && repsEl && weightEl && restEl) {
-            preserved[exId] = {
-                sets: setsEl.value,
-                reps: repsEl.value,
-                weight: weightEl.value,
-                rest_seconds: restEl.value,
-                superset_group: supersetEl?.value || ''
-            };
-        }
-    });
-
+    const total = modalTemplateExercises.length;
     let html = `
-        <label class="block text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1.5 ml-1">Nastavení parametrů cviků & supersetů</label>
-        <div class="space-y-3 max-h-64 overflow-y-auto border border-white/5 bg-black/10 rounded-2xl p-3 custom-scrollbar">
+        <div class="flex items-center justify-between mb-2 ml-1">
+            <label class="block text-[10px] text-gray-400 font-black uppercase tracking-widest">
+                Pořadí cviků & Parametry (${total})
+            </label>
+            <span class="text-[9px] text-[#faa61a] font-bold flex items-center gap-1 bg-[#faa61a]/10 px-2 py-0.5 rounded-md border border-[#faa61a]/20">
+                <i class="fas fa-arrows-alt-v text-[8px]"></i> Měňte pořadí šipkami ▲ ▼
+            </span>
+        </div>
+        <div class="space-y-2.5 max-h-72 overflow-y-auto border border-white/5 bg-black/20 rounded-2xl p-2.5 custom-scrollbar">
     `;
 
-    checkedBoxes.forEach(cb => {
-        const exId = cb.value;
-        const ex = state.gymExercises.find(e => e.id === exId) || { name: exId };
+    modalTemplateExercises.forEach((item, idx) => {
+        const exId = item.exercise_id;
+        const ex = (state.gymExercises || []).find(e => e.id === exId) || { id: exId, name: exId, category: 'Vlastní' };
 
-        let sets = 4;
-        let reps = 10;
-        let weight = 10;
-        let rest = 90;
-        let superset = '';
-
-        if (preserved[exId]) {
-            sets = preserved[exId].sets;
-            reps = preserved[exId].reps;
-            weight = preserved[exId].weight;
-            rest = preserved[exId].rest_seconds;
-            superset = preserved[exId].superset_group;
-        } else if (template && template.exercises) {
-            const match = template.exercises.find(e => e.exercise_id === exId);
-            if (match) {
-                sets = match.sets ?? 4;
-                reps = match.reps ?? 10;
-                weight = match.weight ?? 10;
-                rest = match.rest_seconds ?? 90;
-                superset = match.superset_group || '';
-            }
-        }
+        const sets = item.sets ?? 4;
+        const reps = item.reps ?? 10;
+        const weight = item.weight ?? 10;
+        const rest = item.rest_seconds ?? 90;
+        const superset = item.superset_group || '';
 
         html += `
-            <div class="bg-[#202225] p-3 rounded-xl border border-white/5 space-y-2">
-                <div class="flex justify-between items-center gap-2">
-                    <span class="text-xs font-bold text-white block leading-snug truncate max-w-[180px]">${ex.name}</span>
-                    
-                    <!-- Superset group tag selector -->
-                    <select id="${mode}-ex-superset-${exId}" class="bg-black/40 text-[9px] font-black uppercase text-amber-300 px-2 py-1 rounded-lg border border-white/5 outline-none">
-                        <option value="" ${!superset ? 'selected' : ''}>Samostatný</option>
-                        <option value="A" ${superset === 'A' ? 'selected' : ''}>⚡ Superset A</option>
-                        <option value="B" ${superset === 'B' ? 'selected' : ''}>⚡ Superset B</option>
-                    </select>
+            <div class="bg-[#202225] hover:bg-[#25282d] p-3 rounded-2xl border border-white/5 hover:border-white/10 transition-all space-y-2.5 shadow-sm group">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                        <!-- Order Index Badge -->
+                        <span class="w-6 h-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-black text-[#faa61a] font-mono flex-shrink-0">
+                            #${idx + 1}
+                        </span>
+
+                        <!-- Thumbnail -->
+                        <div class="w-8 h-8 rounded-lg overflow-hidden bg-black/40 border border-white/10 flex-shrink-0 relative">
+                            ${getExerciseThumbnailHtml(ex, 'w-full h-full')}
+                        </div>
+
+                        <div class="min-w-0 flex-1">
+                            <span class="text-xs font-bold text-white block leading-snug truncate group-hover:text-[#faa61a] transition-colors">${ex.name}</span>
+                            <span class="text-[8px] font-black uppercase text-white/30 tracking-wider font-mono">${ex.category}</span>
+                        </div>
+                    </div>
+
+                    <!-- Actions: Superset, Reorder Up/Down, Remove -->
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                        <select id="${mode}-ex-superset-${exId}" class="bg-black/40 text-[9px] font-black uppercase text-amber-300 px-2 py-1 rounded-lg border border-white/5 outline-none hover:border-white/15 transition">
+                            <option value="" ${!superset ? 'selected' : ''}>Samostatný</option>
+                            <option value="A" ${superset === 'A' ? 'selected' : ''}>⚡ Superset A</option>
+                            <option value="B" ${superset === 'B' ? 'selected' : ''}>⚡ Superset B</option>
+                        </select>
+
+                        <!-- Move Up Button -->
+                        <button type="button" 
+                                onclick="window.Gym.moveTemplateExercise('${mode}', ${idx}, -1)" 
+                                ${idx === 0 ? 'disabled' : ''}
+                                class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/15 disabled:opacity-20 disabled:pointer-events-none text-gray-300 hover:text-white flex items-center justify-center text-xs transition border border-white/5 active:scale-95" 
+                                title="Posunout cvik nahoru v plánu">
+                            <i class="fas fa-chevron-up text-[10px]"></i>
+                        </button>
+
+                        <!-- Move Down Button -->
+                        <button type="button" 
+                                onclick="window.Gym.moveTemplateExercise('${mode}', ${idx}, 1)" 
+                                ${idx === total - 1 ? 'disabled' : ''}
+                                class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/15 disabled:opacity-20 disabled:pointer-events-none text-gray-300 hover:text-white flex items-center justify-center text-xs transition border border-white/5 active:scale-95" 
+                                title="Posunout cvik dolů v plánu">
+                            <i class="fas fa-chevron-down text-[10px]"></i>
+                        </button>
+
+                        <!-- Remove Button -->
+                        <button type="button" 
+                                onclick="window.Gym.removeTemplateExercise('${mode}', ${idx})" 
+                                class="w-7 h-7 rounded-lg bg-red-500/10 hover:bg-red-500/25 text-red-400 hover:text-red-300 flex items-center justify-center text-xs transition border border-red-500/20 shadow-xs ml-0.5 active:scale-95" 
+                                title="Odebrat cvik ze šablony">
+                            <i class="fas fa-trash-alt text-[10px]"></i>
+                        </button>
+                    </div>
                 </div>
-                <div class="grid grid-cols-4 gap-2">
-                    <div>
-                        <label class="block text-[8px] text-gray-500 font-bold uppercase mb-0.5 ml-0.5">Série</label>
-                        <input type="number" id="${mode}-ex-sets-${exId}" value="${sets}" class="w-full bg-black/40 text-center text-xs font-bold text-white p-1.5 rounded-lg border border-white/5 outline-none focus:border-[#faa61a]/30">
+
+                <!-- Parameters grid -->
+                <div class="grid grid-cols-4 gap-2 pt-0.5">
+                    <div class="bg-black/30 p-1.5 rounded-xl border border-white/5">
+                        <label class="block text-[8px] text-gray-400 font-bold uppercase text-center mb-0.5">Série</label>
+                        <input type="number" min="1" max="20" id="${mode}-ex-sets-${exId}" value="${sets}" class="w-full bg-transparent text-center text-xs font-bold text-white outline-none focus:text-amber-400">
                     </div>
-                    <div>
-                        <label class="block text-[8px] text-gray-500 font-bold uppercase mb-0.5 ml-0.5">Opakování</label>
-                        <input type="number" id="${mode}-ex-reps-${exId}" value="${reps}" class="w-full bg-black/40 text-center text-xs font-bold text-white p-1.5 rounded-lg border border-white/5 outline-none focus:border-[#faa61a]/30">
+                    <div class="bg-black/30 p-1.5 rounded-xl border border-white/5">
+                        <label class="block text-[8px] text-gray-400 font-bold uppercase text-center mb-0.5">Opakování</label>
+                        <input type="number" min="1" max="100" id="${mode}-ex-reps-${exId}" value="${reps}" class="w-full bg-transparent text-center text-xs font-bold text-white outline-none focus:text-amber-400">
                     </div>
-                    <div>
-                        <label class="block text-[8px] text-gray-500 font-bold uppercase mb-0.5 ml-0.5">Váha (kg)</label>
-                        <input type="number" step="0.5" id="${mode}-ex-weight-${exId}" value="${weight}" class="w-full bg-black/40 text-center text-xs font-bold text-white p-1.5 rounded-lg border border-white/5 outline-none focus:border-[#faa61a]/30">
+                    <div class="bg-black/30 p-1.5 rounded-xl border border-white/5">
+                        <label class="block text-[8px] text-gray-400 font-bold uppercase text-center mb-0.5">Váha (kg)</label>
+                        <input type="number" step="0.5" min="0" max="500" id="${mode}-ex-weight-${exId}" value="${weight}" class="w-full bg-transparent text-center text-xs font-bold text-white outline-none focus:text-amber-400">
                     </div>
-                    <div>
-                        <label class="block text-[8px] text-gray-500 font-bold uppercase mb-0.5 ml-0.5">Pauza (s)</label>
-                        <input type="number" step="5" id="${mode}-ex-rest-${exId}" value="${rest}" class="w-full bg-black/40 text-center text-xs font-bold text-white p-1.5 rounded-lg border border-white/5 outline-none focus:border-[#faa61a]/30">
+                    <div class="bg-black/30 p-1.5 rounded-xl border border-white/5">
+                        <label class="block text-[8px] text-gray-400 font-bold uppercase text-center mb-0.5">Pauza (s)</label>
+                        <input type="number" step="5" min="0" max="600" id="${mode}-ex-rest-${exId}" value="${rest}" class="w-full bg-transparent text-center text-xs font-bold text-white outline-none focus:text-amber-400">
                     </div>
                 </div>
             </div>

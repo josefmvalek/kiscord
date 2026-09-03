@@ -1,0 +1,27 @@
+{
+  "typecheck-validation": {
+    "enabled": true,
+    "PostToolUse": [
+      {
+        "matcher": "replace_file_content",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run typecheck",
+            "timeout": 20
+          }
+        ]
+      },
+      {
+        "matcher": "write_to_file",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run typecheck",
+            "timeout": 20
+          }
+        ]
+      }
+    ]
+  }
+}

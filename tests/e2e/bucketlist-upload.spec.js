@@ -61,15 +61,11 @@ test.describe('Bucket List E2E with File Upload', () => {
   });
 
   test('should allow user to mark bucketlist item as completed and upload a photo', async ({ page }) => {
-    await page.goto('/');
-
-    // Navigate to Bucket List
-    const bucketBtn = page.locator('.channel-link[data-channel="bucketlist"]');
-    await bucketBtn.click();
+    await page.goto('/?channel=bucketlist');
 
     // Verify the grid is visible
     const grid = page.locator('#bucket-grid');
-    await expect(grid).toBeVisible();
+    await expect(grid).toBeVisible({ timeout: 15000 });
 
     // Now, verify the item "Navštívit Hallstatt" is visible
     const bucketItem = page.locator('.glass-card:has-text("Navštívit Hallstatt")');

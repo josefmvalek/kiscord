@@ -18,9 +18,6 @@ import { setupConnectivityListeners, checkAppUpdate, setupGlobalTouchGestures, s
 import { exposeGlobals } from './core/globals.js';
 import { initSpotlight } from './shared/dom/spotlight.js';
 
-// Extra Module Initialization (Legacy/Dependencies)
-import { setupQuestsRealtime } from './domains/entertainment/quests.js';
-import { initLevels } from './domains/entertainment/levels.js';
 
 // --- INITIALIZATION ---
 
@@ -40,11 +37,15 @@ async function initApp() {
 
     // 2. Core System Initialization
     setupRealtimeSync();
-    setupQuestsRealtime();
-    initLevels();
     initTheme();
     initNotifications();
     checkAppUpdate();
+
+    // Defer domain subscriptions to keep the primary bundle lean
+    Promise.all([
+        import('./domains/entertainment/quests.js').then(m => m.setupQuestsRealtime?.()),
+        import('./domains/entertainment/levels.js').then(m => m.initLevels?.())
+    ]).catch(err => console.warn('[Init] Deferred modules load error:', err));
 
     // 3. UI & Events Setup
     renderServersList();

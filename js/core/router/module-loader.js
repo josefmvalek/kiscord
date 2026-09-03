@@ -389,6 +389,7 @@ export async function mountChannelModule(channelId, container, params = {}) {
 
     try {
         const module = await route.loader();
+        container.classList.remove('channel-content-fading');
         const cleanup = await route.render(module, container, channelId, params);
 
         if (typeof cleanup === 'function') {

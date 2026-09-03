@@ -104,10 +104,14 @@ export async function setupDefaultApiRoutes(page, { user, customRestHandler } = 
                 ]),
             });
         } else {
+            const isHead = route.request().method() === 'HEAD';
             await route.fulfill({
                 status: 200,
                 contentType: 'application/json',
-                body: '[]',
+                headers: {
+                    'content-range': '0-0/0',
+                },
+                body: isHead ? undefined : '[]',
             });
         }
     });

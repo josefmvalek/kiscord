@@ -5,7 +5,7 @@
 ---
 
 ## 1. Media Library (`#knihovna`)
-**File**: `js/modules/library.js`
+**File**: `js/domains/entertainment/library/index.js`
 
 Unified media catalogue with tabs for Movies, Series, and Games, featuring live search and TMDB integration.
 
@@ -30,7 +30,7 @@ Unified media catalogue with tabs for Movies, Series, and Games, featuring live 
 ---
 
 ## 2. Watchlist Hub (`#watchlist`)
-**File**: `js/modules/watchlist.js`
+**File**: `js/domains/entertainment/watchlist.js`
 
 Intelligent overview of both partners' entertainment wishlists and evening decision center.
 
@@ -43,7 +43,7 @@ Intelligent overview of both partners' entertainment wishlists and evening decis
 ---
 
 ## 3. Tinder Matcher & Decision Tools
-**Files**: `js/modules/netflixMatcher.js`, `js/modules/watchlist.js`
+**Files**: `js/domains/entertainment/netflix-matcher.js`, `js/domains/entertainment/watchlist.js`
 
 Tools designed to eliminate decision paralysis:
 1. **Dedicated Tinder Matchers**:

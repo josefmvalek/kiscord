@@ -4,15 +4,15 @@
 
 ---
 
-## 1. Gym Architecture (`/js/modules/gym/`)
+## 1. Gym Architecture (`js/domains/fitness/gym/`)
 
-The module is modularized into 15 specialized submodules:
+The module is modularized into specialized submodules:
 
 | File | Responsibility |
 |---|---|
-| `main.js` | Module entry point, tab navigation, and lifecycle management |
-| `activeWorkout.js` | Floating active workout HUD, set logging, and rest timer |
-| `templates.js` | Workout routine templates (Push/Pull/Legs, Upper/Lower, Fullbody) |
+| `index.js` / `main.js` | Module entry point, tab navigation, and lifecycle management |
+| `active-workout/` | Floating active workout HUD, set logging, and rest timer |
+| `templates/` | Workout routine templates (Push/Pull/Legs, Upper/Lower, Fullbody) and builder |
 | `exercises.js` | Registry of 100+ exercises with animated GIFs, instructions, and muscle tags |
 | `prs.js` | 1RM progression charts, load volume analytics, and PR celebrations |
 | `muscleMap.js` | Interactive anatomical muscle volume heatmap |
@@ -34,6 +34,8 @@ The module is modularized into 15 specialized submodules:
 - Automated 1RM calculation using validated Epley and Brzycki formulas.
 - Live PR notifications triggered directly upon entering a record-breaking set.
 
-### C. Recovery & Habit Integration
-- **Habits (`habits.js`)**: Daily routines (e.g. stretching, steps) rewarded with Love Coins.
-- **Recovery (`regenerace/`)**: Evidence-based guide covering supplementation (Creatine, Magnesium, Whey Protein, Omega-3).
+### C. Recovery, Biometrics & Habits
+- **Nutrition (`js/domains/fitness/nutrition/`)**: TDEE calculator, IF timer, macro tracking.
+- **Body Metrics (`js/domains/fitness/body-metrics/`)**: Weight trend smoothing, circumferences, FFMI index.
+- **Habits (`js/domains/lifestyle/habits.js`)**: Daily routines rewarded with Love Coins.
+- **Recovery (`js/domains/fitness/regenerace.js`)**: Evidence-based guide covering supplementation (Creatine, Magnesium, Whey Protein, Omega-3).

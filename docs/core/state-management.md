@@ -33,35 +33,37 @@ const state = {
 
 ---
 
-## 2. Event Bus (`stateEvents`)
+## 2. Reactivity: Event Bus (`stateEvents`) & Reactive Signals (`signals.js`)
 
-To achieve UI reactivity without heavy frameworks, Kiscord uses a lightweight **Pub/Sub (Publish/Subscribe)** pattern:
+To achieve UI reactivity without heavy frameworks, Kiscord pairs a Pub/Sub event bus with fine-grained reactive signals:
 
-- **`stateEvents.on(event, callback)`**: Registers a UI component listener for a specific data domain.
-- **`stateEvents.emit(event, data)`**: Notifies subscribed components to re-render when data updates.
+- **Pub/Sub Bus (`stateEvents`)**:
+  - `stateEvents.on(event, callback)`: Registers a UI component listener for a domain.
+  - `stateEvents.emit(event, data)`: Notifies subscribed components to re-render when data updates.
+- **Reactive Signals (`signals.js`)**:
+  - `createSignal(initialValue)`: Fine-grained reactive values `[getter, setter]`.
+  - `createEffect(callback)`: Automatically tracks dependencies and re-executes on mutation.
 
 ### Usage Example:
 ```javascript
-// Inside a UI rendering module
-stateEvents.on('health', () => {
-    renderHealthUI();
-});
+import { state, stateEvents } from './state.js';
+import { createSignal, createEffect } from './signals.js';
 
-// Inside a mutation handler
-export function updateWater(val) {
-    state.healthData[today].water = val;
-    stateEvents.emit('health'); // Triggers synchronous UI re-render
-}
+// Signals example for granular widgets
+const [water, setWater] = createSignal(state.healthData[today]?.water || 0);
+createEffect(() => {
+    document.querySelector('#water-count').textContent = water();
+});
 ```
 
 ---
 
-## 3. Caching & Persistence
+## 3. Caching & Persistence (`js/core/idb.js`)
 
-The application uses `localStorage` for state caching, enabling instantaneous application startup and offline availability:
+The application uses **IndexedDB** (`kiscord_db`) for asynchronous state caching with transparent `localStorage` fallback/migration:
 
-- **`saveStateToCache()`**: Serializes selected `state` domains to `kiscord_state_cache`.
-- **`loadStateFromCache()`**: Hydrates state immediately upon application load.
+- **`saveStateToCache()`**: Serializes state to IndexedDB keyval store.
+- **`loadStateFromCache()`**: Hydrates state immediately upon application load (< 10ms).
 - **SWR (Stale-While-Revalidate)**: The app displays cached data immediately while fetching fresh records in the background (`initializeState`).
 
 ---

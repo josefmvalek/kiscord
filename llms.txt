@@ -1,81 +1,88 @@
-# Kiscord (August 2026) — AI Context & Architecture Index
+# Kiscord (September 2026) — AI Context & Architecture Index
 > Fast, token-efficient context file for AI coding assistants and LLMs.
 
 ## 1. Project Overview & Tech Stack
-- **What is Kiscord**: Private Progressive Web App (PWA) tailored for two users (Josef & Klárka), styled after Discord (dark mode, channels, sidebars). Combines couple life, VUT FIT university tools, fitness tracker, media entertainment, and memories.
-- **Frontend**: Vanilla JavaScript (ES6+ Modules), HTML5, CSS3 (Discord-inspired custom tokens & CSS variables), Tailwind CSS.
+- **What is Kiscord**: Private Progressive Web App (PWA) tailored for two users (Josef & Klárka), styled after Discord (dark mode, glassmorphism, servers, channels, sidebars). Combines couple life, VUT FIT university tools, fitness tracker, media entertainment, and memories.
+- **Frontend**: Vanilla JavaScript (ES6+ Modules), HTML5, CSS3 (Discord-inspired custom tokens & CSS variables), Tailwind CSS v4.
 - **Backend & DB**: Supabase (PostgreSQL, Realtime PostgreSQL Changes, Storage, Row Level Security).
-- **Hosting & PWA**: Vercel, Service Worker (`public/sw.js`), Offline queue & Cache API.
+- **Testing & Quality**: Vitest (`npm run test:run`), TypeScript check (`npm run typecheck`), Playwright (`npm run test:e2e`).
+- **Hosting & PWA**: Vercel, Service Worker (`sw.js`), IndexedDB cache (`/js/core/idb.js`), Offline queue (`/js/core/offline.js`).
 
 ---
 
 ## 2. Core Mechanics & Global Contracts
 
-### A. State Management (`/js/core/state.js`)
+### A. State Management & Reactivity (`/js/core/state.js`, `/js/core/signals.js`)
 - `state`: Single source of truth holding user data, channels, library, active workout, habits, fitness stats.
-- `saveStateToCache()` / `loadStateFromCache()`: Instant offline hydration via `localStorage`.
-- `ensure[Module]Data()` in `/js/core/loaders.js`: Lazy-loads data from Supabase only when entering a channel.
+- `saveStateToCache()` / `loadStateFromCache()`: Instant offline hydration via IndexedDB (`idb.js`) and `localStorage`.
+- `createSignal()`, `createEffect()` in `/js/core/signals.js`: Fine-grained reactive state for dynamic UI widgets.
+- `ensure[Module]Data()` in `/js/core/loaders.js`: Lazy-loads data from Supabase only when entering a channel, checking `isStale()`.
 
-### B. Router & Channel Navigation (`/js/core/router.js`)
-- `switchChannel(channelId)`: Dynamic ES module importer with View Transitions, memory cleanups, and mobile drawer support.
-- `channelCategories`: Structured categories rendered in the sidebar with collapsible states.
+### B. Router & Channel Navigation (`/js/core/router/`, facade `/js/core/router.js`)
+- `switchChannel(channelId)` in `/js/core/router/navigation.js`: Dynamic ES module importer with View Transitions, memory cleanups, and mobile drawer support.
+- `ROUTE_REGISTRY` in `/js/core/router/module-loader.js`: Maps channel IDs to lazy domain imports (`import('../../domains/...')`).
+- `channelCategories` in `/js/core/router/channel-registry.js`: Structured categories rendered in sidebar with collapsible states and favorite channels.
+- `CleanupCollector` & `module-lifecycle.js`: Prevents memory leaks by unmounting previous module listeners and timers.
 
-### C. Realtime & Sync (`/js/core/sync.js`, `/js/core/offline.js`)
+### C. Repositories, Realtime & Sync (`/js/core/repositories/`, `/js/core/sync.js`, `/js/core/offline.js`)
+- `BaseRepository`: Abstract Stale-While-Revalidate caching layer for database tables.
 - `setupRealtimeSync()`: Subscribes to Supabase Realtime broadcast channels (`health_data`, `library_watchlist`, `tinder_matches`, etc.).
 - `safeUpsert()`, `safeInsert()`, `safeDelete()`: Optimistic local UI updates + background retry queue if offline.
 
 ---
 
-## 3. Sidebar & Channel Catalog (August 2026 Structure)
+## 3. Sidebar & Channel Catalog (Domain-Driven Architecture)
 
-### 📌 Pinned (Always on Top)
-- `dashboard` (`/js/modules/dashboard.js`): **Můj Den** — Personal daily overview, hydration, sleep tracker, sunflower widgets, notes.
-- `calendar` (`/js/modules/calendar.js`): **Kalendář** — Shared date planner, school events, couple sync.
+### 📌 Pinned & Lifestyle (`/js/domains/lifestyle/`)
+- `dashboard` (`/js/domains/lifestyle/dashboard/index.js`): **Můj Den** — Personal daily overview, hydration, sleep tracker, sunflower widgets, notes.
+- `calendar` (`/js/domains/lifestyle/calendar/index.js`): **Kalendář** — Shared date planner, school events, couple sync.
+- `dateplanner` (`/js/domains/lifestyle/date-planner/index.js`): **#plánovač-rande** — Interactive Leaflet map with pinned date spots & route planner.
+- `habits` (`/js/domains/lifestyle/habits.js`): **#návyky** — Daily ritual streaks with Love Coins rewards.
+- `timeline` (`/js/domains/lifestyle/timeline/index.js`): **#timeline** — Photo timeline, milestones & memory albums.
+- `bucketlist` (`/js/domains/lifestyle/bucketlist.js`): **#bucket-list** — Shared dream bucket list with priorities & completions.
 
-### 🎓 VUT FIT & KOLEJE (University & Dorm Life)
-- `schedule` (`/js/modules/schedule.js`): **#rozvrh** — Joint timetable at VUT FIT with room hints & free slot detector.
-- `study-planner` (`/js/modules/studyPlanner.js`): **#studijní-plán** — WIS points tracker, exam milestones, project deadlines.
-- `dorm-hub` (`/js/modules/dormHub.js`): **#koleje-brno** — Laundry room reservation tracker, dorm checklist, campus cafeteria menus.
-- `finance-tracker` (`/js/modules/financeTracker.js`): **#finance** — Personal Brno budget (groceries, dorm, meals) + Kasička savings goals.
-- `laptop-comparison` (`/js/modules/laptopComparison.js`): **#počítač** — Guide & comparison matrix for student laptops.
+### 🎓 VUT FIT & KOLEJE (`/js/domains/university/`)
+- `schedule` (`/js/domains/university/schedule.js`): **#rozvrh** — Joint timetable at VUT FIT with room hints & free slot detector.
+- `study-planner` (`/js/domains/university/study-planner/index.js`): **#studijní-plán** — WIS points tracker, exam milestones, project deadlines.
+- `dorm-hub` (`/js/domains/university/dorm-hub.js`): **#koleje-brno** — Laundry room reservation tracker, dorm checklist, campus cafeteria menus.
+- `laptop-comparison` (`/js/domains/university/laptop-comparison.js`): **#počítač** — Guide & comparison matrix for student laptops.
 
-### 🌿 ZDRAVÍ & FITNESS
-- `gym-tracker` (`/js/modules/gym/`): **#posilovna** — Complete gym tracker: active workout HUD, rest timer, exercise catalogue with GIFs, PR analytics, muscle heatmap, couple gym streak, annual wrapped.
-- `habits` (`/js/modules/habits.js`): **#návyky** — Daily ritual streaks with Love Coins rewards.
-- `regenerace` (`/js/modules/regenerace/`): **#regenerace** — Supplement guide, health timeline, recovery science.
+### 🌿 ZDRAVÍ & FITNESS (`/js/domains/fitness/`)
+- `gym` (`/js/domains/fitness/gym/index.js`): **#posilovna** — Complete gym tracker: active workout HUD, rest timer, exercise catalogue with GIFs, PR analytics, muscle heatmap, couple gym streak, template builder.
+- `regenerace` (`/js/domains/fitness/regenerace.js`): **#regenerace** — Supplement guide, health timeline, recovery science.
+- `nutrition` (`/js/domains/fitness/nutrition/`): **#výživa** — Macro tracking, fasting timer, TDEE calculator.
+- `body-metrics` (`/js/domains/fitness/body-metrics/`): **#tělesné-míry** — Weight, body fat, circumference tracker.
+- `sleep` (`/js/domains/fitness/sleep/`): **#spánek** — Sleep cycles, sleep debt calculation.
 
-### 💖 NÁŠ SVĚT & PŘÍBĚH (Couple, Dates & Memories)
-- `love-shop` (`/js/modules/loveShop.js`): **#obchůdek** — Couple coupon store & coupon pantry redeemable for Love Coins.
-- `dateplanner` (`/js/modules/map.js`): **#plánovač-rande** — Interactive Leaflet map with pinned date spots & route planner.
-- `bucketlist` (`/js/modules/bucketlist.js`): **#bucket-list** — Shared dream bucket list with priorities & completions.
-- `quests` (`/js/modules/quests.js`): **#společné-questy** — Shared milestones & challenge progression.
-- `daily-questions` (`/js/modules/dailyQuestions.js`): **#denní-otázky** — Daily conversational prompt for both partners.
-- `topics` (`/js/modules/topics.js`): **#témata** — Deep talk & fun conversation starters.
-- `timeline` (`/js/modules/timeline.js`): **#timeline** — Photo timeline, milestones & memory albums.
-- `letters` (`/js/modules/letters.js`): **#dopisy** — Time-locked message capsules for anniversaries.
-- `achievements` (`/js/modules/achievements.js`): **#achievementy** — Gamified relationship trophies and milestones.
+### 💖 NÁŠ SVĚT & PŘÍBĚH (`/js/domains/couple/`)
+- `love-shop` (`/js/domains/couple/love-shop/index.js`): **#obchůdek** — Couple coupon store & coupon pantry redeemable for Love Coins.
+- `daily-questions` (`/js/domains/couple/daily-questions.js`): **#denní-otázky** — Daily conversational prompt for both partners.
+- `topics` (`/js/domains/couple/topics/`): **#témata** — Deep talk & fun conversation starters.
+- `letters` (`/js/domains/couple/letters/`): **#dopisy** — Time-locked message capsules for anniversaries.
+- `couple-quiz` (`/js/domains/couple/couple-quiz.js`): **#párový-kvíz** — Couple compatibility and memory quizzes.
+- `confession` (`/js/domains/couple/confession.js`): **#zpovědnice** — Intimate prompts and confessions.
+- `wrapped` (`/js/domains/couple/wrapped/`): **#couple-wrapped** — Annual couple statistics and highlights.
 
-### 🎮 ZÁBAVA & MÉDIA
-- `library` (`/js/modules/library.js`): **#knihovna** — Unified media catalogue with tabs `[ Filmy | Seriály | Hry ]`, live search, TMDB integration, game mode filters (Stálice vs Backlog), magnet links & partner wish indicators.
-- `watchlist` (`/js/modules/watchlist.js`): **#watchlist** — Dedicated couple entertainment center: Spolu-seznam (mutual matches), personal & partner wishlists, **Tinder Matcher** (`/js/modules/netflixMatcher.js`), **Kostka Náhody** randomizer & review log.
-- `music` (`/js/modules/static.js`): **#music-bot** — Shared vibes playlist & web player.
-- `games-hub` (`/js/modules/gamesHub.js`): **#gamesky** — Central Arcade & Minigame Hub: Draw Duel, Kdo spíše?, Párové Kvízy, Foto Puzzle, Tetris War Tracker, Tier Listy & Zajímavosti.
+### 🎮 ZÁBAVA & MÉDIA (`/js/domains/entertainment/`)
+- `library` (`/js/domains/entertainment/library/index.js`): **#knihovna** — Unified media catalogue with tabs `[ Filmy | Seriály | Hry ]`, live search, TMDB integration, game mode filters (Stálice vs Backlog), magnet links & partner wish indicators.
+- `watchlist` (`/js/domains/entertainment/watchlist.js`): **#watchlist** — Dedicated couple entertainment center: Spolu-seznam (mutual matches), personal & partner wishlists, **Tinder Matcher** (`netflix-matcher.js`), **Kostka Náhody** randomizer & review log.
+- `games-hub` (`/js/domains/entertainment/games-hub.js`): **#gamesky** — Central Arcade & Minigame Hub: Draw Duel, Kdo spíše?, Foto Puzzle, Tetris War Tracker, Tier Listy.
+- `quests` (`/js/domains/entertainment/quests.js`): **#společné-questy** — Shared milestones & challenge progression.
+- `achievements` (`/js/domains/entertainment/achievements.js`): **#achievementy** — Gamified relationship trophies and milestones.
 
-### 📦 ARCHIV (Default Collapsed)
-- `kasicka` (`/js/modules/kasicka.js`): **#rakousko-kasička** — Historical brigade earnings & Schnitzel-O-Meter.
-- `austria-info` (`/js/modules/austriaInfo.js`): **#rakousko-info** — Austrian seasonal work packing list & guidelines.
-- `shifts` (`/js/modules/shifts.js`): **#plánovač-směn** — Work shift scheduler.
-- `austrian-german` (`/js/modules/austrianGerman.js`): **#rakouská-němčina** — Alpine dialect dictionary & flashcards.
-- `alpska-vyzva` (`/js/modules/alpskaVyzva.js`): **#alpské-výzvy** — Alpine daily challenges.
-- `alpsky-denicek` (`/js/modules/alpskyDenicek.js`): **#alpský-deníček** — Locked alpine micro-journal.
-- `matura-dashboard`, `matura-czech`, `matura-it` (`/js/modules/matura.js`): **#matura** — High school graduation study tracker & knowledge base.
+### ⚙️ SYSTÉM & INFO (`/js/domains/system/`)
+- `settings` (`/js/domains/system/settings/index.js`): **#nastavení** — Theme selector (7 themes), audio preferences, avatar & offline cache tools.
+- `manual` (`/js/domains/system/manual/index.js`): **#návod** — Interactive application manual, quick start routine, keyboard shortcuts & FAQ.
+- `changelog` (`/js/domains/system/changelog.js`): **#changelog** — Kiscord update history.
+- `profile` (`/js/domains/system/profile.js`): **#profil** — User avatar, love coins, stats.
+- `stats` (`/js/domains/entertainment/stats.js`): **#statistiky** — Relationship data analytics.
+- `readme`, `music` (`/js/domains/system/static.js`): Static pages and shared vibes playlist player.
 
-### ⚙️ SYSTÉM & INFO (Default Collapsed)
-- `stats` (`/js/modules/stats.js`): **#statistiky** — Relationship data analytics.
-- `settings` (`/js/modules/settings.js`): **#nastavení** — Theme selector, audio preferences, avatar & offline tools.
-- `changelog` (`/js/modules/changelog.js`): **#changelog** — Kiscord update history.
-- `manual` (`/js/modules/manual.js`): **#návod** — Interactive application manual, quick start routine, keyboard shortcuts & FAQ.
-- `welcome`, `readme` (`/js/modules/static.js`): Discord-themed onboarding & documentation.
+### 📦 ARCHIV (`/js/domains/archive/`)
+- `kasicka` (`/js/domains/archive/kasicka.js`): **#rakousko-kasička** — Historical brigade earnings.
+- `shifts` (`/js/domains/archive/shifts.js`): **#plánovač-směn** — Work shift scheduler.
+- `austria-info` (`/js/domains/archive/austria-info/`): **#rakousko-info** — Austrian seasonal work packing list & guidelines.
+- `austrian-german` (`/js/domains/archive/austrian-german.js`): **#rakouská-němčina** — Alpine dialect dictionary & flashcards.
 
 ---
 
@@ -94,7 +101,6 @@
 | `gym_sets` | Individual workout sets | `workout_id`, `exercise_id`, `set_order`, `reps`, `weight_kg`, `is_warmup` |
 | `gym_exercises` | Exercise registry | `id`, `name`, `category`, `muscle_primary`, `gif_url` |
 | `gym_body_measurements` | Weight & circumference logs | `user_id`, `date_key`, `weight_kg`, `waist_cm`, `arms_cm`, `photos` |
-| `app_finances` | Personal budget & Brno expenses | `id`, `user_id`, `title`, `amount`, `type` (income/expense), `category` |
 | `habits_items` | Daily habit definitions & logs | `id`, `user_id`, `title`, `icon`, `history` (JSONB) |
 | `love_coupons` | Custom love shop coupons | `id`, `title`, `cost`, `icon`, `redeemed_at` |
 | `vut_subjects` | WIS subjects & point limits | `id`, `code`, `name`, `credits`, `points_current`, `points_max` |
@@ -105,4 +111,5 @@
 1. **Never mutate globals directly**: Use `state` in `/js/core/state.js` and call `saveStateToCache()`.
 2. **Follow Discord Glassmorphism design tokens**: Use `var(--bg-primary)`, `var(--bg-secondary)`, `var(--text-header)`, `var(--text-muted)`.
 3. **Optimistic UI with Haptics**: Call `triggerHaptic('light'|'medium'|'success')` on interactive user taps.
-4. **All asynchronous module imports**: Register in `moduleMap` in `/js/core/router.js`.
+4. **All asynchronous channel imports**: Register in `ROUTE_REGISTRY` in `/js/core/router/module-loader.js`.
+5. **Always verify work**: Run `npm run typecheck` and `npm run test:run` after modifications.

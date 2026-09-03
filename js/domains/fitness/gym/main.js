@@ -28,7 +28,8 @@ import {
     deleteTemplate, openEditTemplateModal, saveEditedTemplate,
     checkAndSeed, refreshExercisesConfig, openManualLogModal, saveManualLog,
     openScheduleTemplateModal, saveScheduledTemplate, addManualSet, removeManualSet,
-    openEditGymLogModal, saveEditGymLog, onTemplateModeChange
+    openEditGymLogModal, saveEditGymLog, onTemplateModeChange,
+    onTemplateCheckboxToggle, moveTemplateExercise, removeTemplateExercise
 } from './templates.js';
 import {
     renderFeedTab, cheerWorkout, deleteLog, openLogDetailModal
@@ -290,6 +291,9 @@ export function attachWindowGym() {
         deleteExercise: (id) => deleteExercise(id, renderGym),
         cycleSetType: (exIdx, setIdx) => cycleSetType(exIdx, setIdx, renderGym),
         refreshExercisesConfig,
+        onTemplateCheckboxToggle,
+        moveTemplateExercise,
+        removeTemplateExercise,
         filterExByCat,
         applyWeightSuggestion,
         incrementWorkoutRound: () => incrementWorkoutRound(renderGym),
